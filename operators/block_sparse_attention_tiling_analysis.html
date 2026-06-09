@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockSparseAttention Tiling 分析报告</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 30px; }
+  h1 { font-size: 2.2em; color: #58a6ff; border-bottom: 2px solid #21262d; padding-bottom: 16px; margin-bottom: 30px; }
+  h2 { font-size: 1.6em; color: #79c0ff; margin: 40px 0 20px; border-left: 4px solid #1f6feb; padding-left: 14px; }
+  h3 { font-size: 1.25em; color: #d2a8ff; margin: 28px 0 14px; }
+  p { margin: 10px 0; color: #b1bac4; }
+  .diagram-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+  .diagram-title { font-size: 0.9em; color: #8b949e; text-align: center; margin-bottom: 12px; font-style: italic; }
+  svg text { font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #30363d; padding: 10px 14px; text-align: left; }
+  th { background: #1f2937; color: #79c0ff; }
+  td { background: #161b22; }
+  code { background: #1c2128; padding: 2px 6px; border-radius: 4px; color: #e6edf3; font-size: 0.9em; }
+  .highlight { color: #ffa657; font-weight: bold; }
+  .note { background: #1c2128; border-left: 3px solid #1f6feb; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+  .note-label { color: #58a6ff; font-weight: bold; }
+  .arch-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; margin: 0 4px; }
+  .arch-910 { background: #1f3a5f; color: #79c0ff; }
+  .arch-950 { background: #3b2a1f; color: #ffa657; }
+  .legend-item { display: inline-flex; align-items: center; margin-right: 20px; margin-bottom: 8px; }
+  .legend-color { width: 16px; height: 16px; border-radius: 3px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🧩 BlockSparseAttention Tiling 深度分析</h1>
+
+<p>本报告对 <code>ops-transformer/attention/block_sparse_attention</code> 的 Tiling 策略进行全景式分析，
+涵盖 Tiling 流程、数据结构、分核策略、L1 分块、Workspace 布局及 TilingKey 编码等核心机制。</p>
+
+<!-- ============================================================ -->
+<h2>1. Tiling 总体流程</h2>
+
+<p>BlockSparseAttention 的 Tiling 流程分为两条路径，分别适配 <span class="arch-badge arch-910">Atlas A2 (910)</span> 和 <span class="arch-badge arch-950">Atlas A5 (950)</span>：</p>
+
+<div class="diagram-box">
+<div class="diagram-title">图1：Tiling 主流程（GetBsaTiling）</div>
+<svg width="1100" height="520" viewBox="0 0 1100 520">
+  <!-- Background -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b949e"/></marker>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1f6feb"/><stop offset="100%" stop-color="#0d419d"/></linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#238636"/><stop offset="100%" stop-color="#0f5323"/></linearGradient>
+    <linearGradient id="gOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d29922"/><stop offset="100%" stop-color="#8b6914"/></linearGradient>
+    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8957e5"/><stop offset="100%" stop-color="#553098"/></linearGradient>
+    <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#da3633"/><stop offset="100%" stop-color="#8b1a18"/></linearGradient>
+  </defs>
+
+  <!-- Common path -->
+  <rect x="30" y="20" width="200" height="44" rx="8" fill="url(#gBlue)"/>
+  <text x="130" y="47" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">GetNpuInfo</text>
+  
+  <line x1="130" y1="64" x2="130" y2="90" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="30" y="90" width="200" height="44" rx="8" fill="url(#gBlue)"/>
+  <text x="130" y="117" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">GetInputLayout + ParseAttrs</text>
+  
+  <line x1="130" y1="134" x2="130" y2="160" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="30" y="160" width="200" height="44" rx="8" fill="url(#gBlue)"/>
+  <text x="130" y="187" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">ParseRequiredTensors</text>
+  
+  <line x1="130" y1="204" x2="130" y2="230" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="30" y="230" width="200" height="44" rx="8" fill="url(#gBlue)"/>
+  <text x="130" y="257" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">ParseOptionalTensors</text>
+  
+  <line x1="130" y1="274" x2="130" y2="300" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="30" y="300" width="200" height="44" rx="8" fill="url(#gBlue)"/>
+  <text x="130" y="327" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">ValidateTNDSeqlenSum</text>
+
+  <!-- Branch diamond -->
+  <line x1="130" y1="344" x2="130" y2="375" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  <polygon points="130,375 210,410 130,445 50,410" fill="#21262d" stroke="#8b949e" stroke-width="2"/>
+  <text x="130" y="415" text-anchor="middle" fill="#ffa657" font-size="12" font-weight="bold">SoC版本?</text>
+
+  <!-- 910 Path -->
+  <line x1="50" y1="410" x2="-30" y2="410" stroke="#79c0ff" stroke-width="2"/>
+  <line x1="-30" y1="410" x2="-30" y2="480" stroke="#79c0ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="-10" y="400" fill="#79c0ff" font-size="11" font-weight="bold">910</text>
+  
+  <rect x="-170" y="480" width="280" height="36" rx="6" fill="url(#gGreen)"/>
+  <text x="-30" y="503" text-anchor="middle" fill="#fff" font-size="12">CalculateTaskSplit</text>
+  
+  <!-- 910 sub-steps placed to the left -->
+  <rect x="-400" y="460" width="200" height="30" rx="5" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="-300" y="480" text-anchor="middle" fill="#7ee787" font-size="11">CalculateBatchTaskSplit × B</text>
+  <line x1="-200" y1="475" x2="-170" y2="492" stroke="#238636" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <rect x="-400" y="500" width="200" height="30" rx="5" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="-300" y="520" text-anchor="middle" fill="#7ee787" font-size="11">blockDim = min(aicNum, totalTask)</text>
+  <line x1="-200" y1="515" x2="-170" y2="503" stroke="#238636" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <!-- 910 Workspace -->
+  <line x1="-30" y1="516" x2="-30" y2="546" stroke="#79c0ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="-170" y="546" width="280" height="36" rx="6" fill="url(#gGreen)"/>
+  <text x="-30" y="569" text-anchor="middle" fill="#fff" font-size="12">CalculateWorkSpace</text>
+
+  <!-- 950 Path -->
+  <line x1="210" y1="410" x2="310" y2="410" stroke="#ffa657" stroke-width="2"/>
+  <line x1="310" y1="410" x2="310" y2="480" stroke="#ffa657" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="400" fill="#ffa657" font-size="11" font-weight="bold">950</text>
+  
+  <rect x="170" y="480" width="280" height="36" rx="6" fill="url(#gOrange)"/>
+  <text x="310" y="503" text-anchor="middle" fill="#fff" font-size="12">CalcSplitCoreTilingParams950</text>
+
+  <!-- 950 sub-steps -->
+  <rect x="480" y="440" width="240" height="30" rx="5" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="600" y="460" text-anchor="middle" fill="#ffa657" font-size="11">CalcBaseTileTilingParams950</text>
+  <line x1="480" y1="455" x2="450" y2="490" stroke="#d29922" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <rect x="480" y="480" width="240" height="30" rx="5" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="600" y="500" text-anchor="middle" fill="#ffa657" font-size="11">mask2idx 分核: aiv 分配</text>
+  <line x1="480" y1="495" x2="450" y2="498" stroke="#d29922" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <rect x="480" y="520" width="240" height="30" rx="5" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="600" y="540" text-anchor="middle" fill="#ffa657" font-size="11">totalTaskNum = Σ(QSTile×N)</text>
+  <line x1="480" y1="530" x2="450" y2="508" stroke="#d29922" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <!-- 950 L1 tile -->
+  <line x1="310" y1="516" x2="310" y2="546" stroke="#ffa657" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="170" y="546" width="280" height="36" rx="6" fill="url(#gOrange)"/>
+  <text x="310" y="569" text-anchor="middle" fill="#fff" font-size="12">CalcMatmulPhaseL1TileInfo950</text>
+
+  <!-- 950 Workspace -->
+  <line x1="310" y1="582" x2="310" y2="608" stroke="#ffa657" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="170" y="608" width="280" height="36" rx="6" fill="url(#gOrange)"/>
+  <text x="310" y="631" text-anchor="middle" fill="#fff" font-size="12">CalcWorkspaceTilingParams950</text>
+
+  <!-- Merge to FillTilingData -->
+  <line x1="-30" y1="582" x2="-30" y2="660" stroke="#8b949e" stroke-width="2"/>
+  <line x1="-30" y1="660" x2="530" y2="660" stroke="#8b949e" stroke-width="2"/>
+  <line x1="310" y1="644" x2="310" y2="660" stroke="#8b949e" stroke-width="2"/>
+  <line x1="530" y1="660" x2="530" y2="680" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="430" y="680" width="200" height="44" rx="8" fill="url(#gPurple)"/>
+  <text x="530" y="707" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">FillTilingData</text>
+
+  <line x1="530" y1="724" x2="530" y2="750" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="430" y="750" width="200" height="44" rx="8" fill="url(#gPurple)"/>
+  <text x="530" y="777" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">GenerateTilingKey</text>
+
+  <!-- Legend -->
+  <rect x="750" y="20" width="320" height="160" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <text x="770" y="45" fill="#c9d1d9" font-size="13" font-weight="bold">图例</text>
+  <rect x="770" y="58" width="16" height="16" rx="3" fill="url(#gBlue)"/><text x="795" y="71" fill="#b1bac4" font-size="12">公共解析阶段</text>
+  <rect x="770" y="83" width="16" height="16" rx="3" fill="url(#gGreen)"/><text x="795" y="96" fill="#b1bac4" font-size="12">910 专属 Tiling</text>
+  <rect x="770" y="108" width="16" height="16" rx="3" fill="url(#gOrange)"/><text x="795" y="121" fill="#b1bac4" font-size="12">950 专属 Tiling</text>
+  <rect x="770" y="133" width="16" height="16" rx="3" fill="url(#gPurple)"/><text x="795" y="146" fill="#b1bac4" font-size="12">公共输出阶段</text>
+  <rect x="770" y="158" width="16" height="16" rx="3" fill="#1c2128" stroke="#8b949e"/><text x="795" y="171" fill="#b1bac4" font-size="12">子步骤（虚线关联）</text>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>2. Tiling 数据结构全景</h2>
+
+<p>Tiling 数据由三层嵌套结构组成，对应不同的切分层次：</p>
+
+<div class="diagram-box">
+<div class="diagram-title">图2：BlockSparseAttentionTilingData 结构层次</div>
+<svg width="1100" height="620" viewBox="0 0 1100 620">
+  <!-- Main struct -->
+  <rect x="20" y="20" width="1060" height="580" rx="12" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+  <text x="40" y="50" fill="#58a6ff" font-size="16" font-weight="bold">BlockSparseAttentionTilingData</text>
+
+  <!-- Group 1: Basic params -->
+  <rect x="40" y="65" width="320" height="200" rx="8" fill="#1c2128" stroke="#1f6feb" stroke-width="1.5"/>
+  <text x="60" y="90" fill="#79c0ff" font-size="13" font-weight="bold">基础参数</text>
+  <text x="60" y="112" fill="#b1bac4" font-size="11">batch, numHeads, kvHeads</text>
+  <text x="60" y="132" fill="#b1bac4" font-size="11">embeddingSize, blockSize</text>
+  <text x="60" y="152" fill="#b1bac4" font-size="11">maxNumBlocksPerBatch</text>
+  <text x="60" y="172" fill="#b1bac4" font-size="11">scaleValue, maskType</text>
+  <text x="60" y="192" fill="#b1bac4" font-size="11">queryLayout, kvCacheLayout</text>
+  <text x="60" y="212" fill="#b1bac4" font-size="11">maxQSeqlen, maxKvSeqlen</text>
+  <text x="60" y="232" fill="#b1bac4" font-size="11">useUniformQSeqlen / KvSeqlen</text>
+  <text x="60" y="252" fill="#b1bac4" font-size="11">softmaxLseFlag (via tilingKey)</text>
+
+  <!-- Group 2: Sparse block params -->
+  <rect x="380" y="65" width="280" height="120" rx="8" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="400" y="90" fill="#ffa657" font-size="13" font-weight="bold">稀疏分块参数</text>
+  <text x="400" y="115" fill="#b1bac4" font-size="11">blockShapeX (Q方向块大小)</text>
+  <text x="400" y="135" fill="#b1bac4" font-size="11">blockShapeY (KV方向块大小)</text>
+  <text x="400" y="155" fill="#b1bac4" font-size="11">totalQBlocks, maxKvBlockNum</text>
+  <text x="400" y="175" fill="#b1bac4" font-size="11">maxQBlockNum</text>
+
+  <!-- Group 3: Task split params -->
+  <rect x="680" y="65" width="380" height="200" rx="8" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="700" y="90" fill="#7ee787" font-size="13" font-weight="bold">任务分核参数</text>
+  <text x="700" y="115" fill="#b1bac4" font-size="11">totalTaskNum (总任务数)</text>
+  <text x="700" y="135" fill="#b1bac4" font-size="11">firstBatchTaskNum (首批任务数)</text>
+  <text x="700" y="155" fill="#b1bac4" font-size="11">firstQBlockNum</text>
+  <text x="700" y="175" fill="#b1bac4" font-size="11">avgRowNumPerSubCore (每子核行数)</text>
+  <text x="700" y="195" fill="#b1bac4" font-size="11">preActivateSubCoreNum (激活子核数)</text>
+  <text x="700" y="215" fill="#b1bac4" font-size="11">tilingKey (64-bit 编码)</text>
+  <text x="700" y="235" fill="#b1bac4" font-size="11">blockDim (核数, 隐含在context中)</text>
+
+  <!-- Group 4: Workspace params -->
+  <rect x="40" y="285" width="500" height="140" rx="8" fill="#1c2128" stroke="#da3633" stroke-width="1.5"/>
+  <text x="60" y="310" fill="#ff7b72" font-size="13" font-weight="bold">Workspace 参数</text>
+  <text x="60" y="335" fill="#b1bac4" font-size="11">mm1OutSize (QK^T 结果空间)</text>
+  <text x="60" y="355" fill="#b1bac4" font-size="11">smOnlineOutSize (Online Softmax P矩阵空间)</text>
+  <text x="60" y="375" fill="#b1bac4" font-size="11">mm2OutSize (PV 结果空间)</text>
+  <text x="60" y="395" fill="#b1bac4" font-size="11">updateSize (O rescale 更新空间)</text>
+  <text x="60" y="415" fill="#b1bac4" font-size="11">selectNumIdxSize + selectIdxSize (稀疏索引空间)</text>
+
+  <!-- Sub-struct 1: Mask2Idx -->
+  <rect x="560" y="285" width="240" height="140" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="580" y="310" fill="#d2a8ff" font-size="13" font-weight="bold">BsaMask2IdxTiling</text>
+  <text x="580" y="338" fill="#b1bac4" font-size="11">xBlockNumAligned</text>
+  <text x="580" y="358" fill="#b1bac4" font-size="11">yBlockNumAligned</text>
+  <text x="580" y="378" fill="#b1bac4" font-size="11">avgRowPerSubCore</text>
+  <text x="580" y="398" fill="#b1bac4" font-size="11">preActiveSubCoreNum</text>
+
+  <!-- Sub-struct 2: BaseTile -->
+  <rect x="820" y="285" width="240" height="80" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="840" y="310" fill="#d2a8ff" font-size="13" font-weight="bold">BsaBaseTiling</text>
+  <text x="840" y="338" fill="#b1bac4" font-size="11">qBaseTile (Q基块大小)</text>
+  <text x="840" y="358" fill="#b1bac4" font-size="11">kvBaseTile (KV基块大小)</text>
+
+  <!-- Sub-struct 3: L1 Tile -->
+  <rect x="820" y="385" width="240" height="200" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="840" y="410" fill="#d2a8ff" font-size="13" font-weight="bold">BsaMmPhaseL1Tiling</text>
+  <text x="840" y="438" fill="#b1bac4" font-size="11">mm1L1TileM / N / KLeft / KRight</text>
+  <text x="840" y="458" fill="#b1bac4" font-size="11">mm2L1TileM / N / KLeft / KRight</text>
+  <text x="840" y="478" fill="#b1bac4" font-size="11">qL1BufNum (Q L1缓冲数)</text>
+  <text x="840" y="498" fill="#b1bac4" font-size="11">kL1BufNum (K L1缓冲数)</text>
+  <text x="840" y="518" fill="#b1bac4" font-size="11">vL1BufNum (V L1缓冲数)</text>
+  <text x="840" y="538" fill="#b1bac4" font-size="11">pL1BufNum (P L1缓冲数)</text>
+  <text x="840" y="558" fill="#b1bac4" font-size="11">（仅950架构使用）</text>
+
+  <!-- Arrows showing nesting -->
+  <line x1="680" y1="355" x2="560" y2="355" stroke="#8957e5" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="940" y1="325" x2="820" y2="325" stroke="#8957e5" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="940" y1="485" x2="820" y2="485" stroke="#8957e5" stroke-width="1.5" stroke-dasharray="4,3"/>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. 稀疏分块（Block Sparse）策略</h2>
+
+<p>BlockSparseAttention 的核心思想是：将 Q 和 KV 序列按 <code>blockShapeX</code> 和 <code>blockShapeY</code> 切成块，
+仅对 <code>blockSparseMask</code> 标记为 1 的 (Q_block, KV_block) 对计算注意力。</p>
+
+<div class="diagram-box">
+<div class="diagram-title">图3：Block Sparse 分块与 Mask 过滤示意</div>
+<svg width="1060" height="480" viewBox="0 0 1060 480">
+  <!-- Q sequence bar -->
+  <rect x="60" y="30" width="800" height="40" rx="4" fill="#1c2128" stroke="#1f6feb" stroke-width="2"/>
+  <text x="30" y="55" fill="#79c0ff" font-size="13" font-weight="bold">Q</text>
+  <!-- Q blocks -->
+  <rect x="62" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.7"/>
+  <text x="127" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_0</text>
+  <rect x="194" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.7"/>
+  <text x="259" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_1</text>
+  <rect x="326" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.7"/>
+  <text x="391" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_2</text>
+  <rect x="458" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.5"/>
+  <text x="523" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_3</text>
+  <rect x="590" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.5"/>
+  <text x="655" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_4</text>
+  <rect x="722" y="32" width="130" height="36" rx="2" fill="#1f6feb" opacity="0.3"/>
+  <text x="787" y="55" text-anchor="middle" fill="#fff" font-size="11">Q_blk_5</text>
+  <text x="870" y="55" fill="#8b949e" font-size="11">blockShapeX=128</text>
+
+  <!-- KV sequence bar -->
+  <rect x="60" y="90" width="800" height="40" rx="4" fill="#1c2128" stroke="#d29922" stroke-width="2"/>
+  <text x="25" y="115" fill="#ffa657" font-size="13" font-weight="bold">KV</text>
+  <rect x="62" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.7"/>
+  <text x="110" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_0</text>
+  <rect x="159" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.7"/>
+  <text x="207" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_1</text>
+  <rect x="256" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.7"/>
+  <text x="304" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_2</text>
+  <rect x="353" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.7"/>
+  <text x="401" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_3</text>
+  <rect x="450" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.5"/>
+  <text x="498" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_4</text>
+  <rect x="547" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.5"/>
+  <text x="595" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_5</text>
+  <rect x="644" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.3"/>
+  <text x="692" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_6</text>
+  <rect x="741" y="92" width="95" height="36" rx="2" fill="#d29922" opacity="0.3"/>
+  <text x="789" y="115" text-anchor="middle" fill="#fff" font-size="10">KV_7</text>
+  <text x="870" y="115" fill="#8b949e" font-size="11">blockShapeY=128</text>
+
+  <!-- BlockSparseMask matrix -->
+  <text x="60" y="170" fill="#c9d1d9" font-size="14" font-weight="bold">BlockSparseMask [B, N, xBlockNum, yBlockNum]</text>
+  
+  <!-- Matrix grid -->
+  <g transform="translate(60, 185)">
+    <!-- Row labels -->
+    <text x="-50" y="25" fill="#79c0ff" font-size="11">Q_blk_0</text>
+    <text x="-50" y="65" fill="#79c0ff" font-size="11">Q_blk_1</text>
+    <text x="-50" y="105" fill="#79c0ff" font-size="11">Q_blk_2</text>
+    <text x="-50" y="145" fill="#79c0ff" font-size="11">Q_blk_3</text>
+    <text x="-50" y="185" fill="#79c0ff" font-size="11">Q_blk_4</text>
+    <text x="-50" y="225" fill="#79c0ff" font-size="11">Q_blk_5</text>
+    
+    <!-- Col labels -->
+    <text x="20" y="-8" fill="#ffa657" font-size="10">KV_0</text>
+    <text x="80" y="-8" fill="#ffa657" font-size="10">KV_1</text>
+    <text x="140" y="-8" fill="#ffa657" font-size="10">KV_2</text>
+    <text x="200" y="-8" fill="#ffa657" font-size="10">KV_3</text>
+    <text x="260" y="-8" fill="#ffa657" font-size="10">KV_4</text>
+    <text x="320" y="-8" fill="#ffa657" font-size="10">KV_5</text>
+    <text x="380" y="-8" fill="#ffa657" font-size="10">KV_6</text>
+    <text x="440" y="-8" fill="#ffa657" font-size="10">KV_7</text>
+    
+    <!-- Mask cells: 1=active(green), 0=skip(dark) -->
+    <!-- Row 0 -->
+    <rect x="0" y="0" width="55" height="35" rx="3" fill="#238636"/><text x="27" y="22" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="60" y="0" width="55" height="35" rx="3" fill="#238636"/><text x="87" y="22" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="120" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="147" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="180" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="207" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="240" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="267" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="300" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="327" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="360" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="387" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="420" y="0" width="55" height="35" rx="3" fill="#21262d"/><text x="447" y="22" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <!-- Row 1 -->
+    <rect x="0" y="40" width="55" height="35" rx="3" fill="#238636"/><text x="27" y="62" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="60" y="40" width="55" height="35" rx="3" fill="#238636"/><text x="87" y="62" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="120" y="40" width="55" height="35" rx="3" fill="#238636"/><text x="147" y="62" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="180" y="40" width="55" height="35" rx="3" fill="#21262d"/><text x="207" y="62" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="240" y="40" width="55" height="35" rx="3" fill="#21262d"/><text x="267" y="62" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="300" y="40" width="55" height="35" rx="3" fill="#21262d"/><text x="327" y="62" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="360" y="40" width="55" height="35" rx="3" fill="#21262d"/><text x="387" y="62" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="420" y="40" width="55" height="35" rx="3" fill="#21262d"/><text x="447" y="62" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <!-- Row 2 -->
+    <rect x="0" y="80" width="55" height="35" rx="3" fill="#21262d"/><text x="27" y="102" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="60" y="80" width="55" height="35" rx="3" fill="#238636"/><text x="87" y="102" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="120" y="80" width="55" height="35" rx="3" fill="#238636"/><text x="147" y="102" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="180" y="80" width="55" height="35" rx="3" fill="#238636"/><text x="207" y="102" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="240" y="80" width="55" height="35" rx="3" fill="#21262d"/><text x="267" y="102" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="300" y="80" width="55" height="35" rx="3" fill="#21262d"/><text x="327" y="102" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="360" y="80" width="55" height="35" rx="3" fill="#21262d"/><text x="387" y="102" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="420" y="80" width="55" height="35" rx="3" fill="#21262d"/><text x="447" y="102" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <!-- Row 3 -->
+    <rect x="0" y="120" width="55" height="35" rx="3" fill="#21262d"/><text x="27" y="142" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="60" y="120" width="55" height="35" rx="3" fill="#21262d"/><text x="87" y="142" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="120" y="120" width="55" height="35" rx="3" fill="#238636"/><text x="147" y="142" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="180" y="120" width="55" height="35" rx="3" fill="#238636"/><text x="207" y="142" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="240" y="120" width="55" height="35" rx="3" fill="#238636"/><text x="267" y="142" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="300" y="120" width="55" height="35" rx="3" fill="#238636"/><text x="327" y="142" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="360" y="120" width="55" height="35" rx="3" fill="#21262d"/><text x="387" y="142" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="420" y="120" width="55" height="35" rx="3" fill="#21262d"/><text x="447" y="142" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <!-- Row 4 -->
+    <rect x="0" y="160" width="55" height="35" rx="3" fill="#21262d"/><text x="27" y="182" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="60" y="160" width="55" height="35" rx="3" fill="#21262d"/><text x="87" y="182" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="120" y="160" width="55" height="35" rx="3" fill="#21262d"/><text x="147" y="182" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="180" y="160" width="55" height="35" rx="3" fill="#21262d"/><text x="207" y="182" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="240" y="160" width="55" height="35" rx="3" fill="#238636"/><text x="267" y="182" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="300" y="160" width="55" height="35" rx="3" fill="#238636"/><text x="327" y="182" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="360" y="160" width="55" height="35" rx="3" fill="#238636"/><text x="387" y="182" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="420" y="160" width="55" height="35" rx="3" fill="#238636"/><text x="447" y="182" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <!-- Row 5 -->
+    <rect x="0" y="200" width="55" height="35" rx="3" fill="#21262d"/><text x="27" y="222" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="60" y="200" width="55" height="35" rx="3" fill="#21262d"/><text x="87" y="222" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="120" y="200" width="55" height="35" rx="3" fill="#21262d"/><text x="147" y="222" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="180" y="200" width="55" height="35" rx="3" fill="#21262d"/><text x="207" y="222" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="240" y="200" width="55" height="35" rx="3" fill="#21262d"/><text x="267" y="222" text-anchor="middle" fill="#484f58" font-size="13">0</text>
+    <rect x="300" y="200" width="55" height="35" rx="3" fill="#238636"/><text x="327" y="222" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="360" y="200" width="55" height="35" rx="3" fill="#238636"/><text x="387" y="222" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+    <rect x="420" y="200" width="55" height="35" rx="3" fill="#238636"/><text x="447" y="222" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">1</text>
+  </g>
+
+  <!-- Arrow to selectIdx -->
+  <text x="600" y="230" fill="#c9d1d9" font-size="13" font-weight="bold">→ Mask2Idx 转换</text>
+  <line x1="580" y1="240" x2="580" y2="270" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- selectIdx result -->
+  <rect x="560" y="275" width="460" height="180" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="580" y="300" fill="#d2a8ff" font-size="13" font-weight="bold">selectIdx (每行的活跃KV块索引)</text>
+  <text x="580" y="325" fill="#7ee787" font-size="11">Q_blk_0 → [0, 1]           count=2</text>
+  <text x="580" y="345" fill="#7ee787" font-size="11">Q_blk_1 → [0, 1, 2]         count=3</text>
+  <text x="580" y="365" fill="#7ee787" font-size="11">Q_blk_2 → [1, 2, 3]         count=3</text>
+  <text x="580" y="385" fill="#7ee787" font-size="11">Q_blk_3 → [2, 3, 4, 5]      count=4</text>
+  <text x="580" y="405" fill="#7ee787" font-size="11">Q_blk_4 → [4, 5, 6, 7]      count=4</text>
+  <text x="580" y="425" fill="#7ee787" font-size="11">Q_blk_5 → [5, 6, 7]         count=3</text>
+  <text x="580" y="450" fill="#8b949e" font-size="11">selectNumIdx 存储每行的 count 值</text>
+</svg>
+</div>
+
+<div class="note">
+<span class="note-label">关键约束：</span>
+<code>blockShapeY</code> 必须是 128 的倍数；<code>blockShapeX</code> 默认 128。
+BlockSparseMask 的 shape 为 <code>[B, N, xBlockNum, yBlockNum]</code>，
+其中 <code>xBlockNum = ceil(maxQSeqlen / blockShapeX)</code>，
+<code>yBlockNum = ceil(maxKvSeqlen / blockShapeY)</code>。
+</div>
+
+<!-- ============================================================ -->
+<h2>4. 分核策略（Core Split）</h2>
+
+<h3>4.1 Atlas A2 (910) 分核</h3>
+
+<div class="diagram-box">
+<div class="diagram-title">图4：910 分核策略 — 任务粒度与核分配</div>
+<svg width="1060" height="380" viewBox="0 0 1060 380">
+  <!-- Task definition -->
+  <rect x="30" y="20" width="1000" height="100" rx="8" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="50" y="48" fill="#7ee787" font-size="14" font-weight="bold">任务定义 (910)</text>
+  <text x="50" y="72" fill="#b1bac4" font-size="12">1个Task = 1个Q_block × 1个KV_head_group</text>
+  <text x="50" y="92" fill="#b1bac4" font-size="12">Q_block = ceil(qSeqlen / blockShapeX) 个基本块</text>
+  <text x="500" y="72" fill="#ffa657" font-size="12">totalTaskNum = Σ_batch( QBlocks × numHeads )</text>
+  <text x="500" y="92" fill="#ffa657" font-size="12">blockDim = min(aicNum, totalTaskNum)</text>
+
+  <!-- Core assignment visual -->
+  <text x="50" y="150" fill="#c9d1d9" font-size="14" font-weight="bold">核分配示意 (blockDim=8, totalTaskNum=20)</text>
+  
+  <g transform="translate(50, 165)">
+    <!-- Task blocks -->
+    <rect x="0" y="0" width="45" height="30" rx="3" fill="#1f6feb"/><text x="22" y="20" text-anchor="middle" fill="#fff" font-size="10">T0</text>
+    <rect x="48" y="0" width="45" height="30" rx="3" fill="#1f6feb"/><text x="70" y="20" text-anchor="middle" fill="#fff" font-size="10">T1</text>
+    <rect x="96" y="0" width="45" height="30" rx="3" fill="#1f6feb"/><text x="118" y="20" text-anchor="middle" fill="#fff" font-size="10">T2</text>
+    <rect x="144" y="0" width="45" height="30" rx="3" fill="#1f6feb"/><text x="166" y="20" text-anchor="middle" fill="#fff" font-size="10">T3</text>
+    <rect x="192" y="0" width="45" height="30" rx="3" fill="#238636"/><text x="214" y="20" text-anchor="middle" fill="#fff" font-size="10">T4</text>
+    <rect x="240" y="0" width="45" height="30" rx="3" fill="#238636"/><text x="262" y="20" text-anchor="middle" fill="#fff" font-size="10">T5</text>
+    <rect x="288" y="0" width="45" height="30" rx="3" fill="#238636"/><text x="310" y="20" text-anchor="middle" fill="#fff" font-size="10">T6</text>
+    <rect x="336" y="0" width="45" height="30" rx="3" fill="#238636"/><text x="358" y="20" text-anchor="middle" fill="#fff" font-size="10">T7</text>
+    <rect x="384" y="0" width="45" height="30" rx="3" fill="#d29922"/><text x="406" y="20" text-anchor="middle" fill="#fff" font-size="10">T8</text>
+    <rect x="432" y="0" width="45" height="30" rx="3" fill="#d29922"/><text x="454" y="20" text-anchor="middle" fill="#fff" font-size="10">T9</text>
+    <rect x="480" y="0" width="45" height="30" rx="3" fill="#d29922"/><text x="502" y="20" text-anchor="middle" fill="#fff" font-size="10">T10</text>
+    <rect x="528" y="0" width="45" height="30" rx="3" fill="#d29922"/><text x="550" y="20" text-anchor="middle" fill="#fff" font-size="10">T11</text>
+    <rect x="576" y="0" width="45" height="30" rx="3" fill="#8957e5"/><text x="598" y="20" text-anchor="middle" fill="#fff" font-size="10">T12</text>
+    <rect x="624" y="0" width="45" height="30" rx="3" fill="#8957e5"/><text x="646" y="20" text-anchor="middle" fill="#fff" font-size="10">T13</text>
+    <rect x="672" y="0" width="45" height="30" rx="3" fill="#8957e5"/><text x="694" y="20" text-anchor="middle" fill="#fff" font-size="10">T14</text>
+    <rect x="720" y="0" width="45" height="30" rx="3" fill="#8957e5"/><text x="742" y="20" text-anchor="middle" fill="#fff" font-size="10">T15</text>
+    <rect x="768" y="0" width="45" height="30" rx="3" fill="#da3633"/><text x="790" y="20" text-anchor="middle" fill="#fff" font-size="10">T16</text>
+    <rect x="816" y="0" width="45" height="30" rx="3" fill="#da3633"/><text x="838" y="20" text-anchor="middle" fill="#fff" font-size="10">T17</text>
+    <rect x="864" y="0" width="45" height="30" rx="3" fill="#da3633"/><text x="886" y="20" text-anchor="middle" fill="#fff" font-size="10">T18</text>
+    <rect x="912" y="0" width="45" height="30" rx="3" fill="#da3633"/><text x="934" y="20" text-anchor="middle" fill="#fff" font-size="10">T19</text>
+  </g>
+
+  <!-- Core mapping -->
+  <text x="50" y="230" fill="#c9d1d9" font-size="12">循环分配：core_i 处理 task_i, task_{i+blockDim}, task_{i+2×blockDim}, ...</text>
+  
+  <g transform="translate(50, 245)">
+    <rect x="0" y="0" width="115" height="28" rx="4" fill="#1f6feb" opacity="0.3" stroke="#1f6feb"/>
+    <text x="57" y="19" text-anchor="middle" fill="#79c0ff" font-size="11">Core 0: T0,T8,T16</text>
+    <rect x="120" y="0" width="115" height="28" rx="4" fill="#1f6feb" opacity="0.3" stroke="#1f6feb"/>
+    <text x="177" y="19" text-anchor="middle" fill="#79c0ff" font-size="11">Core 1: T1,T9,T17</text>
+    <rect x="240" y="0" width="115" height="28" rx="4" fill="#238636" opacity="0.3" stroke="#238636"/>
+    <text x="297" y="19" text-anchor="middle" fill="#7ee787" font-size="11">Core 2: T2,T10,T18</text>
+    <rect x="360" y="0" width="115" height="28" rx="4" fill="#238636" opacity="0.3" stroke="#238636"/>
+    <text x="417" y="19" text-anchor="middle" fill="#7ee787" font-size="11">Core 3: T3,T11,T19</text>
+    <rect x="480" y="0" width="105" height="28" rx="4" fill="#d29922" opacity="0.3" stroke="#d29922"/>
+    <text x="532" y="19" text-anchor="middle" fill="#ffa657" font-size="11">Core 4: T4,T12</text>
+    <rect x="590" y="0" width="105" height="28" rx="4" fill="#d29922" opacity="0.3" stroke="#d29922"/>
+    <text x="642" y="19" text-anchor="middle" fill="#ffa657" font-size="11">Core 5: T5,T13</text>
+    <rect x="700" y="0" width="105" height="28" rx="4" fill="#8957e5" opacity="0.3" stroke="#8957e5"/>
+    <text x="752" y="19" text-anchor="middle" fill="#d2a8ff" font-size="11">Core 6: T6,T14</text>
+    <rect x="810" y="0" width="105" height="28" rx="4" fill="#8957e5" opacity="0.3" stroke="#8957e5"/>
+    <text x="862" y="19" text-anchor="middle" fill="#d2a8ff" font-size="11">Core 7: T7,T15</text>
+  </g>
+
+  <!-- Mask2Idx sub-core split -->
+  <text x="50" y="310" fill="#c9d1d9" font-size="13" font-weight="bold">Mask2Idx 子核分配 (Vector Core 侧)</text>
+  <text x="50" y="332" fill="#b1bac4" font-size="11">totalRowNumMask = B × N × maxQBlockNum</text>
+  <text x="50" y="352" fill="#b1bac4" font-size="11">avgRowNumPerSubCore = ceil(totalRowNumMask / (blockDim × 2))</text>
+  <text x="500" y="332" fill="#b1bac4" font-size="11">preActivateSubCoreNum = ceil(totalRowNumMask / avgRowNumPerSubCore)</text>
+  <text x="500" y="352" fill="#b1bac4" font-size="11">每个子核按行切分处理 Mask→Idx 转换</text>
+</svg>
+</div>
+
+<h3>4.2 Atlas A5 (950) 分核</h3>
+
+<div class="diagram-box">
+<div class="diagram-title">图5：950 分核策略 — BaseTile 驱动的细粒度切分</div>
+<svg width="1060" height="350" viewBox="0 0 1060 350">
+  <!-- Base tile concept -->
+  <rect x="30" y="20" width="500" height="140" rx="8" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="50" y="48" fill="#ffa657" font-size="14" font-weight="bold">BaseTile 计算</text>
+  <text x="50" y="72" fill="#b1bac4" font-size="12">qBaseTile = min(blockShapeX, 128)</text>
+  <text x="50" y="95" fill="#b1bac4" font-size="12">kvBaseTile = 256  (if innerPrec==4 && D≤128)</text>
+  <text x="50" y="118" fill="#b1bac4" font-size="12">kvBaseTile = 128  (otherwise)</text>
+  <text x="50" y="145" fill="#8b949e" font-size="11">Q基块是L1常驻的最小计算单元</text>
+
+  <!-- QSTile calculation -->
+  <rect x="550" y="20" width="480" height="140" rx="8" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="570" y="48" fill="#ffa657" font-size="14" font-weight="bold">QSTileNum 计算 (每batch)</text>
+  <text x="570" y="72" fill="#b1bac4" font-size="12">fullXBlockNum = qSeqlen / blockShapeX</text>
+  <text x="570" y="95" fill="#b1bac4" font-size="12">qSTilePerFullXBlock = ceil(blockShapeX / qBaseTile)</text>
+  <text x="570" y="118" fill="#b1bac4" font-size="12">qSTileTailXBlock = ceil(tailSize / qBaseTile)</text>
+  <text x="570" y="145" fill="#b1bac4" font-size="12">curQSTileNum = perFull × fullNum + perTail</text>
+
+  <!-- Task composition -->
+  <rect x="30" y="180" width="1000" height="70" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="50" y="208" fill="#d2a8ff" font-size="14" font-weight="bold">950 任务定义</text>
+  <text x="50" y="232" fill="#b1bac4" font-size="12">1个Task = 1个QSTile × 1个Head</text>
+  <text x="400" y="208" fill="#ffa657" font-size="12">totalTaskNum = Σ_batch( curQSTileNum × numHeads )</text>
+  <text x="400" y="232" fill="#ffa657" font-size="12">blockDim = aicNum (使用全部Cube核)</text>
+
+  <!-- Mask2Idx on 950 -->
+  <rect x="30" y="270" width="1000" height="70" rx="8" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="50" y="298" fill="#7ee787" font-size="14" font-weight="bold">950 Mask2Idx 分核 (Vector Core 独立分配)</text>
+  <text x="50" y="322" fill="#b1bac4" font-size="12">totalRowNum = B × N × xBlockNumAligned</text>
+  <text x="450" y="298" fill="#b1bac4" font-size="12">avgRowPerSubCore = ceil(totalRowNum / aivNum)</text>
+  <text x="450" y="322" fill="#b1bac4" font-size="12">preActivateSubCoreNum = ceil(totalRowNum / avgRowPerSubCore)</text>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. L1 分块策略（950 专属）</h2>
+
+<p>950 架构的 L1 分块是 Tiling 的核心难点，它决定了 QK 和 PV 两个 Matmul 阶段在 L1 缓冲中的数据切分与多缓冲策略。</p>
+
+<div class="diagram-box">
+<div class="diagram-title">图6：L1 分块策略 — QK 阶段与 PV 阶段（950, D=128 场景）</div>
+<svg width="1100" height="520" viewBox="0 0 1100 520">
+  <!-- QK Phase -->
+  <rect x="20" y="20" width="520" height="240" rx="10" fill="#1c2128" stroke="#1f6feb" stroke-width="2"/>
+  <text x="40" y="48" fill="#79c0ff" font-size="15" font-weight="bold">MM1: Q × K^T → S</text>
+  <g transform="translate(40, 60)">
+    <rect x="0" y="0" width="70" height="100" rx="4" fill="#1f6feb" opacity="0.4" stroke="#1f6feb"/>
+    <text x="35" y="-8" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="bold">Q</text>
+    <text x="35" y="55" text-anchor="middle" fill="#fff" font-size="10">M×K</text>
+    <text x="90" y="55" fill="#8b949e" font-size="20">×</text>
+    <rect x="110" y="0" width="100" height="70" rx="4" fill="#d29922" opacity="0.4" stroke="#d29922"/>
+    <text x="160" y="-8" text-anchor="middle" fill="#ffa657" font-size="11" font-weight="bold">K^T</text>
+    <text x="160" y="40" text-anchor="middle" fill="#fff" font-size="10">K×N</text>
+    <text x="230" y="55" fill="#8b949e" font-size="20">=</text>
+    <rect x="250" y="0" width="100" height="100" rx="4" fill="#238636" opacity="0.4" stroke="#238636"/>
+    <text x="300" y="-8" text-anchor="middle" fill="#7ee787" font-size="11" font-weight="bold">S</text>
+    <text x="300" y="55" text-anchor="middle" fill="#fff" font-size="10">M×N</text>
+  </g>
+  <text x="40" y="195" fill="#ffa657" font-size="12" font-weight="bold">D=128 场景:</text>
+  <text x="40" y="215" fill="#b1bac4" font-size="11">mm1L1TileM = qBaseTile(128) | mm1L1TileN = 256 | mm1L1TileKLeft = 128 | mm1L1TileKRight = 128</text>
+  <text x="40" y="235" fill="#b1bac4" font-size="11">qL1BufNum=1(常驻) | kL1BufNum=2(双缓冲)</text>
+  <text x="40" y="255" fill="#8b949e" font-size="11">Q常驻L1, K按N=256切, K按D=128切, 双缓冲隐藏延迟</text>
+
+  <!-- PV Phase -->
+  <rect x="560" y="20" width="520" height="240" rx="10" fill="#1c2128" stroke="#d29922" stroke-width="2"/>
+  <text x="580" y="48" fill="#ffa657" font-size="15" font-weight="bold">MM2: P × V → O_tmp</text>
+  <g transform="translate(580, 60)">
+    <rect x="0" y="0" width="100" height="100" rx="4" fill="#8957e5" opacity="0.4" stroke="#8957e5"/>
+    <text x="50" y="-8" text-anchor="middle" fill="#d2a8ff" font-size="11" font-weight="bold">P</text>
+    <text x="50" y="55" text-anchor="middle" fill="#fff" font-size="10">M×K</text>
+    <text x="120" y="55" fill="#8b949e" font-size="20">×</text>
+    <rect x="140" y="0" width="70" height="100" rx="4" fill="#da3633" opacity="0.4" stroke="#da3633"/>
+    <text x="175" y="-8" text-anchor="middle" fill="#ff7b72" font-size="11" font-weight="bold">V</text>
+    <text x="175" y="55" text-anchor="middle" fill="#fff" font-size="10">K×N</text>
+    <text x="230" y="55" fill="#8b949e" font-size="20">=</text>
+    <rect x="250" y="0" width="100" height="100" rx="4" fill="#238636" opacity="0.4" stroke="#238636"/>
+    <text x="300" y="-8" text-anchor="middle" fill="#7ee787" font-size="11" font-weight="bold">O_tmp</text>
+    <text x="300" y="55" text-anchor="middle" fill="#fff" font-size="10">M×N</text>
+  </g>
+  <text x="580" y="195" fill="#ffa657" font-size="12" font-weight="bold">D=128 场景:</text>
+  <text x="580" y="215" fill="#b1bac4" font-size="11">mm2L1TileM = qBaseTile(128) | mm2L1TileN = 128 | mm2L1TileKLeft = 256 | mm2L1TileKRight = 128</text>
+  <text x="580" y="235" fill="#b1bac4" font-size="11">vL1BufNum=2(双缓冲) | pL1BufNum=3(三缓冲,prelaunch=2)</text>
+  <text x="580" y="255" fill="#8b949e" font-size="11">P常驻L1三缓冲, V按D=128切, KV方向按256切</text>
+
+  <!-- L1 Buffer layout -->
+  <rect x="20" y="280" width="1060" height="230" rx="10" fill="#1c2128" stroke="#8957e5" stroke-width="2"/>
+  <text x="40" y="308" fill="#d2a8ff" font-size="15" font-weight="bold">L1 缓冲布局（950, D=128, qBaseTile=128, kvBaseTile=128）</text>
+
+  <!-- L1 memory bar -->
+  <rect x="40" y="325" width="1020" height="50" rx="6" fill="#0d1117" stroke="#30363d"/>
+  <rect x="42" y="327" width="120" height="46" rx="4" fill="#1f6feb" opacity="0.6"/>
+  <text x="102" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Q buf×1</text>
+  <rect x="164" y="327" width="100" height="46" rx="4" fill="#d29922" opacity="0.6"/>
+  <text x="214" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">K buf×2-a</text>
+  <rect x="266" y="327" width="100" height="46" rx="4" fill="#d29922" opacity="0.6"/>
+  <text x="316" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">K buf×2-b</text>
+  <rect x="368" y="327" width="100" height="46" rx="4" fill="#8957e5" opacity="0.6"/>
+  <text x="418" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">P buf×3-a</text>
+  <rect x="470" y="327" width="100" height="46" rx="4" fill="#8957e5" opacity="0.6"/>
+  <text x="520" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">P buf×3-b</text>
+  <rect x="572" y="327" width="100" height="46" rx="4" fill="#8957e5" opacity="0.6"/>
+  <text x="622" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">P buf×3-c</text>
+  <rect x="674" y="327" width="100" height="46" rx="4" fill="#da3633" opacity="0.6"/>
+  <text x="724" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">V buf×2-a</text>
+  <rect x="776" y="327" width="100" height="46" rx="4" fill="#da3633" opacity="0.6"/>
+  <text x="826" y="355" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">V buf×2-b</text>
+  <rect x="878" y="327" width="178" height="46" rx="4" fill="#30363d"/>
+  <text x="967" y="355" text-anchor="middle" fill="#8b949e" font-size="10">L1 剩余空间</text>
+
+  <!-- Pipeline diagram -->
+  <text x="40" y="405" fill="#c9d1d9" font-size="13" font-weight="bold">流水线时序（简化）</text>
+  <g transform="translate(40, 415)">
+    <rect x="0" y="0" width="80" height="25" rx="3" fill="#1f6feb" opacity="0.5"/><text x="40" y="17" text-anchor="middle" fill="#fff" font-size="9">Q load</text>
+    <rect x="80" y="0" width="80" height="25" rx="3" fill="#1f6feb" opacity="0.5"/><text x="120" y="17" text-anchor="middle" fill="#fff" font-size="9">Q 常驻</text>
+    <rect x="160" y="0" width="160" height="25" rx="3" fill="#1f6feb" opacity="0.3"/><text x="240" y="17" text-anchor="middle" fill="#79c0ff" font-size="9">Q 常驻L1 (整个task)</text>
+    <rect x="0" y="30" width="80" height="25" rx="3" fill="#d29922" opacity="0.5"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="9">K-a load</text>
+    <rect x="80" y="30" width="80" height="25" rx="3" fill="#d29922" opacity="0.5"/><text x="120" y="47" text-anchor="middle" fill="#fff" font-size="9">K-b load</text>
+    <rect x="160" y="30" width="80" height="25" rx="3" fill="#d29922" opacity="0.5"/><text x="200" y="47" text-anchor="middle" fill="#fff" font-size="9">K-a load</text>
+    <rect x="240" y="30" width="80" height="25" rx="3" fill="#d29922" opacity="0.5"/><text x="280" y="47" text-anchor="middle" fill="#fff" font-size="9">K-b load</text>
+    <rect x="0" y="60" width="80" height="25" rx="3" fill="#238636" opacity="0.5"/><text x="40" y="77" text-anchor="middle" fill="#fff" font-size="9">QK mm</text>
+    <rect x="80" y="60" width="80" height="25" rx="3" fill="#238636" opacity="0.5"/><text x="120" y="77" text-anchor="middle" fill="#fff" font-size="9">QK mm</text>
+    <rect x="160" y="60" width="80" height="25" rx="3" fill="#238636" opacity="0.5"/><text x="200" y="77" text-anchor="middle" fill="#fff" font-size="9">QK mm</text>
+    <rect x="80" y="90" width="80" height="25" rx="3" fill="#8957e5" opacity="0.5"/><text x="120" y="107" text-anchor="middle" fill="#fff" font-size="9">SM+P-a</text>
+    <rect x="160" y="90" width="80" height="25" rx="3" fill="#8957e5" opacity="0.5"/><text x="200" y="107" text-anchor="middle" fill="#fff" font-size="9">SM+P-b</text>
+    <rect x="240" y="90" width="80" height="25" rx="3" fill="#8957e5" opacity="0.5"/><text x="280" y="107" text-anchor="middle" fill="#fff" font-size="9">SM+P-c</text>
+    <rect x="160" y="120" width="80" height="25" rx="3" fill="#da3633" opacity="0.5"/><text x="200" y="137" text-anchor="middle" fill="#fff" font-size="9">PV mm</text>
+    <rect x="240" y="120" width="80" height="25" rx="3" fill="#da3633" opacity="0.5"/><text x="280" y="137" text-anchor="middle" fill="#fff" font-size="9">PV mm</text>
+  </g>
+</svg>
+</div>
+
+<h3>5.1 L1 分块参数对照表</h3>
+
+<table>
+<tr><th>参数</th><th>D=128 场景</th><th>D=256 场景</th><th>说明</th></tr>
+<tr><td><code>mm1L1TileM</code></td><td>128 (qBaseTile)</td><td>128 (qBaseTile)</td><td>Q基块大小，常驻L1</td></tr>
+<tr><td><code>mm1L1TileN</code></td><td>256</td><td>128</td><td>KV方向切分，D=128时更大</td></tr>
+<tr><td><code>mm1L1TileKLeft</code></td><td>128 (D)</td><td>256 (D)</td><td>Q侧K维度=embeddingSize</td></tr>
+<tr><td><code>mm1L1TileKRight</code></td><td>128</td><td>256</td><td>K侧K维度切分</td></tr>
+<tr><td><code>qL1BufNum</code></td><td>1 (常驻)</td><td>1 (常驻)</td><td>Q只需1个缓冲</td></tr>
+<tr><td><code>kL1BufNum</code></td><td>2 (双缓冲)</td><td>2 (双缓冲)</td><td>K双缓冲隐藏MTE1延迟</td></tr>
+<tr><td><code>mm2L1TileM</code></td><td>128</td><td>128</td><td>PV阶段M维度</td></tr>
+<tr><td><code>mm2L1TileN</code></td><td>128</td><td>256</td><td>V的D维度切分</td></tr>
+<tr><td><code>mm2L1TileKLeft</code></td><td>256</td><td>128 (kvBaseTile)</td><td>P侧K维度</td></tr>
+<tr><td><code>mm2L1TileKRight</code></td><td>128</td><td>128</td><td>V侧K维度</td></tr>
+<tr><td><code>vL1BufNum</code></td><td>2</td><td>256/kvBaseTile</td><td>V缓冲数随kvBaseTile调整</td></tr>
+<tr><td><code>pL1BufNum</code></td><td>3 (三缓冲)</td><td>3 (三缓冲)</td><td>P三缓冲适配prelaunch=2</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>6. Workspace 布局</h2>
+
+<div class="diagram-box">
+<div class="diagram-title">图7：Workspace 内存布局</div>
+<svg width="1100" height="300" viewBox="0 0 1100 300">
+  <rect x="20" y="20" width="1060" height="260" rx="10" fill="#1c2128" stroke="#30363d" stroke-width="2"/>
+  <text x="40" y="50" fill="#c9d1d9" font-size="15" font-weight="bold">910 Workspace 布局</text>
+
+  <rect x="40" y="70" width="140" height="60" rx="6" fill="#1f6feb" opacity="0.5" stroke="#1f6feb"/>
+  <text x="110" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">mm1Out (S)</text>
+  <text x="110" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">blockDim×128KB×3×fp32</text>
+
+  <rect x="185" y="70" width="140" height="60" rx="6" fill="#8957e5" opacity="0.5" stroke="#8957e5"/>
+  <text x="255" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">smOnline (P)</text>
+  <text x="255" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">blockDim×128KB×3×fp16</text>
+
+  <rect x="330" y="70" width="140" height="60" rx="6" fill="#d29922" opacity="0.5" stroke="#d29922"/>
+  <text x="400" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">mm2Out (O_tmp)</text>
+  <text x="400" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">blockDim×128KB×3×fp32</text>
+
+  <rect x="475" y="70" width="140" height="60" rx="6" fill="#da3633" opacity="0.5" stroke="#da3633"/>
+  <text x="545" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">update (O_upd)</text>
+  <text x="545" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">blockDim×128KB×3×fp32</text>
+
+  <rect x="620" y="70" width="120" height="60" rx="6" fill="#238636" opacity="0.5" stroke="#238636"/>
+  <text x="680" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">selectNumIdx</text>
+  <text x="680" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">稀疏计数索引</text>
+
+  <rect x="745" y="70" width="120" height="60" rx="6" fill="#238636" opacity="0.5" stroke="#238636"/>
+  <text x="805" y="95" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">selectIdx</text>
+  <text x="805" y="115" text-anchor="middle" fill="#b1bac4" font-size="9">稀疏块索引</text>
+
+  <rect x="870" y="70" width="80" height="60" rx="6" fill="#30363d"/>
+  <text x="910" y="95" text-anchor="middle" fill="#8b949e" font-size="11">sync</text>
+  <text x="910" y="115" text-anchor="middle" fill="#8b949e" font-size="9">256×u32</text>
+
+  <!-- 950 workspace -->
+  <text x="40" y="170" fill="#c9d1d9" font-size="15" font-weight="bold">950 Workspace 布局</text>
+  <rect x="40" y="185" width="200" height="50" rx="6" fill="#d29922" opacity="0.5" stroke="#d29922"/>
+  <text x="140" y="210" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">selectIdx</text>
+  <text x="140" y="228" text-anchor="middle" fill="#b1bac4" font-size="9">B×N×xBlock×yBlock×i32</text>
+
+  <rect x="245" y="185" width="200" height="50" rx="6" fill="#d29922" opacity="0.5" stroke="#d29922"/>
+  <text x="345" y="210" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">selectNumIdx</text>
+  <text x="345" y="228" text-anchor="middle" fill="#b1bac4" font-size="9">B×N×xBlock×i32</text>
+
+  <text x="500" y="215" fill="#8b949e" font-size="12">950的MM1/MM2中间结果通过L1/UB在核内流转，无需Workspace</text>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>7. TilingKey 编码规则</h2>
+
+<p>TilingKey 是一个 64 位整数，用于在 Kernel 侧进行编译期分支分发。编码规则如下：</p>
+
+<div class="diagram-box">
+<div class="diagram-title">图8：TilingKey 64-bit 编码位域</div>
+<svg width="1100" height="250" viewBox="0 0 1100 250">
+  <rect x="20" y="20" width="1060" height="210" rx="10" fill="#1c2128" stroke="#30363d"/>
+  <text x="40" y="50" fill="#c9d1d9" font-size="14" font-weight="bold">TilingKey = AAAABBBBCCCCDDDDEEEE (十进制位域)</text>
+
+  <!-- Bit fields as boxes -->
+  <rect x="40" y="70" width="160" height="50" rx="6" fill="#1f6feb" opacity="0.5" stroke="#1f6feb"/>
+  <text x="120" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">AAAA</text>
+  <text x="120" y="112" text-anchor="middle" fill="#b1bac4" font-size="10">算子类别</text>
+
+  <rect x="210" y="70" width="160" height="50" rx="6" fill="#d29922" opacity="0.5" stroke="#d29922"/>
+  <text x="290" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">BBBB</text>
+  <text x="290" y="112" text-anchor="middle" fill="#b1bac4" font-size="10">数据类型+KV Layout</text>
+
+  <rect x="380" y="70" width="160" height="50" rx="6" fill="#8957e5" opacity="0.5" stroke="#8957e5"/>
+  <text x="460" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">CCCC</text>
+  <text x="460" y="112" text-anchor="middle" fill="#b1bac4" font-size="10">PagedCache+SoftmaxPrec</text>
+
+  <rect x="550" y="70" width="160" height="50" rx="6" fill="#238636" opacity="0.5" stroke="#238636"/>
+  <text x="630" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">DDDD</text>
+  <text x="630" y="112" text-anchor="middle" fill="#b1bac4" font-size="10">MaskType</text>
+
+  <rect x="720" y="70" width="160" height="50" rx="6" fill="#da3633" opacity="0.5" stroke="#da3633"/>
+  <text x="800" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">EEEE</text>
+  <text x="800" y="112" text-anchor="middle" fill="#b1bac4" font-size="10">Q Layout</text>
+
+  <!-- Example -->
+  <text x="40" y="155" fill="#c9d1d9" font-size="13" font-weight="bold">示例解码：</text>
+  <text x="40" y="180" fill="#79c0ff" font-size="12">9000000030100002 → 900(910 BSA) | 00(FP16) | 30(TND KV) | 01(Half SM) | 0(NoCache) | 0(NoMask) | 002(TND Q)</text>
+  <text x="40" y="200" fill="#ffa657" font-size="12">9050000030422222 → 905(950 BSA) | 00(FP16→BF16=22) | 30(TND KV) | 04(LowHighMixed) | 2(NoCache) | 2(NoMask) | 222(BF16) | 2(TND Q)</text>
+  <text x="40" y="220" fill="#7ee787" font-size="12">9000000130100002 → 同上但 +100000000 = LSE Output 开启</text>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>8. Kernel 侧 Tiling 使用流程</h2>
+
+<div class="diagram-box">
+<div class="diagram-title">图9：Kernel 侧 Tiling 数据消费流程</div>
+<svg width="1100" height="380" viewBox="0 0 1100 380">
+  <rect x="20" y="20" width="1060" height="340" rx="10" fill="#1c2128" stroke="#30363d"/>
+
+  <!-- Step 1: Read tiling -->
+  <rect x="40" y="40" width="220" height="60" rx="8" fill="url(#gBlue)"/>
+  <text x="150" y="65" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">1. 读取 TilingData</text>
+  <text x="150" y="85" text-anchor="middle" fill="#b1bac4" font-size="10">从GM tiling指针解析</text>
+
+  <line x1="260" y1="70" x2="290" y2="70" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Mask2Idx (VEC core) -->
+  <rect x="290" y="40" width="220" height="60" rx="8" fill="url(#gGreen)"/>
+  <text x="400" y="65" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">2. Mask2Idx (VEC)</text>
+  <text x="400" y="85" text-anchor="middle" fill="#b1bac4" font-size="10">uint8 mask → int32 idx+count</text>
+
+  <line x1="400" y1="100" x2="400" y2="130" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: SyncAll -->
+  <rect x="330" y="130" width="140" height="40" rx="8" fill="#30363d" stroke="#8b949e"/>
+  <text x="400" y="155" text-anchor="middle" fill="#c9d1d9" font-size="12" font-weight="bold">SyncAll</text>
+
+  <line x1="400" y1="170" x2="400" y2="200" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 4: Task loop -->
+  <rect x="40" y="200" width="1020" height="140" rx="8" fill="#1c2128" stroke="#8957e5" stroke-width="1.5"/>
+  <text x="60" y="225" fill="#d2a8ff" font-size="14" font-weight="bold">3. 任务循环 (CUBE core, stride=coreNum)</text>
+
+  <!-- Inner loop -->
+  <rect x="60" y="240" width="200" height="40" rx="6" fill="#1f6feb" opacity="0.4" stroke="#1f6feb"/>
+  <text x="160" y="265" text-anchor="middle" fill="#fff" font-size="11">读取 selectIdx[count]</text>
+
+  <rect x="280" y="240" width="200" height="40" rx="6" fill="#d29922" opacity="0.4" stroke="#d29922"/>
+  <text x="380" y="265" text-anchor="middle" fill="#fff" font-size="11">加载 Q/K 到 L1 → QK MM</text>
+
+  <rect x="500" y="240" width="200" height="40" rx="6" fill="#8957e5" opacity="0.4" stroke="#8957e5"/>
+  <text x="600" y="265" text-anchor="middle" fill="#fff" font-size="11">Online Softmax → P</text>
+
+  <rect x="720" y="240" width="200" height="40" rx="6" fill="#da3633" opacity="0.4" stroke="#da3633"/>
+  <text x="820" y="265" text-anchor="middle" fill="#fff" font-size="11">加载 V → PV MM → O_tmp</text>
+
+  <!-- Arrows between steps -->
+  <line x1="260" y1="260" x2="280" y2="260" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="480" y1="260" x2="500" y2="260" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="700" y1="260" x2="720" y2="260" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="290" width="200" height="40" rx="6" fill="#238636" opacity="0.4" stroke="#238636"/>
+  <text x="160" y="315" text-anchor="middle" fill="#fff" font-size="11">Rescale O → 写回 GM</text>
+
+  <line x1="920" y1="260" x2="940" y2="260" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="940" y1="260" x2="940" y2="310" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="940" y1="310" x2="260" y2="310" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>9. 910 vs 950 Tiling 差异总结</h2>
+
+<table>
+<tr><th>维度</th><th><span class="arch-badge arch-910">Atlas A2 (910)</span></th><th><span class="arch-badge arch-950">Atlas A5 (950)</span></th></tr>
+<tr><td>任务粒度</td><td>Q_block × KV_head_group</td><td>QSTile × Head (更细粒度)</td></tr>
+<tr><td>blockDim</td><td>min(aicNum, totalTaskNum)</td><td>aicNum (全量Cube核)</td></tr>
+<tr><td>BaseTile</td><td>无显式概念</td><td>qBaseTile / kvBaseTile 驱动</td></tr>
+<tr><td>L1 分块</td><td>硬编码 128×128×128</td><td>按 D=128/256 自适应</td></tr>
+<tr><td>多缓冲</td><td>固定策略</td><td>Q=1buf, K=2buf, P=3buf, V=2~Nbuf</td></tr>
+<tr><td>Mask2Idx</td><td>VEC子核按行切(blockDim×2)</td><td>VEC独立aivNum核按行切</td></tr>
+<tr><td>Workspace</td><td>MM1/P/MM2/Update + 索引</td><td>仅索引 (中间结果核内流转)</td></tr>
+<tr><td>innerPrecise</td><td>0=float32 SM, 1=fp16 SM</td><td>4=low_high_mixed (强制)</td></tr>
+<tr><td>Softmax LSE</td><td>支持输出</td><td>不支持</td></tr>
+<tr><td>Kernel架构</td><td>MIX_AIC_1_2 (Cube+Vec协作)</td><td>Vec预处理 + Cube计算</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>10. 关键源码索引</h2>
+
+<table>
+<tr><th>文件</th><th>核心职责</th></tr>
+<tr><td><code>op_host/block_sparse_attention_tiling.h</code></td><td>Tiling数据结构定义 (BlockSparseAttentionTilingData + 子结构)</td></tr>
+<tr><td><code>op_host/block_sparse_attention_tiling.cpp</code></td><td>Tiling计算全流程 (解析→分核→L1分块→Workspace→Fill)</td></tr>
+<tr><td><code>op_kernel/block_sparse_attention_tilingkey.h</code></td><td>TilingKey 64-bit 编码常量定义</td></tr>
+<tr><td><code>op_kernel/block_sparse_attention.cpp</code></td><td>Kernel入口，按TilingKey分发到具体模板实例</td></tr>
+<tr><td><code>op_kernel/block_sparse_attention_kernel_interface.cpp</code></td><td>Kernel模板定义与类型绑定 (910/950两套)</td></tr>
+<tr><td><code>op_kernel/block_sparse_attention_kernel_regular_arch22.h</code></td><td>910 Kernel实现 (Mask2Idx + QK/PV Matmul + Online Softmax)</td></tr>
+<tr><td><code>op_kernel/arch35/block_sparse_attention_kernel_arch35_regular.h</code></td><td>950 Kernel实现 (TLA架构 + L1分块驱动)</td></tr>
+<tr><td><code>op_kernel/kernel_common.hpp</code></td><td>公共定义 (常量、辅助函数、KernelParams结构)</td></tr>
+</table>
+
+<div class="note">
+<span class="note-label">设计要点：</span>
+<ul style="margin: 8px 0 0 20px; color: #b1bac4;">
+<li>910 采用 <b>粗粒度任务切分</b>（Q_block级别），950 采用 <b>细粒度BaseTile切分</b>（qBaseTile级别），950粒度更细、并行度更高</li>
+<li>950 的 L1 分块策略根据 embeddingSize (D=128/256) 自适应调整 M/N/K 切分和缓冲数量，最大化 L1 利用率</li>
+<li>P 矩阵在 950 上使用 <b>三缓冲</b>（适配 prelaunch=2 的流水线），避免基块间流水阻塞</li>
+<li>Mask2Idx 预处理阶段将 uint8 稀疏掩码转为 int32 索引，后续 Matmul 只需按索引加载活跃 KV 块</li>
+<li>950 Workspace 更精简——中间矩阵通过 L1/UB 核内流转，仅保留稀疏索引空间</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>

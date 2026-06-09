@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MindIE-SD 编译工程图谱</title>
+  <style>
+    :root {
+      --bg: #f4f2ea;
+      --ink: #141817;
+      --muted: #5d6660;
+      --panel: #fffdf8;
+      --line: #d7d1c0;
+      --green: #17684e;
+      --blue: #1f5c89;
+      --red: #963b36;
+      --gold: #a87318;
+      --violet: #62508f;
+      --soft: rgba(20, 24, 23, .055);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(20, 24, 23, .035) 1px, transparent 1px),
+        linear-gradient(rgba(20, 24, 23, .035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 24px 24px;
+      font-family: "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    main {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+    }
+
+    header.hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+      gap: 24px;
+      align-items: end;
+      border-bottom: 3px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 4.8vw, 64px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      border: 1px solid var(--ink);
+      background: var(--panel);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    section {
+      margin-top: 26px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 23px;
+      letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: "";
+      width: 26px;
+      height: 5px;
+      background: var(--ink);
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: .92em;
+      background: var(--soft);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .board {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 36px rgba(31, 27, 18, .10);
+      padding: 18px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      background: #fbfaf5;
+      min-height: 188px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step::after {
+      content: attr(data-num);
+      position: absolute;
+      right: 10px;
+      bottom: -8px;
+      font-size: 72px;
+      line-height: 1;
+      color: rgba(20, 24, 23, .06);
+      font-weight: 900;
+    }
+
+    .step h3 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .step ul {
+      margin: 10px 0 0;
+      padding-left: 17px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 16px;
+      min-height: 100%;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .card p, .card li {
+      color: var(--muted);
+      line-height: 1.62;
+      font-size: 13px;
+    }
+
+    .card ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.25fr 1.25fr;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .matrix div {
+      padding: 12px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      line-height: 1.45;
+      font-size: 13px;
+      min-height: 52px;
+    }
+
+    .matrix div:nth-child(4n) { border-right: 0; }
+    .matrix .head {
+      background: var(--ink);
+      color: white;
+      font-weight: 800;
+      min-height: auto;
+    }
+
+    .matrix .name {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .rail {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-top: 12px;
+    }
+
+    .rail-label {
+      padding: 14px;
+      color: white;
+      font-weight: 800;
+      min-height: 100%;
+    }
+
+    .rail:nth-of-type(1) .rail-label { background: var(--green); }
+    .rail:nth-of-type(2) .rail-label { background: var(--blue); }
+    .rail:nth-of-type(3) .rail-label { background: var(--gold); }
+    .rail:nth-of-type(4) .rail-label { background: var(--red); }
+
+    .rail-content {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .box {
+      background: #fbfaf5;
+      border: 1px solid var(--line);
+      padding: 12px;
+      min-height: 84px;
+    }
+
+    .box strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+    }
+
+    .box span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.48;
+      display: block;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .node {
+      background: var(--ink);
+      color: white;
+      padding: 12px;
+      min-height: 96px;
+      position: relative;
+    }
+
+    .node:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink);
+      font-weight: 900;
+      z-index: 2;
+    }
+
+    .node strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .node span {
+      display: block;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .note {
+      background: rgba(150, 59, 54, .08);
+      border-left: 5px solid var(--red);
+      padding: 14px 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .rail { grid-template-columns: 1fr; }
+      .rail-content { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      main { width: min(100vw - 20px, 1320px); padding-top: 20px; }
+      header.hero, .split, .pipeline, .rail-content { grid-template-columns: 1fr; }
+      .matrix { grid-template-columns: 1fr; }
+      .matrix .head:nth-child(n+2) { display: none; }
+      .matrix div { border-right: 0; }
+      .flow { grid-template-columns: 1fr; }
+      .node:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -19px; transform: translateX(50%); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <h1>MindIE-SD 编译工程图谱</h1>
+        <div class="tags">
+          <span class="tag">setup.py 总调度</span>
+          <span class="tag">CANN custom OPP</span>
+          <span class="tag">torch_npu plugin</span>
+          <span class="tag">AscendC / AICPU / TIK</span>
+        </div>
+      </div>
+      <p class="summary">
+        MindIE-SD 的构建不是单个 CMake target，而是 Python wheel、CANN custom OPP、torch_npu plugin 三个工程叠在一起。OPP 交给 CANN runtime 识别，plugin 交给 PyTorch dispatcher 调用。
+      </p>
+    </header>
+
+    <section>
+      <h2>一条构建主线</h2>
+      <div class="board">
+        <div class="pipeline">
+          <article class="step" data-num="1">
+            <h3>Python wheel</h3>
+            <p><code>setup.py::CustomBuildPy</code> 是总调度，先构建 native 产物，再打 Python 包。</p>
+            <ul><li>读取版本</li><li>触发 ops/plugin</li><li>合并 compile_commands</li></ul>
+          </article>
+          <article class="step" data-num="2">
+            <h3>AscendC OPP</h3>
+            <p><code>build_ascendc_ops.sh</code> 配置 <code>csrc/ops</code>，生成 CANN custom op 包。</p>
+            <ul><li>opapi</li><li>proto</li><li>tiling</li><li>kernel binary</li></ul>
+          </article>
+          <article class="step" data-num="3">
+            <h3>AICPU / TIK</h3>
+            <p>AICPU 先于 package 构建；TIK 使用 <code>msopgen</code> 临时工程。</p>
+            <ul><li>CPU kernel so/json</li><li>TIK customize vendor</li></ul>
+          </article>
+          <article class="step" data-num="4">
+            <h3>PyTorch plugin</h3>
+            <p><code>build_plugin.sh</code> 编译 <code>libPTAExtensionOPS.so</code>。</p>
+            <ul><li>注册 torch.ops</li><li>分配 NPU 输出</li><li>执行 ACLNN</li></ul>
+          </article>
+          <article class="step" data-num="5">
+            <h3>Wheel 交付</h3>
+            <p>把 <code>mindiesd/ops/vendors</code> 和 <code>mindiesd/plugin</code> 一起打入 wheel。</p>
+            <ul><li>Python API</li><li>custom OPP</li><li>plugin so</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>CMake 构建目标</h2>
+      <div class="matrix">
+        <div class="head">Target</div>
+        <div class="head">扫描 / 输入</div>
+        <div class="head">产生什么</div>
+        <div class="head">为什么需要</div>
+        <div class="name"><code>op_host_aclnn</code></div>
+        <div><code>*/op_host/*_def.cpp</code></div>
+        <div><code>aclnn_*.cpp/h</code>、proto</div>
+        <div>由 CANN <code>op_build</code> 自动生成 public ACLNN wrapper。</div>
+        <div class="name"><code>op_host_aclnnInner</code></div>
+        <div>inner def 源</div>
+        <div><code>aclnnInner_*.cpp</code></div>
+        <div>支持 CANN 两段式 ACLNN 内部执行接口。</div>
+        <div class="name"><code>op_host_aclnnExc</code></div>
+        <div>已有手写 ACLNN 的 def</div>
+        <div>只生成 proto / ops info</div>
+        <div>避免自动生成 wrapper 与手写 <code>aclnn*</code> 重名。</div>
+        <div class="name"><code>opapi</code></div>
+        <div>自动生成 + 手写 opapi</div>
+        <div><code>libcust_opapi.so</code></div>
+        <div>plugin 运行时 <code>dlsym</code> 的 custom ACLNN 符号载体。</div>
+        <div class="name"><code>opsproto</code></div>
+        <div>生成 proto cpp/header</div>
+        <div><code>libcust_opsproto_rt2.0.so</code></div>
+        <div>CANN runtime 识别 custom op 的元信息。</div>
+        <div class="name"><code>optiling</code></div>
+        <div>tiling host 源</div>
+        <div><code>libcust_opmaster_rt2.0.so</code></div>
+        <div>运行前生成 tiling data。</div>
+        <div class="name"><code>ops_kernel</code></div>
+        <div><code>op_kernel/*</code> + <code>gen/*.sh</code></div>
+        <div>按 SOC 的 kernel binary/config</div>
+        <div>AscendC kernel 真正的设备侧实现。</div>
+        <div class="name"><code>custom_aicpu_kernels</code></div>
+        <div><code>op_kernel_aicpu/*.cpp/json</code></div>
+        <div>AICPU so + registry json</div>
+        <div>metadata 这类 AICPU 算子的 runtime 注册和执行。</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>扫描、删除、复制路径</h2>
+      <div class="board">
+        <div class="rail">
+          <div class="rail-label">扫描</div>
+          <div class="rail-content">
+            <div class="box"><strong>算子目录</strong><span><code>csrc/ops/**/op_host/CMakeLists.txt</code> 生成 <code>OP_LIST</code>。</span></div>
+            <div class="box"><strong>AICPU</strong><span><code>*/op_kernel_aicpu/CMakeLists.txt</code> 存在才进入子工程。</span></div>
+            <div class="box"><strong>kernel</strong><span><code>&lt;op&gt;/op_kernel/*</code> 存在才参与 <code>ops_kernel</code>。</span></div>
+            <div class="box"><strong>compile scripts</strong><span><code>binary/&lt;soc&gt;/gen/*.sh</code> 决定实际 binary 编译项。</span></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="rail-label">删除</div>
+          <div class="rail-content">
+            <div class="box"><strong>重建 vendors</strong><span><code>rm -rf build/vendors</code>，避免旧 OPP 残留。</span></div>
+            <div class="box"><strong>清理 bin</strong><span>删除 <code>vendors/*/bin</code>，不打进 wheel。</span></div>
+            <div class="box"><strong>plugin build</strong><span><code>build/build_plugin.sh</code> 每次 <code>rm -rf build</code>。</span></div>
+            <div class="box"><strong>临时目录</strong><span><code>setup.py</code> 清理 <code>custom_project_tik</code>、<code>output</code>、<code>lib</code>。</span></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="rail-label">复制</div>
+          <div class="rail-content">
+            <div class="box"><strong>op_kernel</strong><span><code>add_ops_src_copy</code> 拷贝到 <code>binary/&lt;soc&gt;/src/&lt;op&gt;</code>。</span></div>
+            <div class="box"><strong>依赖 kernel</strong><span><code>&lt;op&gt;_depends</code> 会拷贝 common 等依赖目录。</span></div>
+            <div class="box"><strong>AICPU CPU impl</strong><span><code>aie_ascendc/op_impl/cpu</code> 同步到 <code>customize_transformer</code>。</span></div>
+            <div class="box"><strong>最终 vendors</strong><span><code>build/vendors/*</code> 复制到 <code>mindiesd/ops/vendors</code>。</span></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="rail-label">跳过</div>
+          <div class="rail-content">
+            <div class="box"><strong>AICPU strip</strong><span>跳过 <code>op_impl/cpu/aicpu_kernel/impl/*.so</code>，因为是 ARM 目标。</span></div>
+            <div class="box"><strong>无 op_kernel</strong><span>metadata 这类无 AscendC kernel 文件时不进 binary 编译。</span></div>
+            <div class="box"><strong>非 ASCEND_OP_NAME</strong><span>指定 op list 时，扫描到但不在列表里的算子会被过滤。</span></div>
+            <div class="box"><strong>无 AICPU cpp</strong><span><code>op_kernel_aicpu</code> 没有 <code>*_aicpu*.cpp</code> 时 return。</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>torch_npu 与 CANN 暴露的接口</h2>
+      <div class="split">
+        <article class="card">
+          <h3>torch_npu / PyTorch</h3>
+          <ul>
+            <li><code>TORCH_LIBRARY</code> 定义 <code>torch.ops.mindiesd</code> schema。</li>
+            <li><code>TORCH_LIBRARY_IMPL(..., PrivateUse1)</code> 注册 NPU backend 实现。</li>
+            <li><code>TORCH_LIBRARY_IMPL(..., CatchAll)</code> 处理 metadata 无 tensor 参数场景。</li>
+            <li><code>at_npu::native::empty_with_format</code> 分配 NPU 输出并保留 format。</li>
+            <li><code>at_npu::native::get_npu_format</code> 读取输入 tensor 的 NPU format。</li>
+            <li><code>c10_npu::getCurrentNPUStream</code> 提供当前 stream 给 ACLNN。</li>
+            <li><code>at_npu::native::OpCommand</code> 把 custom handler 纳入 torch_npu 执行。</li>
+            <li><code>torch_npu::utils::get_npu_device_type</code> 构造无输入 tensor 时的 NPU options。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>CANN / ACLNN / ACL</h3>
+          <ul>
+            <li><code>op_build</code> 生成 ACLNN wrapper、proto、ops info。</li>
+            <li><code>ascendc_bin_param_build.py</code> 生成 SOC 编译脚本。</li>
+            <li><code>parse_ini_to_json.py</code> 生成 ops-info json。</li>
+            <li><code>ascendc_impl_build.py</code> 生成 dynamic py。</li>
+            <li><code>aclCreateTensor</code> 等接口把 ATen 参数转换成 ACL 参数。</li>
+            <li><code>aclnn*GetWorkspaceSize</code> 是 ACLNN 第一段接口。</li>
+            <li><code>aclnn*</code> 是 ACLNN 第二段执行接口。</li>
+            <li><code>libcust_opapi.so</code> 是 custom ACLNN 符号所在地。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>产物为什么长这样</h2>
+      <div class="matrix">
+        <div class="head">文件 / 目录</div>
+        <div class="head">生成目标</div>
+        <div class="head">编译器 / runtime 要它做什么</div>
+        <div class="head">使用者</div>
+        <div class="name"><code>libcust_opapi.so</code></div>
+        <div><code>opapi</code></div>
+        <div>承载 custom <code>aclnn*</code>，给 plugin 动态查找。</div>
+        <div>plugin / ACLNN runtime</div>
+        <div class="name"><code>libcust_opsproto_rt2.0.so</code></div>
+        <div><code>opsproto</code></div>
+        <div>注册 op proto、shape inference、attr 元信息。</div>
+        <div>CANN runtime</div>
+        <div class="name"><code>libcust_opmaster_rt2.0.so</code></div>
+        <div><code>optiling</code></div>
+        <div>host 侧 tiling 逻辑。</div>
+        <div>CANN runtime</div>
+        <div class="name"><code>kernel/&lt;soc&gt;</code></div>
+        <div><code>ops_kernel</code></div>
+        <div>按 SOC 编译后的 AscendC kernel binary。</div>
+        <div>设备侧执行</div>
+        <div class="name"><code>cust_aicpu_kernel.json</code></div>
+        <div><code>custom_aicpu_kernels</code></div>
+        <div>AICPU custom registry 描述。</div>
+        <div>CANN AICPU runtime</div>
+        <div class="name"><code>libPTAExtensionOPS.so</code></div>
+        <div><code>PTAExtensionOPS</code></div>
+        <div>PyTorch dispatcher 到 ACLNN 的桥。</div>
+        <div>Python / torch_npu</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>运行链路</h2>
+      <div class="flow">
+        <div class="node"><strong>import mindiesd</strong><span>设置 <code>ASCEND_CUSTOM_OPP_PATH</code></span></div>
+        <div class="node"><strong>register_ops</strong><span>加载 <code>libPTAExtensionOPS.so</code></span></div>
+        <div class="node"><strong>torch.ops.mindiesd</strong><span>进入 PyTorch dispatcher</span></div>
+        <div class="node"><strong>PrivateUse1</strong><span>torch_npu NPU dispatch</span></div>
+        <div class="node"><strong>Plugin wrapper</strong><span>输出分配、dtype/ACL 参数转换</span></div>
+        <div class="node"><strong>EXEC_NPU_CMD</strong><span>dlsym custom <code>aclnn*</code></span></div>
+        <div class="node"><strong>CANN runtime</strong><span>AscendC 或 AICPU 执行</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>设计结论</h2>
+      <p class="note">
+        MindIE-SD 的工程边界是清楚分层的：CANN 负责生成和识别 custom OPP，torch_npu 负责 PyTorch NPU dispatch 和 stream/format/tensor 管理，MindIE-SD plugin 负责把两者接起来。构建目标和产物名称大多不是随意命名，而是 CANN custom OPP 目录规范与 torch_npu extension 机制共同决定的。
+      </p>
+    </section>
+  </main>
+</body>
+</html>
