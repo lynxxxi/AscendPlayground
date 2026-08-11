@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="生成领域前沿研究：具身智能、世界模型、长视频与流式生成框架和模型优化技术。">
+  <title>生成前沿研究雷达 · 2026</title>
+  <style>
+    :root {
+      --ink: #0a0d0c;
+      --panel: #111614;
+      --panel-2: #171d1a;
+      --paper: #ece9df;
+      --muted: #929c95;
+      --line: rgba(236, 233, 223, .14);
+      --signal: #d7ff43;
+      --cyan: #62e8d2;
+      --orange: #ff7657;
+      --blue: #8db7ff;
+      --serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", serif;
+      --sans: "Bahnschrift Condensed", "Aptos Narrow", "Microsoft YaHei UI", sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--ink); }
+    body {
+      margin: 0; color: var(--paper); background:
+        linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px), var(--ink);
+      background-size: 44px 44px; font-family: var(--serif); line-height: 1.72; overflow-x: hidden;
+    }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 20; opacity: .18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.17'/%3E%3C/svg%3E"); }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+    .progress { position: fixed; inset: 0 auto auto 0; height: 3px; width: 0; background: var(--signal); z-index: 50; }
+    .shell { width: min(1480px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-bottom: 1px solid var(--line); font: 700 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 20px var(--signal); }
+    .topbar .stamp { color: var(--muted); }
+    .hero { min-height: 82vh; display: grid; grid-template-columns: 1.4fr .6fr; gap: 6vw; align-items: end; padding: 9vh 0 7vh; border-bottom: 1px solid var(--line); }
+    .hero > * { min-width: 0; }
+    .eyebrow, .section-kicker { font: 700 12px/1.2 var(--mono); color: var(--signal); letter-spacing: .18em; text-transform: uppercase; }
+    h1, h2, h3, .display { font-family: var(--sans); font-weight: 800; letter-spacing: -.035em; margin: 0; }
+    h1 { font-size: clamp(64px, 10vw, 156px); line-height: .82; text-transform: uppercase; max-width: 1000px; }
+    h1 .outline { display: block; color: transparent; -webkit-text-stroke: 1px var(--paper); }
+    .hero-deck { max-width: 720px; font-size: clamp(18px, 1.6vw, 25px); color: #c8cec9; margin: 36px 0 0; }
+    .hero-side { padding: 28px; border: 1px solid var(--line); background: rgba(17,22,20,.78); backdrop-filter: blur(10px); }
+    .hero-side .big { font: 800 clamp(52px, 6vw, 96px)/.9 var(--sans); color: var(--signal); }
+    .hero-side p { color: var(--muted); margin: 12px 0 24px; }
+    .mini-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+    .mini-grid div { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .mini-grid div:nth-child(odd) { border-right: 1px solid var(--line); padding-right: 12px; }
+    .mini-grid div:nth-child(even) { padding-left: 18px; }
+    .mini-grid b { display: block; font: 800 23px/1 var(--sans); }
+    .mini-grid span { color: var(--muted); font: 11px var(--mono); }
+    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 5vw; }
+    aside { position: sticky; top: 24px; align-self: start; padding: 70px 0; height: max-content; }
+    .toc-label { font: 11px var(--mono); color: var(--muted); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 16px; }
+    .toc a { display: block; text-decoration: none; color: #758078; padding: 8px 0; border-left: 1px solid var(--line); padding-left: 14px; font: 13px var(--sans); letter-spacing: .04em; transition: .2s; }
+    .toc a:hover, .toc a.active { color: var(--signal); border-color: var(--signal); transform: translateX(4px); }
+    main { min-width: 0; }
+    section { padding: 88px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 20px; }
+    .section-head { display: grid; grid-template-columns: 90px 1fr; gap: 22px; align-items: start; margin-bottom: 48px; }
+    .section-no { font: 700 13px var(--mono); color: var(--signal); padding-top: 10px; }
+    h2 { font-size: clamp(42px, 6vw, 82px); line-height: .96; }
+    .lede { max-width: 820px; font-size: 19px; color: #bbc3bd; margin: 22px 0 0 112px; }
+    .theses { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .thesis { grid-column: span 2; min-height: 270px; background: var(--panel); padding: 30px; position: relative; overflow: hidden; }
+    .thesis:nth-child(4), .thesis:nth-child(5) { grid-column: span 3; }
+    .thesis::after { content: attr(data-no); position: absolute; right: 14px; bottom: -34px; font: 800 110px/1 var(--sans); color: rgba(255,255,255,.035); }
+    .thesis h3 { font-size: 27px; line-height: 1.08; margin: 24px 0 12px; }
+    .thesis p { color: var(--muted); margin: 0; font-size: 15px; }
+    .tag { display: inline-flex; border: 1px solid currentColor; border-radius: 100px; padding: 5px 9px; color: var(--cyan); font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .architecture { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 50px; align-items: stretch; }
+    .arch-node { padding: 22px 18px; border: 1px solid var(--line); position: relative; background: var(--panel); }
+    .arch-node + .arch-node { border-left: 0; }
+    .arch-node:not(:last-child)::after { content: "→"; position: absolute; right: -14px; top: 50%; z-index: 2; color: var(--signal); font: 24px var(--mono); }
+    .arch-node b { display: block; font: 700 17px var(--sans); margin-bottom: 8px; }
+    .arch-node small { color: var(--muted); }
+    .stack-map { display: grid; grid-template-columns: 150px repeat(5, 1fr); margin: 44px 0 28px; border: 1px solid var(--line); background: var(--line); gap: 1px; }
+    .stack-map > div { min-height: 108px; padding: 18px; background: var(--panel); }
+    .stack-map .stack-axis { color: var(--muted); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: end; }
+    .stack-map b { display: block; font: 700 17px/1.15 var(--sans); margin-bottom: 8px; }
+    .stack-map small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .stack-map .accent { background: var(--signal); color: var(--ink); }
+    .stack-map .accent small { color: rgba(10,13,12,.68); }
+    .framework-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .framework-card { grid-column: span 2; min-height: 330px; background: var(--panel); padding: 28px; display: flex; flex-direction: column; }
+    .framework-card.primary { grid-column: span 3; min-height: 360px; }
+    .framework-card h3 { font-size: 30px; margin: 18px 0 8px; }
+    .framework-card .framework-type { color: var(--signal); font: 10px var(--mono); letter-spacing: .1em; }
+    .framework-card p { color: #adb6af; font-size: 14px; }
+    .framework-card dl { margin: auto 0 0; display: grid; grid-template-columns: 88px 1fr; border-top: 1px solid var(--line); font-size: 12px; }
+    .framework-card dt, .framework-card dd { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .framework-card dt { color: var(--muted); font-family: var(--mono); }
+    .framework-card dd { color: var(--paper); }
+    .framework-card .source-link { margin-top: 18px; font: 11px var(--mono); text-underline-offset: 4px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+    .filter { border: 1px solid var(--line); color: var(--muted); background: transparent; border-radius: 100px; padding: 8px 14px; cursor: pointer; font: 12px var(--mono); }
+    .filter.active, .filter:hover { color: var(--ink); background: var(--signal); border-color: var(--signal); }
+    .search { margin-left: auto; min-width: 250px; border: 1px solid var(--line); background: var(--panel); color: var(--paper); padding: 8px 14px; font: 12px var(--mono); }
+    .model-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    .model { background: var(--panel); border: 1px solid var(--line); padding: 26px; min-height: 260px; transition: transform .25s, border-color .25s; }
+    .model:hover { transform: translateY(-4px); border-color: rgba(215,255,67,.5); }
+    .model.hidden { display: none; }
+    .model-top { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+    .model h3 { font-size: 28px; }
+    .state { font: 10px var(--mono); border: 1px solid var(--line); padding: 5px 8px; white-space: nowrap; color: var(--cyan); }
+    .model .meta { color: var(--signal); font: 11px var(--mono); margin: 8px 0 20px; }
+    .model p { color: #aeb7b0; font-size: 15px; margin: 0 0 16px; }
+    .model ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+    .model .source-link { display: inline-block; margin-top: 18px; color: var(--paper); font: 11px var(--mono); text-underline-offset: 4px; }
+    .compare { width: 100%; border-collapse: collapse; margin-top: 34px; font-size: 14px; }
+    .compare th { text-align: left; color: var(--muted); font: 11px var(--mono); letter-spacing: .08em; padding: 14px; border-bottom: 1px solid var(--paper); }
+    .compare td { padding: 18px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .compare td:first-child { font: 700 16px var(--sans); color: var(--signal); }
+    .score { display: inline-block; width: 58px; height: 7px; background: #28302c; margin-right: 8px; position: relative; }
+    .score i { display: block; height: 100%; background: var(--cyan); }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .split > article { background: var(--panel); padding: 34px; }
+    .split h3 { font-size: 30px; margin: 12px 0; }
+    .split p { color: var(--muted); }
+    .signal-list { list-style: none; padding: 0; margin: 24px 0 0; }
+    .signal-list li { padding: 14px 0 14px 28px; border-top: 1px solid var(--line); position: relative; }
+    .signal-list li::before { content: "+"; position: absolute; left: 0; color: var(--signal); font: 16px var(--mono); }
+    .timeline { margin-top: 45px; position: relative; display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+    .timeline::before { content: ""; position: absolute; top: 17px; left: 0; right: 0; height: 1px; background: var(--line); }
+    .time-item { position: relative; padding-top: 45px; }
+    .time-item::before { content: ""; position: absolute; top: 11px; width: 13px; height: 13px; background: var(--ink); border: 3px solid var(--signal); border-radius: 50%; }
+    .time-item time { font: 11px var(--mono); color: var(--signal); }
+    .time-item h3 { font-size: 22px; margin: 8px 0; }
+    .time-item p { font-size: 14px; color: var(--muted); }
+    details { border-top: 1px solid var(--line); }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { list-style: none; display: grid; grid-template-columns: 70px 1fr auto; align-items: center; gap: 20px; padding: 24px 4px; cursor: pointer; }
+    summary::-webkit-details-marker { display: none; }
+    summary .num { color: var(--signal); font: 12px var(--mono); }
+    summary h3 { font-size: clamp(22px, 3vw, 38px); }
+    summary::after { content: "+"; font: 30px var(--mono); color: var(--muted); }
+    details[open] summary::after { content: "×"; color: var(--signal); }
+    .detail-body { padding: 0 70px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; color: var(--muted); }
+    .detail-body b { color: var(--paper); }
+    .callout { border-left: 3px solid var(--orange); padding: 24px 28px; background: rgba(255,118,87,.07); margin: 34px 0; }
+    .callout strong { color: var(--orange); font-family: var(--sans); }
+    .roadmap { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); counter-reset: route; }
+    .roadmap article { background: var(--panel); padding: 30px; counter-increment: route; }
+    .roadmap article::before { content: "0" counter(route); display: block; color: var(--signal); font: 12px var(--mono); margin-bottom: 40px; }
+    .roadmap h3 { font-size: 26px; margin-bottom: 12px; }
+    .roadmap p, .roadmap li { color: var(--muted); font-size: 14px; }
+    .roadmap ul { padding-left: 18px; }
+    .sources { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); counter-reset: source; }
+    .sources a { counter-increment: source; text-decoration: none; padding: 20px; background: var(--panel); display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; transition: background .2s; }
+    .sources a:hover { background: var(--panel-2); }
+    .sources a::before { content: counter(source, decimal-leading-zero); color: var(--signal); font: 11px var(--mono); }
+    .sources small { color: var(--muted); }
+    .sources .arrow { color: var(--muted); }
+    .method { margin-top: 30px; color: var(--muted); font-size: 13px; }
+    footer { padding: 38px 0 70px; display: flex; justify-content: space-between; color: var(--muted); font: 11px var(--mono); }
+    .back { position: fixed; right: 24px; bottom: 24px; width: 44px; height: 44px; border: 1px solid var(--line); background: var(--panel); color: var(--signal); cursor: pointer; opacity: 0; transform: translateY(8px); transition: .2s; z-index: 30; }
+    .back.show { opacity: 1; transform: none; }
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; align-items: center; }
+      .hero-side { max-width: 620px; }
+      .layout { grid-template-columns: 1fr; }
+      aside { display: none; }
+      .theses { grid-template-columns: 1fr 1fr; }
+      .thesis, .thesis:nth-child(4), .thesis:nth-child(5) { grid-column: auto; }
+      .architecture { grid-template-columns: 1fr; }
+      .arch-node + .arch-node { border-left: 1px solid var(--line); border-top: 0; }
+      .arch-node:not(:last-child)::after { content: "↓"; right: 24px; top: auto; bottom: -17px; }
+      .stack-map { grid-template-columns: 130px repeat(2, 1fr); }
+      .framework-grid { grid-template-columns: repeat(2, 1fr); }
+      .framework-card, .framework-card.primary { grid-column: span 1; }
+      .roadmap { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .shell { width: calc(100% - 24px); max-width: 1480px; }
+      .topbar .stamp { display: none; }
+      .topbar { font-size: 9px; letter-spacing: .08em; }
+      .brand { min-width: 0; white-space: nowrap; overflow: hidden; }
+      .hero { min-height: auto; padding: 70px 0 45px; }
+      h1 { font-size: clamp(55px, 20vw, 88px); }
+      .hero-deck { overflow-wrap: anywhere; }
+      section { padding: 62px 0; }
+      .section-head { grid-template-columns: 48px 1fr; gap: 10px; }
+      .lede { margin-left: 0; font-size: 17px; }
+      .theses, .model-grid, .split, .sources, .timeline { grid-template-columns: 1fr; }
+      .stack-map { grid-template-columns: 1fr; }
+      .stack-map > div { min-height: auto; }
+      .stack-map .stack-axis { min-height: 58px; }
+      .framework-grid { grid-template-columns: 1fr; }
+      .controls { align-items: stretch; }
+      .search { margin-left: 0; width: 100%; }
+      .timeline::before { left: 6px; top: 0; bottom: 0; height: auto; width: 1px; }
+      .time-item { padding: 0 0 24px 36px; }
+      .time-item::before { top: 4px; left: 0; }
+      .detail-body { grid-template-columns: 1fr; padding: 0 10px 28px; }
+      summary { grid-template-columns: 38px 1fr auto; gap: 10px; }
+      .table-wrap { overflow-x: auto; }
+      .compare { min-width: 760px; }
+      footer { flex-direction: column; gap: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="shell">
+    <div class="topbar">
+      <div class="brand"><i></i> Frontier Generative Systems / Research Radar</div>
+      <div class="stamp">CUT-OFF 2026.08.11 · CN</div>
+    </div>
+    <div class="hero">
+      <div>
+        <div class="eyebrow">Field report 026 / physical intelligence</div>
+        <h1>生成<br><span class="outline">前沿雷达</span></h1>
+        <p class="hero-deck">从“生成一段好看的视频”走向“持续、可控地生成一个可行动的世界”：具身智能、世界模型、长视频与流式生成的框架版图及优化路线。</p>
+      </div>
+      <div class="hero-side">
+        <div class="big">4×</div>
+        <p>四条正在合流的技术主线：视频基础模型、物理世界预测、长时记忆与实时因果生成。</p>
+        <div class="mini-grid">
+          <div><b>29</b><span>重点模型 / 框架</span></div>
+          <div><b>8</b><span>优化杠杆</span></div>
+          <div><b>6–18m</b><span>判断窗口</span></div>
+          <div><b>37</b><span>一手来源</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell layout">
+    <aside aria-label="目录">
+      <div class="toc-label">Index / 目录</div>
+      <nav class="toc">
+        <a href="#verdict">01 核心判断</a>
+        <a href="#landscape">02 技术版图</a>
+        <a href="#frameworks">03 框架生态</a>
+        <a href="#models">04 模型雷达</a>
+        <a href="#embodied">05 具身与世界模型</a>
+        <a href="#streaming">06 长视频 / 流式</a>
+        <a href="#optimization">07 优化技术栈</a>
+        <a href="#evaluation">08 评测与风险</a>
+        <a href="#roadmap">09 验证路线</a>
+        <a href="#sources">10 参考来源</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section id="verdict">
+        <div class="section-head"><span class="section-no">01 / 10</span><h2>先看结论</h2></div>
+        <p class="lede">2026 年的分水岭不是分辨率，而是模型能否在动作闭环中，以可承受的延迟和显存维持状态、身份、几何与物理一致性。</p>
+        <div class="theses reveal">
+          <article class="thesis" data-no="01"><span class="tag">Architecture</span><h3>DiT 仍是底座，因果化成为出口</h3><p>双向时空注意力保证短片质量；因果、分块自回归与 diffusion forcing / self forcing 把它改造成可持续输出的生成器。</p></article>
+          <article class="thesis" data-no="02"><span class="tag">Embodiment</span><h3>世界模型的门槛是动作，不是画面</h3><p>具身场景要求 action-conditioned、多视角一致、可反事实回放，并能与真实策略评测相关；纯 T2V 只能提供视觉先验。</p></article>
+          <article class="thesis" data-no="03"><span class="tag">Systems</span><h3>瓶颈从 FLOPs 转向状态内存</h3><p>流式推理中 KV cache 随历史增长。滚动窗口、语义检索、头级剪枝和低比特 KV 将决定分钟级生成是否可部署。</p></article>
+          <article class="thesis" data-no="04"><span class="tag">Training</span><h3>后训练正在替代“从头训实时模型”</h3><p>少步蒸馏、对抗后训练、自生成轨迹训练和模型合并，能把高质量双向教师迁移为低延迟因果学生，成本更可控。</p></article>
+          <article class="thesis" data-no="05"><span class="tag">Strategy</span><h3>最优工程路线是分层，而非单模型通吃</h3><p>高质量离线生成、快速预览、交互 rollout 与具身仿真有不同目标函数；共享 tokenizer / backbone，分开后训练与服务配置。</p></article>
+        </div>
+      </section>
+
+      <section id="landscape">
+        <div class="section-head"><span class="section-no">02 / 10</span><h2>技术版图</h2></div>
+        <p class="lede">主流系统已经形成一条可辨认的流水线。真正的创新集中在每一层如何减少时空 token、约束未来，以及保存必要历史。</p>
+        <div class="architecture reveal" aria-label="生成系统架构链路">
+          <div class="arch-node"><b>条件接口</b><small>文本 / 图像 / 视频<br>动作 / 轨迹 / 相机 / 3D</small></div>
+          <div class="arch-node"><b>时空编码</b><small>3D VAE / causal VAE<br>连续或离散 tokenizer</small></div>
+          <div class="arch-node"><b>生成主干</b><small>DiT / MMDiT / Flow<br>AR + diffusion hybrid</small></div>
+          <div class="arch-node"><b>时间记忆</b><small>KV cache / feature bank<br>显式状态 / 语义检索</small></div>
+          <div class="arch-node"><b>服务执行</b><small>少步采样 / 量化<br>序列并行 / kernel fusion</small></div>
+        </div>
+        <div class="table-wrap reveal">
+          <table class="compare">
+            <thead><tr><th>范式</th><th>强项</th><th>结构性短板</th><th>最佳场景</th><th>2026 信号</th></tr></thead>
+            <tbody>
+              <tr><td>双向视频扩散 / Flow</td><td>全局一致、画质高、易接受多模态控制</td><td>整段生成、首帧延迟高、长度受显存约束</td><td>广告、影视、离线合成</td><td><span class="score"><i style="width:88%"></i></span>成熟</td></tr>
+              <tr><td>分块自回归扩散</td><td>因果、可流式、可插入实时控制</td><td>误差累积、历史缓存膨胀</td><td>交互内容、游戏、在线预览</td><td><span class="score"><i style="width:72%"></i></span>快速上升</td></tr>
+              <tr><td>动作条件世界模型</td><td>预测动作后果，可生成训练 / 评测轨迹</td><td>动作精度与真实物理仍难校准</td><td>机器人、自动驾驶、策略规划</td><td><span class="score"><i style="width:66%"></i></span>关键赛道</td></tr>
+              <tr><td>原生交互世界</td><td>低延迟、长时导航、可反事实事件</td><td>开放性差、动作空间有限、难复现</td><td>通用智能体环境、3D 体验</td><td><span class="score"><i style="width:52%"></i></span>前沿预览</td></tr>
+              <tr><td>显式 3D 资产生成</td><td>可编辑 Mesh、PBR、拓扑和引擎资产</td><td>不直接建模时间、动作后果或闭环动力学</td><td>仿真资产、数字孪生、游戏内容</td><td><span class="score"><i style="width:78%"></i></span>生产可用</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="frameworks">
+        <div class="section-head"><span class="section-no">03 / 10</span><h2>框架生态：谁负责哪一层</h2></div>
+        <p class="lede">模型回答“能力上限”，框架回答“能否复现、替换、训练和部署”。Qwen-VLA、minWM、LeRobot 并非直接竞品，而是位于具身生成栈的不同层。</p>
+        <div class="stack-map reveal" aria-label="具身生成框架分层图">
+          <div class="stack-axis">Embodied stack<br>from hardware to model</div>
+          <div><b>数据与硬件</b><small>采集、时间同步、Robot API、数据格式<br>LeRobot</small></div>
+          <div><b>策略 / VLA</b><small>视觉语言理解 → 连续动作<br>Qwen-VLA · openpi · GR00T</small></div>
+          <div class="accent"><b>世界模型转换</b><small>双向 T2V → 动作条件 → 因果少步<br>minWM</small></div>
+          <div><b>生成与空间底座</b><small>视觉、声画、运动与 3D 资产<br>MAGI-2 · FLUX.3 · Wan · Tripo H3.1</small></div>
+          <div><b>训练与服务</b><small>调度、并行、蒸馏、缓存、量化<br>vLLM-Omni · FastVideo · xDiT</small></div>
+        </div>
+        <div class="framework-grid reveal">
+          <article class="framework-card primary">
+            <span class="framework-type">MODEL / TRAINING PARADIGM</span><h3>Qwen-VLA</h3>
+            <p>把 manipulation、navigation、egocentric action modeling 与 trajectory prediction 统一成动作—轨迹预测问题。Qwen3.5-4B 负责视觉语言理解，1.15B DiT Flow-Matching decoder 生成连续动作；通过 embodiment-aware prompt 切换机器人，无需每个平台单独输出头。</p>
+            <dl><dt>训练路径</dt><dd>动作预训练 → 多模态续训 → SFT → RL</dd><dt>开放程度</dt><dd>论文 / 技术信息；当前官方仓库并非完整训练框架</dd><dt>工程价值</dt><dd>统一动作空间、异构数据课程、VLM + Action Expert 拆分</dd></dl>
+            <a class="source-link" href="https://github.com/QwenLM/Qwen-VLA" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+          <article class="framework-card primary">
+            <span class="framework-type">FULL-STACK WORLD MODEL FRAMEWORK</span><h3>minWM</h3>
+            <p>不是单一 checkpoint，而是把双向 T2V 底座转换为实时动作条件世界模型的完整教程与代码。数据、latent 预处理、单/多机训练、FSDP、序列并行、阶段 checkpoint 和 4-step DMD 推理均开放。</p>
+            <dl><dt>主干</dt><dd>Wan2.1-1.3B（Cross-Attn DiT）/ HY1.5-8B（MMDiT）</dd><dt>四阶段</dt><dd>Bi-SFT → TF AR → Causal ODE/CD → Asymmetric DMD</dd><dt>缺口</dt><dd>人姿条件、更多注入方式和既有 WM 微调仍标为 TBD</dd></dl>
+            <a class="source-link" href="https://github.com/shengshu-ai/minWM" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+          <article class="framework-card">
+            <span class="framework-type">ROBOT LEARNING PLATFORM</span><h3>LeRobot</h3>
+            <p>硬件无关 Robot API、LeRobotDataset、策略注册、训练、回放和统一评测组成闭环。2026 版本已同时覆盖 VLA、world model 与 reward model。</p>
+            <dl><dt>核心抽象</dt><dd>Dataset / Policy / Processor / Env / Robot</dd><dt>适合</dt><dd>数据治理、硬件接入、统一基准与策略集成</dd></dl>
+            <a class="source-link" href="https://github.com/huggingface/lerobot" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+          <article class="framework-card">
+            <span class="framework-type">OPEN VLA REFERENCE STACK</span><h3>openpi</h3>
+            <p>Physical Intelligence 的 VLA 代码栈，提供 π₀ Flow Action Expert、π₀-FAST 自回归动作 tokenizer 与 π₀.₅ 的训练、微调和推理参考。</p>
+            <dl><dt>核心价值</dt><dd>Flow action head 与 FAST 两种动作生成范式</dd><dt>限制</dt><dd>源机器人形态与常见平台不同，迁移成功不保证</dd></dl>
+            <a class="source-link" href="https://github.com/Physical-Intelligence/openpi" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+          <article class="framework-card">
+            <span class="framework-type">INDUSTRIAL VLA TOOLCHAIN</span><h3>Isaac GR00T</h3>
+            <p>围绕通用机器人基础模型提供数据处理、跨本体适配、微调与部署路径，并与 Isaac Sim / Lab 形成仿真—策略工具链。</p>
+            <dl><dt>核心价值</dt><dd>仿真、合成数据、策略模型和机器人部署协同</dd><dt>适合</dt><dd>工业机器人 / 人形机器人全链路验证</dd></dl>
+            <a class="source-link" href="https://github.com/NVIDIA/Isaac-GR00T" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+          <article class="framework-card">
+            <span class="framework-type">ANY-TO-ANY SERVING RUNTIME</span><h3>vLLM-Omni</h3>
+            <p>把 vLLM 从文本 AR 扩展到文本、图像、视频、音频与非自回归 DiT；用异构 pipeline、stage overlap、OmniConnector 解耦和动态资源分配服务复杂模型。</p>
+            <dl><dt>并行能力</dt><dd>TP / PP / DP / EP + streaming output</dd><dt>Ascend</dt><dd>已有 NPU 后端，依赖 vLLM-Ascend；DiT 量化仍在演进</dd></dl>
+            <a class="source-link" href="https://github.com/vllm-project/vllm-omni" target="_blank" rel="noopener">官方仓库 ↗</a>
+          </article>
+        </div>
+        <div class="callout reveal"><strong>最值得复现的组合：</strong> LeRobot 负责真实数据与硬件接口，Qwen-VLA / openpi 提供策略侧结构参照，minWM 负责把视频底座变成可交互未来预测器；二者再通过“候选动作 → 世界模型 rollout → reward / verifier 选择”闭环连接。不要试图用 minWM 替代 VLA，也不要把 Qwen-VLA 当作视频世界模拟器。</div>
+        <h3 class="display reveal" style="font-size:clamp(30px,4vw,54px);margin:56px 0 8px">生成基础设施选择矩阵</h3>
+        <p class="method reveal" style="margin:0 0 24px">同一个 Wan / HunyuanVideo 模型可以同时使用服务 runtime、训练框架、缓存插件与并行引擎。下表比较的是主职责，不是互斥替代关系。</p>
+        <div class="table-wrap reveal">
+          <table class="compare">
+            <thead><tr><th>框架</th><th>主定位</th><th>核心机制</th><th>训练 / 服务</th><th>Ascend / NPU 判断</th></tr></thead>
+            <tbody>
+              <tr><td>vLLM-Omni</td><td>Any-to-any 多模态与 DiT 服务 runtime</td><td>异构 stage pipeline、执行重叠、完全解耦、动态资源、TP/PP/DP/EP</td><td>生产服务；OpenAI API；streaming</td><td>已有 NPU 支持并依赖 vLLM-Ascend；DiT 量化/实时视频仍在路线图</td></tr>
+              <tr><td>SGLang-Omni / Diffusion</td><td>多阶段 Omni/Speech runtime；图像视频 DiT 执行</td><td>stage lifecycle、跨阶段传输、AR scheduler；Diffusion 分支源自 FastVideo</td><td>Omni/TTS 服务为强项；Diffusion 独立演进</td><td>需区分 Omni 与 Diffusion 后端；不宜直接假设视频模型已具备 NPU parity</td></tr>
+              <tr><td>LightX2V</td><td>轻量图像 / 视频推理框架</td><td>4-step 蒸馏模型、FP8/量化、SageAttention、block/phase offload、多模型 pipeline</td><td>推理优先；覆盖 T2V/I2V/T2I/I2I</td><td>未见官方 Ascend 后端；适合作为 Wan 推理功能与性能对标</td></tr>
+              <tr><td>FastVideo</td><td>视频后训练 + 实时推理统一框架</td><td>DMD2、Sparse Distillation、VSA/SSTA、Self-Forcing、FSDP2、SP、activation checkpoint</td><td>全量/LoRA 后训练和服务；Dreamverse 实时应用</td><td>官方主要面向 CUDA/MPS；算法可迁移，kernel 与通信层需重写</td></tr>
+              <tr><td>TurboDiffusion / TurboWan</td><td>Wan 系列端到端极致加速配方</td><td>SageAttention + Sparse-Linear Attention + rCM timestep distillation + linear quantization</td><td>开放训练/推理与 Wan2.1/2.2 checkpoint</td><td>论文值来自单 RTX 5090；Ascend 应逐项拆解，不能直接搬 100–200× 结论</td></tr>
+              <tr><td>CacheDiT</td><td>训练免 DiT 缓存、并行和量化插件</td><td>DBCache、TaylorSeer、SCM；CP/TP/2D/3D 并行；TE/VAE/ControlNet 并行</td><td>一行接入 Diffusers；已集成 vLLM-Omni/SGLang Diffusion</td><td>官方声明原生运行于 Ascend NPU；最适合优先验证的低侵入组件</td></tr>
+              <tr><td>xDiT</td><td>大规模 DiT 混合并行推理引擎</td><td>USP(Ulysses+Ring)、PipeFusion、CFG/DP/TP、Parallel VAE、TeaCache/FBCache</td><td>Diffusers wrapper；多卡/多机推理</td><td>当前生态以 CUDA 为主；USP 通信模式和 PipeFusion 是 Ascend 迁移参照</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="models">
+        <div class="section-head"><span class="section-no">04 / 10</span><h2>代表模型雷达</h2></div>
+        <p class="lede">筛选标准是架构代表性、复现价值与对下一代系统的启发，而不是仅按宣传榜单排序。使用按钮按赛道过滤，或输入关键词检索。</p>
+        <div class="controls" role="group" aria-label="模型筛选">
+          <button class="filter active" data-filter="all">全部</button>
+          <button class="filter" data-filter="video">视频基础</button>
+          <button class="filter" data-filter="world">世界模型</button>
+          <button class="filter" data-filter="stream">长时 / 流式</button>
+          <button class="filter" data-filter="spatial">全模态 / 3D</button>
+          <input class="search" type="search" placeholder="搜索：KV、动作、开源…" aria-label="搜索模型">
+        </div>
+        <div class="model-grid reveal">
+          <article class="model" data-cat="video" data-text="wan open source flow dit vace 开源 视频"><div class="model-top"><h3>Wan 2.1 / 2.2</h3><span class="state">开放权重</span></div><div class="meta">VIDEO FOUNDATION · 2025</div><p>大规模视频生成底座，覆盖 T2V / I2V 与 VACE 编辑；生态中已有轻量推理与自动驾驶世界模型适配。</p><ul><li>观察点：高压缩 VAE、Flow Matching、MoE（2.2）</li><li>价值：开源研究与后训练的常用基座</li></ul><a class="source-link" href="https://github.com/Wan-Video/Wan2.1" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="video" data-text="hunyuan video 1.5 fp8 xdit 3d vae 开源"><div class="model-top"><h3>HunyuanVideo 1.x</h3><span class="state">开放权重</span></div><div class="meta">13B DIT · 2024–2025</div><p>系统化展示数据清洗、图像视频联合训练、MLLM 文本编码、3D VAE 与大规模 DiT 训练。</p><ul><li>优化：FP8 权重约节省 10GB 显存（官方仓库口径）</li><li>并行：xDiT / USP 序列并行</li></ul><a class="source-link" href="https://github.com/Tencent-Hunyuan/HunyuanVideo" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="video" data-text="magi 2 preview 114b moe audio video 1080p refiner open weight 开源 音视频"><div class="model-top"><h3>MAGI-2 Preview</h3><span class="state">权重 + 推理 · I2V #6</span></div><div class="meta">114B MOE / 6B ACTIVE · AUDIO-VIDEO</div><p>Sand AI 的统一音视频生成模型，MagiMoE 总参数 114B、每 token 激活约 6B；支持 T2V / I2V，并同步生成音轨。</p><ul><li>两阶段：512×896 preview → 1088×1920 refiner</li><li>当前固定 10 秒、100+5 步、约 307GB 权重、8×Hopper</li><li>蒸馏版尚未发布；Apache-2.0</li></ul><a class="source-link" href="https://github.com/SandAI-org/MAGI-2-preview" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="video spatial" data-text="minimax h3 hailuo image to video i2v open weights audio leaderboard rank 2 开源"><div class="model-top"><h3>MiniMax H3</h3><span class="state">开放权重 · I2V #2</span></div><div class="meta">JUL 2026 · ELO 1,194 ±10</div><p>新一代原生音视频模型。Artificial Analysis 当前含音频 I2V 榜单排名第 2，统计区间为 1–3，与 Seedance 2.0、Gemini Omni Flash 实际处于同一领先组。</p><ul><li>5,663 个榜单样本；发布后仍属快速变化期</li><li>开放权重使其比多数头部闭源模型更有部署研究价值</li><li>FastVideo 已提供专门的 H3 工具适配路径</li></ul><a class="source-link" href="https://artificialanalysis.ai/video/leaderboard/image-to-video" target="_blank" rel="noopener">榜单证据 ↗</a></article>
+          <article class="model" data-cat="spatial world" data-text="flux 3 black forest labs self flow multimodal image video audio action early access 世界模型 多模态"><div class="model-top"><h3>FLUX.3</h3><span class="state">Early Access</span></div><div class="meta">SELF-FLOW · IMAGE / VIDEO / AUDIO / ACTION</div><p>从单一图像模型扩展为统一多模态基础模型；联合学习图像、视频与音频，并通过原生动作预测或视频中间特征连接机器人策略。</p><ul><li>单次最长 20 秒视频 + 原生音频，支持 T2V/I2V/V2V</li><li>FLUX-mimic 已验证视频 backbone + 轻量动作 decoder 路线</li><li>FLUX.3 Dev 开放权重仍属发布计划</li></ul><a class="source-link" href="https://bfl.ai/blog/flux-3" target="_blank" rel="noopener">官方发布 ↗</a></article>
+          <article class="model" data-cat="spatial" data-text="tripo h3.1 3d generation mesh pbr multiview api 2000000 faces 三维 资产"><div class="model-top"><h3>Tripo H3.1 <small style="font-size:12px;color:var(--muted)">（3D 同名分支）</small></h3><span class="state">商业 API</span></div><div class="meta">TEXT / IMAGE / MULTIVIEW → MESH + PBR</div><p>与 MiniMax H3 无关：这是面向生产资产的旗舰 3D 生成模型，原生支持文本、单图与多视图输入，可输出 Quad Mesh、智能低模和 PBR 材质。</p><ul><li>最高约 200 万面；官方口径无纹理约 40 秒、含纹理约 120 秒</li><li>价值：快速构建仿真物体、场景和数字孪生资产</li><li>边界：生成几何，不替代动作条件世界动力学</li></ul><a class="source-link" href="https://developers.tripo3d.ai/en/models/v3-1" target="_blank" rel="noopener">官方文档 ↗</a></article>
+          <article class="model" data-cat="video" data-text="open sora 2.0 开源 11b 200k training"><div class="model-top"><h3>Open-Sora 2.0</h3><span class="state">开放研究</span></div><div class="meta">11B · COST-EFFICIENT TRAINING</div><p>以约 20 万美元训练商业级模型为目标，研究价值在于训练配方、数据与基础设施成本透明度。</p><ul><li>观察点：高质量数据分层、阶段化训练</li><li>价值：端到端工程基线而非单一组件</li></ul><a class="source-link" href="https://github.com/hpcaitech/Open-Sora" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="video" data-text="ltx video 2.3 realtime latent diffusion distilled 开源"><div class="model-top"><h3>LTX-Video / 2.3</h3><span class="state">开放权重 · I2V #23/24</span></div><div class="meta">LOCAL AUDIO-VIDEO · EFFICIENCY FIRST</div><p>强调高时空压缩与潜空间生成效率，是“先优化 token 数，再优化 Transformer”的代表路线；2.3 Pro / Fast 已进入统一 I2V 榜单。</p><ul><li>质量 Elo 低于头部闭源模型，但成本和本地可运行性更优</li><li>适用：低延迟预览、音视频原型与消费级部署研究</li></ul><a class="source-link" href="https://github.com/Lightricks/LTX-Video" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="world" data-text="cosmos predict 2.5 nvidia action conditioned multiview physical ai 开源 世界模型 动作 多视角"><div class="model-top"><h3>Cosmos-Predict2.5</h3><span class="state">代码 + 权重</span></div><div class="meta">2B / 14B · PHYSICAL AI</div><p>统一 Text2World、Image2World、Video2World；提供机器人动作条件与 3 视角、驾驶 7 视角等领域模型。</p><ul><li>200M 高质量预训练视频片段（官方报告）</li><li>模型合并 + 强化学习后训练</li></ul><a class="source-link" href="https://research.nvidia.com/labs/dir/cosmos-predict2.5/" target="_blank" rel="noopener">项目主页 ↗</a></article>
+          <article class="model" data-cat="world" data-text="genie 3 google deepmind interactive 720p 24fps closed world model 具身 世界模型"><div class="model-top"><h3>Genie 3</h3><span class="state">有限预览</span></div><div class="meta">720P · 20–24 FPS · MINUTES</div><p>文本生成可导航世界，并接受实时动作与 promptable events；把世界生成、交互和智能体评测放入同一闭环。</p><ul><li>优势：分钟级一致性与实时交互</li><li>限制：动作空间、多人交互、时长与开放性</li></ul><a class="source-link" href="https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/" target="_blank" rel="noopener">官方说明 ↗</a></article>
+          <article class="model" data-cat="world" data-text="qwen robotworld action language embodied robot world model 具身 动作 开源"><div class="model-top"><h3>Qwen-RobotWorld</h3><span class="state">论文前沿</span></div><div class="meta">2026 · LANGUAGE-CONDITIONED</div><p>用自然语言统一机器人操作、驾驶、导航与人到机器人迁移；Double-Stream MMDiT 连接冻结的 Qwen2.5-VL 与视频潜变量。</p><ul><li>8.6M 视频文本、20+ embodiment（论文口径）</li><li>适合研究跨本体动作接口</li></ul><a class="source-link" href="https://arxiv.org/abs/2606.17030" target="_blank" rel="noopener">论文 ↗</a></article>
+          <article class="model" data-cat="world" data-text="oscar skeleton conditioned robot policy evaluation action 具身 世界模型"><div class="model-top"><h3>OSCAR</h3><span class="state">论文原型</span></div><div class="meta">2026 · OMNI-EMBODIMENT</div><p>以 2D 运动学骨架作为跨机器人 / 人手的统一动作条件，在 Cosmos-Predict2.5-2B 上微调并用于策略虚拟评测。</p><ul><li>启发：动作表示比单纯扩大模型更关键</li><li>风险：真实策略相关性需跨平台复验</li></ul><a class="source-link" href="https://arxiv.org/abs/2606.04463" target="_blank" rel="noopener">论文 ↗</a></article>
+          <article class="model" data-cat="stream" data-text="self forcing realtime streaming kv cache 17 fps long video 流式 长视频"><div class="model-top"><h3>Self Forcing</h3><span class="state">论文 + 项目</span></div><div class="meta">2025 · CAUSAL POST-TRAINING</div><p>训练时让模型以自身生成帧继续 rollout，用整段分布匹配损失直接学习纠错，缩小 train–test gap。</p><ul><li>滚动 KV 支持无界生成，复杂度 O(TL)</li><li>论文报告单 H100 17 FPS、0.45s 最低延迟</li></ul><a class="source-link" href="https://arxiv.org/abs/2506.08009" target="_blank" rel="noopener">论文 ↗</a></article>
+          <article class="model" data-cat="stream" data-text="aapt seaweed real-time streaming adversarial post training 24fps 1nfe 流式"><div class="model-top"><h3>AAPT / Seaweed</h3><span class="state">论文原型</span></div><div class="meta">1 NFE · ADVERSARIAL</div><p>用自回归对抗后训练把潜视频扩散转成单步、逐帧的交互生成器，并用 student forcing 抑制累积误差。</p><ul><li>论文报告单 H100、736×416、24 FPS</li><li>适合研究 1NFE 与 KV 复用的组合</li></ul><a class="source-link" href="https://arxiv.org/abs/2506.09350" target="_blank" rel="noopener">论文 ↗</a></article>
+          <article class="model" data-cat="stream" data-text="magi 1 autoregressive chunk causal kv long video 开源"><div class="model-top"><h3>MAGI-1</h3><span class="state">开放权重</span></div><div class="meta">AR VIDEO AT SCALE · 2025</div><p>以分块因果注意力和逐块去噪实现自回归视频生成，是大规模 causal video foundation model 的代表。</p><ul><li>优势：天然支持续写和流式输出</li><li>挑战：滑窗重算与长时身份漂移</li></ul><a class="source-link" href="https://github.com/SandAI-org/MAGI-1" target="_blank" rel="noopener">官方仓库 ↗</a></article>
+          <article class="model" data-cat="stream" data-text="riflex rope length extrapolation long video training free 长视频 外推"><div class="model-top"><h3>RIFLEx</h3><span class="state">代码 + 论文</span></div><div class="meta">TRAINING-FREE LENGTH EXTRAPOLATION</div><p>定位 RoPE 中主导长度外推的内禀频率，通过降低该频率抑制重复和运动减速。</p><ul><li>无训练实现约 2× 长度外推</li><li>小规模微调可进一步到约 3×（论文口径）</li></ul><a class="source-link" href="https://arxiv.org/abs/2502.15894" target="_blank" rel="noopener">论文 ↗</a></article>
+        </div>
+        <h3 class="display reveal" style="font-size:clamp(30px,4vw,54px);margin:58px 0 8px">Image-to-Video 排名快照</h3>
+        <p class="method reveal" style="margin:0 0 24px">来源：Artificial Analysis Image-to-Video Arena，抓取于 2026-08-11；口径为 Current models / With Audio / Global。Elo 与排名会随盲测投票变化，括号为 95% 置信区间对应的可能名次范围。</p>
+        <div class="table-wrap reveal">
+          <table class="compare">
+            <thead><tr><th>#</th><th>模型</th><th>Elo / 样本</th><th>开放与报告</th><th>技术洞察</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Dreamina Seedance 2.0 720p <small>(1–2)</small></td><td>1,198 / 12,320</td><td>闭源服务；有 2026 技术报告</td><td>四模态参考与原生音频；当前证据最充分，但与 #2 统计重叠</td></tr>
+              <tr><td>2</td><td>MiniMax H3 <small>(1–3)</small></td><td>1,194 / 5,663</td><td>开放权重</td><td>头部中开放性最强；部署、量化与服务框架适配价值高</td></tr>
+              <tr><td>3</td><td>Gemini Omni Flash <small>(1–3)</small></td><td>1,191 / 6,780</td><td>闭源 API / 官方材料</td><td>质量、价格与 Omni 能力的平衡型产品；无法本地复现</td></tr>
+              <tr><td>4</td><td>grok-imagine-video-1.5 <small>(4–6)</small></td><td>1,115 / 4,993</td><td>闭源 API</td><td>第二梯队领先组，需更多样本缩小区间</td></tr>
+              <tr><td>5</td><td>HappyHorse-1.1 <small>(4–6)</small></td><td>1,112 / 7,594</td><td>未开放权重</td><td>与 Grok 1.5、MAGI-2 统计重叠；榜单优势不等于工程可用性</td></tr>
+              <tr><td>6</td><td>MAGI-2 Preview <small>(4–6)</small></td><td>1,108 / 10,635</td><td>权重 + 推理代码 + 预览报告</td><td>114B/6B-active MoE；开源组高质量上限，但 8×Hopper、105 NFE 成本高</td></tr>
+              <tr><td>7</td><td>Wan 2.7 <small>(7–10)</small></td><td>1,094 / 4,297</td><td>当前服务版；2.1/2.2 已开放</td><td>适合作为 Wan 开源生态的能力上界参照，不能与 2.2 权重表现等同</td></tr>
+              <tr><td>8</td><td>HappyHorse-1.0 <small>(7–10)</small></td><td>1,089 / 7,639</td><td>未开放权重</td><td>1.1 提升有限，说明版本差距小于榜单波动</td></tr>
+              <tr><td>9</td><td>SkyReels V4 <small>(7–10)</small></td><td>1,088 / 4,584</td><td>服务 / 项目材料</td><td>榜单进入第一梯队尾部；开放版本与线上版本需分开看</td></tr>
+              <tr><td>10</td><td>Veo 3.1 <small>(8–11)</small></td><td>1,086 / 7,752</td><td>闭源 API / 官方技术介绍</td><td>强原生音频与物理先验，但成本约为多数模型的 2–5 倍</td></tr>
+              <tr><td>13</td><td>Kling 3.0 1080p Pro <small>(11–14)</small></td><td>1,077 / 11,736</td><td>闭源服务</td><td>高样本量、稳定商业基线；当前不再是质量榜首</td></tr>
+              <tr><td>23/24</td><td>LTX-2.3 Pro / Fast <small>(23–25)</small></td><td>959 / 8,684–8,592</td><td>开放权重</td><td>质量榜靠后，但成本低、可本地运行；更适合系统优化与产品原型</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout reveal"><strong>如何读榜：</strong> 这是带音频的人类偏好榜，原生音频、风格和观感会显著影响 Elo；它不能替代动作遵循、物理一致、身份漂移、延迟与成本评测。对 Ascend 来说，MiniMax H3、MAGI-2、LTX-2.3 的开放性通常比纯名次更重要。</div>
+      </section>
+
+      <section id="embodied">
+        <div class="section-head"><span class="section-no">05 / 10</span><h2>具身智能 × 世界模型</h2></div>
+        <p class="lede">世界模型只有进入“观察 → 动作 → 未来 → 评价 / 再规划”闭环，才从视频生成器变成智能体基础设施。</p>
+        <div class="split reveal">
+          <article><span class="tag">Path A</span><h3>生成式仿真环境</h3><p>以 Genie 3 为代表，目标是从文本或图像即时生成可导航环境。优势是场景多样性与反事实事件，适合开放式课程学习；难点是动作可达性、长期状态和多智能体交互。</p><ul class="signal-list"><li>实时视觉反馈，而非离线批量视频</li><li>从键鼠动作扩展到连续控制</li><li>智能体成功率成为核心指标</li></ul></article>
+          <article><span class="tag">Path B</span><h3>物理未来预测器</h3><p>以 Cosmos、Qwen-RobotWorld、OSCAR 为代表，目标是在真实观测和动作条件下预测未来。优势是可服务机器人与驾驶数据增强、规划和策略筛选；难点是因果真实性与 sim-to-real 偏差。</p><ul class="signal-list"><li>动作条件精度高于纯文本对齐</li><li>多相机几何一致与接触动力学</li><li>虚拟评测必须关联真实成功率</li></ul></article>
+        </div>
+        <div class="callout reveal"><strong>关键判断：</strong> 未来更可能出现“通用视觉世界先验 + 领域动作适配器 + 显式几何 / 状态约束”的组合，而不是一个纯像素模型直接覆盖所有机器人本体。OSCAR 的骨架条件与 Cosmos 的领域多视角模型都在释放这一信号。</div>
+        <div class="callout reveal"><strong>2026 新信号：</strong> FLUX.3 把内容生成和动作预测放回同一 Self-Flow backbone，Tripo H3.1 则提供显式 Mesh/PBR 资产。前者可学习动力学表征，后者可提供可编辑几何；将两者通过仿真引擎组合，比要求一个像素世界模型同时承担几何真值、渲染与控制更务实。</div>
+      </section>
+
+      <section id="streaming">
+        <div class="section-head"><span class="section-no">06 / 10</span><h2>长视频 / 流式生成</h2></div>
+        <p class="lede">长视频不是把窗口拉长：窗口内要保持画质，窗口间要携带状态，系统还要在固定延迟与固定显存下持续运行。</p>
+        <div class="timeline reveal">
+          <article class="time-item"><time>STEP 01</time><h3>双向教师</h3><p>先用高质量 DiT / Flow 模型建立视觉、运动和语义先验。</p></article>
+          <article class="time-item"><time>STEP 02</time><h3>因果化</h3><p>改为 frame / chunk-wise causal attention，让未来不再泄漏到过去。</p></article>
+          <article class="time-item"><time>STEP 03</time><h3>自轨迹后训练</h3><p>Self Forcing / AAPT 让模型看到自身误差，并通过整段目标纠偏。</p></article>
+          <article class="time-item"><time>STEP 04</time><h3>有界记忆</h3><p>滚动、压缩或检索 KV，在固定预算内保留近期运动与远期身份。</p></article>
+        </div>
+        <div class="table-wrap reveal">
+          <table class="compare">
+            <thead><tr><th>问题</th><th>症状</th><th>有效技术</th><th>仍未解决</th></tr></thead>
+            <tbody>
+              <tr><td>曝光偏差</td><td>越生成越偏色、失真、静止</td><td>self rollout、student forcing、序列级分布匹配</td><td>极长尾错误仍会累积</td></tr>
+              <tr><td>位置外推</td><td>重复、运动减速、周期性伪影</td><td>RIFLEx / RoPE 频率校准、长上下文微调</td><td>内容记忆不等于位置外推</td></tr>
+              <tr><td>历史内存</td><td>KV 随帧数增长，吞吐下滑 / OOM</td><td>rolling KV、头级剪枝、INT4/INT8 KV、语义路由</td><td>压缩后身份与因果细节丢失</td></tr>
+              <tr><td>交互延迟</td><td>FPS 够但首帧等待长</td><td>1–4 步蒸馏、1NFE、流水并行、异步解码</td><td>“吞吐实时”不等于“响应实时”</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="optimization">
+        <div class="section-head"><span class="section-no">07 / 10</span><h2>模型优化技术栈</h2></div>
+        <p class="lede">按投入产出比排序：先减少 token 和采样步，再处理注意力与缓存，最后才是底层 kernel。点击展开每一层。</p>
+        <div class="reveal">
+          <details open><summary><span class="num">L1</span><h3>时空 Tokenizer / VAE</h3></summary><div class="detail-body"><p><b>技术：</b>causal 3D convolution、高空间 / 时间压缩率、分块编码解码、连续 latent 或 FSQ / VQ。视频 token 数下降会同时降低主干 FLOPs、注意力显存与 KV 体积。</p><p><b>注意：</b>压缩率不能只看重建 PSNR；高速运动、文字、细小机械接触会首先损失。具身任务需加入 action-sensitive reconstruction 与多视角一致性指标。</p></div></details>
+          <details><summary><span class="num">L2</span><h3>少步采样与后训练</h3></summary><div class="detail-body"><p><b>技术：</b>consistency / distribution matching distillation、adversarial post-training、flow trajectory distillation、模型合并、RL 后训练。目标从 30–50 NFE 压到 1–8 NFE。</p><p><b>注意：</b>少步模型容易牺牲多样性和复杂运动。应分别测 prompt alignment、动态程度、失败率与长 rollout 稳定性，而非只看平均 VBench。</p></div></details>
+          <details><summary><span class="num">L3</span><h3>因果 / 稀疏时空注意力</h3></summary><div class="detail-body"><p><b>技术：</b>frame / chunk causal mask、sliding tile、block sparse、局部窗口 + 稀疏全局 token、时空分解、pyramid attention broadcast。</p><p><b>注意：</b>稀疏模式要对应信息结构：局部头负责纹理与运动，少量全局或检索头负责主体、场景和剧情；统一裁剪通常损害长时一致性。</p></div></details>
+          <details><summary><span class="num">L4</span><h3>KV Cache 生命周期</h3></summary><div class="detail-body"><p><b>技术：</b>rolling KV 固定窗口、跨 chunk cache sharing、静态头结构化剪枝、动态头相似度剪枝、INT8 / INT4 量化、内容感知历史检索。</p><p><b>前沿：</b>Forcing-KV 报告单 H200 超过 29 FPS、缓存下降 30%；这是论文硬件口径，不应直接外推到其他加速器或分辨率。</p></div></details>
+          <details><summary><span class="num">L4+</span><h3>扩散 Timestep Feature Cache</h3></summary><div class="detail-body"><p><b>不要与 KV cache 混淆：</b>CacheDiT、TeaCache、First-Block-Cache 等利用相邻去噪 timestep 的 Transformer residual / feature 冗余，跳过部分 block 计算；AR KV cache 则保存历史帧注意力状态。</p><p><b>落地：</b>CacheDiT 可组合 DBCache、TaylorSeer、SCM、并行和量化，并已接入 Diffusers、vLLM-Omni 与 SGLang Diffusion。它官方声明支持 Ascend NPU，适合先做低侵入 A/B，再评估长视频误差累积。</p></div></details>
+          <details><summary><span class="num">L5</span><h3>并行策略</h3></summary><div class="detail-body"><p><b>技术：</b>Ulysses / Ring 序列并行、context parallel、CFG parallel、流水并行、VAE 与 DiT 异步重叠。xDiT 的 USP 已被 HunyuanVideo 等采用。</p><p><b>决策：</b>短片通常通信成本敏感；长序列才充分受益。需要按分辨率 × 帧数 × 卡数扫描，而不是固定一个并行度。</p></div></details>
+          <details><summary><span class="num">L5+</span><h3>MoE 与分阶段 Refiner</h3></summary><div class="detail-body"><p><b>案例：</b>MAGI-2 用 114B MagiMoE 保持容量、每 token 仅激活约 6B；先在 512×896 latent 上完成主体生成，再由独立 refiner 提升到 1088×1920，并用 Turbo VAE 解码。</p><p><b>系统重点：</b>专家路由与 All-to-All、preview/refiner 分阶段调度、text encoder 与 VAE 的 CPU/GPU/roundtrip 卸载。当前 100+5 NFE 表明首要优化仍是蒸馏，其次才是 kernel。</p></div></details>
+          <details><summary><span class="num">L6</span><h3>低精度与算子融合</h3></summary><div class="detail-body"><p><b>技术：</b>BF16 基线，权重 FP8 / INT8、KV INT8 / INT4、混合精度敏感层保留；融合 QKV、RoPE、norm、MLP、attention 与反量化。</p><p><b>注意：</b>视频的误差会跨帧传播。量化校准集必须包含高速运动、镜头切换、长 rollout 和多视角，不应沿用静态图像校准集。</p></div></details>
+          <details><summary><span class="num">L7</span><h3>数据与课程学习</h3></summary><div class="detail-body"><p><b>技术：</b>质量 / 运动 / 美学 / caption 分层，图像视频联合训练，低分辨率到高分辨率、短到长、通用到领域的 progressive curriculum。</p><p><b>具身扩展：</b>统一动作语言、骨架 / 轨迹表示、多视角时间同步、失败轨迹与接触事件采样，其价值常高于盲目扩参。</p></div></details>
+          <details><summary><span class="num">L8</span><h3>测试时计算与闭环选择</h3></summary><div class="detail-body"><p><b>技术：</b>多候选 rollout + VLM / reward rerank、风险敏感采样、物理约束 verifier、规划时短视界树搜索。世界模型可用更多 test-time compute 换取预测质量。</p><p><b>注意：</b>生成分数更高不代表策略收益更高。最终选择器应优化任务成功、碰撞率、轨迹可执行性和校准误差。</p></div></details>
+        </div>
+      </section>
+
+      <section id="evaluation">
+        <div class="section-head"><span class="section-no">08 / 10</span><h2>评测与风险</h2></div>
+        <p class="lede">当前榜单对短片视觉质量覆盖较好，但对长时记忆、交互延迟、动作因果和真实策略收益覆盖不足。</p>
+        <div class="split reveal">
+          <article><span class="tag">Measure</span><h3>建议的四层指标</h3><ul class="signal-list"><li>帧级：清晰度、重建、文字 / 小物体</li><li>片段级：运动、身份、镜头与语义一致</li><li>系统级：首帧延迟、稳态 FPS、峰值显存、能耗</li><li>闭环级：动作遵循、成功率、碰撞、真实相关性</li></ul></article>
+          <article><span class="tag" style="color:var(--orange)">Beware</span><h3>常见误判</h3><ul class="signal-list"><li>把厂商自评 FPS 当跨硬件可比指标</li><li>把“无限生成”当“无限记忆”</li><li>用 VBench 替代物理与控制评测</li><li>忽略闭源预览与开放权重的复现差异</li></ul></article>
+        </div>
+        <div class="callout reveal"><strong>证据纪律：</strong> 本报告中的 FPS、分辨率、显存和数据规模均保留原始来源语境，属于作者 / 机构报告值，除非特别说明并非独立复测。模型版本、许可证和仓库状态在 2026-08-11 后可能变化。</div>
+      </section>
+
+      <section id="roadmap">
+        <div class="section-head"><span class="section-no">09 / 10</span><h2>Ascend 验证路线</h2></div>
+        <p class="lede">建议从可测量的三阶段原型开始：先跑通代表底座，再做缓存与少步优化，最后进入动作条件闭环。</p>
+        <div class="roadmap reveal">
+          <article><h3>框架基线</h3><p>优先移植 minWM 的 Wan2.1-1.3B 路线，保留四阶段 checkpoint，建立 BF16 单卡与多卡基线。</p><ul><li>复用 LeRobotDataset 对齐观测 / 动作 / 相机</li><li>固定 480p、短 / 长两组 rollout</li><li>记录 NFE、首帧延迟、FPS、峰值 HBM</li></ul></article>
+          <article><h3>优化组合</h3><p>按“4-step DMD → timestep cache / KV → 注意力 → 量化 → 融合”逐层消融，并与 FastVideo、TurboWan、CacheDiT、xDiT 路线对照。</p><ul><li>分开测试 feature cache 与 rolling KV</li><li>BF16 / FP8 权重 + INT8 KV 敏感性</li><li>USP/SP 拓扑、通信占比与 vLLM-Omni 服务开销</li></ul></article>
+          <article><h3>VLA × WM 闭环</h3><p>用 Qwen-VLA / openpi 风格的 Action Expert 产生候选动作，让 minWM rollout 服务策略筛选。</p><ul><li>第三视角 + 腕部相机双视角</li><li>短视界多候选 + reward / verifier</li><li>虚拟排名与真实成功率相关性</li></ul></article>
+        </div>
+      </section>
+
+      <section id="sources">
+        <div class="section-head"><span class="section-no">10 / 10</span><h2>来源与延伸</h2></div>
+        <p class="lede">优先选择论文、研究机构项目页和官方仓库。点击可打开原始材料。</p>
+        <div class="sources reveal">
+          <a href="https://research.nvidia.com/labs/dir/cosmos-predict2.5/" target="_blank" rel="noopener"><span>Cosmos-Predict2.5</span><small>NVIDIA Research · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/" target="_blank" rel="noopener"><span>Genie 3</span><small>Google DeepMind · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2506.08009" target="_blank" rel="noopener"><span>Self Forcing</span><small>arXiv · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2506.09350" target="_blank" rel="noopener"><span>AAPT / Seaweed</span><small>arXiv · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2502.15894" target="_blank" rel="noopener"><span>RIFLEx</span><small>arXiv · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2605.09681" target="_blank" rel="noopener"><span>Forcing-KV</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2606.17030" target="_blank" rel="noopener"><span>Qwen-RobotWorld</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2606.04463" target="_blank" rel="noopener"><span>OSCAR</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/Wan-Video/Wan2.1" target="_blank" rel="noopener"><span>Wan 2.1</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/Tencent-Hunyuan/HunyuanVideo" target="_blank" rel="noopener"><span>HunyuanVideo</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/hpcaitech/Open-Sora" target="_blank" rel="noopener"><span>Open-Sora</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/Lightricks/LTX-Video" target="_blank" rel="noopener"><span>LTX-Video</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/SandAI-org/MAGI-1" target="_blank" rel="noopener"><span>MAGI-1</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2412.07772" target="_blank" rel="noopener"><span>CausVid</span><small>arXiv · 2024/2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2504.13074" target="_blank" rel="noopener"><span>SkyReels-V2</span><small>arXiv · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2503.20314" target="_blank" rel="noopener"><span>Wan Technical Report</span><small>arXiv · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2412.03603" target="_blank" rel="noopener"><span>HunyuanVideo Paper</span><small>arXiv · 2024</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2408.06072" target="_blank" rel="noopener"><span>CogVideoX</span><small>arXiv · ICLR 2025</small><span class="arrow">↗</span></a>
+          <a href="https://research.nvidia.com/labs/dir/cosmos1/" target="_blank" rel="noopener"><span>Cosmos Platform</span><small>NVIDIA Research · 2025</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/QwenLM/Qwen-VLA" target="_blank" rel="noopener"><span>Qwen-VLA</span><small>Official GitHub · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2605.30280" target="_blank" rel="noopener"><span>Qwen-VLA Report</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/shengshu-ai/minWM" target="_blank" rel="noopener"><span>minWM</span><small>Official GitHub · Apache-2.0</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2605.30263" target="_blank" rel="noopener"><span>minWM Report</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/huggingface/lerobot" target="_blank" rel="noopener"><span>LeRobot</span><small>Official GitHub · ICLR 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/Physical-Intelligence/openpi" target="_blank" rel="noopener"><span>openpi</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/SandAI-org/MAGI-2-preview" target="_blank" rel="noopener"><span>MAGI-2 Preview</span><small>Official GitHub · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://bfl.ai/blog/flux-3" target="_blank" rel="noopener"><span>FLUX.3</span><small>Black Forest Labs · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://developers.tripo3d.ai/en/models/v3-1" target="_blank" rel="noopener"><span>Tripo H3.1</span><small>Official Developer Docs · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/vllm-project/vllm-omni" target="_blank" rel="noopener"><span>vLLM-Omni</span><small>Official GitHub · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/sgl-project/sglang-omni" target="_blank" rel="noopener"><span>SGLang-Omni</span><small>Official GitHub · 2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/ModelTC/LightX2V" target="_blank" rel="noopener"><span>LightX2V</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/hao-ai-lab/FastVideo" target="_blank" rel="noopener"><span>FastVideo</span><small>Official GitHub</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/thu-ml/TurboDiffusion" target="_blank" rel="noopener"><span>TurboDiffusion / TurboWan</span><small>Official GitHub · 2025/2026</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/vipshop/cache-dit" target="_blank" rel="noopener"><span>CacheDiT</span><small>Official GitHub · Ascend NPU</small><span class="arrow">↗</span></a>
+          <a href="https://github.com/xdit-project/xDiT" target="_blank" rel="noopener"><span>xDiT</span><small>Official GitHub / Paper</small><span class="arrow">↗</span></a>
+          <a href="https://artificialanalysis.ai/video/leaderboard/image-to-video" target="_blank" rel="noopener"><span>I2V Arena Leaderboard</span><small>Artificial Analysis · 2026-08-11</small><span class="arrow">↗</span></a>
+          <a href="https://arxiv.org/abs/2604.14148" target="_blank" rel="noopener"><span>Seedance 2.0 Report</span><small>arXiv · 2026</small><span class="arrow">↗</span></a>
+        </div>
+        <p class="method">方法：模型层深读 Cosmos-Predict2.5、Genie 3、Self Forcing、MAGI-2、FLUX.3、MiniMax H3 与 Tripo H3.1；框架层深读 Qwen-VLA、minWM、LeRobot、vLLM-Omni、FastVideo、TurboDiffusion 及本地框架仓库。I2V 名次来自 Artificial Analysis 同日快照，厂商报告与第三方盲测严格分栏。检索截止：2026-08-11。此报告是技术研究与工程判断，不构成采购建议。</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="shell"><span>ASCEND PLAYGROUND / FRONTIER GENERATIVE SYSTEMS</span><span>RESEARCH CUT · 2026.08.11</span></footer>
+  <button class="back" aria-label="返回顶部" title="返回顶部">↑</button>
+
+  <script>
+    const progress = document.querySelector('.progress');
+    const back = document.querySelector('.back');
+    const sections = [...document.querySelectorAll('main section')];
+    const tocLinks = [...document.querySelectorAll('.toc a')];
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      progress.style.width = (max > 0 ? scrollY / max * 100 : 0) + '%';
+      back.classList.toggle('show', scrollY > 700);
+      let current = sections[0]?.id;
+      for (const section of sections) if (section.getBoundingClientRect().top < 180) current = section.id;
+      tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+    }
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    back.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+
+    const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); }
+    }), { threshold: .08 });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    const filters = [...document.querySelectorAll('.filter')];
+    const search = document.querySelector('.search');
+    const models = [...document.querySelectorAll('.model')];
+    let activeFilter = 'all';
+    function filterModels() {
+      const q = search.value.trim().toLowerCase();
+      models.forEach(card => {
+        const categoryOK = activeFilter === 'all' || card.dataset.cat.split(' ').includes(activeFilter);
+        const textOK = !q || (card.dataset.text + ' ' + card.textContent).toLowerCase().includes(q);
+        card.classList.toggle('hidden', !(categoryOK && textOK));
+      });
+    }
+    filters.forEach(btn => btn.addEventListener('click', () => {
+      filters.forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      filterModels();
+    }));
+    search.addEventListener('input', filterModels);
+  </script>
+</body>
+</html>
