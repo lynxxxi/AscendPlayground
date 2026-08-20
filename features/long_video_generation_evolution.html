@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="长视频生成技术演进研究：从窗口拼接、记忆分块到 Self-Forcing、因果流式生成与演化记忆。">
+  <title>长视频生成：从“延长”到“记住”</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #e9eadf;
+      --muted: #a4a89b;
+      --paper: #10120f;
+      --paper-2: #161916;
+      --line: #343a31;
+      --acid: #d7ff4f;
+      --orange: #ff7548;
+      --cyan: #72d8d2;
+      --violet: #c4a7ff;
+      --max: 1240px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 86% 3%, rgba(114,216,210,.09), transparent 25rem),
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 44px 44px, 44px 44px, auto;
+      font-family: "Noto Serif SC", serif;
+      line-height: 1.78;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 20; opacity: .16;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+    }
+    a { color: inherit; }
+    .mono, .eyebrow, .tag, th, .metric, .nav a, .source-no, button { font-family: "IBM Plex Mono", monospace; }
+    .shell { max-width: var(--max); margin: auto; padding: 0 30px; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--line);
+      background: rgba(16,18,15,.88); backdrop-filter: blur(16px);
+    }
+    .topbar .shell { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: .16em; text-transform: uppercase; }
+    .brand i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 18px var(--acid); margin-right: 10px; }
+    .nav { display: flex; gap: 22px; overflow-x: auto; }
+    .nav a { color: var(--muted); font-size: 11px; text-decoration: none; white-space: nowrap; }
+    .nav a:hover { color: var(--acid); }
+    .hero { min-height: 760px; padding: 102px 0 70px; border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr); gap: 72px; align-items: end; }
+    .eyebrow { color: var(--acid); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 24px 0 32px; max-width: 930px; font-size: clamp(48px, 7.6vw, 110px); line-height: .98; letter-spacing: -.055em; font-weight: 900; }
+    h1 em { color: transparent; -webkit-text-stroke: 1px var(--muted); font-style: normal; }
+    .dek { max-width: 790px; font-size: clamp(18px, 2vw, 25px); color: #ced0c7; line-height: 1.65; }
+    .hero-aside { border-left: 1px solid var(--acid); padding-left: 24px; margin-bottom: 8px; }
+    .hero-aside p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+    .hero-aside strong { display: block; color: var(--ink); font-size: 32px; line-height: 1.15; margin-bottom: 4px; }
+    .scrollmark { position: absolute; right: 30px; bottom: 36px; writing-mode: vertical-rl; font: 11px "IBM Plex Mono"; color: var(--muted); letter-spacing: .12em; }
+    main section { padding: 96px 0; border-bottom: 1px solid var(--line); }
+    .section-head { display: grid; grid-template-columns: 130px 1fr; gap: 34px; margin-bottom: 52px; }
+    .section-no { color: var(--acid); font: 500 13px "IBM Plex Mono"; padding-top: 12px; }
+    h2 { margin: 0; font-size: clamp(34px, 5vw, 68px); line-height: 1.12; letter-spacing: -.04em; }
+    .lead { max-width: 890px; margin: 22px 0 0; color: var(--muted); font-size: 18px; }
+    .thesis-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+    .thesis { padding: 34px; min-height: 270px; border-right: 1px solid var(--line); position: relative; }
+    .thesis:last-child { border-right: 0; }
+    .thesis .metric { color: var(--acid); font-size: 11px; }
+    .thesis h3 { margin: 42px 0 13px; font-size: 24px; line-height: 1.3; }
+    .thesis p { margin: 0; color: var(--muted); font-size: 14px; }
+    .callout { margin-top: 28px; padding: 24px 28px; display: flex; gap: 20px; align-items: baseline; background: var(--acid); color: #12140f; }
+    .callout b { font-size: 20px; white-space: nowrap; }
+    .callout span { font-size: 15px; }
+    .timeline-controls { display: flex; flex-wrap: wrap; gap: 9px; margin: -12px 0 36px 164px; }
+    button { border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 9px 13px; cursor: pointer; font-size: 11px; }
+    button:hover, button.active { border-color: var(--acid); color: var(--paper); background: var(--acid); }
+    .timeline { margin-left: 164px; border-left: 1px solid var(--line); }
+    .event { display: grid; grid-template-columns: 110px 1fr; gap: 26px; padding: 0 0 48px 30px; position: relative; transition: opacity .25s; }
+    .event::before { content: ""; position: absolute; width: 9px; height: 9px; left: -5px; top: 8px; background: var(--paper); border: 1px solid var(--acid); transform: rotate(45deg); }
+    .event.hidden { display: none; }
+    .year { color: var(--acid); font: 600 13px "IBM Plex Mono"; padding-top: 3px; }
+    .event-card { display: grid; grid-template-columns: minmax(200px,.6fr) 1.4fr; gap: 28px; border-top: 1px solid var(--line); padding-top: 18px; }
+    .event-card h3 { margin: 0; font-size: 24px; line-height: 1.35; }
+    .tags { margin-top: 13px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 10px; padding: 3px 7px; border: 1px solid var(--line); color: var(--muted); }
+    .event-card p { margin: 0; color: #c3c6bc; font-size: 14px; }
+    .event-card a { text-underline-offset: 3px; text-decoration-color: #65705d; }
+    .mechanism { display: grid; grid-template-columns: 1fr 70px 1fr; gap: 22px; align-items: stretch; }
+    .panel { border: 1px solid var(--line); background: rgba(22,25,22,.72); padding: 30px; }
+    .panel h3 { margin: 8px 0 24px; font-size: 26px; }
+    .panel .label { font: 11px "IBM Plex Mono"; color: var(--orange); letter-spacing: .12em; }
+    .panel.good .label { color: var(--acid); }
+    .flow { display: grid; gap: 10px; }
+    .node { border: 1px solid var(--line); padding: 13px 16px; font-size: 14px; background: var(--paper); }
+    .arrow { text-align: center; color: var(--muted); line-height: 1; }
+    .versus { display: flex; align-items: center; justify-content: center; font: 600 14px "IBM Plex Mono"; color: var(--muted); }
+    .mechanism-notes { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 22px; border: 1px solid var(--line); }
+    .note { padding: 25px; border-right: 1px solid var(--line); }
+    .note:last-child { border: 0; }
+    .note b { display: block; color: var(--cyan); font: 600 12px "IBM Plex Mono"; margin-bottom: 10px; }
+    .note p { margin: 0; color: var(--muted); font-size: 13px; }
+    .matrix-wrap { overflow-x: auto; border: 1px solid var(--line); }
+    table { width: 100%; min-width: 940px; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--acid); font-size: 10px; letter-spacing: .06em; background: var(--paper-2); position: sticky; top: 58px; }
+    td { color: #c8cac2; }
+    td:first-child { color: var(--ink); font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    .yes { color: var(--acid); } .partial { color: var(--cyan); } .no { color: #71766d; }
+    .frontier { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .frontier-card { min-height: 310px; padding: 32px; border: 1px solid var(--line); position: relative; overflow: hidden; }
+    .frontier-card::after { content: attr(data-index); position: absolute; right: -10px; bottom: -50px; font: 900 150px "IBM Plex Mono"; color: rgba(255,255,255,.035); }
+    .frontier-card h3 { margin: 28px 0 14px; font-size: 28px; }
+    .frontier-card p { color: var(--muted); font-size: 14px; max-width: 500px; }
+    .bar { height: 3px; background: var(--line); margin-top: 28px; }
+    .bar i { display: block; height: 100%; background: var(--acid); width: var(--w); }
+    .assessment { display: grid; grid-template-columns: .9fr 1.1fr; gap: 42px; }
+    .scorecard { display: grid; gap: 12px; }
+    .score { display: grid; grid-template-columns: 150px 1fr 42px; gap: 14px; align-items: center; font-size: 13px; }
+    .score .track { height: 8px; background: var(--line); overflow: hidden; }
+    .score .fill { height: 100%; width: var(--score); background: linear-gradient(90deg,var(--cyan),var(--acid)); }
+    .score output { font: 12px "IBM Plex Mono"; color: var(--acid); }
+    .caveats { border-left: 1px solid var(--orange); padding-left: 30px; }
+    .caveats h3 { margin-top: 0; font-size: 24px; }
+    .caveats li { margin: 12px 0; color: var(--muted); }
+    .roadmap { counter-reset: step; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); }
+    .roadmap article { padding: 30px; border-right: 1px solid var(--line); counter-increment: step; }
+    .roadmap article:last-child { border: 0; }
+    .roadmap article::before { content: "0" counter(step); font: 500 12px "IBM Plex Mono"; color: var(--acid); }
+    .roadmap h3 { font-size: 21px; margin: 34px 0 14px; }
+    .roadmap p { color: var(--muted); font-size: 13px; }
+    .sources { columns: 2; column-gap: 44px; list-style: none; margin: 0; padding: 0; }
+    .sources li { break-inside: avoid; display: grid; grid-template-columns: 36px 1fr; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .source-no { color: var(--acid); }
+    .sources a { text-decoration-color: #586050; text-underline-offset: 3px; }
+    footer { padding: 44px 0 70px; color: var(--muted); font-size: 12px; }
+    .reveal { opacity: 0; transform: translateY(18px); transition: .65s cubic-bezier(.2,.7,.2,1); }
+    .reveal.visible { opacity: 1; transform: none; }
+    @media (max-width: 850px) {
+      .nav { display: none; } .hero { min-height: auto; }
+      .hero-grid, .event-card, .assessment { grid-template-columns: 1fr; }
+      .hero-aside { margin-top: 20px; }
+      .section-head { grid-template-columns: 1fr; gap: 8px; }
+      .thesis-grid, .mechanism-notes, .roadmap { grid-template-columns: 1fr; }
+      .thesis, .note, .roadmap article { border-right: 0; border-bottom: 1px solid var(--line); }
+      .mechanism { grid-template-columns: 1fr; } .versus { padding: 4px; }
+      .timeline, .timeline-controls { margin-left: 0; }
+      .event { grid-template-columns: 70px 1fr; padding-left: 20px; }
+      .frontier { grid-template-columns: 1fr; } .sources { columns: 1; }
+    }
+    @media print {
+      .topbar, .scrollmark, .timeline-controls { display: none; }
+      body { background: white; color: #151515; } body::before { display:none; }
+      :root { --ink:#111; --muted:#444; --paper:#fff; --paper-2:#f5f5f0; --line:#bbb; --acid:#365900; }
+      main section { padding: 44px 0; } .reveal { opacity:1; transform:none; }
+      a { text-decoration: none; } .hero { min-height:auto; padding-top:50px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell">
+      <div class="brand"><i></i>Long Video / Research File 08</div>
+      <nav class="nav" aria-label="章节导航">
+        <a href="#thesis">结论</a><a href="#timeline">演进</a><a href="#self-forcing">Self-Forcing</a><a href="#matrix">对比</a><a href="#frontier">前沿</a><a href="#sources">来源</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="shell hero-grid">
+      <div>
+        <div class="eyebrow">Technical evolution · 2022—2026.08</div>
+        <h1>长视频生成：<br>从<em>“延长”</em>到“记住”</h1>
+        <p class="dek">Self-Forcing 不是又一种视频拼接术。它把模型在推理时必然面对的“自己的错误历史”，提前放进训练闭环。真正的技术主线，是从固定窗口的局部连续，走向可流式、可交互、可长期维持世界状态的生成系统。</p>
+      </div>
+      <aside class="hero-aside">
+        <p><strong>5 代</strong>技术范式</p>
+        <p><strong>12 项</strong>代表工作</p>
+        <p><strong>4 个</strong>仍未解决的核心瓶颈</p>
+        <p class="mono">研究截止：2026-08-20<br>证据等级：论文 / 官方项目页</p>
+      </aside>
+    </div>
+    <div class="scrollmark">SCROLL TO READ ↓</div>
+  </div>
+
+  <main>
+    <section id="thesis">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">01 / THESIS</div><div><h2>先给结论：长度只是表象，状态才是问题</h2><p class="lead">“能生成 2 分钟”并不自动等于“理解了前 2 分钟”。长视频系统要同时解决误差累积、历史压缩、计算增长和叙事控制；任何只解决一项的方案，都可能得到很长但近乎静止、身份漂移或语义失忆的视频。</p></div></div>
+        <div class="thesis-grid reveal">
+          <article class="thesis"><span class="metric">01 / EXPOSURE BIAS</span><h3>训练看真历史，推理吃假历史</h3><p>Teacher Forcing 用真实前序帧训练；推理却只能使用模型自己生成的帧。微小误差被下一段继续放大，这是长时退化的根源之一。</p></article>
+          <article class="thesis"><span class="metric">02 / MEMORY BUDGET</span><h3>无限输出 ≠ 无限记忆</h3><p>FIFO 队列可以恒定显存地一直吐帧，但被淘汰的历史不再可见。主体离场后再出现、空间布局回忆和因果闭环，仍需要显式长期记忆。</p></article>
+          <article class="thesis"><span class="metric">03 / SYSTEM CO-DESIGN</span><h3>算法与系统开始合流</h3><p>少步蒸馏、因果注意力、KV cache、流式 VAE、量化和序列并行共同决定真实吞吐；只优化 DiT FLOPs 不足以得到实时系统。</p></article>
+        </div>
+        <div class="callout reveal"><b>核心判断</b><span>Self-Forcing 的价值在“训练分布对齐”，不是单独发明了无限生成。它与滚动 KV cache、少步扩散和视频级分布匹配组合，才形成实时长视频能力。</span></div>
+      </div>
+    </section>
+
+    <section id="timeline">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">02 / EVOLUTION</div><div><h2>五次范式迁移</h2><p class="lead">筛选时间线可观察三条交织路线：推理技巧（不训练）、模型/训练范式、以及记忆与系统工程。</p></div></div>
+        <div class="timeline-controls reveal" role="group" aria-label="筛选技术路线">
+          <button class="active" data-filter="all">ALL</button><button data-filter="inference">推理扩展</button><button data-filter="training">训练范式</button><button data-filter="memory">记忆机制</button><button data-filter="system">系统效率</button>
+        </div>
+        <div class="timeline">
+          <article class="event reveal" data-cat="training memory"><div class="year">2022</div><div class="event-card"><div><h3>Latent Video Diffusion</h3><div class="tags"><span class="tag">LATENT</span><span class="tag">HIERARCHY</span></div></div><p>把视频生成搬到压缩潜空间，并用关键帧/插值式层级建模降低像素级成本。它奠定了后续 Video DiT 的工程底座，但“长”仍依赖层级结构和有限窗口。<a href="https://arxiv.org/abs/2211.13221">论文 ↗</a></p></div></article>
+          <article class="event reveal" data-cat="inference"><div class="year">2023</div><div class="event-card"><div><h3>Gen-L-Video / FreeNoise</h3><div class="tags"><span class="tag">NO TRAINING</span><span class="tag">WINDOW</span></div></div><p>第一代主流思路是“复用短视频模型”：Gen-L-Video 用重叠片段的 temporal co-denoising；FreeNoise 重排并复用初始噪声、采用窗口注意力。优势是零训练迁移，弱点是全局状态与新运动逐渐衰减。<a href="https://arxiv.org/abs/2305.18264">Gen-L ↗</a> · <a href="https://arxiv.org/abs/2310.15169">FreeNoise ↗</a></p></div></article>
+          <article class="event reveal" data-cat="inference memory"><div class="year">2024 H1</div><div class="event-card"><div><h3>StreamingT2V / FIFO-Diffusion</h3><div class="tags"><span class="tag">CHUNK AR</span><span class="tag">QUEUE</span><span class="tag">MEMORY</span></div></div><p>StreamingT2V 为分块自回归显式加入短期 CAM 与首段外观长期记忆；FIFO-Diffusion 让不同噪声级帧在队列里对角去噪，以恒定内存持续出帧。此时“可扩展长度”形成，但误差闭环仍主要发生在推理期。<a href="https://arxiv.org/abs/2403.14773">StreamingT2V ↗</a> · <a href="https://arxiv.org/abs/2405.11473">FIFO ↗</a></p></div></article>
+          <article class="event reveal" data-cat="training"><div class="year">2024 H2</div><div class="event-card"><div><h3>Diffusion Forcing</h3><div class="tags"><span class="tag">CAUSAL</span><span class="tag">VARIABLE NOISE</span></div></div><p>每个时序 token 可处于独立噪声等级，把 next-token 的因果结构与全序列 diffusion 的灵活采样结合起来。它提供了超出训练时域的连续序列 rollout 基础，但仍从真实数据子序列学习，未完全消除自生成上下文偏差。<a href="https://arxiv.org/abs/2407.01392">论文 ↗</a></p></div></article>
+          <article class="event reveal" data-cat="training system"><div class="year">2024→25</div><div class="event-card"><div><h3>CausVid</h3><div class="tags"><span class="tag">CAUSAL DIT</span><span class="tag">DMD</span><span class="tag">4 STEP</span></div></div><p>将慢速双向教师蒸馏为块因果学生，以 ODE 轨迹初始化和非对称分布匹配蒸馏稳定训练；4 步生成与 KV cache 带来论文报告的单卡 9.4 FPS。它证明高质量教师可以转化为快速流式模型。<a href="https://arxiv.org/abs/2412.07772">论文 ↗</a></p></div></article>
+          <article class="event reveal" data-cat="training memory system"><div class="year">2025.06</div><div class="event-card"><div><h3>Self-Forcing</h3><div class="tags"><span class="tag">ON-POLICY ROLLOUT</span><span class="tag">VIDEO LOSS</span><span class="tag">ROLLING KV</span></div></div><p>训练时用当前模型自回归生成的历史作为下一段条件，再对完整生成序列施加视频级分布匹配监督；随机截断梯度控制成本，滚动 KV cache 支持恒定窗口外推。其意义是让训练看见推理时真实会遭遇的错误分布。<a href="https://arxiv.org/abs/2506.08009">论文 ↗</a></p></div></article>
+          <article class="event reveal" data-cat="training memory system"><div class="year">2025 H2</div><div class="event-card"><div><h3>LongLive / Self-Forcing++</h3><div class="tags"><span class="tag">TRAIN-LONG</span><span class="tag">FRAME SINK</span><span class="tag">SELF-GENERATED LONG</span></div></div><p>LongLive 用 streaming-long tuning、短窗 + frame sink、KV recache 支持动态提示与分钟级交互；Self-Forcing++ 从学生自生成长视频中采样片段，让短视频教师继续校正远期分布，论文展示最长 4:15。路线从“短训练、长外推”转为“用长 rollout 训练长能力”。<a href="https://arxiv.org/abs/2509.22622">LongLive ↗</a> · <a href="https://arxiv.org/abs/2510.02283">SF++ ↗</a></p></div></article>
+          <article class="event reveal" data-cat="memory system"><div class="year">2026</div><div class="event-card"><div><h3>压缩记忆 → 演化记忆</h3><div class="tags"><span class="tag">2-BIT KV</span><span class="tag">MEMORY QUERY</span><span class="tag">RELATIVE ROPE</span></div></div><p>Quant VideoGen 把 KV cache 压缩到 2-bit 级方案以换取更大有效上下文；Echo-Infinity 用可学习 Memory Query 持续吸收被淘汰历史，并修正 RoPE 外推。论文宣称 24 小时 rollout，但这应理解为持续生成与恒定成本的展示，不等同于 24 小时叙事推理。<a href="https://arxiv.org/abs/2602.02958">QVG ↗</a> · <a href="https://arxiv.org/abs/2606.04527">Echo ↗</a></p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="self-forcing">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">03 / DEEP DIVE</div><div><h2>Self-Forcing 到底改变了什么？</h2><p class="lead">把训练流程画成两条链，差异就很明确：模型是否在学习时承担自己上一刻决策造成的后果。</p></div></div>
+        <div class="mechanism reveal">
+          <article class="panel"><div class="label">BEFORE · TEACHER / DIFFUSION FORCING</div><h3>干净上下文训练</h3><div class="flow"><div class="node">真实视频前缀 x₁…xₜ</div><div class="arrow">↓ 作为条件</div><div class="node">去噪未来 chunk</div><div class="arrow">↓</div><div class="node">局部 / 帧级训练损失</div><div class="arrow">⚠</div><div class="node">推理时换成模型生成前缀</div></div></article>
+          <div class="versus">VS</div>
+          <article class="panel good"><div class="label">SELF-FORCING · CLOSED LOOP</div><h3>自生成上下文训练</h3><div class="flow"><div class="node">当前模型生成 chunk₁</div><div class="arrow">↓ 写入 rolling KV</div><div class="node">基于生成历史继续 chunk₂…n</div><div class="arrow">↓</div><div class="node">对整段生成分布做视频级监督</div><div class="arrow">↺</div><div class="node">训练与推理都消费“自己的历史”</div></div></article>
+        </div>
+        <div class="mechanism-notes reveal">
+          <div class="note"><b>01 / ROLLOUT</b><p>不是把 ground truth 加噪后一次性学习，而是在训练内真正自回归展开，让 exposure bias 可被优化。</p></div>
+          <div class="note"><b>02 / HOLISTIC LOSS</b><p>视频级分布匹配关注整条生成轨迹的联合质量，比逐帧误差更能惩罚累积漂移。</p></div>
+          <div class="note"><b>03 / TRUNCATED GRAD</b><p>随机截断穿越 rollout 的反向梯度，避免对所有历史完整反传造成不可承受的显存与计算。</p></div>
+          <div class="note"><b>04 / ROLLING KV</b><p>因果注意力复用历史 K/V；固定窗口淘汰旧状态，使单步成本不随总视频长度无限增长。</p></div>
+        </div>
+        <div class="callout reveal"><b>准确定位</b><span>Self-Forcing 更接近“视频生成中的 on-policy 分布对齐”，但其优化器仍是可微的分布匹配/扩散训练，不宜简单等同于强化学习。</span></div>
+      </div>
+    </section>
+
+    <section id="matrix">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">04 / MATRIX</div><div><h2>代表路线横向对比</h2><p class="lead">“无限”一栏只表示算法可持续输出，不表示具有无限语义记忆。速度数字来自不同硬件、分辨率与计时口径，不可直接排行。</p></div></div>
+        <div class="matrix-wrap reveal"><table>
+          <thead><tr><th>方法</th><th>核心单位</th><th>需训练</th><th>自生成上下文训练</th><th>长期记忆</th><th>成本随总长度</th><th>主要收益</th><th>典型短板</th></tr></thead>
+          <tbody>
+            <tr><td>Gen-L / FreeNoise</td><td>重叠窗口 / 噪声重排</td><td class="no">否</td><td class="no">否</td><td class="no">隐式</td><td class="partial">局部窗口</td><td>零训练延长现有模型</td><td>停滞、跨段语义弱</td></tr>
+            <tr><td>FIFO-Diffusion</td><td>噪声等级队列</td><td class="no">否</td><td class="no">否</td><td class="no">固定 FIFO</td><td class="yes">近似恒定</td><td>概念上无限、恒定显存</td><td>训练/推理错配仍在</td></tr>
+            <tr><td>StreamingT2V</td><td>视频 chunk</td><td class="partial">模块训练</td><td class="no">否</td><td class="partial">短期 + 首段外观</td><td class="yes">有界</td><td>转场平滑、运动更足</td><td>全局推理与对象回忆有限</td></tr>
+            <tr><td>Diffusion Forcing</td><td>独立噪声 token</td><td class="yes">是</td><td class="no">主要否</td><td class="partial">因果上下文</td><td class="partial">取决于上下文</td><td>可变长度、扩散式引导</td><td>长 rollout exposure bias</td></tr>
+            <tr><td>CausVid</td><td>因果 frame block</td><td class="yes">蒸馏</td><td class="no">有限</td><td class="partial">KV cache</td><td class="yes">滚动时有界</td><td>4 步、9.4 FPS（论文口径）</td><td>短教师外推与累计误差</td></tr>
+            <tr><td>Self-Forcing</td><td>训练内 AR rollout</td><td class="yes">是</td><td class="yes">是</td><td class="partial">rolling KV</td><td class="yes">有界</td><td>训练/推理分布对齐、流式</td><td>远期记忆仍受窗口约束</td></tr>
+            <tr><td>LongLive</td><td>frame-level AR</td><td class="yes">long tuning</td><td class="yes">对齐长训练</td><td class="partial">window + sink</td><td class="yes">有界</td><td>20.7 FPS、动态提示（论文口径）</td><td>sink 是摘要，不是世界模型</td></tr>
+            <tr><td>Self-Forcing++</td><td>自生成长视频片段</td><td class="yes">后训练</td><td class="yes">是</td><td class="partial">沿用 AR 状态</td><td class="yes">有界</td><td>远超教师时域，最长展示 4:15</td><td>位置跨度与基础模型先验仍限</td></tr>
+            <tr><td>Echo-Infinity</td><td>可学习 Memory Query</td><td class="yes">端到端</td><td class="yes">考虑 AR 噪声</td><td class="yes">演化压缩记忆</td><td class="yes">恒定设计目标</td><td>历史压缩、RoPE 外推、超长 rollout</td><td>2026 新工作，需更多复现与语义评测</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="frontier">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">05 / FRONTIER</div><div><h2>接下来会演进到哪里</h2><p class="lead">以下是基于现有论文路线作出的技术推断，而非已经兑现的产品能力。</p></div></div>
+        <div class="frontier">
+          <article class="frontier-card reveal" data-index="1"><div class="eyebrow">Memory</div><h3>从缓存帧到结构化世界状态</h3><p>未来记忆不会只保存首帧或若干 KV，而会分层保存身份、几何、对象关系、事件摘要，并在需要时检索。Echo-Infinity 的可学习演化记忆是这一方向的早期形态。</p><div class="bar"><i style="--w:86%"></i></div></article>
+          <article class="frontier-card reveal" data-index="2"><div class="eyebrow">Training</div><h3>从短教师蒸馏到自改进长 rollout</h3><p>Self-Forcing++ 已展示用学生自己的长样本暴露远期错误，再让短教师对采样片段提供局部纠偏。下一步很可能结合偏好模型、物理一致性验证器与 curriculum horizon。</p><div class="bar"><i style="--w:78%"></i></div></article>
+          <article class="frontier-card reveal" data-index="3"><div class="eyebrow">Architecture</div><h3>局部精确 + 全局压缩的双时间尺度</h3><p>短窗口负责纹理和运动连续，稀疏全局 token 或状态空间模块负责远期因果。全量历史 attention 不经济，纯 FIFO 又会遗忘，混合结构是更可能的平衡点。</p><div class="bar"><i style="--w:82%"></i></div></article>
+          <article class="frontier-card reveal" data-index="4"><div class="eyebrow">System</div><h3>KV、VAE 与低比特成为同等重要的主角</h3><p>少步 DiT 已把去噪压到 1–4 步后，瓶颈转向 KV 容量、异步解码、通信和带宽。2-bit KV、FP4/W4A4、流式 VAE 与 cache-aware kernel 会决定能否真正落地。</p><div class="bar"><i style="--w:92%"></i></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="assessment">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">06 / VERDICT</div><div><h2>如何评价 Self-Forcing</h2><p class="lead">这是基于公开证据的相对判断，不是跨论文统一 benchmark 的精确分数。</p></div></div>
+        <div class="assessment reveal">
+          <div class="scorecard">
+            <div class="score"><span>训练范式创新</span><div class="track"><div class="fill" style="--score:92%"></div></div><output>9.2</output></div>
+            <div class="score"><span>实时流式潜力</span><div class="track"><div class="fill" style="--score:90%"></div></div><output>9.0</output></div>
+            <div class="score"><span>长期视觉一致</span><div class="track"><div class="fill" style="--score:76%"></div></div><output>7.6</output></div>
+            <div class="score"><span>长期语义记忆</span><div class="track"><div class="fill" style="--score:58%"></div></div><output>5.8</output></div>
+            <div class="score"><span>工程可移植性</span><div class="track"><div class="fill" style="--score:68%"></div></div><output>6.8</output></div>
+          </div>
+          <div class="caveats"><h3>它没有解决的事</h3><ul><li>固定 rolling cache 仍会遗忘窗口外细节；对象长期遮挡后重现、房间空间关系和故事伏笔并无保证。</li><li>自回滚能减小但不能消灭误差累积；基础短视频教师的偏差、动作模式与视觉先验仍会传给学生。</li><li>“实时”取决于 GPU、分辨率、帧率、VAE 是否计入和初帧延迟；论文间 FPS 不能直接横比。</li><li>长视频评测仍偏弱。短片 VBench 得分、两分钟无硬切，不足以证明分钟级因果与叙事一致性。</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ascend">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">07 / ASCEND</div><div><h2>对 AscendPlayground 的实现启示</h2><p class="lead">如果目标是把此类模型迁移到昇腾，优先级应围绕可验证的系统闭环，而不是一次性复刻全部论文技巧。</p></div></div>
+        <div class="roadmap reveal">
+          <article><h3>先跑通因果基线</h3><p>实现 block-causal attention、chunk 级 rollout 与正确的 temporal RoPE；建立短视频质量基线与逐 chunk 漂移曲线。</p></article>
+          <article><h3>再做 rolling KV</h3><p>明确 sink/local window 淘汰策略，记录 cache 显存、搬运带宽与长程主体一致性；KV 格式先 FP16/BF16，再评估 INT8/FP8。</p></article>
+          <article><h3>少步蒸馏优先</h3><p>从 40–50 步降到 4 步通常是最大收益源；随后再叠 sparse attention、量化和异步 VAE，才能隔离每项收益。</p></article>
+          <article><h3>按时间轴验收</h3><p>固定 prompt/seed，每 5–10 秒记录身份、布局、运动、提示遵循和帧率；同时报告首帧延迟、稳态 FPS 与完整 E2E。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">08 / SOURCES</div><div><h2>一手来源</h2><p class="lead">正文事实以论文与官方项目页为主；2026 年工作仍较新，结论应随复现和同行评议更新。</p></div></div>
+        <ol class="sources reveal">
+          <li><span class="source-no">01</span><a href="https://arxiv.org/abs/2211.13221">Latent Video Diffusion Models for High-Fidelity Long Video Generation</a></li>
+          <li><span class="source-no">02</span><a href="https://arxiv.org/abs/2305.18264">Gen-L-Video: Multi-Text to Long Video Generation via Temporal Co-Denoising</a></li>
+          <li><span class="source-no">03</span><a href="https://arxiv.org/abs/2310.15169">FreeNoise: Tuning-Free Longer Video Diffusion via Noise Rescheduling</a></li>
+          <li><span class="source-no">04</span><a href="https://arxiv.org/abs/2403.14773">StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation</a></li>
+          <li><span class="source-no">05</span><a href="https://arxiv.org/abs/2405.11473">FIFO-Diffusion: Generating Infinite Videos from Text without Training</a></li>
+          <li><span class="source-no">06</span><a href="https://arxiv.org/abs/2407.01392">Diffusion Forcing: Next-token Prediction Meets Full-Sequence Diffusion</a></li>
+          <li><span class="source-no">07</span><a href="https://arxiv.org/abs/2412.07772">CausVid: From Slow Bidirectional to Fast Autoregressive Video Diffusion Models</a></li>
+          <li><span class="source-no">08</span><a href="https://arxiv.org/abs/2506.08009">Self Forcing: Bridging the Train-Test Gap in Autoregressive Video Diffusion</a></li>
+          <li><span class="source-no">09</span><a href="https://arxiv.org/abs/2509.22622">LongLive: Real-time Interactive Long Video Generation</a></li>
+          <li><span class="source-no">10</span><a href="https://arxiv.org/abs/2510.02283">Self-Forcing++: Towards Minute-Scale High-Quality Video Generation</a></li>
+          <li><span class="source-no">11</span><a href="https://arxiv.org/abs/2602.02958">Quant VideoGen: Auto-Regressive Long Video Generation via 2-Bit KV-Cache</a></li>
+          <li><span class="source-no">12</span><a href="https://arxiv.org/abs/2606.04527">Echo-Infinity: Learning Evolving Memory for Real-Time Infinite Video Generation</a></li>
+          <li><span class="source-no">13</span><a href="https://github.com/Vchitect/VBench">VBench / VBench-Long official repository</a></li>
+          <li><span class="source-no">14</span><a href="https://self-forcing.github.io/">Self-Forcing official project page</a></li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell mono">ASCENDPLAYGROUND / FEATURES · LONG VIDEO GENERATION EVOLUTION · 2026-08-20<br>注：所有性能数字均保留原论文口径；不对不同硬件、分辨率与计时范围做伪精确横比。</div></footer>
+
+  <script>
+    const events = document.querySelectorAll('.event');
+    document.querySelectorAll('[data-filter]').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      events.forEach(e => e.classList.toggle('hidden', filter !== 'all' && !e.dataset.cat.includes(filter)));
+    }));
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+    }), { threshold: .08 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
