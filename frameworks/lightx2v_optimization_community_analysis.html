@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="LightX2V 优化技术、在研方向、组织社区与核心贡献者分析，基于 2026-08-21 的代码与公开资料快照。">
+  <title>LightX2V 技术与社区分析｜2026-08</title>
+  <style>
+    :root {
+      --paper: #f3efe4;
+      --paper-2: #ebe4d5;
+      --ink: #17201d;
+      --muted: #5f675f;
+      --line: #bdb6a5;
+      --deep: #163c32;
+      --green: #1d7258;
+      --lime: #bfd657;
+      --amber: #d68a2d;
+      --red: #a94b3f;
+      --blue: #39728d;
+      --white: #fffdf6;
+      --shadow: 0 16px 40px rgba(34, 40, 32, .11);
+      --serif: "Iowan Old Style", Baskerville, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      --sans: "Aptos", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(191,214,87,.19), transparent 24rem),
+        linear-gradient(rgba(22,60,50,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22,60,50,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 28px 28px, 28px 28px, auto;
+      font-family: var(--sans);
+      line-height: 1.72;
+    }
+    a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--amber); }
+    code { font-family: var(--mono); font-size: .91em; background: rgba(22,60,50,.08); padding: .12em .34em; border-radius: 3px; }
+    .shell { width: min(1480px, 100%); margin: 0 auto; }
+
+    header {
+      min-height: 620px;
+      color: var(--white);
+      background:
+        linear-gradient(120deg, rgba(191,214,87,.08), transparent 40%),
+        repeating-linear-gradient(135deg, transparent 0 14px, rgba(255,255,255,.025) 14px 15px),
+        var(--deep);
+      border-bottom: 8px solid var(--lime);
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: "X2V";
+      position: absolute;
+      right: -2vw; bottom: -11rem;
+      font: 900 clamp(13rem, 30vw, 34rem)/1 var(--sans);
+      letter-spacing: -.09em;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(255,255,255,.1);
+      pointer-events: none;
+    }
+    .hero { padding: 70px 56px 54px; position: relative; z-index: 1; }
+    .eyebrow { display: flex; align-items: center; gap: 12px; font: 700 .74rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); }
+    .eyebrow::before { content: ""; width: 42px; height: 3px; background: var(--lime); }
+    h1 { max-width: 980px; margin: 26px 0 18px; font: 700 clamp(3.1rem, 7.5vw, 8rem)/.93 var(--serif); letter-spacing: -.06em; }
+    .hero-lead { max-width: 930px; margin: 0; font-size: clamp(1.05rem, 1.7vw, 1.42rem); color: #dce8df; }
+    .hero-meta { margin-top: 50px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .pill { border: 1px solid rgba(255,255,255,.28); padding: 8px 12px; border-radius: 999px; font: 600 .76rem/1 var(--mono); color: #f7faec; background: rgba(255,255,255,.05); }
+
+    .layout { display: grid; grid-template-columns: 255px minmax(0,1fr); gap: 46px; padding: 46px 56px 110px; }
+    nav { position: sticky; top: 24px; align-self: start; border-top: 5px solid var(--deep); padding-top: 18px; }
+    nav .nav-title { font: 800 .7rem/1 var(--mono); letter-spacing: .14em; color: var(--muted); margin-bottom: 14px; }
+    nav a { display: block; padding: 7px 0; text-decoration: none; color: var(--ink); border-bottom: 1px solid rgba(95,103,95,.18); font-size: .88rem; }
+    nav a:hover { padding-left: 6px; color: var(--green); }
+    nav .stamp { margin-top: 18px; color: var(--muted); font: .72rem/1.55 var(--mono); }
+
+    main { min-width: 0; }
+    section { scroll-margin-top: 26px; padding: 20px 0 54px; border-bottom: 1px solid var(--line); }
+    section:last-child { border-bottom: 0; }
+    h2 { margin: 0 0 22px; font: 700 clamp(2rem, 4vw, 4.2rem)/1 var(--serif); letter-spacing: -.045em; color: var(--deep); }
+    h3 { margin: 28px 0 10px; font: 700 1.2rem/1.3 var(--sans); color: var(--deep); }
+    .section-kicker { display: block; margin-bottom: 10px; font: 700 .7rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
+    .lede { max-width: 930px; font: 1.14rem/1.75 var(--serif); color: #2d3833; }
+    .callout { background: var(--deep); color: var(--white); padding: 28px 30px; border-left: 8px solid var(--lime); box-shadow: var(--shadow); font: 1.15rem/1.65 var(--serif); }
+    .callout strong { color: var(--lime); }
+
+    .metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 24px 0; }
+    .metric { background: rgba(255,253,246,.7); border: 1px solid var(--line); padding: 18px; min-height: 132px; }
+    .metric b { display: block; font: 700 2rem/1 var(--serif); color: var(--deep); margin-bottom: 12px; }
+    .metric small { display: block; color: var(--muted); font-size: .76rem; line-height: 1.5; }
+
+    .verdict-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px; }
+    .verdict { padding: 20px; border-top: 5px solid var(--green); background: rgba(255,253,246,.72); }
+    .verdict.warn { border-color: var(--amber); }
+    .verdict.risk { border-color: var(--red); }
+    .verdict b { display:block; margin-bottom: 7px; }
+    .verdict p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    .stack { display: grid; grid-template-columns: repeat(5, minmax(130px,1fr)); gap: 9px; margin: 28px 0; }
+    .stack-item { position: relative; padding: 18px 15px; min-height: 145px; color: var(--white); background: var(--deep); }
+    .stack-item:nth-child(even) { background: #275c4d; }
+    .stack-item::after { content: "→"; position: absolute; right: -13px; top: 50%; z-index: 2; color: var(--amber); font-weight: 900; }
+    .stack-item:last-child::after { display:none; }
+    .stack-item .n { color: var(--lime); font: 800 .68rem/1 var(--mono); }
+    .stack-item b { display: block; margin: 9px 0 5px; font-size: .95rem; }
+    .stack-item span { color: #cbd9d1; font-size: .78rem; line-height: 1.45; display:block; }
+
+    .filterbar { display:flex; flex-wrap:wrap; gap:8px; margin: 18px 0; }
+    button { cursor:pointer; border:1px solid var(--deep); background:transparent; color:var(--deep); border-radius:999px; padding:8px 13px; font:700 .74rem/1 var(--mono); }
+    button.active, button:hover { background:var(--deep); color:var(--white); }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    .card { background: rgba(255,253,246,.76); border: 1px solid var(--line); padding: 22px; position: relative; transition: opacity .2s, transform .2s; }
+    .card.hidden { display:none; }
+    .card .tag { display:inline-block; margin-bottom:12px; padding:5px 8px; color:var(--white); background:var(--green); font:800 .66rem/1 var(--mono); letter-spacing:.08em; }
+    .card[data-state="progress"] .tag { background: var(--amber); }
+    .card[data-state="risk"] .tag { background: var(--red); }
+    .card h3 { margin: 0 0 8px; }
+    .card p { margin: 7px 0; font-size: .91rem; color: #47504a; }
+    .card .evidence { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; color: var(--muted); font: .73rem/1.5 var(--mono); }
+
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .88rem; background: rgba(255,253,246,.65); }
+    th { background: var(--deep); color: var(--white); text-align:left; font:700 .72rem/1.3 var(--mono); letter-spacing:.04em; }
+    th,td { padding: 12px 13px; border:1px solid var(--line); vertical-align:top; }
+    tr:nth-child(even) td { background: rgba(22,60,50,.035); }
+    .good { color: var(--green); font-weight: 800; }
+    .caution { color: #9b5b12; font-weight: 800; }
+    .bad { color: var(--red); font-weight: 800; }
+    .note { padding: 14px 16px; background: rgba(214,138,45,.1); border-left: 4px solid var(--amber); color: #5b4b36; font-size: .85rem; }
+
+    .roadmap { border-left: 2px solid var(--line); margin: 25px 0 0 11px; }
+    .road { position:relative; margin: 0 0 18px 26px; padding: 0 0 10px; }
+    .road::before { content:""; position:absolute; left:-34px; top:7px; width:13px; height:13px; border-radius:50%; background:var(--paper); border:3px solid var(--amber); }
+    .road b { display:block; color:var(--deep); }
+    .road span { font-size:.87rem; color:var(--muted); }
+
+    .bars { margin: 22px 0; }
+    .bar-row { display:grid; grid-template-columns:160px 1fr 48px; align-items:center; gap:12px; margin:9px 0; font-size:.83rem; }
+    .track { height:9px; background:rgba(22,60,50,.1); overflow:hidden; }
+    .fill { height:100%; background:linear-gradient(90deg,var(--green),var(--lime)); transform-origin:left; animation:grow .9s ease-out both; }
+    @keyframes grow { from { transform:scaleX(0); } }
+
+    .ecosystem { display:grid; grid-template-columns:1.15fr .85fr; gap:14px; }
+    .panel { padding:22px; background:rgba(255,253,246,.74); border:1px solid var(--line); }
+    .panel h3 { margin-top:0; }
+    .channel-list { list-style:none; padding:0; margin:0; }
+    .channel-list li { display:grid; grid-template-columns:120px 1fr; gap:12px; padding:9px 0; border-bottom:1px solid rgba(95,103,95,.18); }
+    .channel-list b { color:var(--deep); }
+
+    .scorecard { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .score { background:var(--deep); color:var(--white); padding:20px; }
+    .score .score-num { font:700 2.2rem/1 var(--serif); color:var(--lime); }
+    .score b { display:block; margin:9px 0 5px; }
+    .score small { color:#c9d7d0; }
+
+    .recommendations { counter-reset: rec; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .rec { counter-increment:rec; padding:22px 22px 22px 64px; position:relative; background:rgba(255,253,246,.72); border:1px solid var(--line); }
+    .rec::before { content:counter(rec,decimal-leading-zero); position:absolute; left:18px; top:19px; color:var(--amber); font:800 1.1rem/1 var(--mono); }
+    .rec b { color:var(--deep); }
+
+    .sources { font-size:.84rem; }
+    .sources li { padding:6px 0; }
+    .sources code { white-space:normal; }
+    .method { color:var(--muted); font-size:.84rem; }
+    sup a { text-decoration:none; font:700 .65rem/1 var(--mono); }
+    footer { background:var(--deep); color:#cad8d0; padding:28px 56px; font: .74rem/1.6 var(--mono); }
+
+    @media (max-width: 1050px) {
+      .layout { grid-template-columns: 1fr; padding:34px 28px 80px; }
+      nav { position:static; display:none; }
+      .metrics,.scorecard { grid-template-columns:repeat(2,1fr); }
+      .stack { grid-template-columns:1fr; }
+      .stack-item::after { content:"↓"; right:50%; top:auto; bottom:-19px; }
+      .hero { padding:54px 28px; }
+    }
+    @media (max-width: 680px) {
+      header { min-height:auto; }
+      h1 { font-size:3.15rem; }
+      .cards,.ecosystem,.recommendations,.metrics,.scorecard { grid-template-columns:1fr; }
+      .bar-row { grid-template-columns:110px 1fr 38px; }
+      table { display:block; overflow-x:auto; }
+    }
+    @media print {
+      body { background:white; color:black; }
+      header { min-height:auto; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+      .layout { display:block; padding:28px; }
+      nav,.filterbar { display:none; }
+      section { break-inside:auto; }
+      .card,.panel,.score,.metric,.rec { break-inside:avoid; }
+      a { color:inherit; text-decoration:none; }
+      a::after { content:""; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell hero">
+      <div class="eyebrow">Framework intelligence brief · 2026.08</div>
+      <h1>LightX2V<br>优化与社区全景</h1>
+      <p class="hero-lead">它不是单一的“视频推理加速器”，而是一条覆盖模型压缩、算子、并行、内存、调度和异构硬件的垂直优化栈。真正的竞争力来自组合能力与快速适配；主要短板则是公开基准、版本治理与组合兼容性尚未追上扩张速度。</p>
+      <div class="hero-meta">
+        <span class="pill">代码快照 origin/main · afcfe8f1 · 2026-08-20</span>
+        <span class="pill">研究日期 · 2026-08-21</span>
+        <span class="pill">Apache-2.0</span>
+        <span class="pill">本地代码 + GitHub/HF/官方博客交叉验证</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell layout">
+    <nav aria-label="报告目录">
+      <div class="nav-title">CONTENTS</div>
+      <a href="#summary">01 · 执行摘要</a>
+      <a href="#stack">02 · 优化技术栈</a>
+      <a href="#evidence">03 · 性能证据</a>
+      <a href="#progress">04 · 正在推进</a>
+      <a href="#organization">05 · 组织与社区</a>
+      <a href="#contributors">06 · 核心贡献者</a>
+      <a href="#maturity">07 · 成熟度与风险</a>
+      <a href="#recommend">08 · 对 Ascend 的建议</a>
+      <a href="#sources">09 · 方法与来源</a>
+      <div class="stamp">事实、项目方声明与分析判断分层呈现。PR 代表“正在评审/尝试”，不等于正式路线图承诺。</div>
+    </nav>
+
+    <main>
+      <section id="summary">
+        <span class="section-kicker">01 / Executive read</span>
+        <h2>执行摘要</h2>
+        <div class="callout"><strong>核心判断：</strong>LightX2V 的护城河是把“少算、低精度算、并行算、搬着算、拆开算”统一到一套快速跟进新模型与新芯片的工程框架中。它已经是高活跃的实用型开源项目，但还不是证据体系、稳定版本和治理机制都成熟的基础设施产品。</div>
+
+        <div class="metrics">
+          <div class="metric"><b>1,413</b><small><code>origin/main</code> 提交数；首个提交为 2025-03-24。</small></div>
+          <div class="metric"><b>2,703</b><small>GitHub stars；另有 257 forks。数据取自 2026-08-21 GitHub API。</small></div>
+          <div class="metric"><b>25 / 163</b><small>打开的 PR / Issues；显示出高吞吐开发，也意味着维护压力。</small></div>
+          <div class="metric"><b>37</b><small>Hugging Face 组织页列出的模型仓库；约 2,440 followers。</small></div>
+        </div>
+
+        <div class="verdict-grid">
+          <div class="verdict"><b>最强项 · 垂直协同</b><p>4 步蒸馏、FP8/NVFP4、稀疏注意力、Ulysses/CFG 并行、offload 可叠加，收益跨越算法到系统。</p></div>
+          <div class="verdict warn"><b>当前焦点 · 异构与 VAE</b><p>MiniMax-H3 VAE 并行/tiling，Ascend/MetaX/MUSA/XPU 后端，以及 Blackwell 稀疏和 NVFP4 正密集推进。</p></div>
+          <div class="verdict risk"><b>主要风险 · 证据与治理</b><p>主 benchmark 日期较旧，缺少独立复现；包仍为 0.1.0、无 tag、CI 仅 lint，功能扩张快于稳定性机制。</p></div>
+        </div>
+
+        <h3>一句话定位</h3>
+        <p class="lede">LightX2V 更像“视觉生成推理的实验室到部署桥梁”：上游承接 Wan、Hunyuan、LTX、Qwen、MiniMax 等模型，下游对接 NVIDIA 与十类非 NVIDIA 后端，同时把自家蒸馏/量化权重、推理框架、服务、训练和机器人闭环放入同一生态。它与 Diffusers 的通用易用性路线不同，也不只是 xDiT/FastVideo 一类并行执行器。</p>
+      </section>
+
+      <section id="stack">
+        <span class="section-kicker">02 / Optimization stack</span>
+        <h2>优化技术栈</h2>
+        <p class="lede">从端到端耗时看，LightX2V 的优化可以拆成五层。越靠左越接近“减少工作量”，越靠右越接近“让系统更容易部署和扩展”。</p>
+        <div class="stack" role="img" aria-label="LightX2V 五层优化栈">
+          <div class="stack-item"><span class="n">L1 · ALGORITHM</span><b>少算</b><span>步数/CFG 蒸馏、特征缓存、动态分辨率、稀疏注意力</span></div>
+          <div class="stack-item"><span class="n">L2 · NUMERIC</span><b>低精度算</b><span>INT8、FP8、NVFP4、MX 格式，覆盖 DiT/编码器/VAE/KV</span></div>
+          <div class="stack-item"><span class="n">L3 · EXECUTION</span><b>更快地算</b><span>Flash/Sage/FA4、Triton/CUDA/SYCL kernels、compile、warmup、CUDA Graph</span></div>
+          <div class="stack-item"><span class="n">L4 · SCALE</span><b>并行算</b><span>Ulysses、Ring、CFG、TP、混合并行、VAE tile parallel</span></div>
+          <div class="stack-item"><span class="n">L5 · SYSTEM</span><b>搬着 / 拆开算</b><span>model/block/phase offload、磁盘 lazy load、三阶段分离部署、异构后端</span></div>
+        </div>
+
+        <div class="filterbar" aria-label="优化卡片筛选">
+          <button class="active" data-filter="all">全部</button>
+          <button data-filter="landed">已落地</button>
+          <button data-filter="progress">在推进</button>
+          <button data-filter="risk">边界 / 风险</button>
+        </div>
+        <div class="cards" id="optCards">
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>步数蒸馏 + CFG 蒸馏</h3><p>把原始 40–50 步压缩到 4 步并关闭 CFG。官方教程称约 20–24×，且可与 INT8/FP8 量化结合。权重覆盖 Wan、HunyuanVideo、Qwen-Image、LingBot-Video、MiniMax-H3 等。</p><div class="evidence">证据：step_distill.md、README、Hugging Face 模型组织页 <sup><a href="#s1">S1</a></sup><sup><a href="#s5">S5</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>模型与激活量化</h3><p>公开文档列出 W8A8 INT8/FP8、INT4 Marlin、FP8 block、W4A4 NVFP4 等路径，后端包括 vLLM、SGLang、Q8、TorchAO、DeepGEMM；代码还包含 MXFP4/6/8 与 NVFP4 kernel。</p><div class="evidence">证据：quantization.md、lightx2v_kernel 源码 <sup><a href="#s2">S2</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>计算跳过与稀疏化</h3><p>TeaCache、TaylorSeer、AdaCache、CustomCache 复用相邻去噪步特征；Radial/Sparge 等稀疏注意力减少 token 交互。官方单项示例给出 TeaCache 3.24×、CustomCache 3.49×。</p><div class="evidence">证据：cache_source.md、attention.md；数值为项目自测 <sup><a href="#s3">S3</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>高性能执行与内核</h3><p>集成 Flash Attention 2/3、Sage Attention 2、Radial、Sparge，并维护独立 <code>lightx2v_kernel</code>。近期 main 还持续加入 compile/warmup、FP8 VAE/encoder、RoPE/RMSNorm 与 SYCL FMHA。</p><div class="evidence">证据：attention.md、最近 30 个 main 提交 <sup><a href="#s1">S1</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>多维并行</h3><p>DiT 侧支持 Ulysses 与 Ring 序列并行、CFG 并行和混合并行；新模型又扩展 TP/SP。视频“长序列、小 batch”使序列切分比传统数据并行更自然。</p><div class="evidence">证据：parallel.md、官方并行机制博客 <sup><a href="#s4">S4</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>分层 Offload</h3><p>模型级、block 级、phase 级 CPU↔GPU offload，并支持磁盘/NVMe lazy load、异步预取和双缓冲。目标是让 14B 模型进入 8GB VRAM + 16/32GB RAM 环境。</p><div class="evidence">证据：低资源部署指南、官方 Offload 博客 <sup><a href="#s6">S6</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>分离部署</h3><p>把 Encoder、Transformer/DiT、Decoder 拆为三类服务，通过 Mooncake RDMA 传输，并引入去中心化队列调度，解决各阶段显存占用与吞吐不均。</p><div class="evidence">证据：disagg 代码/配置、LightX2V × Mooncake 博客 <sup><a href="#s7">S7</a></sup></div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>VAE 与内存峰值优化</h3><p>已有 VAE tiling、轻量 TAE、FP8 VAE、分块解码和并行解码。VAE 不再被视为“尾部小模块”，在原生音视频和高分辨率工作负载中已成为独立优化对象。</p><div class="evidence">证据：低延迟/低资源文档，MiniMax-H3 近期提交</div></article>
+          <article class="card" data-state="landed"><span class="tag">已落地</span><h3>十类非 NVIDIA 后端</h3><p><code>lightx2v_platform</code> 将设备与算子适配从上层 runner 解耦。文档列出 MLU、MetaX、DCU、Ascend、ROCm、MUSA、GCU、Intel PTL、Iluvatar、PPU。</p><div class="evidence">证据：lightx2v_platform/README_zh.md <sup><a href="#s8">S8</a></sup></div></article>
+          <article class="card" data-state="risk"><span class="tag">边界</span><h3>组合并非完全正交</h3><p>官方低延迟文档明确说明“一部分加速方案目前无法结合使用”。因此理论上的乘法收益不能直接相乘；每个模型、硬件、分辨率与精度组合都需要单独验证。</p><div class="evidence">证据：for_low_latency.md <sup><a href="#s9">S9</a></sup></div></article>
+        </div>
+      </section>
+
+      <section id="evidence">
+        <span class="section-kicker">03 / Performance evidence</span>
+        <h2>性能证据：强，但不完整</h2>
+        <p class="lede">公开数据能证明 LightX2V 在特定 Wan2.1 配置上有明显优势，却还不能证明所有模型、所有后端都保持同等领先。应把“框架基准”“单项优化”和“组合模型宣传”分开阅读。</p>
+        <table>
+          <thead><tr><th>证据</th><th>硬件 / 任务</th><th>结果</th><th>可信度判断</th></tr></thead>
+          <tbody>
+            <tr><td>框架单卡对比</td><td>H100；Wan2.1-I2V-14B 480P，40 steps，81 frames</td><td>5.18 s/it；相对 Diffusers 9.77 s/it 为 <span class="good">1.9×</span></td><td><span class="caution">中</span>：配置明确，但为项目方自测，更新于 2025-12-01。</td></tr>
+            <tr><td>框架 8 卡对比</td><td>同任务，8×H100</td><td>0.75 s/it；相对 FastVideo 2.94 s/it 为 <span class="good">3.9×</span></td><td><span class="caution">中</span>：竞品版本、kernel 与完整复现环境未在表内给出。</td></tr>
+            <tr><td>消费卡适配</td><td>RTX 4090D，单卡 / 8 卡</td><td>20.26 / 4.75 s/it；表中 xDiT、SGL-Diffusion OOM</td><td><span class="caution">中</span>：显示显存工程优势，但 OOM 对配置高度敏感。</td></tr>
+            <tr><td>4 步蒸馏</td><td>原始 40–50 步 → 4 步，无 CFG</td><td>教程称 <span class="good">约 20–24×</span></td><td><span class="caution">中</span>：主要收益来自模型改变；需单独评估动态范围与质量退化。</td></tr>
+            <tr><td>Wan2.2 NVFP4 Sparse</td><td>单张 RTX 5090</td><td>项目称 <span class="good">超过 50×</span></td><td><span class="caution">中偏低</span>：蒸馏、量化、稀疏的组合结果，不等同于纯框架加速。</td></tr>
+            <tr><td>缓存单项</td><td>项目文档中的特定 H200/模型样例</td><td>TeaCache 3.24×；CustomCache 3.49×；AdaCache 2.73×</td><td><span class="caution">中偏低</span>：视觉质量主要靠样例展示，缺少统一自动指标。</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><b>解读原则：</b>“40→4 步”本身理论上是 10–12.5 倍去噪步数缩减；项目给出的 20–24×还包含去掉 CFG 等收益。不要把它再与表内 FP8、缓存、并行倍率机械相乘。官方也承认部分方案尚不能组合。</div>
+      </section>
+
+      <section id="progress">
+        <span class="section-kicker">04 / Work in progress</span>
+        <h2>正在做哪些优化</h2>
+        <p class="lede">仓库没有一份正式 roadmap。以下是 2026-08-21 的 25 个打开 PR 与远端开发分支反映出的“事实上的路线图”。它们是正在评审或试验的工作，不保证合并。</p>
+        <div class="roadmap">
+          <div class="road"><b>MiniMax-H3：VAE 负载均衡、时空 tile 并行、激进 tile shape</b><span>PR #1394、#1398；目标是降低高分辨率音视频解码尾部延迟，并让 VAE 真正扩展到多卡。</span></div>
+          <div class="road"><b>Ascend：稀疏 FA / NPU 融合算子 + NeoPP dense/MoE 重构</b><span>PR #1159、#1301、#1396；方向从“能运行”升级到稀疏化、融合和统一的 MoE backend。</span></div>
+          <div class="road"><b>Blackwell / RTX 5090：SOL Attention、FA4、split-N NVFP4</b><span>PR #1385、#1344；围绕 SM120 的注意力与低精度 FFN 形状继续做专用内核。</span></div>
+          <div class="road"><b>并行通信：Ulysses FP8 预量化、multi-micro hybrid、PipeFusion</b><span>PR #1304、#1350、#1268；重点从“支持并行”进入通信量、微批调度与模型适配。</span></div>
+          <div class="road"><b>MetaX：分布式 encoder/decoder 与 offload</b><span>PR #1342 声称 Flux2 TP8 pipeline 53.99s→20.23s；#1341 声称 Qwen-Image 52.76s→21.68s，尚待合并与复现。</span></div>
+          <div class="road"><b>内存路径：mmap host registration 与 pinned weight</b><span>PR #1206；希望降低 offload 固定页内存管理和复制路径开销。</span></div>
+          <div class="road"><b>训练与具身：lightx2v_train 大重构、FastWAM 评测、OpenPI/LIBERO</b><span>PR #1325、#1311、#1401；项目边界已从纯视觉推理扩展到训练和 action-generating world model。</span></div>
+        </div>
+        <h3>最近已合并，值得继续观察</h3>
+        <p>截至 8 月 20 日，main 已合并 SwiftVR compile/warmup、MiniMax-H3 XPU block offload 与 RoPE/RMSNorm/SYCL FMHA、Ascend/MetaX fused MoE backend、MUSA FP8、MiniMax-H3 VAE 优化、LTX-2.5 与 Wan-Animate-2。这说明开发节奏以“新模型 Day-0/快速适配 + 随后补齐性能路径”为主。</p>
+      </section>
+
+      <section id="organization">
+        <span class="section-kicker">05 / Organization & community</span>
+        <h2>组织与社区背景</h2>
+        <div class="ecosystem">
+          <div class="panel">
+            <h3>ModelTC：模型压缩与推理部署项目群</h3>
+            <p>LightX2V 托管于 GitHub 的 <a href="https://github.com/ModelTC">ModelTC</a> 组织。其置顶项目组合包含 LightLLM、LightCompress、MQBench、Qwen-Image/Wan Lightning，呈现出清晰的“压缩 → kernel/框架 → 模型权重 → 在线体验”技术谱系。Hugging Face 组织页自述为 <em>Model-ToolChain team</em>，关注模型压缩与 AI 模型推理部署。<sup><a href="#s10">S10</a></sup></p>
+            <p><b>需要谨慎：</b>GitHub 组织没有公开成员列表，项目也没有在公开主页给出法人或正式公司归属。提交历史中确有部分 <code>@sensetime.com</code> 邮箱，但这只能证明个别提交身份，<b>不能据此断言项目由商汤所有或官方运营</b>。</p>
+          </div>
+          <div class="panel">
+            <h3>生态触点</h3>
+            <ul class="channel-list">
+              <li><b>代码</b><span>GitHub：Apache-2.0，PR/Issue 驱动</span></li>
+              <li><b>权重</b><span>Hugging Face：37 个模型仓库</span></li>
+              <li><b>文档</b><span>中英文 ReadTheDocs + papers 索引</span></li>
+              <li><b>传播</b><span>LightX2V Blog：offload、并行、分离部署、平台适配</span></li>
+              <li><b>产品</b><span>LightX2V Studio 在线体验与 OpenAPI/CLI/skills</span></li>
+              <li><b>社群</b><span>README 公布微信群入口</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>社区结构判断</h3>
+        <table>
+          <thead><tr><th>维度</th><th>观察</th><th>判断</th></tr></thead>
+          <tbody>
+            <tr><td>项目活跃度</td><td>18 个月 1,413 commits；2026 年 6/7/8 月分别 79/81/65 commits（8 月仅统计至 20 日）。</td><td class="good">很高</td></tr>
+            <tr><td>外部参与</td><td>GitHub API 返回 63 个贡献者记录；README 单列 10 名社区开发者；芯片厂商工程师持续贡献后端。</td><td class="good">较强</td></tr>
+            <tr><td>维护集中度</td><td>历史贡献由 helloyongyang 与 gushiqiao 显著领先，近期则扩展到 Watebear、zhangbilang、STwangyingrui、qiuxin2012。</td><td class="caution">核心集中、边缘扩展</td></tr>
+            <tr><td>治理透明度</td><td>有格式化指南与 issue 模板，但无公开 maintainer 名单、治理章程、roadmap 或 release cadence。</td><td class="bad">偏弱</td></tr>
+            <tr><td>厂商协作</td><td>Intel、Mooncake 与多家国产芯片团队出现在提交、PR 或官方致谢中。</td><td class="good">突出优势</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="contributors">
+        <span class="section-kicker">06 / Core contributors</span>
+        <h2>核心贡献者</h2>
+        <p class="lede">“核心”按 GitHub contributor API 的历史贡献量、最近 90 天提交活跃度、负责模块和评审身份综合判断。提交数会受 squash/merge、邮箱别名和匿名提交影响，不等同于代码行数或影响力。</p>
+        <div class="bars" aria-label="主要贡献者历史贡献量">
+          <div class="bar-row"><span>helloyongyang</span><div class="track"><div class="fill" style="width:100%"></div></div><b>393</b></div>
+          <div class="bar-row"><span>gushiqiao</span><div class="track"><div class="fill" style="width:86%"></div></div><b>338</b></div>
+          <div class="bar-row"><span>wangshankun</span><div class="track"><div class="fill" style="width:24%"></div></div><b>94</b></div>
+          <div class="bar-row"><span>GACLove</span><div class="track"><div class="fill" style="width:16%"></div></div><b>64</b></div>
+          <div class="bar-row"><span>GoatWu</span><div class="track"><div class="fill" style="width:14%"></div></div><b>56</b></div>
+          <div class="bar-row"><span>Watebear</span><div class="track"><div class="fill" style="width:13%"></div></div><b>51</b></div>
+          <div class="bar-row"><span>Musisoul</span><div class="track"><div class="fill" style="width:9%"></div></div><b>37</b></div>
+          <div class="bar-row"><span>zhangbilang</span><div class="track"><div class="fill" style="width:8%"></div></div><b>31</b></div>
+        </div>
+        <table>
+          <thead><tr><th>贡献者</th><th>可观察角色 / 领域</th><th>为什么属于核心</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://github.com/helloyongyang">Yang Yong / helloyongyang</a></td><td>创始提交者；核心框架、配置、MUSA、训练/机器人方向</td><td>首个 commit 作者；API 393 次贡献，历史第一；最近仍持续合并平台与 CI 工作。</td></tr>
+            <tr><td><a href="https://github.com/gushiqiao">Shiqiao Gu / gushiqiao</a></td><td>模型接入、配置、发布与项目协调</td><td>API 338 次贡献；最近 90 天约 46 commits，主导 MiniMax-H3、LTX、InfiniteTalk 等快速接入。</td></tr>
+            <tr><td><a href="https://github.com/wangshankun">Shankun Wang / wangshankun</a></td><td>训练、cache、offload、Flux、SOL attention</td><td>API 94 次贡献；历史第三，工作跨推理优化与训练方法。</td></tr>
+            <tr><td><a href="https://github.com/GACLove">Peng Gao / GACLove</a></td><td>服务与 pipeline、lazy load、音视频分段处理</td><td>API 64 次贡献；承担较多基础可用性和内存路径工作。</td></tr>
+            <tr><td><a href="https://github.com/GoatWu">Zhuguanyu Wu / GoatWu</a></td><td>蒸馏训练、scheduler、checkpoint/LoRA 工具</td><td>API 56 次贡献；连接“训练出加速模型”与推理框架。</td></tr>
+            <tr><td><a href="https://github.com/Watebear">Watebear</a></td><td>Ascend/MetaX/MLU/MUSA 等平台与 MoE/并行优化</td><td>API 51 次贡献；最近 90 天约 27 commits，且为多个在研 PR 的 collaborator。</td></tr>
+            <tr><td><a href="https://github.com/zhangbilang">Bilang ZHANG / zhangbilang</a></td><td>compile/warmup、VAE/encoder FP8、MiniMax-H3、SwiftVR</td><td>历史 31 次、最近 90 天约 27 commits；是当前性能工程的高活跃贡献者。</td></tr>
+            <tr><td><a href="https://github.com/STwangyingrui">STwangyingrui</a></td><td>VAE 并行、Ulysses、MoE、NVFP4/FA4、profiling</td><td>API 28 次贡献；近期主导多项并行和 kernel 性能 PR。</td></tr>
+            <tr><td><a href="https://github.com/qiuxin2012">Xin Qiu / qiuxin2012</a></td><td>Intel XPU/SYCL、SP/TP、block offload、RoPE/RMSNorm</td><td>虽历史计数较低，但 8 月密集提交，代表社区向 Intel 平台扩张的新核心。</td></tr>
+          </tbody>
+        </table>
+        <div class="note">身份归并说明：Git 历史中同一人可能使用多个名字/邮箱，例如 Yang Yong 与 helloyongyang、Shiqiao Gu 与 gushiqiao。上表优先采用 GitHub API 的账号聚合结果，并以本地 git log 补充近期领域；没有把匿名的 65 次 <code>gushiqiao</code> 记录强行并入账号数。</div>
+      </section>
+
+      <section id="maturity">
+        <span class="section-kicker">07 / Maturity & risks</span>
+        <h2>成熟度与风险</h2>
+        <div class="scorecard">
+          <div class="score"><div class="score-num">9.0</div><b>优化广度</b><small>算法、数值、kernel、并行、内存、调度、硬件全覆盖。</small></div>
+          <div class="score"><div class="score-num">8.5</div><b>迭代速度</b><small>新模型与新芯片适配快，2026 年仍保持高提交频率。</small></div>
+          <div class="score"><div class="score-num">8.0</div><b>异构能力</b><small>十类非 NVIDIA 后端，接口层已独立。</small></div>
+          <div class="score"><div class="score-num">6.0</div><b>性能证据</b><small>有数字，但主基准偏旧且缺少第三方复现矩阵。</small></div>
+          <div class="score"><div class="score-num">5.5</div><b>工程治理</b><small>0.1.0、无 tags；一个 lint workflow、32 个测试文件。</small></div>
+          <div class="score"><div class="score-num">5.0</div><b>API 稳定性</b><small>大规模重构与快速适配并行，兼容性成本较高。</small></div>
+        </div>
+        <h3>需要特别关注的信号</h3>
+        <table>
+          <thead><tr><th>信号</th><th>本次快照观察</th><th>影响</th></tr></thead>
+          <tbody>
+            <tr><td>版本与发布</td><td><code>pyproject.toml</code> 为 0.1.0；仓库无 Git tag。</td><td>难以固定稳定版本与安全回滚点，建议按 commit SHA 锁定。</td></tr>
+            <tr><td>CI / 测试</td><td>仅 1 个 GitHub workflow（lint）；仓库可见 32 个 test 文件。</td><td>跨 10+ 硬件后端的回归很可能依赖线下环境，公开可验证性有限。</td></tr>
+            <tr><td>代码债</td><td>核心目录扫描到 38 处 TODO/FIXME；分离部署文档仍含内部绝对路径示例。</td><td>说明部分路径仍在产品化过程中。</td></tr>
+            <tr><td>基准时效</td><td>README 主性能表更新于 2025-12-01，而模型和后端已快速变化。</td><td>不能用旧表代表 MiniMax-H3、LTX-2.5 或 Ascend 当前水平。</td></tr>
+            <tr><td>组合兼容性</td><td>官方明确承认部分加速方案无法组合。</td><td>配置空间大，需要建立按模型/硬件的验证矩阵。</td></tr>
+            <tr><td>本地同步</td><td>研究开始时本地 main 比 <code>origin/main</code> 落后 30 commits；本报告已 fetch 并基于远端 SHA 分析，未改动工作树。</td><td>后续复现应明确使用本地旧 SHA 还是报告快照 SHA。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="recommend">
+        <span class="section-kicker">08 / AscendPlayground implications</span>
+        <h2>对 Ascend 评估的建议</h2>
+        <div class="recommendations">
+          <div class="rec"><b>按 commit 固定基线。</b><br>建议先以 <code>afcfe8f1</code> 为通用基线，再单独拉取 #1301/#1396 验证 Ascend sparse 与 NeoPP/MoE；不要直接跟随浮动 main。</div>
+          <div class="rec"><b>把优化拆成可归因实验。</b><br>依次测 eager BF16 → fused ops → FP8/INT8 → SP/TP → sparse → offload；每一步记录延迟、峰值内存和质量，避免组合倍率失真。</div>
+          <div class="rec"><b>优先验证“模型 × 算子 × 并行”三维矩阵。</b><br>至少覆盖 Wan2.2、MiniMax-H3/NeoPP，单卡与 2/4/8 卡，dense 与 sparse；同时核对 NPU kernel fallback。</div>
+          <div class="rec"><b>端到端测量 VAE 和数据搬运。</b><br>DiT 变快后，VAE、encoder、CPU↔NPU copy、视频编码会成为新瓶颈。报告应同时给出阶段耗时，而非只报 s/it。</div>
+          <div class="rec"><b>把质量门槛纳入性能门槛。</b><br>蒸馏、cache、稀疏和量化都会改变输出。固定 seed/prompt，至少保存 VBench/CLIP 类指标和人工 A/B，而不是只比较速度。</div>
+          <div class="rec"><b>关注上游合并后的维护性。</b><br>Ascend 代码正处于 dense、sparse、MoE backend 重构期；应优先贡献可复现 benchmark、单元测试和配置校验，降低长期 fork 成本。</div>
+        </div>
+      </section>
+
+      <section id="sources">
+        <span class="section-kicker">09 / Method & sources</span>
+        <h2>方法与来源</h2>
+        <p class="method"><b>证据层级：</b>A = 代码/提交/官方 API；B = 项目官方文档或博客；C = 项目方自测性能；D = 本报告基于公开行为的分析判断。研究先读取本地仓库，再 fetch 远端 refs（不修改工作树），并以 GitHub/Hugging Face/官方博客交叉核对。公开动态截至 2026-08-21。AutoGLM DeepResearch 本地 token 服务返回 502，故外部深读改用公开网页与 GitHub API完成。</p>
+        <ol class="sources">
+          <li id="s1"><a href="https://github.com/ModelTC/LightX2V">LightX2V GitHub 仓库主页与 README</a>；代码快照 <a href="https://github.com/ModelTC/LightX2V/tree/afcfe8f1">afcfe8f1</a>。</li>
+          <li id="s2"><a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/method_tutorials/quantization.md">模型量化技术</a> 与 <a href="https://github.com/ModelTC/LightX2V/tree/afcfe8f1/lightx2v_kernel">lightx2v_kernel</a>。</li>
+          <li id="s3"><a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/method_tutorials/cache_source.md">特征缓存文档</a>；<a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/method_tutorials/attention.md">注意力机制文档</a>。</li>
+          <li id="s4"><a href="https://light-ai.top/LightX2V-BLOG/posts/Parallel/">LightX2V 并行机制</a> 与 <a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/method_tutorials/parallel.md">并行推理文档</a>。</li>
+          <li id="s5"><a href="https://huggingface.co/lightx2v/models">LightX2V Hugging Face 组织与模型列表</a>。</li>
+          <li id="s6"><a href="https://light-ai.top/LightX2V-BLOG/posts/Offload/">LightX2V Offload 设计</a>；<a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/deploy_guides/for_low_resource.md">低资源部署指南</a>。</li>
+          <li id="s7"><a href="https://light-ai.top/LightX2V-BLOG/posts/Disaggregation/">LightX2V × Mooncake 分离部署</a> 与 <a href="https://github.com/ModelTC/LightX2V/tree/afcfe8f1/lightx2v/disagg">disagg 实现</a>。</li>
+          <li id="s8"><a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/lightx2v_platform/README_zh.md">lightx2v_platform 多平台后端说明</a>；<a href="https://light-ai.top/LightX2V-BLOG/posts/LightX2VPlatform/">多平台设计博客</a>。</li>
+          <li id="s9"><a href="https://github.com/ModelTC/LightX2V/blob/afcfe8f1/docs/ZH_CN/source/deploy_guides/for_low_latency.md">低延迟部署指南</a>。</li>
+          <li id="s10"><a href="https://github.com/ModelTC">ModelTC GitHub 组织</a>；<a href="https://api.github.com/repos/ModelTC/LightX2V">GitHub Repository API</a>；<a href="https://api.github.com/repos/ModelTC/LightX2V/contributors?per_page=100&amp;anon=1">Contributors API</a>；<a href="https://github.com/ModelTC/LightX2V/pulls">打开的 PR 列表</a>。</li>
+        </ol>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="shell">LightX2V optimization & community brief · Generated for AscendPlayground · Snapshot 2026-08-21 · Claims from project benchmarks are explicitly labeled and should be independently reproduced before procurement or production decisions.</div>
+  </footer>
+
+  <script>
+    const buttons = document.querySelectorAll('[data-filter]');
+    const cards = document.querySelectorAll('#optCards .card');
+    buttons.forEach(button => button.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      const filter = button.dataset.filter;
+      cards.forEach(card => card.classList.toggle('hidden', filter !== 'all' && card.dataset.state !== filter));
+    }));
+  </script>
+</body>
+</html>
