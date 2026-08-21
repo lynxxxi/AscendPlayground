@@ -138,6 +138,13 @@
     .road::before { content:""; position:absolute; left:-34px; top:7px; width:13px; height:13px; border-radius:50%; background:var(--paper); border:3px solid var(--amber); }
     .road b { display:block; color:var(--deep); }
     .road span { font-size:.87rem; color:var(--muted); }
+    .plain-note { margin-top:9px; padding:12px 14px; background:rgba(255,253,246,.78); border-left:4px solid var(--green); color:#39433e; font-size:.86rem; }
+    .plain-note strong { color:var(--green); }
+    .plain-note em { color:#8f5414; font-style:normal; font-weight:700; }
+    .plain-note ul { margin:7px 0 0; padding-left:19px; }
+    .plain-note li { margin:4px 0; }
+    .term { font-family:var(--mono); font-size:.78rem; color:var(--deep); background:rgba(191,214,87,.22); padding:2px 5px; border-radius:3px; }
+    .scope-note { margin:18px 0 24px; padding:16px 18px; background:rgba(57,114,141,.09); border-left:5px solid var(--blue); font-size:.9rem; }
 
     .bars { margin: 22px 0; }
     .bar-row { display:grid; grid-template-columns:160px 1fr 48px; align-items:center; gap:12px; margin:9px 0; font-size:.83rem; }
@@ -304,14 +311,58 @@
         <span class="section-kicker">04 / Work in progress</span>
         <h2>正在做哪些优化</h2>
         <p class="lede">仓库没有一份正式 roadmap。以下是 2026-08-21 的 25 个打开 PR 与远端开发分支反映出的“事实上的路线图”。它们是正在评审或试验的工作，不保证合并。</p>
+        <div class="scope-note"><b>先说结论：</b>下面 7 组工作不是同一层面的优化。第 1–6 组主要解决“算得慢、显存不够、多卡闲置、数据搬运贵”；第 7 组主要扩展训练与机器人评测能力，属于工程能力建设，不能直接理解为推理速度提升。所有列出的 PR 在本报告更新时仍为 <b>Open、非 Draft、未合并</b>。</div>
         <div class="roadmap">
-          <div class="road"><b>MiniMax-H3：VAE 负载均衡、时空 tile 并行、激进 tile shape</b><span>PR #1394、#1398；目标是降低高分辨率音视频解码尾部延迟，并让 VAE 真正扩展到多卡。</span></div>
-          <div class="road"><b>Ascend：稀疏 FA / NPU 融合算子 + NeoPP dense/MoE 重构</b><span>PR #1159、#1301、#1396；方向从“能运行”升级到稀疏化、融合和统一的 MoE backend。</span></div>
-          <div class="road"><b>Blackwell / RTX 5090：SOL Attention、FA4、split-N NVFP4</b><span>PR #1385、#1344；围绕 SM120 的注意力与低精度 FFN 形状继续做专用内核。</span></div>
-          <div class="road"><b>并行通信：Ulysses FP8 预量化、multi-micro hybrid、PipeFusion</b><span>PR #1304、#1350、#1268；重点从“支持并行”进入通信量、微批调度与模型适配。</span></div>
-          <div class="road"><b>MetaX：分布式 encoder/decoder 与 offload</b><span>PR #1342 声称 Flux2 TP8 pipeline 53.99s→20.23s；#1341 声称 Qwen-Image 52.76s→21.68s，尚待合并与复现。</span></div>
-          <div class="road"><b>内存路径：mmap host registration 与 pinned weight</b><span>PR #1206；希望降低 offload 固定页内存管理和复制路径开销。</span></div>
-          <div class="road"><b>训练与具身：lightx2v_train 大重构、FastWAM 评测、OpenPI/LIBERO</b><span>PR #1325、#1311、#1401；项目边界已从纯视觉推理扩展到训练和 action-generating world model。</span></div>
+          <div class="road">
+            <b>MiniMax-H3：VAE 负载均衡、时空 tile 并行、激进 tile shape</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1394">PR #1394</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1398">#1398</a>；目标是降低高分辨率音视频解码尾部延迟，并让 VAE 真正扩展到多卡。</span>
+            <div class="plain-note"><strong>简单说：</strong>VAE 是最后把“压缩的潜变量”还原成真正视频帧的模块。现在把一段视频切成许多时间块和画面块，再像分快递一样动态分给多张卡；做完任务的卡可以继续拿新块，避免有人忙、有人等。#1394 的项目自测显示，8 卡任务利用率在 5 秒视频上由 87.5% 提升到 98.0%，15 秒视频达到 99.3%。#1398 则为横屏 768p/544p 使用更大的解码块，以减少切块和拼接开销。<br><em>注意：</em>块越大通常越快、也越吃显存，并可能改变接缝处画质，因此“激进尺寸”只对已验证的横屏分辨率开放；它优化的是解码阶段，不会让 DiT 去噪本身变快。</div>
+          </div>
+          <div class="road">
+            <b>Ascend：稀疏 FA / NPU 融合算子 + NeoPP dense/MoE 重构</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1159">PR #1159</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1301">#1301</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1396">#1396</a>；方向从“能运行”升级到稀疏化、融合和统一的 MoE backend。</span>
+            <div class="plain-note"><strong>简单说：</strong>这是在把原来偏通用、可能回退到普通 PyTorch 的计算，换成 Ascend NPU 更擅长的原生路径。
+              <ul>
+                <li><span class="term">稀疏 FA</span>：注意力不再让所有 token 两两计算，只计算筛选后的重要关系，减少主要计算量。</li>
+                <li><span class="term">融合算子</span>：把 LayerNorm、RMSNorm、RoPE 等步骤交给 NPU 专用算子，减少反复读写显存和大量小算子启动。</li>
+                <li><span class="term">dense / MoE 重构</span>：dense 模型每层都算全部参数；MoE 每次只调用部分“专家”。重构是让两类模型共用清晰的后端接口与配置，减少重复代码和错误分支。</li>
+              </ul><em>为什么重要：</em>这组工作决定 Ascend 是“兼容运行”还是“真正吃到硬件性能”。<em>注意：</em>收益依赖具体模型、CANN/torch_npu 版本和是否全程命中 NPU kernel；若中途回退或频繁转格式，理论收益会被抵消。</div>
+          </div>
+          <div class="road">
+            <b>Blackwell / RTX 5090 / Thor：SOL Attention、FA4、split-N NVFP4</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1385">PR #1385</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1344">#1344</a>；围绕 SM120/SM110a 的注意力与低精度 FFN 形状继续做专用内核。</span>
+            <div class="plain-note"><strong>简单说：</strong>新一代 NVIDIA 芯片支持更快的 4-bit 浮点计算，但旧 kernel 不一定能把硬件喂饱。这两项是在为新架构重写“最费时间的两类计算”：Attention 和 FFN 矩阵乘。
+              <ul>
+                <li><span class="term">NVFP4</span>：用 4-bit 表示权重/激活，减少显存与带宽；<span class="term">split-N</span> 把矩阵输出列拆成更合适的小块批量计算，改善不规则 FFN 形状的利用率。</li>
+                <li><span class="term">FA4</span>：FlashAttention-4 路径；动态稀疏注意力只处理需要的区域。</li>
+                <li><span class="term">SOL Attention</span>：项目新增的 5090 注意力 backend；PR 尚未公开解释缩写，不宜把它误认为行业统一标准。</li>
+              </ul>#1344 在 NVIDIA Thor 上给出的完整组合自测为约 45s→16s（2.81×）。<em>注意：</em>这是“NVFP4 + split-N + FA4 + compile”的组合收益，不是任一单项的独立倍率，而且主要适用于相应新架构。</div>
+          </div>
+          <div class="road">
+            <b>并行通信：Ulysses FP8 预量化、multi-micro hybrid、PipeFusion</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1304">PR #1304</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1350">#1350</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1268">#1268</a>；重点从“能多卡运行”进入减少通信、减少空等和复用权重。</span>
+            <div class="plain-note"><strong>简单说：</strong>多卡不一定自动更快——卡之间传数据、等待同步、切换不同阶段都可能成为瓶颈。这三项分别修三个问题：
+              <ul>
+                <li><span class="term">Ulysses FP8 预量化</span>：在发送 Q/K/V 和 attention 输出前先压成 FP8，传输量更小；新 Triton kernel 一次处理多行，减少 kernel 启动和 HBM 访问。</li>
+                <li><span class="term">multi-micro hybrid</span>：Hunyuan-Image3 自回归阶段用 TP4，去噪阶段用 TP2+SP2，但复用同一套 TP2 权重视图，避免阶段切换时搬整份权重；micro-shard 让小任务凑起来提高 MoE 利用率。</li>
+                <li><span class="term">PipeFusion</span>：把 Flux2 的图像 patch 和模型阶段做流水线，不同 GPU 像装配线一样同时处理不同 patch，并用 stale-KV cache 减少重复计算。</li>
+              </ul><em>注意：</em>这些方案在卡数、拓扑、序列长度不合适时，通信和调度开销可能大于收益；stale cache 还需要验证画质影响。</div>
+          </div>
+          <div class="road">
+            <b>MetaX：分布式 encoder/decoder 与 offload</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1342">PR #1342</a> 声称 Flux2 TP8 pipeline 53.99s→20.23s；<a href="https://github.com/ModelTC/LightX2V/pull/1341">#1341</a> 声称 Qwen-Image 52.76s→21.68s，尚待合并与复现。</span>
+            <div class="plain-note"><strong>简单说：</strong>之前多卡主要加速中间的 Transformer，但开头的文本/图像编码、结尾的 VAE 解码以及 CPU↔GPU 搬权重仍可能串行，导致“中间很快、头尾堵车”。这两个 PR 把 encoder/decoder 也纳入多卡处理，并调整分布式 offload，让 8 卡更少等待单卡阶段。<br><em>注意：</em>标题中的 53.99s→20.23s 和 52.76s→21.68s 是 PR 作者在特定 MetaX 配置下的结果，正文未提供完整复现实验；不能直接外推到 NVIDIA、Ascend 或其他模型。</div>
+          </div>
+          <div class="road">
+            <b>内存路径：mmap host registration 与 pinned weight</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1206">PR #1206</a>；希望降低 offload 固定页内存管理和复制路径开销。</span>
+            <div class="plain-note"><strong>简单说：</strong>模型从磁盘 lazy-load 后，权重已经映射在 CPU 内存里。旧流程还要再复制一次到新的 pinned memory，才能高速传给 GPU；新方案尝试直接把原来的 mmap 内存注册成 pinned memory，省掉“CPU 内存 → 另一块 CPU 内存”这一次搬运。可以把它理解为让快递直接从仓库上高速，不再先倒一次车。<br><em>适用条件：</em>原始存储满足注册要求且不需要 dtype 转换时收益最大。<em>注意：</em>它减少的是 offload 搬运开销，不减少模型计算量；固定页过多也会挤压系统可用内存。</div>
+          </div>
+          <div class="road">
+            <b>训练与具身：lightx2v_train 大重构、FastWAM 评测、OpenPI/LIBERO</b>
+            <span><a href="https://github.com/ModelTC/LightX2V/pull/1325">PR #1325</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1311">#1311</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1401">#1401</a>；项目边界已从纯视觉推理扩展到训练和 action-generating world model。</span>
+            <div class="plain-note"><strong>简单说：</strong>这一组不是直接给视频生成“加速”。#1325 是 171 个文件、约 +11k/−4.6k 行的训练框架大重构，目标是让蒸馏/训练代码更模块化；#1311 把 FastWAM 接到 RoboDojo/RoboTwin 评测，并允许在 24GB GPU 上依次 offload 视频与动作专家；#1401 把 π0.5-LIBERO 策略做成本地 PyTorch runner，补齐 checkpoint 转换、ROS 闭环和可复现实验。<br><em>为什么值得关注：</em>它让 LightX2V 从“生成图像/视频”延伸到“根据视觉生成机器人动作并闭环评测”。<em>注意：</em>这是产品边界和研发基础设施扩张，不应计入推理加速成绩；大重构本身还带来合并与回归风险。</div>
+          </div>
         </div>
         <h3>最近已合并，值得继续观察</h3>
         <p>截至 8 月 20 日，main 已合并 SwiftVR compile/warmup、MiniMax-H3 XPU block offload 与 RoPE/RMSNorm/SYCL FMHA、Ascend/MetaX fused MoE backend、MUSA FP8、MiniMax-H3 VAE 优化、LTX-2.5 与 Wan-Animate-2。这说明开发节奏以“新模型 Day-0/快速适配 + 随后补齐性能路径”为主。</p>
