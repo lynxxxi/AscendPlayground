@@ -145,6 +145,44 @@
     .plain-note li { margin:4px 0; }
     .term { font-family:var(--mono); font-size:.78rem; color:var(--deep); background:rgba(191,214,87,.22); padding:2px 5px; border-radius:3px; }
     .scope-note { margin:18px 0 24px; padding:16px 18px; background:rgba(57,114,141,.09); border-left:5px solid var(--blue); font-size:.9rem; }
+    .deep-dive { margin:42px 0 34px; padding-top:30px; border-top:3px double var(--deep); }
+    .deep-intro { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px; align-items:end; margin-bottom:18px; }
+    .deep-intro h3 { margin:4px 0 0; font:700 clamp(1.7rem,3vw,2.8rem)/1.08 var(--serif); letter-spacing:-.035em; }
+    .deep-intro p { margin:0; max-width:760px; color:var(--muted); }
+    .review-stamp { align-self:start; border:1px solid var(--deep); padding:8px 10px; font:700 .68rem/1.35 var(--mono); color:var(--deep); background:rgba(191,214,87,.2); }
+    details.tech-deep { margin:12px 0; border:1px solid var(--line); background:rgba(255,253,246,.76); box-shadow:0 8px 24px rgba(34,40,32,.05); }
+    details.tech-deep[open] { border-top:4px solid var(--green); }
+    details.tech-deep summary { cursor:pointer; list-style:none; display:grid; grid-template-columns:42px minmax(0,1fr) auto; gap:13px; align-items:center; padding:17px 18px; }
+    details.tech-deep summary::-webkit-details-marker { display:none; }
+    details.tech-deep summary::before { content:"+"; width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--green); border-radius:50%; color:var(--green); font:700 1rem/1 var(--mono); }
+    details.tech-deep[open] summary::before { content:"−"; background:var(--green); color:var(--white); }
+    .deep-title b { display:block; color:var(--deep); font-size:1.04rem; }
+    .deep-title small { display:block; margin-top:3px; color:var(--muted); font-size:.76rem; }
+    .verdict-chip { white-space:nowrap; border-radius:999px; padding:6px 9px; font:700 .65rem/1 var(--mono); color:var(--deep); background:rgba(191,214,87,.32); }
+    .verdict-chip.conditional { background:rgba(214,138,45,.18); color:#7f4b13; }
+    .verdict-chip.corrective { background:rgba(57,114,141,.16); color:#285f77; }
+    .deep-body { padding:0 20px 22px 73px; }
+    .plain-answer { margin:0 0 15px; padding:14px 16px; background:var(--deep); color:var(--white); border-left:6px solid var(--lime); font:1rem/1.65 var(--serif); }
+    .plain-answer strong { color:var(--lime); }
+    .mechanism { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:14px 0 18px; }
+    .mechanism .step { min-height:96px; padding:11px; color:var(--white); background:#285448; position:relative; }
+    .mechanism .step:nth-child(even) { background:#326454; }
+    .mechanism .step::after { content:"→"; position:absolute; right:-8px; top:37%; z-index:2; color:var(--amber); font-weight:900; }
+    .mechanism .step:last-child::after { display:none; }
+    .step i { display:block; color:var(--lime); font:700 .63rem/1.2 var(--mono); font-style:normal; }
+    .step b { display:block; margin:6px 0 3px; font-size:.8rem; }
+    .step span { display:block; color:#d8e4dd; font-size:.7rem; line-height:1.42; }
+    .deep-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .deep-box { padding:13px 14px; border:1px solid rgba(95,103,95,.25); background:rgba(243,239,228,.55); }
+    .deep-box h4 { margin:0 0 7px; color:var(--deep); font-size:.82rem; }
+    .deep-box p,.deep-box ul { margin:0; color:#47504a; font-size:.8rem; }
+    .deep-box ul { padding-left:18px; }
+    .deep-box.yes { border-top:3px solid var(--green); }
+    .deep-box.no { border-top:3px solid var(--red); }
+    .shape-equation { margin:12px 0; padding:12px 14px; overflow-x:auto; color:var(--deep); background:rgba(22,60,50,.07); font:700 .76rem/1.6 var(--mono); }
+    .evidence-line { margin-top:12px; color:var(--muted); font:.7rem/1.55 var(--mono); }
+    .truth-table td:first-child { width:24%; font-weight:700; color:var(--deep); }
+    .truth-table td:last-child { width:18%; }
 
     .bars { margin: 22px 0; }
     .bar-row { display:grid; grid-template-columns:160px 1fr 48px; align-items:center; gap:12px; margin:9px 0; font-size:.83rem; }
@@ -191,6 +229,14 @@
       .cards,.ecosystem,.recommendations,.metrics,.scorecard { grid-template-columns:1fr; }
       .bar-row { grid-template-columns:110px 1fr 38px; }
       table { display:block; overflow-x:auto; }
+      .deep-intro,.deep-grid { grid-template-columns:1fr; }
+      .review-stamp { justify-self:start; }
+      details.tech-deep summary { grid-template-columns:34px minmax(0,1fr); padding:14px 12px; }
+      .verdict-chip { grid-column:2; justify-self:start; }
+      .deep-body { padding:0 12px 18px; }
+      .mechanism { grid-template-columns:1fr; }
+      .mechanism .step { min-height:auto; }
+      .mechanism .step::after { content:"↓"; right:50%; top:auto; bottom:-13px; }
     }
     @media print {
       body { background:white; color:black; }
@@ -203,7 +249,7 @@
       a::after { content:""; }
     }
   </style>
-</head>
+  </head>
 <body>
   <header>
     <div class="shell hero">
@@ -363,6 +409,142 @@
             <span><a href="https://github.com/ModelTC/LightX2V/pull/1325">PR #1325</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1311">#1311</a>、<a href="https://github.com/ModelTC/LightX2V/pull/1401">#1401</a>；项目边界已从纯视觉推理扩展到训练和 action-generating world model。</span>
             <div class="plain-note"><strong>简单说：</strong>这一组不是直接给视频生成“加速”。#1325 是 171 个文件、约 +11k/−4.6k 行的训练框架大重构，目标是让蒸馏/训练代码更模块化；#1311 把 FastWAM 接到 RoboDojo/RoboTwin 评测，并允许在 24GB GPU 上依次 offload 视频与动作专家；#1401 把 π0.5-LIBERO 策略做成本地 PyTorch runner，补齐 checkpoint 转换、ROS 闭环和可复现实验。<br><em>为什么值得关注：</em>它让 LightX2V 从“生成图像/视频”延伸到“根据视觉生成机器人动作并闭环评测”。<em>注意：</em>这是产品边界和研发基础设施扩张，不应计入推理加速成绩；大重构本身还带来合并与回归风险。</div>
           </div>
+        </div>
+
+        <div class="deep-dive" id="concept-deep-dive">
+          <div class="deep-intro">
+            <div>
+              <span class="section-kicker">Concept drill-down</span>
+              <h3>五个概念，再往下拆一层</h3>
+              <p>以下解释直接对照 PR head 与实现代码。每张卡片区分“模型结构”“并行拓扑”“单卡 kernel”和“分布式执行”，避免把名字相似的东西混为一谈。</p>
+            </div>
+            <div class="review-stamp">CODE REVIEWED<br>2026-08-22</div>
+          </div>
+
+          <details class="tech-deep" open>
+            <summary>
+              <span class="deep-title"><b>01 · NeoPP MoE 到底是什么？</b><small>先分清模型名、模型结构和后端 kernel</small></span>
+              <span class="verdict-chip corrective">不是一种通用加速算法</span>
+            </summary>
+            <div class="deep-body">
+              <p class="plain-answer"><strong>一句话：</strong><code>NeoPP</code> 是 LightX2V 代码里一个图像生成模型族的 <code>model_cls</code>；<code>MoE</code> 是该模型的一种 FFN 版本。LightX2V 同时支持 <code>version=dense</code> 和 <code>version=moe</code>。公开仓库没有解释 “NeoPP” 缩写或上游模型出处，因此不应自行扩写它的全称。</p>
+              <div class="mechanism" aria-label="NeoPP Dense 与 MoE 的处理流程">
+                <div class="step"><i>INPUT</i><b>每个 token</b><span>来自图像/文本序列的隐藏向量</span></div>
+                <div class="step"><i>DENSE</i><b>同一个 MLP</b><span>所有 token 都经过同一组 gate/up/down 权重</span></div>
+                <div class="step"><i>MOE ROUTER</i><b>选择 Top-K 专家</b><span>gate 为每个 token 计算专家分数</span></div>
+                <div class="step"><i>MOE OUTPUT</i><b>加权合并</b><span>只执行入选专家，再按 routing weight 求和</span></div>
+              </div>
+              <div class="shape-equation">Dense: y = Down(SwiGLU(Gate(x), Up(x)))<br>MoE: y = Σᵢ routing_weightᵢ · Expertᵢ(x), i ∈ Top-K(x)</div>
+              <div class="deep-grid">
+                <div class="deep-box yes"><h4>PR #1396 实际在改什么</h4><ul><li>把 NeoPP 自己写的 MoE 分支换成公共 <code>create_local_fused_moe</code> 接口。</li><li>后端统一为 <code>flashinfer</code>、<code>torch_grouped_mm</code>、<code>torch_expert_loop</code>。</li><li>给 Ascend 增加 dense 配置和可移植的 KV update 路径，并补 NPU attention 适配。</li><li>也就是说，它是在统一执行后端，不是在把 dense 模型自动变成 MoE。</li></ul></div>
+                <div class="deep-box no"><h4>什么时候不会有收益</h4><ul><li>运行的是 NeoPP dense 权重：根本不会经过 MoE backend。</li><li>token 很少或专家负载极不均：路由、排序、padding 的开销可能占比很大。</li><li>目标设备没有高效 fused/grouped MoE：可能只能走 expert loop。</li><li>当前公共 fused MoE 路径只接受默认精度权重，且不支持 routed-expert LoRA/diff adapter。</li></ul></div>
+              </div>
+              <div class="evidence-line">代码证据：<a href="https://github.com/ModelTC/LightX2V/pull/1396">PR #1396</a>；<code>NeoppSparseMoeWeights</code> / <code>NeoppMlpWeights</code>；<code>configs/neopp/neopp_moe.json</code> 与 <code>neopp_dense.json</code>。</div>
+            </div>
+          </details>
+
+          <details class="tech-deep" open>
+            <summary>
+              <span class="deep-title"><b>02 · VAE 负载均衡是什么场景？真的有用吗？</b><small>优化的是最终解码，不是主 DiT 去噪</small></span>
+              <span class="verdict-chip conditional">有条件地有用</span>
+            </summary>
+            <div class="deep-body">
+              <p class="plain-answer"><strong>一句话：</strong>MiniMax-H3 生成的是压缩 latent，最后必须由 VAE 还原成视频。高分辨率或长视频会把 latent 切成“时间 clip × 空间 tile”。PR #1394 把所有 tile 放进一个全局任务池，再尽量平均分给各 GPU，解决某些卡先干完、等最慢卡的长尾。</p>
+              <div class="mechanism" aria-label="VAE tile 负载均衡流程">
+                <div class="step"><i>LATENT</i><b>长视频 latent</b><span>[帧数, 高, 宽] 都可能很大</span></div>
+                <div class="step"><i>TILING</i><b>时间 × 空间切块</b><span>任务数 = clips × tile rows × tile cols</span></div>
+                <div class="step"><i>BALANCE</i><b>连续均分任务池</b><span>每卡任务数最多只相差 1</span></div>
+                <div class="step"><i>GATHER</i><b>Rank 0 拼接</b><span>批量 P2P 收集，再做空间/时间 overlap blending</span></div>
+              </div>
+              <div class="shape-equation">tasks = num_temporal_clips × num_spatial_tiles<br>per_rank = divmod(tasks, world_size) → 每卡 ⌊tasks/GPU⌋ 或 ⌈tasks/GPU⌉ 个 tile</div>
+              <div class="deep-grid">
+                <div class="deep-box yes"><h4>最可能有用的场景</h4><ul><li>4/8 卡生成 768p 以上、5–15 秒或更长视频。</li><li>VAE decode 已占端到端耗时的明显比例。</li><li>总 tile 数不少于 GPU 数，而且无法被 GPU 数整除。</li><li>各 tile 形状一致或接近，单任务耗时比较稳定。</li></ul></div>
+                <div class="deep-box no"><h4>收益有限或可能倒退</h4><ul><li>单卡：没有负载均衡对象。</li><li>短视频/低分辨率：tile 太少，甚至少于 GPU 数。</li><li>DiT 占 95% 时间而 VAE 只占 5%：即使 VAE 快一倍，端到端也只约快 2.6%。</li><li>GPU 间带宽低：gather、同步、拼接的成本可能吃掉并行收益。</li></ul></div>
+              </div>
+              <div class="note"><b>“任务利用率”不等于整机加速比。</b> PR 作者报告 8 卡、768×1344 下，5 秒视频的 task-level efficiency 从 87.5% 到 98.0%，15 秒达到 99.3%。这证明分工更均匀，但没有直接给出端到端秒数。按 Amdahl 定律，如果 VAE 原本占总时间 20%，即便 VAE 自身提速 2×，整条流水线也只有约 1.11×。</div>
+              <div class="evidence-line">代码证据：<a href="https://github.com/ModelTC/LightX2V/pull/1394">PR #1394</a> 的 <code>_get_all_tiles</code>、<code>_balanced_task_counts</code>、<code>_decode_parallel</code>；更大 tile shape 见 <a href="https://github.com/ModelTC/LightX2V/pull/1398">#1398</a>。</div>
+            </div>
+          </details>
+
+          <details class="tech-deep" open>
+            <summary>
+              <span class="deep-title"><b>03 · split-N 是什么？</b><small>单卡矩阵乘的输出列切分；不是 split-K，也不是多卡并行</small></span>
+              <span class="verdict-chip conditional">特定 shape workaround</span>
+            </summary>
+            <div class="deep-body">
+              <p class="plain-answer"><strong>一句话：</strong>FFN 的线性层本质是矩阵乘 <code>C[M,N] = A[M,K] × B[N,K]ᵀ</code>。<code>N</code> 是输出通道数。split-N 把输出通道切成 2 或 4 段，作为一批较小 GEMM 一起交给 CUTLASS；输入 A 不切、也不用做局部结果求和。</p>
+              <div class="shape-equation">C[:, 0:N/p] = A × B[0:N/p, :]ᵀ<br>C[:, N/p:2N/p] = A × B[N/p:2N/p, :]ᵀ　…　→ 沿 N 直接拼回完整 C</div>
+              <div class="mechanism" aria-label="split-N GEMM 流程">
+                <div class="step"><i>ORIGINAL</i><b>一个大 GEMM</b><span>A 被所有输出通道共同使用</span></div>
+                <div class="step"><i>SPLIT N</i><b>切输出列</b><span>权重 B 和输出 C 沿 N 分段</span></div>
+                <div class="step"><i>STRIDED BATCH</i><b>A 使用零 stride</b><span>各段复用同一输入，不复制 A</span></div>
+                <div class="step"><i>OUTPUT</i><b>直接写各自区间</b><span>没有 split-K 那种跨块累加</span></div>
+              </div>
+              <div class="deep-grid">
+                <div class="deep-box yes"><h4>为什么可能更快</h4><ul><li>某些 Wan FFN 的 M/N/K 形状在 Thor/新 NVFP4 kernel 上利用率不好。</li><li>切成若干独立 N 段后，能产生更合适的 thread-block 调度和并发。</li><li>实现用 strided-batched GEMM 复用 A，避免 Python 循环启动多次 kernel。</li></ul></div>
+                <div class="deep-box no"><h4>为什么不是通用开关</h4><ul><li>仅用于 NVFP4 FFN 特定路径，配置名本身就叫 <code>workaround</code>。</li><li><code>split_n_parts ≥ 2</code>，N 必须能整除 parts，且每段 N 必须是 128 的倍数。</li><li>若原 GEMM 已充分占满硬件，拆分只会增加调度成本。</li><li>它不降低 FLOPs，也不减少权重读取总量；收益来自 kernel shape 更合适。</li></ul></div>
+              </div>
+              <div class="note"><b>容易混淆：</b><code>split-K</code> 是把归约维 K 切开，最后必须把多份 partial C 相加；<code>split-N</code> 的各段输出互不重叠，可以直接写回。这里也没有跨 GPU 通信。</div>
+              <div class="evidence-line">代码证据：<a href="https://github.com/ModelTC/LightX2V/pull/1344">PR #1344</a> 的 <code>cutlass_scaled_nvfp4_mm_split_n_stride</code>、SM120/Thor CUTLASS kernel 与 2/4-way 等价性测试。</div>
+            </div>
+          </details>
+
+          <details class="tech-deep" open>
+            <summary>
+              <span class="deep-title"><b>04 · multi-micro 是什么？</b><small>micro 指权重微分片，不是 micro-batch</small></span>
+              <span class="verdict-chip conditional">极窄的 H200 专项优化</span>
+            </summary>
+            <div class="deep-body">
+              <p class="plain-answer"><strong>一句话：</strong>HunyuanImage-3 同一次生成有两个计算形态：自回归（AR）阶段适合 TP4，扩散去噪阶段适合 TP2+SP2。multi-micro 让每份常驻 TP2 权重内部再包含两个可零拷贝查看的“微分片”，AR 时各卡只看其中一个，去噪时同一张卡同时使用两个；切阶段不用搬或重排整份权重。</p>
+              <div class="mechanism" aria-label="HunyuanImage-3 multi-micro 两阶段拓扑">
+                <div class="step"><i>LOAD ONCE</i><b>Storage TP2</b><span>每个常驻 shard 内含 2 个 micro shard</span></div>
+                <div class="step"><i>AR PHASE</i><b>逻辑 TP4</b><span>4 卡分别选择一个 zero-copy micro view</span></div>
+                <div class="step"><i>DENOISE</i><b>TP2 + SP2</b><span>每卡把本地两个 micro 合成一个逻辑 TP2 shard</span></div>
+                <div class="step"><i>FUSED MOE</i><b>共享一次路由</b><span>四次 grouped GEMM，一次 finalize、一次 TP2 all-reduce</span></div>
+              </div>
+              <div class="shape-equation">4 GPUs: AR = TP4 × SP1　→　Denoise = TP2 × SP2<br>micro_shard_count = AR_TP / storage_TP = 4 / 2 = 2 = denoise_SP</div>
+              <div class="deep-grid">
+                <div class="deep-box yes"><h4>它解决的真实浪费</h4><ul><li>不做 phase-aware layout：TP4↔TP2 切换可能需要重新分片、复制或保留两套权重。</li><li>旧 denoise 路径按两个 micro 分别调用 fused-MoE，会重复 token→expert 排序、workspace/finalize，并产生更多归约。</li><li>新 custom op 对两个 micro 共用一份 expert permutation/offset，最后才在 FP32 中求和并乘 routing score。</li></ul></div>
+                <div class="deep-box no"><h4>当前限制非常严格</h4><ul><li>只面向 H200/Hopper SM90、BF16。</li><li>必须正好 2 个 micro shard、64 experts、Top-K 8、SwiGLU。</li><li>不支持 bias、量化、LoRA、expert parallel。</li><li>只在 HunyuanImage-3 denoise phase 走 custom multi-micro；AR 仍走官方单次 FlashInfer。</li></ul></div>
+              </div>
+              <div class="note"><b>不要把它理解成 micro-batch。</b>micro-batch 是把输入 batch 切小；这里切的是一张卡上常驻的权重 shard。它的核心价值是“一份物理存储，同时暴露 TP4 和 TP2 两种逻辑视图”。</div>
+              <div class="evidence-line">代码证据：<a href="https://github.com/ModelTC/LightX2V/pull/1350">PR #1350</a> 的 <code>hybrid_tp.py</code>、<code>parallel.py</code> 与 <code>multi_micro_fused_moe.py</code>。</div>
+            </div>
+          </details>
+
+          <details class="tech-deep" open>
+            <summary>
+              <span class="deep-title"><b>05 · “分布式 encoder / decoder”究竟怎么分布？</b><small>这些 MetaX PR 主要是单 rank 执行 + 广播，而非把单个模块切片并行</small></span>
+              <span class="verdict-chip corrective">标题容易误读</span>
+            </summary>
+            <div class="deep-body">
+              <p class="plain-answer"><strong>一句话：</strong>在 PR #1341/#1342 中，Text Encoder 通常只在 rank 0 运行，然后把 prompt embeddings 广播给所有 DiT rank；VAE Decoder 只在指定的 <code>vae_decode_rank</code> 运行，再广播解码后的 raw image tensor。它是“分布式流水线里的单点执行”，不是把一个 encoder/decoder 的矩阵切到 8 张卡共同计算。</p>
+              <div class="mechanism" aria-label="rank0 encoder 与单 rank VAE decoder 流程">
+                <div class="step"><i>RANK 0</i><b>Text Encoder 一次</b><span>其他 rank 不加载或 CPU offload encoder</span></div>
+                <div class="step"><i>BROADCAST</i><b>发送 embeddings</b><span>所有 rank 获得相同条件向量</span></div>
+                <div class="step"><i>ALL RANKS</i><b>并行 DiT</b><span>TP/SP/CFG 执行主要去噪计算</span></div>
+                <div class="step"><i>DECODE RANK</i><b>VAE 一次 + 广播</b><span>指定 rank 解码 raw image，主 rank 再转 PIL/返回</span></div>
+              </div>
+              <div class="deep-grid">
+                <div class="deep-box yes"><h4>为什么仍然可能大幅变快</h4><ul><li>避免 8 张卡各加载一份大 Text Encoder，释放显存给 DiT，减少 CPU↔GPU offload 抖动。</li><li>避免 8 个 rank 重复做完全相同的编码/解码工作。</li><li>Qwen-Image 还加入 rank-aware model offload：不同 rank 以不同驻留策略准备 DiT 权重，减少阶段间来回搬运。</li><li>当原 pipeline 因显存不足频繁 offload 时，减少复制模型往往比“多算一点”更重要。</li></ul></div>
+                <div class="deep-box no"><h4>它没有解决什么</h4><ul><li>Text Encoder 和 VAE 单次计算本身没有被多卡加速，仍可能成为串行瓶颈。</li><li>VAE raw image tensor 比 text embedding 大，广播可能占用较多互联带宽。</li><li>多请求服务中，如果每卡本可处理不同请求，强制 rank0 单点反而可能限制吞吐。</li><li>标题中的 53.99s→20.23s、52.76s→21.68s 是完整 pipeline 结果，不能归因于 broadcast 这一个改动。</li></ul></div>
+              </div>
+              <div class="note"><b>更准确的叫法：</b>“rank-aware encoder/decoder placement（按 rank 放置）+ output broadcast”。真正的 tensor-parallel encoder 会把同一个 encoder 层的权重或激活分片到多卡；这里没有这么做。</div>
+              <div class="evidence-line">代码证据：<a href="https://github.com/ModelTC/LightX2V/pull/1342">PR #1342</a> 的 <code>_run_text_encoder_rank0_broadcast</code> / <code>_decode_vae_on_rank</code>；<a href="https://github.com/ModelTC/LightX2V/pull/1341">#1341</a> 的 rank-aware model offload 与 embedding broadcast。</div>
+            </div>
+          </details>
+
+          <h3>到底值不值得关注：快速判断表</h3>
+          <table class="truth-table">
+            <thead><tr><th>项目</th><th>真正优化的瓶颈</th><th>最匹配的场景</th><th>本报告判断</th></tr></thead>
+            <tbody>
+              <tr><td>NeoPP common MoE backend</td><td>MoE token 路由后的专家 GEMM 与跨设备可移植性</td><td>NeoPP MoE + FlashInfer/grouped-MM/NPU fused backend</td><td><span class="caution">有工程价值，收益待测</span></td></tr>
+              <tr><td>H3 VAE tile balance</td><td>多卡 VAE 尾部等待与任务数不整除</td><td>8 卡、768p、长视频、VAE 占比高</td><td><span class="good">场景命中时真实有效</span></td></tr>
+              <tr><td>split-N NVFP4</td><td>新架构上特定 FFN GEMM shape 利用率</td><td>Wan FFN + NVFP4 + Thor/对应 CUTLASS 路径</td><td><span class="caution">专项 workaround</span></td></tr>
+              <tr><td>multi-micro MoE</td><td>TP4↔TP2/SP2 阶段切换及重复 MoE routing/finalize</td><td>4×H200、HunyuanImage-3、BF16、固定 MoE 结构</td><td><span class="caution">设计漂亮但极窄</span></td></tr>
+              <tr><td>rank-aware encoder/decoder</td><td>模型重复驻留、重复计算与 offload 抖动</td><td>多卡单请求、显存紧张、各 rank 条件相同</td><td><span class="good">常见且实用，但不是模块并行</span></td></tr>
+            </tbody>
+          </table>
         </div>
         <h3>最近已合并，值得继续观察</h3>
         <p>截至 8 月 20 日，main 已合并 SwiftVR compile/warmup、MiniMax-H3 XPU block offload 与 RoPE/RMSNorm/SYCL FMHA、Ascend/MetaX fused MoE backend、MUSA FP8、MiniMax-H3 VAE 优化、LTX-2.5 与 Wan-Animate-2。这说明开发节奏以“新模型 Day-0/快速适配 + 随后补齐性能路径”为主。</p>
