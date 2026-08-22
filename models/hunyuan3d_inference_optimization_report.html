@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Hunyuan3D 2.x 推理优化路径分析：从形状 DiT、FlashVDM、纹理多视图扩散，到编译、量化、缓存、并行与昇腾迁移。">
+  <title>Hunyuan3D 推理优化路径｜工程分析报告</title>
+  <style>
+    :root {
+      --paper:#f1eee5; --paper2:#e7e1d3; --ink:#17201e; --muted:#68706b;
+      --navy:#102b2b; --green:#1d6b55; --acid:#d5e55f; --orange:#e68b3a;
+      --red:#b6483f; --blue:#39768c; --line:#bcb6a8; --white:#fffdf8;
+      --serif:"Iowan Old Style","Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+      --sans:"Aptos","Noto Sans SC","Microsoft YaHei UI",sans-serif;
+      --mono:"Cascadia Mono","SFMono-Regular",Consolas,monospace;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;overflow-x:hidden;color:var(--ink);font:16px/1.72 var(--sans);background:var(--paper)}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;background-image:linear-gradient(rgba(16,43,43,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(16,43,43,.025) 1px,transparent 1px);background-size:24px 24px}
+    a{color:var(--green);text-underline-offset:3px} a:hover{color:var(--orange)} code{font: .88em var(--mono);background:#dfe3d2;padding:.12em .34em;border-radius:3px}
+    .mast{min-height:660px;position:relative;overflow:hidden;color:var(--white);background:var(--navy);border-bottom:9px solid var(--acid)}
+    .mast::before{content:"3D";position:absolute;right:-1vw;bottom:-8rem;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);font:900 clamp(15rem,35vw,34rem)/1 var(--sans);letter-spacing:-.12em}
+    .mast::after{content:"";position:absolute;width:440px;height:440px;right:12%;top:-170px;border:1px solid rgba(213,229,95,.28);border-radius:50%;box-shadow:0 0 0 55px rgba(213,229,95,.025),0 0 0 110px rgba(213,229,95,.02)}
+    .hero{position:relative;z-index:1;width:min(1480px,100%);margin:auto;padding:72px 58px 56px}
+    .eyebrow{display:flex;gap:12px;align-items:center;color:var(--acid);font:800 .73rem/1 var(--mono);letter-spacing:.18em;text-transform:uppercase}.eyebrow::before{content:"";width:42px;height:3px;background:var(--acid)}
+    h1{max-width:1100px;margin:28px 0 18px;font:700 clamp(3.3rem,7vw,7.7rem)/.94 var(--serif);letter-spacing:-.06em}
+    .hero p{max-width:920px;color:#d9e4dc;font-size:clamp(1rem,1.8vw,1.36rem)}
+    .meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:40px}.meta span{padding:8px 11px;border:1px solid rgba(255,255,255,.25);border-radius:99px;font:700 .7rem/1 var(--mono)}
+    .hero-verdict{display:grid;grid-template-columns:1.4fr .6fr;gap:18px;max-width:1120px;margin-top:44px;padding:24px 26px;background:rgba(255,255,255,.07);border-left:7px solid var(--acid);backdrop-filter:blur(8px)}.hero-verdict>*{min-width:0;overflow-wrap:anywhere}
+    .hero-verdict b{color:var(--acid)} .hero-verdict p{margin:0;font-size:1rem}.hero-score{border-left:1px solid rgba(255,255,255,.2);padding-left:22px}.hero-score strong{display:block;color:var(--acid);font:700 2.5rem/1 var(--serif)}.hero-score small{color:#c9d4ce}
+    .shell{width:min(1480px,100%);margin:auto;display:grid;grid-template-columns:245px minmax(0,1fr);gap:48px;padding:42px 58px 110px;position:relative}
+    nav{position:sticky;top:22px;align-self:start;border-top:5px solid var(--navy);padding-top:14px} nav b{font:800 .67rem var(--mono);letter-spacing:.16em;color:var(--muted)} nav a{display:block;padding:7px 0;border-bottom:1px solid rgba(104,112,107,.2);text-decoration:none;color:var(--ink);font-size:.83rem} nav a:hover{padding-left:5px}.stamp{margin-top:18px;color:var(--muted);font:.69rem/1.5 var(--mono)}
+    main{min-width:0} section{padding:22px 0 54px;border-bottom:1px solid var(--line);scroll-margin-top:20px} section:last-child{border:0}
+    .kicker{display:block;margin-bottom:9px;color:var(--orange);font:800 .68rem/1 var(--mono);letter-spacing:.15em;text-transform:uppercase} h2{margin:0 0 21px;color:var(--navy);font:700 clamp(2.1rem,4vw,4rem)/1 var(--serif);letter-spacing:-.045em} h3{margin:27px 0 9px;color:var(--navy);font-size:1.16rem}.lede{max-width:940px;color:#34403b;font:1.12rem/1.72 var(--serif)}
+    .callout{margin:22px 0;padding:24px 27px;color:var(--white);background:var(--navy);border-left:8px solid var(--acid);font:1.08rem/1.65 var(--serif)}.callout strong{color:var(--acid)}
+    .grid3,.grid4,.two{display:grid;gap:13px;margin:21px 0}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr 1fr}
+    .card{padding:20px;background:rgba(255,253,248,.72);border:1px solid var(--line);border-top:5px solid var(--green)}.card.warn{border-top-color:var(--orange)}.card.risk{border-top-color:var(--red)}.card.blue{border-top-color:var(--blue)}.card h3{margin:0 0 8px}.card p,.card li{font-size:.88rem;color:#4a534e}.card ul{margin:8px 0;padding-left:18px}.tag{display:inline-block;margin-bottom:10px;padding:5px 8px;color:var(--white);background:var(--green);font:800 .63rem/1 var(--mono);letter-spacing:.08em}.warn .tag{background:var(--orange)}.risk .tag{background:var(--red)}.blue .tag{background:var(--blue)}
+    .metric{min-height:135px;padding:18px;background:var(--navy);color:var(--white)}.metric strong{display:block;color:var(--acid);font:700 2rem/1 var(--serif)}.metric b{display:block;margin:10px 0 5px}.metric small{color:#cbd6d0;line-height:1.45}.metric.orange strong{color:#ffad68}
+    .formula{overflow:auto;margin:24px 0;padding:18px 20px;border:1px solid var(--line);background:#e0e4d3;color:var(--navy);font:700 .82rem/1.7 var(--mono);white-space:nowrap}
+    .pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:28px 0}.pipe{position:relative;min-height:148px;padding:15px 13px;color:var(--white);background:var(--navy)}.pipe:nth-child(even){background:#225548}.pipe::after{content:"→";position:absolute;right:-9px;top:44%;z-index:2;color:var(--orange);font-weight:900}.pipe:last-child::after{display:none}.pipe i{color:var(--acid);font:700 .62rem var(--mono);font-style:normal}.pipe b{display:block;margin:8px 0 5px;font-size:.88rem}.pipe span{display:block;color:#d1ddd6;font-size:.72rem;line-height:1.45}
+    table{width:100%;margin:20px 0;border-collapse:collapse;background:rgba(255,253,248,.72);font-size:.84rem}th,td{padding:11px 12px;border:1px solid var(--line);vertical-align:top}th{text-align:left;color:var(--white);background:var(--navy);font:700 .7rem/1.3 var(--mono);letter-spacing:.03em}tr:nth-child(even) td{background:rgba(16,43,43,.035)}.yes{color:var(--green);font-weight:800}.maybe{color:#955512;font-weight:800}.no{color:var(--red);font-weight:800}
+    .evidence{display:inline-block;padding:3px 7px;border-radius:99px;font:800 .61rem/1 var(--mono);white-space:nowrap}.evidence.a{color:#104d3b;background:#c9e5b5}.evidence.b{color:#734207;background:#f0d5a4}.evidence.c{color:#8a2f2a;background:#efc3be}
+    .note{margin:15px 0;padding:14px 16px;background:rgba(57,118,140,.09);border-left:4px solid var(--blue);font-size:.84rem;color:#405159}
+    .roadmap{margin:25px 0 0 10px;border-left:2px solid var(--line)}.road{position:relative;margin:0 0 19px 27px;padding:0 0 11px}.road::before{content:"";position:absolute;left:-35px;top:5px;width:13px;height:13px;border:3px solid var(--orange);border-radius:50%;background:var(--paper)}.road b{display:block;color:var(--navy)}.road p{margin:4px 0;color:var(--muted);font-size:.87rem}.road .gate{display:inline-block;padding:3px 7px;background:#e1e5d2;font:700 .64rem var(--mono)}
+    .matrix td:first-child{font-weight:800;color:var(--navy)}.priority{font:800 .7rem var(--mono)}.p0{color:var(--red)}.p1{color:#955512}.p2{color:var(--blue)}
+    details{margin:12px 0;border:1px solid var(--line);background:rgba(255,253,248,.75)}details[open]{border-top:4px solid var(--green)}summary{cursor:pointer;padding:16px 18px;color:var(--navy);font-weight:800}details>div{padding:0 20px 18px;font-size:.88rem}.codeblock{overflow:auto;padding:16px;background:#122c2b;color:#dce7df;font: .75rem/1.65 var(--mono);white-space:pre}.codeblock em{color:var(--acid);font-style:normal}
+    .source-list{padding-left:20px}.source-list li{padding:6px 0;font-size:.84rem}.method{color:var(--muted);font-size:.82rem}.updated{padding:15px 17px;border:1px dashed var(--line);color:var(--muted);font-size:.8rem}
+    footer{padding:28px 58px;background:var(--navy);color:#c7d3cc;font:.72rem/1.6 var(--mono)}
+    .reveal{opacity:1;transform:none}
+    @media(max-width:1080px){.shell{grid-template-columns:1fr;padding:34px 28px 80px}nav{display:none}.pipeline{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.hero{padding:58px 28px}.hero-verdict{grid-template-columns:1fr}.hero-score{border-left:0;border-top:1px solid rgba(255,255,255,.2);padding:15px 0 0}}
+    @media(max-width:680px){h1{font-size:3rem}.grid3,.grid4,.two,.pipeline{grid-template-columns:1fr}.pipe::after{display:none}.hero{padding:46px 20px}.hero p{overflow-wrap:anywhere}.shell{padding:26px 20px 65px}.mast{min-height:720px}table{display:block;overflow-x:auto}.hero-verdict{padding:20px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}}
+    @media print{body::before,nav,.mast::before,.mast::after{display:none}.mast{min-height:auto;color:var(--ink);background:white;border-bottom:3px solid #000}.hero p,.hero-verdict{color:var(--ink)}.hero-verdict{background:white;border:1px solid #888}.hero-score{border-color:#888}.hero-score strong,.hero-verdict b,.eyebrow{color:var(--ink)}.shell{display:block;padding:20px}.reveal{opacity:1;transform:none}section{break-inside:avoid}.card,.metric{break-inside:avoid}.metric{color:var(--ink);background:white;border:1px solid #777}.metric small{color:#333}a{color:#000;text-decoration:none}}
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <div class="hero">
+      <div class="eyebrow">Model Systems Review · 2026/08</div>
+      <h1>Hunyuan3D<br>推理优化路径</h1>
+      <p>从 Hunyuan3D 2.x 的真实执行图出发，对照 Diffusers、PyTorch 2、TensorRT、3D 专项缓存论文与昇腾软件栈，给出可验证、可分阶段落地的工程路线。</p>
+      <div class="meta"><span>研究快照 2026-08-22</span><span>对象：Shape + Texture</span><span>目标：Latency / VRAM / Throughput</span><span>证据优先：官方代码与论文</span></div>
+      <div class="hero-verdict">
+        <p><b>一句话结论：</b>最大的第一性收益不是“先做 INT8”，而是先减少模型调用次数——Turbo/蒸馏消除 50 步与双 CFG 的乘法成本；随后优化 FlashVDM 体素解码与纹理多视图扩散，最后再以静态 bucket、图编译、混合精度和几何感知缓存榨取系统收益。</p>
+        <div class="hero-score"><strong>3 → 1</strong><small>原版双引导每步 3 份 latent；guidance-distilled 路径可回到单份前向</small></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav aria-label="报告目录"><b>CONTENTS</b>
+      <a href="#summary">01 / 执行摘要</a><a href="#anatomy">02 / 成本解剖</a><a href="#paths">03 / 优化路径</a><a href="#frameworks">04 / 框架对照</a><a href="#papers">05 / 3D 论文启示</a><a href="#ascend">06 / 昇腾落地</a><a href="#roadmap">07 / 实施路线</a><a href="#benchmark">08 / 验收基准</a><a href="#risks">09 / 风险边界</a><a href="#sources">10 / 来源与方法</a>
+      <div class="stamp">INFERENCE DOSSIER<br>HUNYUAN3D 2.x<br>CONFIDENCE-LABELED</div>
+    </nav>
+
+    <main>
+      <section id="summary" class="reveal">
+        <span class="kicker">01 · Executive readout</span><h2>执行摘要</h2>
+        <p class="lede">Hunyuan3D 不是一个“单模型推理问题”，而是形状条件编码、Flow-matching DiT 采样、3D VAE/体素查询、表面提取、几何渲染、纹理扩散和贴图烘焙组成的异构流水线。只优化 DiT 会留下明显的 Amdahl 瓶颈；只做通用编译，也会被动态体素查询和自定义 CUDA rasterizer 截断。</p>
+        <div class="grid4">
+          <div class="metric"><strong>P0</strong><b>少步模型</b><small>优先 Turbo / guidance distillation；先砍调用次数，再优化单次前向。</small></div>
+          <div class="metric"><strong>P0</strong><b>体素解码</b><small>复用官方 FlashVDM，围绕 query 分块、稀疏选择和 cross-attention 做专项算子。</small></div>
+          <div class="metric orange"><strong>P1</strong><b>编译与融合</b><small>固定 shape bucket，分别编译 conditioner、DiT、VAE；纹理流水线按子图切分。</small></div>
+          <div class="metric orange"><strong>P1</strong><b>阶段驻留</b><small>shape / paint 模型错峰驻留；服务层做模型池、预热和同形状微批。</small></div>
+        </div>
+        <div class="grid3">
+          <article class="card"><span class="tag">立即采用</span><h3>官方已有快速路径</h3><p>Turbo 形状模型、Fast 指导蒸馏、Turbo Paint、FlashVDM、SageAttention 开关和 <code>pipeline.compile()</code> 已出现在官方仓库。它们是风险最低的基线。</p></article>
+          <article class="card warn"><span class="tag">实验采用</span><h3>缓存必须 3D-aware</h3><p>普通整层缓存会积累几何误差。优先验证 token/block 选择，并引入体素稳定性、速度与加速度门控；拓扑指标不通过就回退。</p></article>
+          <article class="card risk"><span class="tag">避免误区</span><h3>量化不是免费加速</h3><p>权重变小不等于端到端更快。若没有对应低精度 kernel、编译融合与校准，INT8/FP8 可能只省显存，甚至增加 Q/DQ 和数据搬运。</p></article>
+        </div>
+        <div class="note"><b>证据标记：</b><span class="evidence a">A 已验证</span> 官方代码/论文明确支持；<span class="evidence b">B 可迁移</span> 已在相近 DiT/扩散框架验证；<span class="evidence c">C 假设</span> 需要在 Hunyuan3D 与目标硬件上实测。文中所有收益目标均按此口径解释。</div>
+      </section>
+
+      <section id="anatomy" class="reveal">
+        <span class="kicker">02 · Cost anatomy</span><h2>先把成本拆对</h2>
+        <div class="pipeline" aria-label="Hunyuan3D 推理流水线">
+          <div class="pipe"><i>01 / CPU+ACC</i><b>输入预处理</b><span>去背景、缩放、alpha mask；小但易造成同步。</span></div>
+          <div class="pipe"><i>02 / ONCE</i><b>条件编码</b><span>CLIP / DINO 图像特征；同图多样本可缓存。</span></div>
+          <div class="pipe"><i>03 / REPEAT</i><b>Shape DiT</b><span>N 个 timestep；原版 CFG 可扩成 2×/3× batch。</span></div>
+          <div class="pipe"><i>04 / IRREGULAR</i><b>3D VAE 解码</b><span>分层体素查询、cross-attention、动态 near-surface 点。</span></div>
+          <div class="pipe"><i>05 / CPU+ACC</i><b>表面提取</b><span>Marching Cubes / mesh 清理；含设备同步与拷贝。</span></div>
+          <div class="pipe"><i>06 / REPEAT</i><b>Paint</b><span>多视图渲染、纹理扩散、回投与 UV/PBR 烘焙。</span></div>
+        </div>
+        <div class="formula">T<sub>e2e</sub> = T<sub>prep+cond</sub> + N<sub>shape</sub> × M<sub>CFG</sub> × T<sub>DiT</sub> + T<sub>VAE3D</sub>(R, chunks) + T<sub>mesh</sub> + N<sub>tex</sub> × M<sub>CFG</sub> × T<sub>UNet</sub>(views) + T<sub>bake</sub></div>
+        <table>
+          <thead><tr><th>阶段</th><th>官方代码信号</th><th>主要瓶颈</th><th>优先旋钮</th><th>证据</th></tr></thead>
+          <tbody>
+            <tr><td>Shape DiT</td><td>默认 <code>50</code> 步；dual guidance 时拼接 3 份 latent；支持自定义 timesteps/sigmas</td><td>Attention + MLP，且被步数和 CFG 倍乘</td><td>Turbo 5-step、guidance embed、SDPA/fused attention、compile</td><td><span class="evidence a">A</span></td></tr>
+            <tr><td>3D VAE</td><td>默认 octree <code>384</code>、chunk <code>8000</code>；分层 near-surface 查询；官方可启用 FlashVDM</td><td>动态 query、cross-attention、小批循环、显存峰值</td><td>FlashVDM、chunk autotune、query bucketing、稀疏 kernel</td><td><span class="evidence a">A</span></td></tr>
+            <tr><td>Texture diffusion</td><td>主 pipeline 出现 <code>28</code> 步入口；非 Turbo CFG 为双前向；多视图 position map 有缓存</td><td>多视图 UNet、渲染/栅格化、VAE 与回投</td><td>Turbo Paint、view batching、条件缓存、子图编译</td><td><span class="evidence a">A</span></td></tr>
+            <tr><td>服务与内存</td><td>官方给出 shape 约 6 GB、shape+texture 约 16 GB；提供 CPU offload</td><td>模型同时驻留、冷启动、权重搬运、碎片</td><td>阶段卸载、常驻池、预热、allocator 配置</td><td><span class="evidence a">A</span></td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Amdahl 提醒：</strong>当 Turbo 把 DiT 从 50 步压到 5 步后，体素解码、Marching Cubes 和纹理阶段占比会迅速上升。优化顺序必须随 profile 改变，不能沿用原版模型的热点排序。</div>
+      </section>
+
+      <section id="paths" class="reveal">
+        <span class="kicker">03 · Optimization stack</span><h2>六条优化路径</h2>
+        <table class="matrix">
+          <thead><tr><th>路径</th><th>具体动作</th><th>预期作用</th><th>质量风险</th><th>优先级 / 证据</th></tr></thead>
+          <tbody>
+            <tr><td>1. 减少调用次数</td><td>默认采用 Turbo/mini-Turbo；需要高质时用 Fast/guidance-distilled；纹理优先 Turbo Paint；按资产等级路由 5/10/20/50 步</td><td>同时降低算力、激活与 launch；收益对端到端最直接</td><td>少步可能损失薄结构、凹陷和细纹理</td><td><span class="priority p0">P0</span> <span class="evidence a">A</span></td></tr>
+            <tr><td>2. 消除 CFG 重算</td><td>选择带 guidance embedding 的蒸馏模型；原版必须 CFG 时合批执行并避免重复 condition 编码</td><td>原版 dual guidance 从 3 份 latent 回到 1 份前向的潜力最大</td><td>需验证条件遵循与多视图一致性</td><td><span class="priority p0">P0</span> <span class="evidence a">A</span></td></tr>
+            <tr><td>3. 稀疏体素解码</td><td>启用 FlashVDM；对 <code>topk_mode</code>、mini-grid、chunk、octree R 做联合 autotune；复用 K/V 与近表面掩码</td><td>降低 3D VAE 的 query 数和 cross-attention 开销</td><td>漏掉薄面、孔洞或孤立部件会改变拓扑</td><td><span class="priority p0">P0</span> <span class="evidence a">A</span></td></tr>
+            <tr><td>4. 图编译与算子融合</td><td>固定 shape bucket；独立 compile conditioner / DiT / VAE；融合 QKV、RoPE、attention、bias-activation；捕获稳定 denoise loop</td><td>减少 Python/launch 开销，提高矩阵核利用率</td><td>动态 query 会 graph break；首次编译昂贵</td><td><span class="priority p1">P1</span> <span class="evidence b">B</span></td></tr>
+            <tr><td>5. 混合精度与量化</td><td>BF16/FP16 基线；先量化 DiT/UNet Linear 权重，再评估 activation；VAE decoder、norm、输出头和几何判定保留高精度</td><td>省显存与带宽；有低精度 kernel 时才转化为延迟收益</td><td>几何 latent 对系统误差敏感，阈值附近可能翻转占据状态</td><td><span class="priority p1">P1</span> <span class="evidence b">B</span></td></tr>
+            <tr><td>6. 缓存与并行</td><td>条件特征跨请求缓存；DiT 用 token/block 选择；纹理按视图 batch；多卡优先流水线/阶段并行，吞吐场景做同 bucket 微批</td><td>减少冗余并提升设备占用</td><td>缓存误差累积、通信和 padding 可能反噬</td><td><span class="priority p2">P2</span> <span class="evidence b">B</span></td></tr>
+          </tbody>
+        </table>
+        <div class="two">
+          <article class="card"><span class="tag">推荐配置 A</span><h3>交互预览</h3><ul><li>mini-Turbo / Turbo，5 步</li><li>FlashVDM，较低 octree bucket</li><li>仅 shape 或低分辨率 Turbo Paint</li><li>编译引擎预热并常驻</li><li>目标：首个可用 mesh 延迟最低</li></ul></article>
+          <article class="card blue"><span class="tag">推荐配置 B</span><h3>离线精品资产</h3><ul><li>2.1/2.5 高质量模型或 Fast 版本</li><li>高 octree 分辨率，保守稀疏门限</li><li>PBR Paint，多视图高分辨率</li><li>只采用通过拓扑回归的缓存/量化</li><li>目标：单位成本下降而非绝对最低延迟</li></ul></article>
+        </div>
+      </section>
+
+      <section id="frameworks" class="reveal">
+        <span class="kicker">04 · Framework transfer</span><h2>其他推理框架怎么做</h2>
+        <p class="lede">可迁移的不是某个框架名称，而是四类机制：稳定输入形状、图级融合、低精度 kernel、跨 timestep 复用。Hunyuan3D 的动态 3D 后处理决定了“整网单引擎”通常不现实，最稳妥的是分段编译。</p>
+        <table>
+          <thead><tr><th>框架 / 体系</th><th>核心做法</th><th>对 Hunyuan3D 的可迁移部分</th><th>不宜照搬</th></tr></thead>
+          <tbody>
+            <tr><td><b>PyTorch 2 / Inductor</b></td><td><code>torch.compile</code>、kernel fusion、CUDA/NPU Graph、编译缓存</td><td class="yes">DiT、conditioner、VAE/UNet 稳定子图；官方 pipeline 已提供 compile 入口</td><td>动态 octree、Python mesh 对象、自定义 rasterizer 会断图</td></tr>
+            <tr><td><b>Hugging Face Diffusers</b></td><td>attention backend、group/sequential offload、layerwise casting、quantization、compile repeated blocks</td><td class="yes">纹理 UNet/VAE、阶段卸载、重复 block 编译、内存策略</td><td>Hunyuan3D shape pipeline 只是 diffusers-like，并非原生通用 pipeline</td></tr>
+            <tr><td><b>TensorRT / Torch-TensorRT</b></td><td>静态 engine、算子融合、FP8/INT8、timing cache、weight streaming</td><td class="maybe">可作为 NVIDIA 目标上限；适合 DiT/UNet 固定 bucket 子图</td><td>整条 3D pipeline 导出困难；引擎重编译和 plugin 维护成本高</td></tr>
+            <tr><td><b>ONNX Runtime / OpenVINO</b></td><td>图优化、EP 分区、CPU/GPU/NPU 跨平台执行</td><td class="maybe">conditioner 或标准 2D 子模型部署；便于服务化与可移植性验证</td><td>复杂 attention、动态体素与自定义 renderer 覆盖不足时收益有限</td></tr>
+            <tr><td><b>TeaCache / TokenCache / DeepCache</b></td><td>依据 timestep/特征变化跳过 block 或复用 token</td><td class="maybe">Shape DiT 与 Texture UNet 的中后期稳定区间</td><td>不可把 2D 感知阈值直接用于几何；必须加入拓扑门禁</td></tr>
+            <tr><td><b>FlashAttention / SageAttention</b></td><td>IO-aware attention、低精度 attention kernel</td><td class="yes">Shape DiT 中官方直接调用 SDPA，并支持 SageAttention 替换</td><td>小序列/小 batch 时可能被转换开销抵消；硬件后端不通用</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><b>框架选择原则：</b>先用 PyTorch profiler 找到占比，再决定编译边界。若 DiT 占主导，优先高性能 attention + compile；若 FlashVDM 后 VAE 仍占主导，投入自定义 sparse query/cross-attention；若 Paint 占主导，则把 Diffusers 的 offload、view batching 与 repeated-block compile 迁入纹理子图。</div>
+      </section>
+
+      <section id="papers" class="reveal">
+        <span class="kicker">05 · Research transfer</span><h2>3D 优化论文给出的边界</h2>
+        <div class="grid3">
+          <article class="card"><span class="tag">Fast3Dcache · 2025/26</span><h3>按体素稳定性缓存</h3><p>论文指出直接套用 2D/视频缓存会破坏几何一致性；用体素稳定模式约束缓存额度，并依据速度/加速度选择稳定特征。公开结果报告最高 <b>27.12%</b> 加速、<b>54.8%</b> FLOPs 降低，Chamfer 与 F-score 退化分别约 2.48% 与 1.95%。</p><p><span class="evidence a">A 论文结果</span> 但需在 Hunyuan3D 重验。</p></article>
+          <article class="card blue"><span class="tag">Hash3D · 2024</span><h3>跨时间与视角复用</h3><p>对相邻 timestep 和相邻相机位置的 feature map 做自适应网格哈希复用；覆盖多种 text/image-to-3D 模型，论文报告 1.3–4× 效率提升。最适合借鉴到纹理多视图与 optimization-based 3D，而非直接等同 Hunyuan Shape DiT。</p><p><span class="evidence b">B 机制可迁移</span></p></article>
+          <article class="card warn"><span class="tag">TokenCache · 2024</span><h3>选择 token、block、时刻</h3><p>把缓存问题拆成三个决策：缓存哪些 token、跳过哪些 block、在哪些 timestep 启用。对 Hunyuan3D 的启示是建立 token 重要度与 block 敏感度表，不做“一刀切每 N 步缓存”。</p><p><span class="evidence b">B DiT 迁移</span></p></article>
+        </div>
+        <h3>建议组合：几何感知的双层缓存</h3>
+        <div class="formula">L0 条件缓存（exact） → L1 timestep/block 缓存（近似） → token/voxel 稳定性筛选 → 每 K 步强制 full refresh → 拓扑守卫触发回退</div>
+        <table>
+          <thead><tr><th>缓存对象</th><th>键</th><th>失效条件</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr><td>去背景图、CLIP/DINO embedding</td><td>输入图 hash + preprocessing version + model revision</td><td>图像、mask、encoder 或预处理变化</td><td class="yes">精确缓存，可直接生产使用</td></tr>
+            <tr><td>DiT block residual / token</td><td>step 区间 + latent change + prompt/condition id</td><td>特征变化超阈值、关键 early/late step、周期刷新</td><td class="maybe">灰度实验，建立 Pareto 曲线</td></tr>
+            <tr><td>体素/空间 token</td><td>voxel id + velocity/acceleration + octree level</td><td>近表面状态改变、符号/占据不稳定、细结构区域</td><td class="maybe">优先于整层缓存</td></tr>
+            <tr><td>纹理 position map / render condition</td><td>mesh hash + camera set + resolution + material config</td><td>mesh、UV、相机或 PBR 配置变化</td><td class="yes">官方代码已有 cached condition 思路</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="ascend" class="reveal">
+        <span class="kicker">06 · Ascend execution plan</span><h2>昇腾落地：先迁通，再跑快</h2>
+        <p class="lede">Hunyuan3D 官方实现仍有明显 CUDA 假设：默认设备字符串、SageAttention、纹理 custom rasterizer / differentiable renderer，以及可能的 CUDA-only 第三方算子。昇腾迁移的第一里程碑应是算子覆盖率与数值一致性，不是立即追求整网图编译。</p>
+        <div class="grid4">
+          <article class="card"><span class="tag">L0 / DEVICE</span><h3>设备抽象</h3><p>统一 <code>device</code>、autocast、generator、synchronize；清理硬编码 <code>cuda</code>；锁定 TorchNPU / PyTorch / CANN 配套版本。</p></article>
+          <article class="card warn"><span class="tag">L1 / OPS</span><h3>算子替换</h3><p>SDPA 映射 NPU fused attention；不直接依赖 SageAttention。逐项替换 rasterizer、MC、稀疏 scatter/gather 和自定义 extension。</p></article>
+          <article class="card blue"><span class="tag">L2 / GRAPH</span><h3>分段编译</h3><p>先编译 DiT repeating blocks，再 conditioner/UNet；动态 3D query 留 eager，稳定后再以 bucket 或自定义 kernel 纳入图。</p></article>
+          <article class="card risk"><span class="tag">L3 / KERNEL</span><h3>专项内核</h3><p>用 Triton-Ascend / AscendC 攻克 FlashVDM query batching、cross-attention、near-surface 筛选与纹理回投。</p></article>
+        </div>
+        <table>
+          <thead><tr><th>模块</th><th>迁移判断</th><th>建议后端</th><th>首要验证</th></tr></thead>
+          <tbody>
+            <tr><td>Conditioner</td><td class="yes">标准算子为主，低风险</td><td>torch_npu eager → compile</td><td>embedding cosine、冷/热延迟</td></tr>
+            <tr><td>Shape DiT</td><td class="yes">最值得优先优化</td><td>SDPA/NPU attention + Inductor；必要时 Triton-Ascend</td><td>graph break、attention 精度、5/50 步延迟</td></tr>
+            <tr><td>3D VAE / FlashVDM</td><td class="maybe">动态且稀疏，工程量高</td><td>eager 基线 + bucket；热点写 AscendC/Triton-Ascend</td><td>query 数、chunk 扫描、内存峰值、拓扑</td></tr>
+            <tr><td>Marching Cubes</td><td class="maybe">可先 CPU fallback</td><td>CPU 异步 / NPU 自定义算子</td><td>D2H 同步占比、mesh 等价性</td></tr>
+            <tr><td>Paint UNet/VAE</td><td class="maybe">标准扩散子图可迁</td><td>torch_npu compile + view batch</td><td>自定义 renderer 前后断图、色差</td></tr>
+            <tr><td>Rasterizer / bake</td><td class="no">最大功能阻塞点</td><td>CPU 可用版本 → AscendC/custom op</td><td>UV seam、遮挡、PBR 通道一致性</td></tr>
+          </tbody>
+        </table>
+        <details><summary>建议的分段执行图</summary><div><div class="codeblock">CPU preprocess
+  └─ NPU conditioner <em>[compile, exact cache]</em>
+       └─ NPU Shape DiT × 5/50 <em>[static bucket, fused attention, optional token cache]</em>
+            └─ NPU FlashVDM / VAE <em>[dynamic island → sparse custom kernel]</em>
+                 └─ CPU/NPU Marching Cubes <em>[async boundary]</em>
+                      └─ NPU render condition <em>[cache by mesh+views]</em>
+                           └─ NPU Paint UNet × steps <em>[view batch, compile]</em>
+                                └─ renderer / UV bake <em>[custom-op boundary]</em></div></div></details>
+        <div class="note">TorchNPU 官方资料强调版本配套；当前仓库文档还提供 Inductor NPU backend、图模式和 allocator/任务队列调优入口。具体开关会随版本变化，实施时以目标环境文档为准，不把本报告中的框架能力视为该模型已验证支持。</div>
+      </section>
+
+      <section id="roadmap" class="reveal">
+        <span class="kicker">07 · Delivery roadmap</span><h2>四阶段实施路线</h2>
+        <div class="roadmap">
+          <div class="road"><b>Phase 0｜1–2 周：可复现基线与火焰图</b><p>冻结 30–100 个输入、模型 revision、seed、分辨率与硬件；为 6 个流水线阶段埋点；记录 P50/P95、峰值内存、算子 top-30、graph break、mesh/texture 指标。</p><span class="gate">GATE：单次结果可复现，分段耗时合计误差 &lt; 3%</span></div>
+          <div class="road"><b>Phase 1｜2–3 周：官方快路 + 工程零损优化</b><p>建立 Turbo/Fast/原版路由；启用 FlashVDM；条件与 position-map 精确缓存；shape/paint 错峰驻留；预热与静态 bucket；消除无效同步和重复搬运。</p><span class="gate">GATE：质量等价档无回归，吞吐/延迟获得明确 Pareto 改善</span></div>
+          <div class="road"><b>Phase 2｜3–6 周：编译、融合与混合精度</b><p>DiT repeating blocks → conditioner → Paint UNet 依次编译；建立 attention backend 对照；做 Linear 权重 PTQ，敏感层保留 BF16/FP16；为 octree/chunk 做 autotune。</p><span class="gate">GATE：编译缓存稳定；新 shape 不频繁重编译；拓扑与纹理门限全部通过</span></div>
+          <div class="road"><b>Phase 3｜4–8 周：几何感知缓存与专项算子</b><p>实现 block/token/voxel 稳定性调度；每 K 步刷新；对 FlashVDM cross-attention、near-surface query 和 renderer 热点开发硬件专用 kernel。</p><span class="gate">GATE：形成质量—延迟 Pareto 前沿；失败样本能自动回退到安全路径</span></div>
+        </div>
+        <h3>建议的工程目标（不是公开 benchmark）</h3>
+        <table>
+          <thead><tr><th>目标</th><th>保守门槛</th><th>进取门槛</th><th>解释</th></tr></thead>
+          <tbody>
+            <tr><td>Shape-only 交互档</td><td>相对原版 e2e ≥ 3×</td><td>≥ 6×</td><td>主要由 50→5 步、CFG 蒸馏与 FlashVDM 贡献；必须同硬件同质量档比较</td></tr>
+            <tr><td>同模型零损优化</td><td>e2e ≥ 1.25×</td><td>≥ 1.7×</td><td>仅 compile、fused attention、缓存、搬运和服务优化，不改变步数/权重</td></tr>
+            <tr><td>峰值显存</td><td>下降 ≥ 20%</td><td>下降 ≥ 40%</td><td>阶段卸载、量化与 chunk 调优；需同时报告延迟代价</td></tr>
+            <tr><td>吞吐</td><td>≥ 1.5×</td><td>≥ 2.5×</td><td>同 bucket 微批、模型池和 view batching；与单请求延迟分开计</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="benchmark" class="reveal">
+        <span class="kicker">08 · Measurement contract</span><h2>验收不能只看秒数</h2>
+        <div class="grid3">
+          <article class="card"><span class="tag">PERFORMANCE</span><h3>性能</h3><ul><li>cold / warm P50、P95</li><li>shape / VAE / mesh / paint 分段</li><li>峰值显存与 allocator reserved</li><li>samples/hour、设备利用率</li><li>编译时间、缓存命中与重编译次数</li></ul></article>
+          <article class="card blue"><span class="tag">GEOMETRY</span><h3>几何</h3><ul><li>Chamfer Distance、F-score</li><li>法线一致性、silhouette IoU</li><li>连通分量、非流形边、自交</li><li>薄结构召回、孔洞与部件完整性</li><li>固定 seed 的 vertex/face 差异</li></ul></article>
+          <article class="card warn"><span class="tag">TEXTURE</span><h3>纹理</h3><ul><li>多视图 CLIP / LPIPS</li><li>UV seam 与遮挡错误率</li><li>颜色/材质通道偏差</li><li>视图一致性和纹理漂移</li><li>PBR roughness / metallic 合理性</li></ul></article>
+        </div>
+        <h3>最小 benchmark 矩阵</h3>
+        <table>
+          <thead><tr><th>维度</th><th>取值</th><th>目的</th></tr></thead>
+          <tbody>
+            <tr><td>模型</td><td>2.0 / 2.1；mini / 1.1B / 3.0B；base / Fast / Turbo</td><td>拆分架构收益与蒸馏收益</td></tr>
+            <tr><td>资产</td><td>简单封闭体、薄结构、多个分离部件、镂空、反光/透明参考图</td><td>覆盖最容易被稀疏化和量化破坏的尾部</td></tr>
+            <tr><td>分辨率</td><td>octree 256 / 384 / 512（若支持）；纹理 低/中/高</td><td>建立成本曲线和 shape bucket</td></tr>
+            <tr><td>优化开关</td><td>逐项 + 组合；Turbo、FlashVDM、attention、compile、precision、cache</td><td>避免把组合收益错误归因给某一技术</td></tr>
+            <tr><td>平台</td><td>目标 NPU；可选同代 GPU 仅作机制参考</td><td>禁止跨硬件直接比较绝对秒数</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>回归规则：</strong>任何出现新非流形边、丢失薄结构、连通分量异常或 UV seam 明显增加的配置，不应因平均 CLIP 分数“看起来没掉”而通过。3D 质量门禁必须包含拓扑与几何尾部样本。</div>
+      </section>
+
+      <section id="risks" class="reveal">
+        <span class="kicker">09 · Decision boundaries</span><h2>风险与不确定性</h2>
+        <div class="two">
+          <article class="card risk"><span class="tag">高风险</span><h3>动态 3D 子图</h3><p>octree 每层活跃点数依赖前一层输出，容易触发 graph break、shape specialization 与频繁重编译。解决办法是按 query-count bucket + padding/mask，且只在 padding 成本低于重编译成本时启用。</p></article>
+          <article class="card risk"><span class="tag">高风险</span><h3>CUDA 自定义依赖</h3><p>纹理 rasterizer 与 differentiable renderer 不是简单把 <code>cuda</code> 改成 <code>npu</code>。应先定义功能等价 CPU 路径，再依据 profile 决定是否开发 AscendC custom op。</p></article>
+          <article class="card warn"><span class="tag">中风险</span><h3>缓存误差累积</h3><p>早期 timestep 决定全局形状，晚期决定表面细节；统一阈值不可靠。需要分段阈值、强制 refresh 和拓扑失败回退。</p></article>
+          <article class="card warn"><span class="tag">中风险</span><h3>低精度边界翻转</h3><p>SDF/occupancy 接近等值面时，小数值误差会改变符号，从而改变 mesh。decoder 输出头、norm、surface threshold 相关计算应默认保留较高精度。</p></article>
+        </div>
+        <div class="updated"><b>范围说明：</b>本报告聚焦 Hunyuan3D 2.x 公开代码形态。Hunyuan3D 2.5 技术报告说明其仍沿用 shape + texture 两阶段路线，但未假设所有 2.5 内部推理细节或线上服务优化均已开源。框架版本与硬件能力截至 2026-08-22 的公开资料，实施前必须复核目标环境版本矩阵。</div>
+      </section>
+
+      <section id="sources" class="reveal">
+        <span class="kicker">10 · Sources & method</span><h2>来源与研究方法</h2>
+        <p class="method">资料优先级：官方代码 / 技术报告 / 论文 → 框架官方文档 → 机制相近论文。代码层结论来自对 shape pipeline、Hunyuan3D-DiT attention、3D VAE volume decoder、FlashVDM 示例与 texture pipeline 的定向阅读。框架迁移结论均明确标注为“已验证”或“待迁移验证”。</p>
+        <ol class="source-list">
+          <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2">Tencent Hunyuan3D-2 官方仓库</a>：模型族、显存说明、Turbo/Fast/FlashVDM、代码入口与部署状态。</li>
+          <li><a href="https://arxiv.org/abs/2501.12202">Hunyuan3D 2.0 Technical Report</a>：两阶段系统、Flow-based DiT 与高分辨率纹理生成。</li>
+          <li><a href="https://arxiv.org/abs/2506.16504">Hunyuan3D 2.5 Technical Report</a>：高保真 shape + texture 路线的延续与升级。</li>
+          <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2/blob/main/hy3dgen/shapegen/pipelines.py">Shape pipeline 源码</a>：默认步数、CFG/dual guidance、compile、FlashVDM、octree/chunk 参数。</li>
+          <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2/blob/main/hy3dgen/shapegen/models/denoisers/hunyuan3ddit.py">Hunyuan3D-DiT 源码</a>：SDPA/SageAttention 与 guidance embedding。</li>
+          <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2/blob/main/hy3dgen/shapegen/models/autoencoders/volume_decoders.py">Volume decoder 源码</a>：分层体素查询与 FlashVDM 解码结构。</li>
+          <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2/blob/main/hy3dgen/texgen/hunyuanpaint/pipeline.py">Hunyuan3D-Paint pipeline 源码</a>：多视图条件、CFG、scheduler 与 compile 入口。</li>
+          <li><a href="https://arxiv.org/abs/2511.22533">Fast3Dcache</a>：面向 3D 几何的训练无关缓存、稳定性准则与公开实验。</li>
+          <li><a href="https://arxiv.org/abs/2404.06091">Hash3D</a>：跨相邻 timestep 与相机视角的 feature hashing / reuse。</li>
+          <li><a href="https://arxiv.org/abs/2409.18523">TokenCache</a>：DiT token、block 与 timestep 三维缓存选择。</li>
+          <li><a href="https://arxiv.org/abs/2412.18911">Dual Feature Caching</a>：扩散 Transformer 缓存误差与双特征复用。</li>
+          <li><a href="https://huggingface.co/docs/diffusers/main/optimization/fp16">Diffusers inference optimization</a>：编译、量化、offload 与内存/速度策略。</li>
+          <li><a href="https://docs.pytorch.org/TensorRT/user_guide/compilation/torch_compile.html">Torch-TensorRT torch.compile backend</a>：静态图、精度、engine cache 与动态 shape 约束。</li>
+          <li><a href="https://github.com/NVIDIA/Model-Optimizer/tree/main/examples/diffusers">NVIDIA Model Optimizer · Diffusers</a>：扩散模型 PTQ、cache diffusion 与 TensorRT 组合路径。</li>
+          <li><a href="https://github.com/Ascend/pytorch">Ascend Extension for PyTorch</a>：TorchNPU、版本配套、图编译与 NPU backend。</li>
+          <li><a href="https://github.com/Ascend/triton-ascend">Triton-Ascend</a>：昇腾自定义高性能 kernel 的可选实现层。</li>
+        </ol>
+      </section>
+    </main>
+  </div>
+
+  <footer>ASCEND PLAYGROUND / MODEL RESEARCH · HUNYUAN3D INFERENCE OPTIMIZATION · STATIC SINGLE-FILE REPORT</footer>
+  <script>
+    const items = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+      }), { threshold: .06 });
+      items.forEach(item => observer.observe(item));
+    } else { items.forEach(item => item.classList.add('visible')); }
+  </script>
+</body>
+</html>
