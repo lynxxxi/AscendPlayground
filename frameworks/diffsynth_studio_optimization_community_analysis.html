@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DiffSynth-Studio 优化路线、进行中 PR、组织社区与核心贡献者分析。">
+  <title>DiffSynth-Studio：扩散实验室的性能与社区剖面</title>
+  <style>
+    :root{
+      --ink:#182126;--muted:#59666c;--paper:#f4f0e6;--paper2:#fffdf7;--grid:#c9c5b9;
+      --cyan:#00a9a5;--cyan2:#d4f3ef;--orange:#f06b32;--yellow:#f2c84b;--navy:#102c3a;
+      --red:#bc3f36;--green:#23785d;--shadow:0 18px 50px rgba(16,44,58,.12);
+      --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+      --sans:"Aptos","Trebuchet MS",sans-serif;--mono:"Cascadia Code",Consolas,monospace;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:var(--sans);line-height:1.66;background-color:var(--paper);background-image:linear-gradient(rgba(16,44,58,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(16,44,58,.045) 1px,transparent 1px);background-size:28px 28px}
+    a{color:#087b79;text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:var(--orange)}code{font-family:var(--mono);font-size:.86em;background:rgba(0,169,165,.1);padding:2px 5px;border-radius:3px}button{font:inherit}
+    .topline{height:7px;background:linear-gradient(90deg,var(--cyan) 0 54%,var(--orange) 54% 77%,var(--yellow) 77%)}
+    header{position:relative;overflow:hidden;color:#f7f3e8;background:var(--navy);padding:64px max(24px,calc((100vw - 1240px)/2)) 52px;border-bottom:1px solid #071d27}
+    header:before{content:"DIFF / SYNTH";position:absolute;right:-30px;top:-36px;color:rgba(255,255,255,.045);font:900 clamp(5rem,15vw,13rem)/1 var(--mono);letter-spacing:-.08em;white-space:nowrap}
+    .eyebrow{display:flex;gap:10px;align-items:center;font:700 .74rem/1.4 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:#8fe1db}.eyebrow:before{content:"";width:44px;height:3px;background:var(--orange)}
+    h1{position:relative;max-width:980px;margin:20px 0 16px;font:800 clamp(2.9rem,7vw,6.8rem)/.92 var(--serif);letter-spacing:-.06em}.subtitle{position:relative;max-width:880px;margin:0;color:#c9d8dc;font-size:1.06rem}
+    .snapshot{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}.pill{border:1px solid rgba(255,255,255,.24);padding:7px 10px;color:#dce9eb;background:rgba(255,255,255,.045);font:700 .7rem/1 var(--mono)}.pill.hot{border-color:var(--orange);color:#ffc5a9}
+    .hero-metrics{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:1px;max-width:1240px;margin:42px auto -86px;background:rgba(255,255,255,.17);box-shadow:var(--shadow)}
+    .metric{min-height:116px;padding:18px;background:#173c4b}.metric b{display:block;color:white;font:800 1.85rem/1 var(--serif)}.metric span{display:block;margin-top:9px;color:#a9c3c9;font:.68rem/1.45 var(--mono)}.metric.warn{background:#733c2c}.metric.warn span{color:#ffd4bd}
+    .nav-wrap{position:sticky;top:0;z-index:20;margin-top:66px;background:rgba(244,240,230,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--grid)}nav{display:flex;gap:2px;max-width:1240px;margin:auto;overflow-x:auto;padding:0 18px}nav a{flex:0 0 auto;color:var(--muted);padding:13px 12px;text-decoration:none;font:700 .68rem/1 var(--mono);border-bottom:3px solid transparent}nav a:hover,nav a.active{color:var(--navy);border-color:var(--orange)}
+    .page{display:grid;grid-template-columns:210px minmax(0,1fr);gap:38px;max-width:1240px;margin:0 auto;padding:58px 24px 80px}.rail{position:sticky;top:62px;align-self:start;padding:16px 0}.rail .label{color:var(--orange);font:800 .67rem/1 var(--mono);letter-spacing:.13em}.rail p{font-size:.79rem;color:var(--muted)}.rail .status{padding:12px;border-left:4px solid var(--cyan);background:rgba(255,255,255,.48);font:.7rem/1.55 var(--mono)}
+    main{min-width:0}section{scroll-margin-top:72px;padding:50px 0;border-bottom:1px solid var(--grid)}section:first-child{padding-top:18px}.kicker{display:block;margin-bottom:9px;color:var(--orange);font:800 .68rem/1.2 var(--mono);letter-spacing:.15em;text-transform:uppercase}h2{margin:0 0 18px;font:800 clamp(2rem,4vw,3.6rem)/1.02 var(--serif);letter-spacing:-.045em;color:var(--navy)}h3{margin:28px 0 12px;font:800 1.35rem/1.2 var(--serif);color:var(--navy)}h4{margin:0 0 8px}.lede{max-width:900px;margin:0 0 28px;color:var(--muted);font-size:1.03rem}
+    .verdict{display:grid;grid-template-columns:1.25fr .75fr;background:var(--navy);color:white;box-shadow:var(--shadow)}.verdict-main{padding:30px}.verdict-main b{display:block;color:#7ce0d7;font:800 clamp(1.5rem,3vw,2.45rem)/1.18 var(--serif)}.verdict-main p{margin:14px 0 0;color:#cbdcdf}.verdict-side{display:grid;place-items:center;padding:26px;text-align:center;background:var(--orange)}.verdict-side strong{font:900 3.4rem/1 var(--serif)}.verdict-side span{font:.7rem/1.5 var(--mono)}
+    .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.card{position:relative;padding:20px;background:rgba(255,253,247,.82);border:1px solid var(--grid);box-shadow:0 8px 22px rgba(16,44,58,.06)}.card:before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:4px;background:var(--cyan)}.card.orange:before{background:var(--orange)}.card.yellow:before{background:var(--yellow)}.card h3{margin:7px 0 8px;font-size:1.15rem}.card p{margin:0;color:var(--muted);font-size:.84rem}.card .num{color:var(--cyan);font:800 .68rem/1 var(--mono)}
+    .score-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:22px}.score{display:grid;grid-template-columns:185px 1fr 48px;gap:12px;align-items:center;padding:10px 12px;background:rgba(255,255,255,.48);font-size:.78rem}.track{height:8px;background:#d8d5cb}.fill{height:100%;background:linear-gradient(90deg,var(--cyan),#38c4a4)}.fill.caution{background:linear-gradient(90deg,var(--yellow),var(--orange))}.score b{text-align:right;font-family:var(--mono)}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:22px 0}.node{position:relative;min-height:118px;padding:14px;color:white;background:#174454}.node:nth-child(even){background:#1f5969}.node:after{content:"→";position:absolute;z-index:2;right:-10px;top:42%;color:var(--orange);font-size:1.25rem;font-weight:900}.node:last-child:after{display:none}.node small{display:block;color:#7fe0d5;font:700 .62rem/1.3 var(--mono)}.node b{display:block;margin:8px 0 4px;font-size:.83rem}.node span{display:block;color:#c8dcdf;font-size:.7rem;line-height:1.45}
+    .layer-map{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.stack{border:1px solid var(--grid);background:rgba(255,253,247,.75);padding:18px}.stack-row{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:11px 0;border-bottom:1px dashed var(--grid)}.stack-row:last-child{border:0}.stack-row b{color:var(--navy);font-size:.79rem}.stack-row span{color:var(--muted);font-size:.78rem}
+    .callout{padding:18px 20px;border-left:6px solid var(--orange);background:#fff3e5;color:#603d2d;font-size:.87rem}.callout.cyan{border-color:var(--cyan);background:var(--cyan2);color:#164f51}.callout strong{color:var(--navy)}
+    details.deep{margin:12px 0;border:1px solid var(--grid);background:rgba(255,253,247,.86);box-shadow:0 8px 22px rgba(16,44,58,.05)}details.deep[open]{border-top:4px solid var(--cyan)}details.deep summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:16px 17px}details.deep summary::-webkit-details-marker{display:none}details.deep summary:before{content:"+";display:grid;place-items:center;width:28px;height:28px;color:var(--cyan);border:1px solid var(--cyan);border-radius:50%;font:800 .9rem/1 var(--mono)}details.deep[open] summary:before{content:"−";color:white;background:var(--cyan)}.deep-title b{display:block;color:var(--navy)}.deep-title small{display:block;margin-top:3px;color:var(--muted);font-size:.72rem}.tag{white-space:nowrap;padding:6px 9px;border-radius:99px;background:var(--cyan2);color:#0b6663;font:800 .63rem/1 var(--mono)}.tag.warn{background:#ffe8cf;color:#905020}.tag.risk{background:#f8dcda;color:#8f302b}.deep-body{padding:0 20px 22px 67px}.answer{padding:13px 15px;color:white;background:var(--navy);border-left:5px solid var(--yellow);font-family:var(--serif)}
+    .mechanism{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0}.step{position:relative;padding:11px;background:#1e5b63;color:white;min-height:90px}.step:nth-child(even){background:#267078}.step:after{content:"→";position:absolute;right:-8px;top:37%;z-index:2;color:var(--yellow);font-weight:900}.step:last-child:after{display:none}.step i{display:block;color:#8ef1e4;font:700 .6rem/1 var(--mono);font-style:normal}.step b{display:block;margin:6px 0 3px;font-size:.77rem}.step span{display:block;color:#d5e8e7;font-size:.68rem;line-height:1.4}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.box{padding:13px 14px;border:1px solid var(--grid);background:#faf7ef}.box.good{border-top:3px solid var(--green)}.box.bad{border-top:3px solid var(--red)}.box h4{font-size:.8rem;color:var(--navy)}.box p,.box ul{margin:0;color:var(--muted);font-size:.77rem}.box ul{padding-left:18px}.evidence{margin-top:12px;color:var(--muted);font:.68rem/1.55 var(--mono)}
+    .memory-ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--grid);margin:20px 0}.memory-ladder>div{padding:22px;background:var(--paper2)}.memory-ladder strong{display:block;color:var(--navy);font:800 2.2rem/1 var(--serif)}.memory-ladder span{display:block;margin-top:8px;color:var(--muted);font-size:.75rem}.memory-ladder .arrow{color:var(--orange);font-family:var(--mono)}
+    table{width:100%;border-collapse:collapse;margin:18px 0;background:rgba(255,253,247,.84);font-size:.76rem}th{padding:11px;text-align:left;color:white;background:var(--navy);font:700 .67rem/1.3 var(--mono)}td{padding:11px;border-bottom:1px solid var(--grid);vertical-align:top}tbody tr:hover{background:rgba(0,169,165,.06)}.yes{color:var(--green);font-weight:800}.maybe{color:#9a5d19;font-weight:800}.no{color:var(--red);font-weight:800}
+    .pr-list{display:grid;gap:10px}.pr{display:grid;grid-template-columns:92px minmax(0,1.2fr) minmax(230px,.8fr);gap:16px;padding:17px;background:rgba(255,253,247,.85);border:1px solid var(--grid)}.pr-id{color:var(--orange);font:900 1.1rem/1 var(--mono)}.pr-id small{display:block;margin-top:8px;color:var(--muted);font:.61rem/1.45 var(--mono)}.pr h3{margin:0 0 5px;font-size:1rem}.pr p{margin:0;color:var(--muted);font-size:.77rem}.pr .judgement{padding:10px 12px;border-left:4px solid var(--cyan);background:var(--cyan2);font-size:.73rem}.pr .judgement.warn{border-color:var(--orange);background:#fff0df}.pr .judgement.risk{border-color:var(--red);background:#fae8e5}
+    .people{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.person{padding:18px;color:white;background:var(--navy);border-top:5px solid var(--cyan)}.person:nth-child(2){border-color:var(--orange)}.person:nth-child(3){border-color:var(--yellow)}.person:nth-child(4){border-color:#8fa8b2}.person strong{display:block;font:800 1.15rem/1.15 var(--serif)}.person .commits{display:block;margin:9px 0;color:#7ce0d7;font:800 1.8rem/1 var(--mono)}.person p{margin:0;color:#c7d7da;font-size:.72rem}
+    .timeline{position:relative;margin:25px 0 0;padding-left:30px}.timeline:before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--cyan)}.event{position:relative;margin:0 0 18px;padding:15px;background:rgba(255,253,247,.8);border:1px solid var(--grid)}.event:before{content:"";position:absolute;left:-30px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--orange);border:3px solid var(--paper)}.event time{color:var(--orange);font:800 .67rem/1 var(--mono)}.event b{display:block;margin:5px 0;color:var(--navy)}.event p{margin:0;color:var(--muted);font-size:.78rem}
+    .risk-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.risk-card{padding:18px;background:#fff8eb;border:1px solid #dac9ad}.risk-card b{display:block;color:var(--red);font-family:var(--serif)}.risk-card p{margin:7px 0 0;color:var(--muted);font-size:.8rem}
+    .source-list{columns:2;column-gap:28px}.source-list li{break-inside:avoid;margin:0 0 10px;color:var(--muted);font-size:.77rem}
+    footer{padding:28px 24px 42px;text-align:center;color:#6b777b;font:.68rem/1.6 var(--mono)}
+    .progress{position:fixed;left:0;top:0;z-index:50;height:4px;width:0;background:var(--orange)}
+    @media(max-width:980px){.hero-metrics{grid-template-columns:repeat(3,1fr)}.page{grid-template-columns:1fr}.rail{display:none}.cards{grid-template-columns:1fr 1fr}.people{grid-template-columns:1fr 1fr}.flow{grid-template-columns:1fr}.node{min-height:auto}.node:after{content:"↓";right:50%;top:auto;bottom:-13px}.layer-map,.verdict{grid-template-columns:1fr}.pr{grid-template-columns:78px 1fr}.pr .judgement{grid-column:2}.source-list{columns:1}}
+    @media(max-width:620px){body{overflow-x:hidden}header{padding-top:42px;min-width:0}h1{font-size:2.48rem;overflow-wrap:anywhere}.subtitle,h2,h3,.pill,.deep-title,.answer,.evidence,.source-list a{overflow-wrap:anywhere;word-break:break-word}.snapshot{max-width:100%}.hero-metrics{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:-76px}.metric{min-width:0}.nav-wrap{margin-top:58px}.page{padding:42px 14px 60px;min-width:0}.cards,.score-grid,.people,.two,.memory-ladder,.risk-grid{grid-template-columns:minmax(0,1fr)}.card,.person,.box,.risk-card,details.deep,.pr{min-width:0}.score{grid-template-columns:128px minmax(0,1fr) 42px}.pr{grid-template-columns:minmax(0,1fr)}.pr .judgement{grid-column:1}.mechanism{grid-template-columns:minmax(0,1fr)}.step{min-height:auto}.step:after{content:"↓";right:50%;top:auto;bottom:-13px}details.deep summary{grid-template-columns:32px minmax(0,1fr)}.tag{grid-column:2;justify-self:start;white-space:normal}.deep-body{padding:0 12px 18px}.stack-row{grid-template-columns:minmax(0,1fr)}table{display:block;max-width:100%;overflow-x:auto;white-space:normal}}
+    @media print{.nav-wrap,.progress,.rail{display:none}.page{display:block;padding:20px}header{padding:30px}.hero-metrics{margin:20px 0 0}.metric{min-height:auto}details.deep:not([open])>*{display:block}body{background:white}.card,.pr,details.deep{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div><div class="topline"></div>
+  <header id="top">
+    <div class="eyebrow">Repository intelligence / 2026-08-22</div>
+    <h1>DiffSynth-Studio<br>扩散实验室剖面</h1>
+    <p class="subtitle">它有哪些优化、正在优化什么、哪些技术真的能带来收益，以及 ModelScope 组织背景与核心贡献者如何塑造项目路线。</p>
+    <div class="snapshot"><span class="pill hot">结论对应 main@fed7b18</span><span class="pill">代码复核 2026-08-22</span><span class="pill">Apache-2.0</span><span class="pill">DiffSynth 2.1.2</span></div>
+    <div class="hero-metrics">
+      <div class="metric"><b>12,975</b><span>GitHub stars<br>API snapshot</span></div>
+      <div class="metric"><b>1,275</b><span>forks<br>community reach</span></div>
+      <div class="metric"><b>1,255</b><span>main commits<br>local git</span></div>
+      <div class="metric"><b>58</b><span>30 日合并 PR<br>2026-07-23 起</span></div>
+      <div class="metric warn"><b>535</b><span>开放 Issue<br>维护压力信号</span></div>
+      <div class="metric warn"><b>2</b><span>README 明示<br>主要维护者</span></div>
+    </div>
+  </header>
+  <div class="nav-wrap"><nav>
+    <a href="#summary">结论</a><a href="#position">定位</a><a href="#architecture">架构</a><a href="#optimization">已落地优化</a><a href="#active">正在做</a><a href="#community">组织社区</a><a href="#people">贡献者</a><a href="#risks">风险判断</a><a href="#sources">证据</a>
+  </nav></div>
+  <div class="page">
+    <aside class="rail"><div class="label">READING NOTE</div><p>本报告把“跑得更快”“占得更少”“原本跑不了、现在能跑”分开评价。PR 标题里的加速数字不会自动等同于端到端收益。</p><div class="status">SNAPSHOT<br>main = fed7b18<br>latest = 2026-08-20<br>report = 2026-08-22</div></aside>
+    <main>
+      <section id="summary">
+        <span class="kicker">Executive verdict</span><h2>先给结论：它更像研究型全栈框架，不是极致推理引擎</h2>
+        <p class="lede">DiffSynth-Studio 的核心竞争力不是某个独家 CUDA kernel，而是把新模型快速接入、低显存推理、LoRA/全量训练、蒸馏、量化和多硬件适配放进统一 Pipeline。若目标是研究、微调和消费卡可达性，它很强；若目标是稳定服务、高吞吐和极致时延，官方自己把这条路线交给了 DiffSynth-Engine。</p>
+        <div class="verdict"><div class="verdict-main"><b>最值得关注的是“可达性工程”：让原本装不下、训不起、难接入的模型可用。</b><p>动态显存管理、Disk Offload、统一量化、拆分训练、逐层训练 Offload，以及 2026 年正在推进的双卡模型并行都围绕这个目标。纯速度优化存在，但覆盖和基准证据弱于其显存优化。</p></div><div class="verdict-side"><div><strong>7.8</strong><br><span>综合研究价值 / 10<br>生产推理需另评</span></div></div></div>
+        <div class="cards">
+          <article class="card"><span class="num">01 / STRONGEST</span><h3>显存管理是护城河</h3><p>组件级、层级和磁盘级三层 offload，加上显存预算自动分配；它改变的是“能不能运行”，通常比单点 kernel 加速更有用户价值。</p></article>
+          <article class="card orange"><span class="num">02 / FAST MOVING</span><h3>模型支持速度极快</h3><p>22 个 example family、104 个模型实现文件；2026 年持续接入图像、视频、音频与音视频联合模型，并补齐训练链路。</p></article>
+          <article class="card yellow"><span class="num">03 / CAVEAT</span><h3>维护带宽高度集中</h3><p>README 直接说明主要工作由 Artiprocher 与 mi804 承担。高合并速度与 535 个开放 Issue 同时存在，说明创新吞吐强、支持债务也高。</p></article>
+        </div>
+        <div class="score-grid">
+          <div class="score"><span>模型/任务覆盖</span><div class="track"><div class="fill" style="width:92%"></div></div><b>9.2</b></div>
+          <div class="score"><span>低显存可达性</span><div class="track"><div class="fill" style="width:91%"></div></div><b>9.1</b></div>
+          <div class="score"><span>训练完整度</span><div class="track"><div class="fill" style="width:87%"></div></div><b>8.7</b></div>
+          <div class="score"><span>通用推理加速深度</span><div class="track"><div class="fill caution" style="width:66%"></div></div><b>6.6</b></div>
+          <div class="score"><span>生产部署成熟度</span><div class="track"><div class="fill caution" style="width:55%"></div></div><b>5.5</b></div>
+          <div class="score"><span>维护者冗余</span><div class="track"><div class="fill caution" style="width:43%"></div></div><b>4.3</b></div>
+        </div>
+      </section>
+
+      <section id="position">
+        <span class="kicker">What it is</span><h2>项目定位：Studio 做探索，Engine 做部署</h2>
+        <p class="lede">官方把 DiffSynth 拆为两条产品线。这一分工解释了为什么 Studio 愿意接受实验性训练特性、快速模型适配和较多 Python 层 hook，而不强求所有路径都达到服务引擎级稳定性。</p>
+        <div class="layer-map">
+          <div class="stack">
+            <div class="stack-row"><b>DiffSynth-Studio</b><span>面向学术与前沿能力探索：新模型 Day-0/快速接入、推理与训练统一、研究方法复现、低门槛实验。</span></div>
+            <div class="stack-row"><b>DiffSynth-Engine</b><span>面向工业部署：更高计算性能、更稳定的功能和工程支持。评估线上服务时不能用 Studio 的星标直接替代 Engine 的部署能力。</span></div>
+            <div class="stack-row"><b>AIGC Zone</b><span>两者共同支撑 ModelScope AIGC Zone / Civision 的模型体验与产品化入口。</span></div>
+            <div class="stack-row"><b>License</b><span>代码为 Apache-2.0，商业使用友好；具体模型权重仍需逐一遵循其模型许可。</span></div>
+          </div>
+          <div class="callout cyan"><strong>一句话识别：</strong><br>Diffusers 更像广泛生态 API，ComfyUI 更像节点工作流，专业 serving engine 更像生产运行时；DiffSynth-Studio 的差异点是“研究代码 + 统一 Pipeline + 低显存 + 训推一致”。<br><br><strong>不要误判：</strong>它不是 DiffSynth-Engine 的旧版，也不是仅做视频的库。当前已经覆盖图像、视频、音乐、音视频联合生成和图像质量评估。</div>
+        </div>
+        <h3>发展方向并非只追新模型</h3>
+        <div class="timeline">
+          <div class="event"><time>2023–2024</time><b>从 FastSDXL 到视频研究工具</b><p>FastBlend、Diffutoon、ExVideo 建立了视频去闪烁、卡通渲染和长视频后训练能力；2024 年项目迁入 ModelScope。</p></div>
+          <div class="event"><time>2025</time><b>从单点应用走向统一框架</b><p>EliGen、ArtAug、Nexus-Gen 与 Qwen-Image 蒸馏模型形成“研究成果—模型—代码—在线体验”闭环；DiffSynth 2.0 重写显存和训练框架。</p></div>
+          <div class="event"><time>2026</time><b>训练平台化与跨模态扩张</b><p>Diffusion Templates、Image-to-LoRA V2、CPU Offload Training、统一量化，以及 LTX/MiniMax 等音视频模型，显示路线正从“模型合集”升级为研究平台。</p></div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <span class="kicker">Architecture map</span><h2>优化为什么容易扩散到很多模型：控制面被统一了</h2>
+        <p class="lede">2.x 架构把模型文件、量化方式、显存生命周期、Pipeline 计算单元和训练任务拆开。优化若进入 <code>core</code> 或 <code>BasePipeline</code>，就可能被多个模型复用；只写在 examples 或单模型文件里的优化则更像专项适配。</p>
+        <div class="flow">
+          <div class="node"><small>CONFIG</small><b>ModelConfig</b><span>模型来源、文件 pattern、dtype、设备、量化与 offload 配置</span></div>
+          <div class="node"><small>LOAD</small><b>ModelPool</b><span>下载、hash 识别、state dict 转换、预量化加载</span></div>
+          <div class="node"><small>ORCHESTRATE</small><b>Pipeline Units</b><span>文本/VAE/DiT/控制模块按依赖图组织，并管理中间 cache</span></div>
+          <div class="node"><small>EXECUTE</small><b>Core backends</b><span>attention、quant、VRAM、NPU patch、USP、compile</span></div>
+          <div class="node"><small>TRAIN</small><b>TrainingModule</b><span>SFT、LoRA、full、direct distill、DMD2、split/offload</span></div>
+        </div>
+        <div class="two">
+          <div class="box good"><h4>框架级优化：复用价值高</h4><ul><li><code>core/attention</code> 的后端选择</li><li><code>core/quant</code> 的统一量化契约</li><li><code>core/vram</code> 与 <code>core/offload_training</code></li><li><code>BasePipeline.compile_pipeline()</code></li></ul></div>
+          <div class="box bad"><h4>专项优化：需逐模型验证</h4><ul><li>Qwen-Image 的外部 KV cache 接口</li><li>Wan / Flux 的 TeaCache 分支</li><li>Z-Image NPU fused patch</li><li>开放 PR 中按 block 手工切双卡</li></ul></div>
+        </div>
+      </section>
+
+      <section id="optimization">
+        <span class="kicker">Landed optimizations</span><h2>已经落地的优化：机制、场景与真实边界</h2>
+        <p class="lede">下面按“显存可达性、计算加速、减少重复计算、多卡并行、训练效率”分类。所有卡片默认展开，便于直接阅读和打印。</p>
+
+        <details class="deep" open><summary><span class="deep-title"><b>01 · 动态显存管理、CPU Offload 与 Disk Offload</b><small>DiffSynth 最成熟、最有辨识度的一条主线</small></span><span class="tag">可达性优化 · 强</span></summary><div class="deep-body">
+          <p class="answer"><strong>核心：</strong>模型权重不再只有“全在 GPU / 全在 CPU”两种状态，而是在 Offload、Onload、Preparing、Computation 四种状态之间按层迁移；<code>vram_limit</code> 决定保留多少常驻 GPU，极端情况下还能从 safetensors 懒加载到磁盘。</p>
+          <div class="memory-ladder"><div><strong>56G</strong><span>Qwen-Image 基础 BF16，文档参考值</span></div><div><strong>40G</strong><span>组件级 CPU Offload</span></div><div><strong>21G</strong><span>CPU Offload + FP8 存储，计算仍转 BF16</span></div></div>
+          <div class="two"><div class="box good"><h4>真的有用</h4><p>显存小于模型权重或峰值激活时，它直接把 OOM 变为可运行。对单次离线生成、研究验证、消费卡微调尤其有价值。</p></div><div class="box bad"><h4>代价</h4><p>PCIe/内存/SSD 搬运会拉低速度；<code>vram_limit</code> 越低通常越慢。Disk Offload 只支持 safetensors，且不支持需要 reshape 的 converter。</p></div></div>
+          <div class="evidence">证据：<a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/VRAM_management.md">VRAM Management</a>；<code>diffsynth/core/vram/*</code>；量化与磁盘组合见 PR #1554。</div>
+        </div></details>
+
+        <details class="deep" open><summary><span class="deep-title"><b>02 · 统一量化框架：NF4 / INT / FP8 / MXFP / NVFP4</b><small>2026-08 刚完成的框架级重构</small></span><span class="tag">显存 + 条件加速</span></summary><div class="deep-body">
+          <p class="answer"><strong>核心：</strong><code>QuantizeConfig</code> 把 bitsandbytes、torchao 与 comfy-kitchen 统一为同一接口，支持在线量化、预量化加载、量化保存、按层混合量化、Disk Offload 和量化底座上的 LoRA 训练。</p>
+          <div class="mechanism"><div class="step"><i>SELECT</i><b>匹配 Linear</b><span>target / exclude 精确控制敏感层</span></div><div class="step"><i>BACKEND</i><b>替换量化层</b><span>BnB、torchao 或 Comfy 格式</span></div><div class="step"><i>RUN</i><b>动态或一次反量化</b><span>低显存与兼容性之间选择</span></div><div class="step"><i>TRAIN</i><b>冻结底座 + LoRA</b><span>仅可微 backend 允许训练</span></div></div>
+          <div class="two"><div class="box good"><h4>价值</h4><ul><li>统一 14 种注册方法，覆盖 weight-only 与 W8A8/W4A4。</li><li>MixedQuantizeConfig 可让 modulation 等敏感层保留较高精度。</li><li>Comfy 权重格式互通，降低生态转换成本。</li></ul></div><div class="box bad"><h4>不要混淆</h4><ul><li>旧式 FP8 VRAM 配置是“FP8 存储、BF16 计算”，官方明确不提速。</li><li>新动态 activation 量化可能调用真实低精度 kernel，但高度依赖 GPU、torchao/CUDA 版本与 shape。</li><li>不是所有量化方法都支持 LoRA 反向传播。</li></ul></div></div>
+          <div class="evidence">证据：<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1620">PR #1620</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1622">#1622</a> 与 <a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/Quantization.md">量化文档</a>。</div>
+        </div></details>
+
+        <details class="deep" open><summary><span class="deep-title"><b>03 · 高效 Attention + 区域化 torch.compile</b><small>通用计算加速的两根支柱</small></span><span class="tag">无损加速 · 中强</span></summary><div class="deep-body">
+          <p class="answer"><strong>核心：</strong>Attention 会按可用性自动选择 FlashAttention 4 → 3 → 2 → SageAttention → xFormers → PyTorch；compile 只编译重复 Transformer block，减少整模型编译时间。</p>
+          <div class="two"><div class="box good"><h4>最适合</h4><p>固定/少量 shape、DiT 去噪步多、Attention 占比高、会重复执行多次或长期服务的场景。区域编译能把一次编译成本摊薄。</p></div><div class="box bad"><h4>限制</h4><p>mask、causal、sliding-window 不兼容时会回退 torch；分辨率、CFG、prompt 长度变化可能触发重编译。官方没有给统一端到端 benchmark，不能预设固定百分比。</p></div></div>
+          <div class="callout cyan"><strong>实现细节：</strong><code>dynamic=True</code> 是默认建议；重复 block 按类名逐个 <code>compile</code>，其他模型才整块编译。FlashAttention 4 支持是 2026-08-07 新增。</div>
+          <div class="evidence">证据：<a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/diffsynth/core/attention/attention.py">attention.py</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1573">PR #1573</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1368">#1368</a>。</div>
+        </div></details>
+
+        <details class="deep" open><summary><span class="deep-title"><b>04 · TeaCache、KV Cache 与蒸馏：三种不同的“少算”</b><small>名字都像 cache，但机制完全不同</small></span><span class="tag warn">有损/模型相关</span></summary><div class="deep-body">
+          <p class="answer"><strong>TeaCache</strong> 根据相邻去噪步输入变化判断是否跳过部分 DiT block 并复用残差；<strong>KV Cache</strong> 在当前 Qwen/FLUX2 Template 路径中复用外部模板/参考输入的 K/V；<strong>蒸馏</strong> 则训练新模型用更少去噪步逼近教师。</p>
+          <table><thead><tr><th>技术</th><th>省掉什么</th><th>质量风险</th><th>通用性</th></tr></thead><tbody><tr><td>TeaCache</td><td>部分去噪步的 block 计算</td><td>阈值过大可能积累误差</td><td>Flux/Wan 等专项</td></tr><tr><td>Template KV Cache</td><td>固定模板/参考条件的 K/V 生成</td><td>取决于模板模型</td><td>当前以 FLUX2/Qwen 接口为主</td></tr><tr><td>蒸馏</td><td>完整去噪步数</td><td>需要训练与质量评测</td><td>必须有对应 distilled 权重</td></tr></tbody></table>
+          <div class="callout"><strong>重要：</strong>Qwen-Image 2026-08 的 KV cache 提交只是增加传入和拼接 <code>block_x → (K,V)</code> 的接口，不会自动从普通 prompt 推理中“凭空生成缓存”。README 所称 Qwen-Image 蒸馏约 5× 是特定蒸馏模型，不等于任意基础模型打开一个参数就能 5×。</div>
+          <div class="evidence">证据：<code>FluxImageUnit_TeaCache</code>、<code>WanVideoUnit_TeaCache</code>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1616">PR #1616</a>、Qwen-Image Distill 模型条目。</div>
+        </div></details>
+
+        <details class="deep" open><summary><span class="deep-title"><b>05 · USP 多卡序列并行与 Ascend NPU patch</b><small>长 token 视频更容易命中；通信决定上限</small></span><span class="tag">硬件适配 · 中</span></summary><div class="deep-body">
+          <p class="answer"><strong>USP：</strong>把 DiT token 序列切到多卡，由 xDiT 的 ring / all-to-all attention 协同计算；当前文档明确覆盖 Wan 与 MOVA，并延展到 VACE。Ascend 路径加入 NPU attention 类型、USP 适配、RMSNorm 与 RoPE fused operator。</p>
+          <div class="two"><div class="box good"><h4>有用场景</h4><p>高分辨率、长帧数、单卡放不下激活，或 Attention/MLP 计算足以覆盖通信成本；高速 NVLink/HCCS 更有利。</p></div><div class="box bad"><h4>不会线性扩展</h4><p>官方文档明确实际加速低于 GPU 数；短序列、小模型或 PCIe 通信下可能收益很小。NPU fused patch 当前主要是 Z-Image 专项，不应推断所有模型均已算子融合。</p></div></div>
+          <div class="evidence">证据：<a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/Accelerated_Inference.md">加速文档</a>、<code>xdit_context_parallel.py</code>、<code>core/npu_patch/npu_fused_operator.py</code>、PR #1345。</div>
+        </div></details>
+
+        <details class="deep" open><summary><span class="deep-title"><b>06 · Split Training 与 CPU Offload Training</b><small>都是训练降显存，但优化对象不同</small></span><span class="tag warn">能跑优先</span></summary><div class="deep-body">
+          <p class="answer"><strong>Split Training</strong> 把固定 VAE/Text Encoder 前处理缓存到磁盘，多 epoch 不再重复算；<strong>Offload Training</strong> 用 hook 逐层搬运权重，只让当前模块驻留 GPU，并用 pinned arena 避免逐 tensor pin_memory 的取整浪费。</p>
+          <div class="mechanism"><div class="step"><i>PRE-HOOK</i><b>当前层上 GPU</b><span>pinned memory + non-blocking copy</span></div><div class="step"><i>FORWARD</i><b>执行当前模块</b><span>常驻规模从 N 层降为约 1 层</span></div><div class="step"><i>POST-HOOK</i><b>权重回 CPU</b><span>兼容 gradient checkpoint recompute</span></div><div class="step"><i>BACKWARD</i><b>梯度/优化器处理</b><span>可选 optimizer CPU offload</span></div></div>
+          <div class="two"><div class="box good"><h4>Split Training</h4><p>数据反复训练、Text Encoder/VAE 冻结时最有效；代价是先生成较大的特征缓存并占磁盘。</p></div><div class="box bad"><h4>Offload Training</h4><p>官方 toy 示例 4G→1.4G，但明确典型慢 2–10×；当前仅可靠支持单卡，不兼容 DDP/DeepSpeed，属于“可达性”而非速度优化。</p></div></div>
+          <div class="evidence">证据：<a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Training/Split_Training.md">Split Training</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Training/Offload_Training.md">Offload Training</a>、PR #1444。</div>
+        </div></details>
+      </section>
+
+      <section id="active">
+        <span class="kicker">Open pull requests</span><h2>正在做哪些优化：按成熟度而不是标题排序</h2>
+        <p class="lede">快照时共有 20 个开放 PR。以下只列与性能、显存或训练效率直接相关的工作；Echo-Memory 也列出，但明确标记为能力接入而非通用优化。</p>
+        <div class="pr-list">
+          <article class="pr"><div class="pr-id">#1325<small>OPEN<br>2026-03-04</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1325">Prior-based step skip：宣称少约 70% 步数</a></h3><p>保存同一身份/场景的早期 latent、timestep 和 sigma，新任务从后段恢复。适合口型、动作变化等“场景固定、运动变化”的系列生成。</p></div><div class="judgement warn"><b>有条件真实。</b>它复用的是上一条样本的早期扩散轨迹，不适用于普通独立 prompt。PR 没有系统质量指标或端到端 benchmark；“少 70% 步数”不能直接写成通用 3.3×。</div></article>
+          <article class="pr"><div class="pr-id">#1223<small>OPEN<br>UPDATED 07-05</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1223">Wan 训练 SP + DP</a></h3><p>8×A800 示例使用 SP=4、DP=2，把长视频 token 沿序列切分，同时保留两组数据并行；提交者对齐了损失曲线。</p></div><div class="judgement risk"><b>方向正确，依赖风险高。</b>反向传播依赖 xDiT 与 PyTorch 尚未正式合入/发布的 autograd 修复，且只测 Wan2.2 TI2V-5B 小数据集。适合继续实验，不宜当稳定训练能力。</div></article>
+          <article class="pr"><div class="pr-id">#1434<small>OPEN<br>2026-05-11</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1434">FLUX.2 双卡模型并行 + CPU 数据预处理</a></h3><p>按 block 中点把约 60GB BF16 Transformer 分到两卡，用 pre-hook 跨卡搬 activation，并避开 LoRA 支路量化；另把 Mistral-24B 特征预处理放 CPU。</p></div><div class="judgement"><b>可达性价值高。</b>2×5090 实测约 20.7G / 12.6G、2.69 s/it；2×24GB 只是架构推断、尚未验证。不是追求比单卡更快，而是让 24GB 双卡有机会训练。</div></article>
+          <article class="pr"><div class="pr-id">#1436<small>OPEN<br>DEPENDS #1434</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1436">Wan 2.x LoRA 双卡模型并行</a></h3><p>前半 Wan blocks 放 cuda:0，后半放 cuda:1，每个后半 block 用 hook 对齐 context/t_mod/freqs，head 再回 cuda:0。</p></div><div class="judgement warn"><b>能跑，但几乎不提速。</b>2×5090 实测 44.3 s/it，作者给出的单卡 FP8 baseline 为 44.7 s/it；价值是显存分摊。依赖另外两个 PR，跨 3090/4090 未验证。</div></article>
+          <article class="pr"><div class="pr-id">#1302<small>OPEN<br>2026-02-19</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1302">Wan 训练 FLOPs 采集接口</a></h3><p>用 module wrapper/decorator 按输入输出和参数估算 forward FLOPs，并用约 3×forward/time 粗估训练 TFLOPS。</p></div><div class="judgement"><b>它是测量基础设施，不是加速。</b>有助于定位 T5/DiT/VAE 计算占比和硬件利用率，但“反向=2×前向”是粗略假设，不等于 profiler 的精确算子统计。</div></article>
+          <article class="pr"><div class="pr-id">#1612<small>OPEN<br>2026-08-18</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1612">Echo-Memory Wan 集成整理</a></h3><p>把 Echo-Memory loader 纳入 pipeline，补标准/低显存推理、LoRA/full training 与文档；基于 #1592 的社区 overlay。</p></div><div class="judgement warn"><b>不是通用显存优化。</b>“Memory”指模型的跨片段场景记忆能力，不是 GPU memory manager。价值在长视频一致性/回访场景能力接入。</div></article>
+          <article class="pr"><div class="pr-id">#1017<small>OPEN<br>2025-10-29</small></div><div><h3><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1017">Wan2.2-S2V TeaCache</a></h3><p>尝试把 TeaCache 扩展到 S2V；23 个 commits，长期未更新。</p></div><div class="judgement risk"><b>成熟度低。</b>主线已存在 Wan TeaCache，但这份 S2V PR 长期停滞、改动大且无正文 benchmark，不能计入近期确定路线。</div></article>
+        </div>
+        <h3>快速判断表</h3>
+        <table><thead><tr><th>工作</th><th>解决的真实瓶颈</th><th>最匹配场景</th><th>当前判断</th></tr></thead><tbody>
+          <tr><td>Prior step skip</td><td>同场景系列生成的早期去噪重复</td><td>固定身份/背景，多动作、多口型</td><td class="maybe">潜力高，需质量基准</td></tr>
+          <tr><td>SP + DP training</td><td>长视频激活与训练吞吐</td><td>8 卡高速互联 Wan 训练</td><td class="no">依赖未落地修复</td></tr>
+          <tr><td>FLUX2/Wan dual GPU</td><td>单卡装不下权重/激活</td><td>2×24/32GB 消费卡 LoRA</td><td class="yes">可达性有价值</td></tr>
+          <tr><td>FLOPs collector</td><td>缺少训练利用率观测</td><td>优化前 profiling</td><td class="maybe">基础设施，非加速</td></tr>
+          <tr><td>Echo-Memory</td><td>长视频场景记忆能力</td><td>多 chunk、相机动作、回访</td><td class="maybe">能力接入，非性能项</td></tr>
+        </tbody></table>
+      </section>
+
+      <section id="community">
+        <span class="kicker">Organization & ecosystem</span><h2>组织与社区：大平台背书，小核心团队维护</h2>
+        <p class="lede">DiffSynth-Studio 由 ModelScope Community 开发维护。ModelScope 官方将自己定义为开放 AI 社区平台，并说明由阿里巴巴发起；DiffSynth 则是其 AIGC 区域的核心引擎之一。</p>
+        <div class="cards">
+          <article class="card"><span class="num">PLATFORM</span><h3>ModelScope 资源闭环</h3><p>代码仓库与 Model Hub、Dataset、Studio 在线体验、Civision/AIGC Zone 连通，研究成果可以同时发布模型、数据、示例与 Demo。</p></article>
+          <article class="card orange"><span class="num">RESEARCH</span><h3>成果反哺框架</h3><p>FastBlend、Diffutoon、ExVideo、EliGen、ArtAug、Diffusion Templates、Image-to-LoRA 等并非外部模型搬运，而是团队研究方法。</p></article>
+          <article class="card yellow"><span class="num">COMMUNITY</span><h3>贡献面广但核心窄</h3><p>GitHub API 统计 Artiprocher 857 次贡献、mi804 186 次，两人合计约占已识别头部贡献的绝大多数；第三名 Feng0w0 为 40。</p></article>
+        </div>
+        <div class="memory-ladder"><div><strong>227</strong><span>2026 年截至快照已合并 PR</span></div><div><strong>58</strong><span>最近 30 天合并 PR</span></div><div><strong>7</strong><span>同期关闭 Issue；功能吞吐明显高于问题清理</span></div></div>
+        <div class="callout"><strong>社区健康解读：</strong>12.9k star、1.27k fork 与快速合并说明影响力和创新活跃度都高；但 535 个开放 Issue、README 对人员有限的公开提示、以及若干跨越数月的开放 PR，说明 bus factor 和支持响应是明确风险。GitHub 的 <code>open_issues_count</code> 会把 PR 也算进去，因此本报告使用 Search API 将 535 个 Issue 与 20 个 PR 分开。</div>
+      </section>
+
+      <section id="people">
+        <span class="kicker">Core contributors</span><h2>核心贡献者：谁在决定技术方向</h2>
+        <p class="lede">贡献次数来自 GitHub Contributors API 快照，不等于代码行或影响力；角色判断结合 2026 年提交主题。Git shortlog 中的 Zhongjie Duan 对应 GitHub 账号 Artiprocher，Hong Zhang 对应 mi804。</p>
+        <div class="people">
+          <article class="person"><strong><a href="https://github.com/Artiprocher" style="color:white">Artiprocher</a><br><small>Zhongjie Duan</small></strong><span class="commits">857</span><p>项目第一维护者与架构主线。近期覆盖 Qwen KV cache、FlashAttention 4、MiniMax H3/Music3、Pipeline 修复与发布节奏；也是早期项目作者身份的延续。</p></article>
+          <article class="person"><strong><a href="https://github.com/mi804" style="color:white">mi804</a><br><small>Hong Zhang</small></strong><span class="commits">186</span><p>2026 年量化与运行时核心：统一 QuantizeConfig、动态量化 LoRA、quant + disk offload、torch.compile、训练/模型框架重构。</p></article>
+          <article class="person"><strong><a href="https://github.com/Feng0w0" style="color:white">Feng0w0</a><br><small>Ascend/NPU</small></strong><span class="commits">40</span><p>设备抽象、NPU USP、Z-Image RMSNorm/RoPE 融合、ZeRO3 适配，是昇腾路线最清晰的专项贡献者。</p></article>
+          <article class="person"><strong><a href="https://github.com/lzws" style="color:white">lzws</a><br><small>Models & Wan</small></strong><span class="commits">28</span><p>Wan USP/S2V/VACE 修复、Qwen lightning 与多种图像/视频模型接入，属于重要的模型能力和示例维护力量。</p></article>
+        </div>
+        <h3>外围贡献正在补什么</h3>
+        <table><thead><tr><th>贡献方向</th><th>代表贡献者 / PR</th><th>对主项目的意义</th></tr></thead><tbody>
+          <tr><td>长视频并行训练</td><td>mahaocong90 · #1223 / #1302</td><td>补 SP+DP 与 FLOPs 观测，但仍需要维护者帮助处理上游依赖。</td></tr>
+          <tr><td>消费卡双 GPU</td><td>genno-whittlery · #1434 / #1436</td><td>把社区真实硬件约束带入训练框架，验证“可用优先”的需求。</td></tr>
+          <tr><td>模型整合</td><td>NancyFyong、yjy415、Yuze-e20 等</td><td>扩展 LingBot、Hunyuan、LTX 与其他新模型，分担模型适配面。</td></tr>
+          <tr><td>场景复用加速</td><td>Efrat-Taig · #1325</td><td>提供不同于通用 cache 的业务特定去噪复用思路。</td></tr>
+        </tbody></table>
+      </section>
+
+      <section id="risks">
+        <span class="kicker">Strategic assessment</span><h2>采用建议与风险</h2>
+        <div class="risk-grid">
+          <div class="risk-card"><b>适合：研究与快速验证</b><p>需要第一时间试新图像/视频/音频模型，同时希望有统一训练和低显存路径。DiffSynth 的模型覆盖与示例密度能显著缩短接入时间。</p></div>
+          <div class="risk-card"><b>适合：显存受限的离线任务</b><p>单次生成、LoRA 微调、消费卡或内存/SSD 充足但显存不足。接受速度换容量时，动态 VRAM/量化/offload 组合很有价值。</p></div>
+          <div class="risk-card"><b>谨慎：高吞吐在线服务</b><p>Python hook、动态迁移、磁盘加载和大量模型特例不天然适合稳定低延迟。官方建议的产品分工本身就指向 DiffSynth-Engine。</p></div>
+          <div class="risk-card"><b>谨慎：把 PR 数字当承诺</b><p>开放 PR 的硬件与数据集验证范围通常很窄；“70% fewer steps”“双卡能跑”都不是跨模型、跨硬件、端到端的稳定 SLA。</p></div>
+          <div class="risk-card"><b>风险：依赖矩阵复杂</b><p>FlashAttention 2/3/4、Sage、xFormers、torchao、CUDA 13、xDiT、torch-npu 各有版本边界。新后端出现不等于所有模型都自动兼容。</p></div>
+          <div class="risk-card"><b>风险：核心维护者集中</b><p>功能进入主线的速度快，但 Issue 响应和老 PR 清理能力有限。生产采用应固定 commit、保留回归集，并自行维护关键补丁。</p></div>
+        </div>
+        <h3>建议的技术选型顺序</h3>
+        <table><thead><tr><th>你的目标</th><th>优先尝试</th><th>不要先做</th></tr></thead><tbody>
+          <tr><td>模型装不下</td><td>预量化权重 → 合理 vram_limit → CPU offload → 最后 Disk Offload</td><td>一开始就 vram_limit=0；会把大量时间花在搬运</td></tr>
+          <tr><td>离线推理更快</td><td>高效 attention → 固定 shape compile → 蒸馏/TeaCache 的质量对比</td><td>先加多卡；短任务可能被通信和启动开销吞掉</td></tr>
+          <tr><td>LoRA 训练显存不足</td><td>Split Training + gradient checkpoint + 可微量化底座</td><td>把 training offload 当加速；官方明确可能慢 2–10×</td></tr>
+          <tr><td>长视频多卡训练</td><td>先用主线 DDP/DeepSpeed；SP+DP 单独建立数值回归</td><td>直接依赖 #1223 投产，其上游 autograd 问题未闭环</td></tr>
+          <tr><td>线上部署</td><td>同时评估 DiffSynth-Engine，做冷启动、并发、显存碎片与故障恢复测试</td><td>仅凭 Studio 单样本 demo 决策</td></tr>
+        </tbody></table>
+      </section>
+
+      <section id="sources">
+        <span class="kicker">Evidence & methodology</span><h2>证据边界与来源</h2>
+        <p class="lede">代码事实以本地仓库 <code>main@fed7b18fac2e</code> 为准；社区数字与开放 PR 状态采集于 2026-08-22。性能数字只在来源明确说明了硬件、模型和条件时引用，并区分作者自报、官方文档与本报告推断。</p>
+        <ol class="source-list">
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio">DiffSynth-Studio 官方仓库与 README</a>：定位、更新历史、模型与研究成果。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/tree/fed7b18fac2ed4cb802796eec91970e7659bccde">本报告代码快照 fed7b18</a>。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/VRAM_management.md">VRAM Management</a>：56G/40G/21G 示例与 Disk Offload 限制。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/Quantization.md">Model Quantization</a>：后端、方法矩阵、LoRA/磁盘组合。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/Accelerated_Inference.md">Accelerated Inference</a>：USP 与 regional compile。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Training/Offload_Training.md">Offload Training</a>：O(1 layer)、单卡限制与 2–10× 降速提示。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1620">#1620 统一量化</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1622">#1622 量化 LoRA</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1616">#1616 KV cache</a>。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1325">#1325 step skip</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1223">#1223 SP+DP</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1434">#1434 FLUX2 双卡</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1436">#1436 Wan 双卡</a>。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1302">#1302 FLOPs</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1612">#1612 Echo-Memory</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1017">#1017 TeaCache</a>。</li>
+          <li><a href="https://www.modelscope.cn/docs/models/intro">ModelScope 官方介绍</a>：开放 AI 社区与 Model Hub 角色。</li>
+          <li><a href="https://www.modelscope.cn/learn/434243">ModelScope 入门</a>：由阿里巴巴发起的开放 AI 社区。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine">DiffSynth-Engine</a>：工业部署对照项目。</li>
+        </ol>
+        <div class="callout cyan"><strong>方法说明：</strong>仓库规模来自本地 Git；贡献次数来自 GitHub Contributors API；PR/Issue 数量来自 GitHub Search API；PR 机制同时核对 PR head 与 diff。星标、Issue 和 PR 会随时间变化，页面不把这些快照当作永久常量。</div>
+      </section>
+    </main>
+  </div>
+  <footer>DIFFSYNTH-STUDIO REPOSITORY INTELLIGENCE · GENERATED FOR ASCENDPLAYGROUND · 2026-08-22</footer>
+  <script>
+    const bar=document.getElementById('progress');
+    const nav=[...document.querySelectorAll('nav a')];
+    const sections=nav.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    function update(){const h=document.documentElement;const max=h.scrollHeight-h.clientHeight;bar.style.width=(max?100*h.scrollTop/max:0)+'%';let current=sections[0];for(const s of sections){if(s.getBoundingClientRect().top<=110)current=s}nav.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+current.id))}
+    addEventListener('scroll',update,{passive:true});addEventListener('resize',update);update();
+  </script>
+</body>
+</html>
