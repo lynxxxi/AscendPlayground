@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="DiffSynth-Studio 优化路线、进行中 PR、组织社区与核心贡献者分析。">
-  <title>DiffSynth-Studio：扩散实验室的性能与社区剖面</title>
+  <meta name="description" content="以 DiffSynth-Engine 为主的高性能扩散推理引擎解析，并对照 DiffSynth-Studio 的研究、优化与社区路线。">
+  <title>DiffSynth-Engine：高性能推理引擎与 Studio 生态分析</title>
   <style>
     :root{
       --ink:#182126;--muted:#59666c;--paper:#f4f0e6;--paper2:#fffdf7;--grid:#c9c5b9;
@@ -52,26 +52,85 @@
   <div class="progress" id="progress"></div><div class="topline"></div>
   <header id="top">
     <div class="eyebrow">Repository intelligence / 2026-08-22</div>
-    <h1>DiffSynth-Studio<br>扩散实验室剖面</h1>
-    <p class="subtitle">它有哪些优化、正在优化什么、哪些技术真的能带来收益，以及 ModelScope 组织背景与核心贡献者如何塑造项目路线。</p>
-    <div class="snapshot"><span class="pill hot">结论对应 main@fed7b18</span><span class="pill">代码复核 2026-08-22</span><span class="pill">Apache-2.0</span><span class="pill">DiffSynth 2.1.2</span></div>
+    <h1>DiffSynth-Engine<br>工业推理引擎剖面</h1>
+    <p class="subtitle">以 Engine 为主线，拆解它如何组织扩散推理、显存、低精度与多卡执行；再用 Studio 解释 DiffSynth 生态为何同时保留“稳定部署”和“前沿探索”两套技术路线。</p>
+    <div class="snapshot"><span class="pill hot">Engine main@db0f911</span><span class="pill">代码复核 2026-08-22</span><span class="pill">Apache-2.0</span><span class="pill">Python ≥ 3.10</span></div>
     <div class="hero-metrics">
-      <div class="metric"><b>12,975</b><span>GitHub stars<br>API snapshot</span></div>
-      <div class="metric"><b>1,275</b><span>forks<br>community reach</span></div>
-      <div class="metric"><b>1,255</b><span>main commits<br>local git</span></div>
-      <div class="metric"><b>58</b><span>30 日合并 PR<br>2026-07-23 起</span></div>
-      <div class="metric warn"><b>535</b><span>开放 Issue<br>维护压力信号</span></div>
-      <div class="metric warn"><b>2</b><span>README 明示<br>主要维护者</span></div>
+      <div class="metric"><b>13</b><span>Pipeline 实现文件<br>Engine snapshot</span></div>
+      <div class="metric"><b>54</b><span>模型实现文件<br>图像 / 视频 / 3D</span></div>
+      <div class="metric"><b>13</b><span>Attention 配置值<br>AUTO + 12 后端</span></div>
+      <div class="metric"><b>4</b><span>并行维度<br>CFG / SP / TP / FSDP</span></div>
+      <div class="metric warn"><b>2</b><span>CPU offload 粒度<br>模型级 / 顺序级</span></div>
+      <div class="metric warn"><b>0</b><span>统一公开性能倍数<br>需按硬件实测</span></div>
     </div>
   </header>
   <div class="nav-wrap"><nav>
-    <a href="#summary">结论</a><a href="#position">定位</a><a href="#architecture">架构</a><a href="#optimization">已落地优化</a><a href="#active">正在做</a><a href="#community">组织社区</a><a href="#people">贡献者</a><a href="#risks">风险判断</a><a href="#sources">证据</a>
+    <a href="#summary">Engine 结论</a><a href="#engine-architecture">Engine 架构</a><a href="#engine-optimization">Engine 优化</a><a href="#engine-models">模型与边界</a><a href="#comparison">双项目定位</a><a href="#studio">Studio 评估</a><a href="#active">Studio 路线</a><a href="#risks">采用建议</a><a href="#sources">证据</a>
   </nav></div>
   <div class="page">
-    <aside class="rail"><div class="label">READING NOTE</div><p>本报告把“跑得更快”“占得更少”“原本跑不了、现在能跑”分开评价。PR 标题里的加速数字不会自动等同于端到端收益。</p><div class="status">SNAPSHOT<br>main = fed7b18<br>latest = 2026-08-20<br>report = 2026-08-22</div></aside>
+    <aside class="rail"><div class="label">READING NOTE</div><p>前半部分以 Engine 的实际代码为准，后半部分保留 Studio 的优化与社区研究。报告把吞吐、时延、显存占用和“能否运行”分开评价。</p><div class="status">ENGINE<br>main = db0f911<br>latest = 2026-05-27<br><br>STUDIO<br>main = fed7b18<br>report = 2026-08-22</div></aside>
     <main>
       <section id="summary">
-        <span class="kicker">Executive verdict</span><h2>先给结论：它更像研究型全栈框架，不是极致推理引擎</h2>
+        <span class="kicker">Engine executive verdict</span><h2>先给结论：Engine 是 DiffSynth 面向部署的独立推理运行时</h2>
+        <p class="lede">DiffSynth-Engine 不是 Studio 的轻量包装，也不是单一模型 Demo。它重写采样器、调度器、模型与 Pipeline 组件，通过统一配置把 Attention 后端、低精度线性层、缓存、编译、offload 与多卡拓扑组合起来，目标是让扩散模型在不同资源预算上更稳定、更快地完成推理。</p>
+        <div class="verdict"><div class="verdict-main"><b>它最有价值的地方，是把“模型兼容、显存可达、多卡执行、算子选择”变成一组可配置的运行时能力。</b><p>Engine 当前覆盖 SD/SDXL、Flux/Flux2、Qwen-Image、Wan、Z-Image 与 Hunyuan3D 等路线，并兼容 ModelScope/CivitAI 权重和 LoRA。它适合构建自有推理服务或离线生成管线，但仓库仍是 Python 库，不自带请求调度、动态批处理、租户隔离或完整服务控制面。</p></div><div class="verdict-side"><div><strong>ENGINE</strong><br><span>稳定推理主线<br>Studio 的部署互补面</span></div></div></div>
+        <div class="cards">
+          <article class="card"><span class="num">01 / RUNTIME</span><h3>关键组件自主实现</h3><p>采样器与噪声调度器在仓库内实现，官方明确避免依赖 k-diffusion、ldm、sgm；这减少了核心推理语义被外部库牵制的程度。</p></article>
+          <article class="card orange"><span class="num">02 / PERFORMANCE</span><h3>优化由配置驱动</h3><p><code>OptimizationConfig</code>、<code>AttentionConfig</code> 与 <code>ParallelConfig</code> 把 FP8、FBCache、compile、Attention 和多卡策略放到 Pipeline 构建入口。</p></article>
+          <article class="card yellow"><span class="num">03 / BOUNDARY</span><h3>高性能不等于完整 Serving</h3><p>项目解决模型执行层问题；API 网关、队列、批处理、流控、可观测性与故障恢复仍需使用者自行建设或接入其他服务框架。</p></article>
+        </div>
+        <div class="callout cyan" style="margin-top:18px"><strong>证据强度：</strong>本节结论来自 Engine <code>main@db0f911</code> 的 README、配置、Pipeline、并行、offload、benchmark 与测试代码。官方没有给出统一端到端 benchmark 表，因此本文不把“optimized performance”改写成未经验证的固定加速倍数。</div>
+      </section>
+
+      <section id="engine-architecture">
+        <span class="kicker">Engine architecture</span><h2>架构主线：从权重入口到可组合执行后端</h2>
+        <p class="lede">Engine 的公共 API 很薄：先用 <code>fetch_model()</code> 获取 ModelScope/CivitAI 权重，再由具体 <code>PipelineConfig</code> 描述组件、精度、设备与优化，最后由 <code>BasePipeline</code> 统一加载、LoRA、图像编解码、offload 和编译生命周期。</p>
+        <div class="flow">
+          <div class="node"><small>FETCH</small><b>Model sources</b><span>ModelScope、CivitAI、本地 safetensors、分片与通配符路径</span></div>
+          <div class="node"><small>CONFIG</small><b>PipelineConfig</b><span>模型组件、dtype、device、Attention、优化与并行拓扑</span></div>
+          <div class="node"><small>LOAD</small><b>from_pretrained</b><span>权重识别、key map 转换、组件初始化与 LoRA 融合</span></div>
+          <div class="node"><small>EXECUTE</small><b>Model + algorithm</b><span>DiT/UNet/VAE/Text Encoder 配合内置 sampler 与 scheduler</span></div>
+          <div class="node"><small>LIFECYCLE</small><b>BasePipeline</b><span>编解码、compile、模型换入换出、磁盘释放与结果保存</span></div>
+        </div>
+        <div class="layer-map">
+          <div class="stack">
+            <div class="stack-row"><b>算法层</b><span><code>algorithm/sampler</code> 与 <code>noise_scheduler</code> 支持 Euler、DPM++、DEIS、DDPM、Flow Matching 等路径。</span></div>
+            <div class="stack-row"><b>模型层</b><span>按 SD、SDXL、SD3、Flux、Flux2、Qwen-Image、Wan、Z-Image、Hunyuan3D 分包，公共 Attention、LoRA 与 Transformer helper 下沉复用。</span></div>
+            <div class="stack-row"><b>Pipeline 层</b><span>图像、视频、语音驱动视频与 3D shape 分开编排；公共生命周期集中在 <code>BasePipeline</code>。</span></div>
+            <div class="stack-row"><b>运行时层</b><span><code>utils</code> 承担下载、加载、offload、并行进程组、内存预测、平台识别与视频 I/O。</span></div>
+          </div>
+          <div class="callout cyan"><strong>设计含义：</strong><br>配置继承把模型差异与运行时策略分开，因此同一类优化可跨多个 Pipeline 复用；但每个模型仍决定自己支持哪些并行方式和 Attention 实现，不能只看到枚举存在就推断全模型兼容。<br><br><strong>工程取向：</strong><br>核心依赖固定在 PyTorch 2.6–2.8，开发依赖锁定 Diffusers 0.31 与 Transformers 4.52.4，说明项目更重可验证组合，而不是无限追随上游最新版本。</div>
+        </div>
+      </section>
+
+      <section id="engine-optimization">
+        <span class="kicker">Engine optimization stack</span><h2>性能栈：算得更省、搬得更少、必要时拆到多卡</h2>
+        <details class="deep" open><summary><span></span><span class="deep-title"><b>Attention：AUTO + 12 种具体后端</b><small>AUTO / EAGER / FA2 / FA3 / FA3-FP8 / FA4 / AITER / AITER-FP8 / XFORMERS / SDPA / SAGE / SPARGE / VSA</small></span><span class="tag">COMPUTE</span></summary><div class="deep-body"><div class="answer">价值在于按 GPU、模型和序列形态选择密集、Flash 或稀疏 Attention；AUTO 方便起步，生产环境仍应固定后端并做数值回归。</div><div class="two"><div class="box good"><h4>潜在收益</h4><p>图像高分辨率和视频长序列通常最受 Attention 内存与计算影响；FP8、Sparge 与 VSA 提供进一步压缩空间。</p></div><div class="box bad"><h4>真实边界</h4><p>后端有硬件、dtype、shape 与安装依赖差异；枚举数量不等于每个模型都通过了全部组合测试。</p></div></div></div></details>
+        <details class="deep" open><summary><span></span><span class="deep-title"><b>低精度、缓存与编译</b><small><code>use_fp8_linear</code> / <code>use_fbcache</code> / <code>use_torch_compile</code></small></span><span class="tag">LATENCY</span></summary><div class="deep-body"><div class="answer">FP8 Linear 减少权重带宽与显存压力，FBCache 跳过相近步骤的重复 block 计算，<code>torch.compile</code> 优化稳定 shape 的重复执行；三者可配置组合，但需要分别验证画质、首轮编译与端到端收益。</div><div class="two"><div class="box good"><h4>适合</h4><p>固定分辨率、重复请求、DiT 去噪步较多，以及支持 FP8 的新 GPU。</p></div><div class="box bad"><h4>注意</h4><p>动态 shape 可能重编译；缓存阈值影响画质；README 没有给跨模型统一数字。</p></div></div></div></details>
+        <details class="deep" open><summary><span></span><span class="deep-title"><b>显存生命周期：两种 CPU offload + 磁盘释放</b><small><code>cpu_offload</code> / <code>sequential_cpu_offload</code> / <code>offload_to_disk</code></small></span><span class="tag warn">CAPACITY</span></summary><div class="deep-body"><div class="answer">模型级 offload 在组件之间换入换出，顺序 offload 通过 forward hook 细化到子模块；磁盘模式在组件完成后销毁内存对象，需要时再加载。它们优先解决 OOM，不应被描述成加速。</div><div class="two"><div class="box good"><h4>收益</h4><p>让 Flux、Wan 等大模型在较小 GPU 上运行，并可与 VAE tiling、低精度权重组合。</p></div><div class="box bad"><h4>代价</h4><p>PCIe/统一内存/磁盘搬运增加延迟；顺序粒度越细，通常越依赖主机内存带宽。</p></div></div></div></details>
+        <details class="deep" open><summary><span></span><span class="deep-title"><b>多卡执行：CFG、序列、张量并行与 FSDP</b><small>支持 1 / 2 / 4 / 8 卡拓扑，序列并行含 Ulysses 与 Ring 维度</small></span><span class="tag">SCALE</span></summary><div class="deep-body"><div class="answer"><code>parallelism</code> 被分解为 CFG × SP 或 CFG × TP，并可用 FSDP 分片模型；代码明确禁止 TP 与 SP 同开，也禁止 TP 与 FSDP 同开，说明它是受约束的拓扑配置而非任意排列组合。</div><div class="two"><div class="box good"><h4>适合</h4><p>视频长序列、大 DiT 权重或 CFG 两支可独立计算的场景；高速互联更能覆盖通信开销。</p></div><div class="box bad"><h4>平台限制</h4><p>并行 worker 明确要求 CUDA；<code>yunchang</code> 仅在 Linux 安装。Apple Silicon 可单机运行，不代表支持这套多卡路径。</p></div></div></div></details>
+      </section>
+
+      <section id="engine-models">
+        <span class="kicker">Models, tooling & maturity</span><h2>支持面很宽，但“能加载”与“已适合生产”必须分开</h2>
+        <p class="lede">代码快照包含 54 个模型实现文件、13 个 Pipeline 实现文件、21 个 Python 示例和 45 个测试模块。覆盖面已经从经典 SD 扩展到图像编辑、视频、语音驱动视频与 3D，但不同路线的功能完整度并不一致。</p>
+        <table><thead><tr><th>方向</th><th>代码中的代表能力</th><th>部署时应核对</th></tr></thead><tbody>
+          <tr><td>SD / SDXL / SD3</td><td>UNet/DiT、VAE、Text Encoder、LoRA、ControlNet、inpainting</td><td>目标权重格式、ControlNet 变体与精度回归</td></tr>
+          <tr><td>Flux / Flux2</td><td>文生图、Kontext、ControlNet、IP-Adapter、Redux、FBCache、Klein 4B/9B</td><td>模型版本、双编码器成本、compile 与 FP8 组合</td></tr>
+          <tr><td>Qwen-Image</td><td>生成、Edit/2511、ControlNet、EliGen、SVD/Nunchaku 量化路径</td><td>文本渲染质量、编辑一致性、量化 kernel 环境</td></tr>
+          <tr><td>Wan</td><td>T2V/I2V/首尾帧、S2V、DMD、LoRA、GGUF、并行与稀疏 Attention</td><td>分辨率/帧数显存曲线、通信拓扑、音频依赖</td></tr>
+          <tr><td>Z-Image / Hunyuan3D</td><td>图像生成/编辑与 3D shape Pipeline</td><td>相对较新的代码路径、下游格式与测试覆盖</td></tr>
+        </tbody></table>
+        <div class="cards">
+          <article class="card"><span class="num">MODEL ACCESS</span><h3>Hub 与民间权重兼容</h3><p><code>fetch_model</code> 支持 ModelScope 模型 ID、revision、单文件、分片和通配符；另有 CivitAI 下载入口与 LoRA 加载。</p></article>
+          <article class="card orange"><span class="num">MEASUREMENT</span><h3>自带性能基准脚本</h3><p>现有 harness 可比较 Flux/Qwen-Image 的 basic、FP8、compile、FP8+compile、offload，并导出 profiler trace，适合复制到目标硬件实测。</p></article>
+          <article class="card yellow"><span class="num">VERSIONING</span><h3>README 发布史落后于 main</h3><p>README 新闻停在 2025 年 v0.6.0，但 2026-05-27 的主线已包含 Flux2、Z-Image 等代码。生产使用应固定 commit 或 PyPI 版本，不能混用文档与 main 能力。</p></article>
+        </div>
+        <div class="callout"><strong>推荐验收法：</strong>选定模型、分辨率/帧数、batch 与 GPU 后，用仓库 benchmark 脚本跑 basic → FP8 → compile → 组合模式；同时记录冷启动、稳态 P50/P95、峰值显存、画质回归与错误率。没有这组数据，就不能把“高性能引擎”直接兑换成自己的 SLA。</div>
+      </section>
+
+      <section id="studio">
+        <span class="kicker">Studio counterpart</span><h2>再看 Studio：它更像研究型全栈框架，不是极致推理引擎</h2>
         <p class="lede">DiffSynth-Studio 的核心竞争力不是某个独家 CUDA kernel，而是把新模型快速接入、低显存推理、LoRA/全量训练、蒸馏、量化和多硬件适配放进统一 Pipeline。若目标是研究、微调和消费卡可达性，它很强；若目标是稳定服务、高吞吐和极致时延，官方自己把这条路线交给了 DiffSynth-Engine。</p>
         <div class="verdict"><div class="verdict-main"><b>最值得关注的是“可达性工程”：让原本装不下、训不起、难接入的模型可用。</b><p>动态显存管理、Disk Offload、统一量化、拆分训练、逐层训练 Offload，以及 2026 年正在推进的双卡模型并行都围绕这个目标。纯速度优化存在，但覆盖和基准证据弱于其显存优化。</p></div><div class="verdict-side"><div><strong>7.8</strong><br><span>综合研究价值 / 10<br>生产推理需另评</span></div></div></div>
         <div class="cards">
@@ -89,7 +148,7 @@
         </div>
       </section>
 
-      <section id="position">
+      <section id="comparison">
         <span class="kicker">What it is</span><h2>项目定位：Studio 做探索，Engine 做部署</h2>
         <p class="lede">官方把 DiffSynth 拆为两条产品线。这一分工解释了为什么 Studio 愿意接受实验性训练特性、快速模型适配和较多 Python 层 hook，而不强求所有路径都达到服务引擎级稳定性。</p>
         <div class="layer-map">
@@ -109,7 +168,7 @@
         </div>
       </section>
 
-      <section id="architecture">
+      <section id="studio-architecture">
         <span class="kicker">Architecture map</span><h2>优化为什么容易扩散到很多模型：控制面被统一了</h2>
         <p class="lede">2.x 架构把模型文件、量化方式、显存生命周期、Pipeline 计算单元和训练任务拆开。优化若进入 <code>core</code> 或 <code>BasePipeline</code>，就可能被多个模型复用；只写在 examples 或单模型文件里的优化则更像专项适配。</p>
         <div class="flow">
@@ -125,7 +184,7 @@
         </div>
       </section>
 
-      <section id="optimization">
+      <section id="studio-optimization">
         <span class="kicker">Landed optimizations</span><h2>已经落地的优化：机制、场景与真实边界</h2>
         <p class="lede">下面按“显存可达性、计算加速、减少重复计算、多卡并行、训练效率”分类。所有卡片默认展开，便于直接阅读和打印。</p>
 
@@ -226,27 +285,34 @@
       <section id="risks">
         <span class="kicker">Strategic assessment</span><h2>采用建议与风险</h2>
         <div class="risk-grid">
-          <div class="risk-card"><b>适合：研究与快速验证</b><p>需要第一时间试新图像/视频/音频模型，同时希望有统一训练和低显存路径。DiffSynth 的模型覆盖与示例密度能显著缩短接入时间。</p></div>
-          <div class="risk-card"><b>适合：显存受限的离线任务</b><p>单次生成、LoRA 微调、消费卡或内存/SSD 充足但显存不足。接受速度换容量时，动态 VRAM/量化/offload 组合很有价值。</p></div>
-          <div class="risk-card"><b>谨慎：高吞吐在线服务</b><p>Python hook、动态迁移、磁盘加载和大量模型特例不天然适合稳定低延迟。官方建议的产品分工本身就指向 DiffSynth-Engine。</p></div>
+          <div class="risk-card"><b>适合 Engine：可控的推理运行时</b><p>需要自有 Python 推理管线、明确的模型组件、Attention/FP8/compile/offload 组合，以及受约束的多卡执行拓扑。</p></div>
+          <div class="risk-card"><b>适合 Studio：研究与快速验证</b><p>需要第一时间试新图像/视频/音频模型，同时希望有统一训练、LoRA 和低显存路径。Studio 的模型覆盖与示例密度能缩短实验接入时间。</p></div>
+          <div class="risk-card"><b>适合：显存受限的离线任务</b><p>两套项目都提供 offload；Engine 更偏稳定推理生命周期，Studio 的动态 VRAM、Disk Offload 与训练组合更丰富。接受速度换容量时才启用。</p></div>
           <div class="risk-card"><b>谨慎：把 PR 数字当承诺</b><p>开放 PR 的硬件与数据集验证范围通常很窄；“70% fewer steps”“双卡能跑”都不是跨模型、跨硬件、端到端的稳定 SLA。</p></div>
-          <div class="risk-card"><b>风险：依赖矩阵复杂</b><p>FlashAttention 2/3/4、Sage、xFormers、torchao、CUDA 13、xDiT、torch-npu 各有版本边界。新后端出现不等于所有模型都自动兼容。</p></div>
+          <div class="risk-card"><b>风险：Engine 不是服务控制面</b><p>仓库没有直接解决 API 鉴权、请求队列、动态批处理、多租户、弹性扩缩与故障恢复。线上部署仍需补齐服务层并建立 SLA 测试。</p></div>
+          <div class="risk-card"><b>风险：依赖矩阵复杂</b><p>Engine 的 FA2/3/4、AITER、Sage/Sparge/VSA 与 Studio 的 xFormers、torchao、xDiT、torch-npu 各有版本边界。后端存在不等于全模型自动兼容。</p></div>
           <div class="risk-card"><b>风险：核心维护者集中</b><p>功能进入主线的速度快，但 Issue 响应和老 PR 清理能力有限。生产采用应固定 commit、保留回归集，并自行维护关键补丁。</p></div>
         </div>
         <h3>建议的技术选型顺序</h3>
         <table><thead><tr><th>你的目标</th><th>优先尝试</th><th>不要先做</th></tr></thead><tbody>
-          <tr><td>模型装不下</td><td>预量化权重 → 合理 vram_limit → CPU offload → 最后 Disk Offload</td><td>一开始就 vram_limit=0；会把大量时间花在搬运</td></tr>
-          <tr><td>离线推理更快</td><td>高效 attention → 固定 shape compile → 蒸馏/TeaCache 的质量对比</td><td>先加多卡；短任务可能被通信和启动开销吞掉</td></tr>
+          <tr><td>Engine 模型装不下</td><td>匹配低精度权重 → VAE tiling → <code>cpu_offload</code> → <code>sequential_cpu_offload</code> → 必要时磁盘生命周期</td><td>先上最细粒度 offload；搬运可能主导延迟</td></tr>
+          <tr><td>Engine 推理更快</td><td>目标 GPU 上比较 Attention → FP8 → compile → FBCache；逐项做数值与画质回归</td><td>把不同机器或不同 shape 的 benchmark 数字直接外推</td></tr>
           <tr><td>LoRA 训练显存不足</td><td>Split Training + gradient checkpoint + 可微量化底座</td><td>把 training offload 当加速；官方明确可能慢 2–10×</td></tr>
           <tr><td>长视频多卡训练</td><td>先用主线 DDP/DeepSpeed；SP+DP 单独建立数值回归</td><td>直接依赖 #1223 投产，其上游 autograd 问题未闭环</td></tr>
-          <tr><td>线上部署</td><td>同时评估 DiffSynth-Engine，做冷启动、并发、显存碎片与故障恢复测试</td><td>仅凭 Studio 单样本 demo 决策</td></tr>
+          <tr><td>线上部署</td><td>以 Engine 为推理候选，补齐服务控制面；测试冷启动、并发、P95、显存碎片、超时和故障恢复</td><td>仅凭 Engine/Studio 单样本 demo 决策</td></tr>
         </tbody></table>
       </section>
 
       <section id="sources">
         <span class="kicker">Evidence & methodology</span><h2>证据边界与来源</h2>
-        <p class="lede">代码事实以本地仓库 <code>main@fed7b18fac2e</code> 为准；社区数字与开放 PR 状态采集于 2026-08-22。性能数字只在来源明确说明了硬件、模型和条件时引用，并区分作者自报、官方文档与本报告推断。</p>
+        <p class="lede">Engine 事实以官方仓库 <code>main@db0f91196138</code>（2026-05-27）为准，Studio 事实以 <code>main@fed7b18fac2e</code> 为准；社区数字与开放 PR 状态采集于 2026-08-22。性能数字只在来源明确说明硬件、模型和条件时引用，并区分代码事实、作者自报与本报告推断。</p>
         <ol class="source-list">
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine">DiffSynth-Engine 官方仓库与 README</a>：项目定位、依赖要求、快速开始与发布记录。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine/tree/db0f91196138fa3c9633591e27c229c3cc764d10">Engine 代码快照 db0f911</a>：本报告的 Engine 代码统计与实现依据。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine/blob/main/docs/tutorial_zh.md">Engine 中文使用指南</a>：模型获取、图像/视频推理、LoRA、显存优化与多卡入口。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine/blob/main/diffsynth_engine/configs/pipeline.py">Engine Pipeline 配置</a>：Attention、FP8/FBCache/compile、offload 与并行拓扑。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine/blob/main/diffsynth_engine/pipelines/base.py">Engine BasePipeline</a>：加载、LoRA、编解码、offload 和生命周期管理。</li>
+          <li><a href="https://github.com/modelscope/DiffSynth-Engine/blob/main/examples/model_perf_benchmark.py">Engine benchmark harness</a>：Flux/Qwen-Image 的 basic、FP8、compile 与 offload 对照入口。</li>
           <li><a href="https://github.com/modelscope/DiffSynth-Studio">DiffSynth-Studio 官方仓库与 README</a>：定位、更新历史、模型与研究成果。</li>
           <li><a href="https://github.com/modelscope/DiffSynth-Studio/tree/fed7b18fac2ed4cb802796eec91970e7659bccde">本报告代码快照 fed7b18</a>。</li>
           <li><a href="https://github.com/modelscope/DiffSynth-Studio/blob/main/docs/en/Pipeline_Usage/VRAM_management.md">VRAM Management</a>：56G/40G/21G 示例与 Disk Offload 限制。</li>
@@ -258,13 +324,12 @@
           <li><a href="https://github.com/modelscope/DiffSynth-Studio/pull/1302">#1302 FLOPs</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1612">#1612 Echo-Memory</a>、<a href="https://github.com/modelscope/DiffSynth-Studio/pull/1017">#1017 TeaCache</a>。</li>
           <li><a href="https://www.modelscope.cn/docs/models/intro">ModelScope 官方介绍</a>：开放 AI 社区与 Model Hub 角色。</li>
           <li><a href="https://www.modelscope.cn/learn/434243">ModelScope 入门</a>：由阿里巴巴发起的开放 AI 社区。</li>
-          <li><a href="https://github.com/modelscope/DiffSynth-Engine">DiffSynth-Engine</a>：工业部署对照项目。</li>
         </ol>
-        <div class="callout cyan"><strong>方法说明：</strong>仓库规模来自本地 Git；贡献次数来自 GitHub Contributors API；PR/Issue 数量来自 GitHub Search API；PR 机制同时核对 PR head 与 diff。星标、Issue 和 PR 会随时间变化，页面不把这些快照当作永久常量。</div>
+        <div class="callout cyan"><strong>方法说明：</strong>两仓库规模与实现判断来自本地 Git 快照；贡献次数来自 GitHub Contributors API；PR/Issue 数量来自 GitHub Search API；PR 机制同时核对 PR head 与 diff。Engine 的外部仓库内容在处理前通过 URL 与提示注入检查。星标、Issue、PR 和 main 能力会变化，页面不把快照当作永久常量。</div>
       </section>
     </main>
   </div>
-  <footer>DIFFSYNTH-STUDIO REPOSITORY INTELLIGENCE · GENERATED FOR ASCENDPLAYGROUND · 2026-08-22</footer>
+  <footer>DIFFSYNTH-ENGINE + STUDIO REPOSITORY INTELLIGENCE · GENERATED FOR ASCENDPLAYGROUND · 2026-08-22</footer>
   <script>
     const bar=document.getElementById('progress');
     const nav=[...document.querySelectorAll('nav a')];
