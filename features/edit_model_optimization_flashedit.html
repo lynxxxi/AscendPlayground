@@ -44,19 +44,23 @@
     .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}.filter{border:1px solid var(--ink);background:transparent;padding:8px 14px;border-radius:30px;cursor:pointer;font:11px var(--mono)}.filter.active,.filter:hover{background:var(--ink);color:var(--acid)}.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.opt{border:1px solid var(--ink);padding:25px;min-height:240px}.opt.hidden{display:none}.opt-top{display:flex;justify-content:space-between;gap:12px}.opt h3{font-size:29px}.opt p{color:var(--muted);font-size:14px}.opt dl{display:grid;grid-template-columns:75px 1fr;margin:18px 0 0;font-size:12px;border-top:1px solid var(--soft)}.opt dt,.opt dd{margin:0;padding:8px 0;border-bottom:1px solid var(--soft)}.opt dt{font-family:var(--mono);color:var(--muted)}
     .roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink);counter-reset:r}.roadmap article{background:var(--paper);padding:30px;counter-increment:r}.roadmap article:before{content:"0" counter(r);font:900 50px/1 var(--sans);color:var(--red)}.roadmap h3{font-size:28px;margin:30px 0 12px}.roadmap p,.roadmap li{font-size:14px;color:var(--muted)}.roadmap li{margin:8px 0}.gate{display:block;margin-top:22px;border-top:1px solid var(--ink);padding-top:12px;font:800 10px var(--mono);color:var(--blue)}
     .sources{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--ink);border:1px solid var(--ink);counter-reset:s}.sources a{counter-increment:s;background:var(--paper);padding:20px;text-decoration:none;display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center}.sources a:before{content:counter(s,decimal-leading-zero);font:10px var(--mono);color:var(--red)}.sources a:hover{background:var(--acid)}.sources small{display:block;color:var(--muted)}.method{font-size:12px;color:var(--muted);margin-top:25px}
+    .term{display:inline;border:0;border-bottom:1px dotted var(--blue);padding:0 .06em;background:linear-gradient(transparent 70%,rgba(33,72,255,.09) 0);color:inherit;font:inherit;line-height:inherit;cursor:help;text-align:inherit}.term:after{content:"°";color:var(--blue);font:700 .68em var(--mono);vertical-align:super;margin-left:1px}.term:hover,.term:focus-visible{color:var(--blue);background:var(--acid);border-bottom-color:transparent;outline:none}.term[aria-expanded="true"]{color:var(--blue);background:var(--acid)}
+    .glossary-fab{position:fixed;left:20px;bottom:20px;z-index:64;border:1px solid var(--ink);background:var(--paper);color:var(--ink);padding:10px 13px;box-shadow:5px 5px 0 var(--ink);font:800 10px var(--mono);letter-spacing:.06em;cursor:pointer}.glossary-fab:hover,.glossary-fab:focus-visible{background:var(--acid)}
+    .term-tip{position:fixed;z-index:90;width:min(370px,calc(100vw - 24px));padding:19px 44px 19px 20px;background:var(--dark);color:var(--paper);border-top:5px solid var(--acid);box-shadow:12px 14px 0 rgba(23,24,22,.2);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .16s,transform .16s,visibility .16s}.term-tip.show{opacity:1;visibility:visible;transform:none}.term-tip .tip-kicker{display:block;color:var(--acid);font:800 9px var(--mono);letter-spacing:.14em;text-transform:uppercase}.term-tip h3{margin:7px 0 9px;font:900 25px/1 var(--sans);letter-spacing:-.02em}.term-tip p{margin:0;color:#c2c7bd;font-size:13px;line-height:1.65}.term-tip .tip-close{position:absolute;right:12px;top:11px;border:0;background:transparent;color:#9ca198;font:22px/1 var(--mono);cursor:pointer}.term-tip .tip-close:hover{color:var(--acid)}
+    .reading-note{display:flex;align-items:center;gap:14px;margin:28px 0 0;padding:14px 18px;border:1px solid var(--ink);background:rgba(216,255,66,.32);font-size:13px}.reading-note b{font:900 14px var(--sans)}.reading-note .demo{white-space:nowrap;border-bottom:1px dotted var(--blue);color:var(--blue);font:800 11px var(--mono)}
     footer{padding:36px 0 65px;display:flex;justify-content:space-between;font:10px var(--mono);color:var(--muted)}.top{position:fixed;right:24px;bottom:24px;width:46px;height:46px;background:var(--dark);color:var(--acid);border:0;cursor:pointer;opacity:0;transform:translateY(8px);transition:.2s;z-index:60}.top.show{opacity:1;transform:none}.reveal{opacity:0;transform:translateY(20px);transition:.55s ease}.reveal.visible{opacity:1;transform:none}
     @media(max-width:1000px){.hero{grid-template-columns:1fr}.hero-card{max-width:600px}.layout{grid-template-columns:1fr}.side{display:none}.stack{grid-template-columns:1fr 1fr}.verdict{grid-template-columns:1fr 1fr}.vcard,.vcard.wide{grid-column:auto}.layers{grid-template-columns:120px 1fr}.layers>div:nth-child(4){grid-column:2}.pipeline{grid-template-columns:1fr}.node,.node:nth-child(2){grid-column:auto}.node+.node{border-left:1px solid var(--ink);border-top:0}.node:not(:last-child):after{right:22px;top:auto;bottom:-18px;transform:rotate(90deg)}}
-    @media(max-width:680px){.wrap{width:calc(100% - 24px)}.bar span:last-child{display:none}.hero{min-height:auto;padding:70px 0 45px}h1{font-size:clamp(58px,18vw,88px);overflow-wrap:anywhere}.deck{overflow-wrap:anywhere}.hero-card{width:100%;transform:none}section{padding:65px 0}.head{grid-template-columns:45px 1fr;gap:8px}.lede{margin-left:0}.verdict,.opt-grid,.bars,.roadmap,.sources,.stack{grid-template-columns:1fr}.layers{grid-template-columns:1fr}.layers>div:nth-child(4){grid-column:auto}.detail{grid-template-columns:1fr;padding:0 8px 28px}.warning{grid-template-columns:1fr}.barrow{grid-template-columns:82px 1fr 50px}.hero:after{display:none}footer{flex-direction:column;gap:8px}}
+    @media(max-width:680px){.wrap{width:calc(100% - 24px)}.bar span:last-child{display:none}.hero{min-height:auto;padding:70px 0 45px}h1{font-size:clamp(58px,18vw,88px);overflow-wrap:anywhere}.deck{overflow-wrap:anywhere}.hero-card{width:100%;transform:none}section{padding:65px 0}.head{grid-template-columns:45px 1fr;gap:8px}.lede{margin-left:0}.verdict,.opt-grid,.bars,.roadmap,.sources,.stack{grid-template-columns:1fr}.layers{grid-template-columns:1fr}.layers>div:nth-child(4){grid-column:auto}.detail{grid-template-columns:1fr;padding:0 8px 28px}.warning{grid-template-columns:1fr}.barrow{grid-template-columns:82px 1fr 50px}.hero:after{display:none}footer{flex-direction:column;gap:8px}.glossary-fab{left:12px;bottom:12px}.term-tip{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;width:auto;max-height:48vh;overflow:auto}.reading-note{align-items:flex-start;flex-direction:column;gap:6px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
   </style>
 </head>
 <body>
   <div class="progress" aria-hidden="true"></div>
   <header class="mast">
-    <div class="wrap bar"><div class="signal"><i></i> Ascend Playground / Model Systems</div><span>Research cut · 2026.08.22 · v1.0</span></div>
+    <div class="wrap bar"><div class="signal"><i></i> Ascend Playground / Model Systems</div><span>Research cut · 2026.08.22 · annotated v1.1</span></div>
     <div class="wrap hero">
-      <div><div class="kicker">Field note 031 / generative image editing</div><h1>Edit 模型<span class="stroke">优化手册</span></h1><p class="deck">从“更多采样步”转向“目标解耦”：以 FlashEdit 为核心，拆解图像编辑模型在反演、结构保持、语义绑定、训练数据与部署系统上的优化杠杆。</p></div>
-      <aside class="hero-card" aria-label="FlashEdit 核心指标"><div class="big">&lt;0.2s</div><p>FlashEdit 在 NVIDIA A6000 / PIE-Bench 设置下的论文报告编辑延迟。它是作者测试值，不是跨硬件承诺。</p><div class="metrics"><div class="metric"><b>150.84×</b><span>vs DDIM + P2P</span></div><div class="metric"><b>1 + 1</b><span>反演 + 编辑前向</span></div><div class="metric"><b>25.33</b><span>背景 PSNR</span></div><div class="metric"><b>22.29</b><span>CLIP-Edited</span></div></div></aside>
+      <div><div class="kicker">Field note 031 / generative image editing</div><h1>Edit 模型<span class="stroke">优化手册</span></h1><p class="deck">从“更多采样步”转向“目标解耦”：以 FlashEdit 为核心，拆解图像编辑模型在<button type="button" class="term" data-term="inversion">反演</button>、结构保持、语义绑定、训练数据与部署系统上的优化杠杆。</p><div class="reading-note"><span class="demo">虚线术语°</span><span><b>给第一次阅读的你：</b>遇到带蓝色虚线和 ° 的词，悬停或点击即可看到通俗解释；手机上会从底部弹出。</span></div></div>
+      <aside class="hero-card" aria-label="FlashEdit 核心指标"><div class="big">&lt;0.2s</div><p>FlashEdit 在 NVIDIA A6000 / <button type="button" class="term" data-term="piebench">PIE-Bench</button> 设置下的论文报告编辑延迟。它是作者测试值，不是跨硬件承诺。</p><div class="metrics"><div class="metric"><b>150.84×</b><span>vs <button type="button" class="term" data-term="ddim">DDIM</button> + <button type="button" class="term" data-term="p2p">P2P</button></span></div><div class="metric"><b>1 + 1</b><span>反演 + 编辑前向</span></div><div class="metric"><b>25.33</b><span>背景 <button type="button" class="term" data-term="psnr">PSNR</button></span></div><div class="metric"><b>22.29</b><span><button type="button" class="term" data-term="clipedited">CLIP-Edited</button></span></div></div></aside>
     </div>
   </header>
 
@@ -67,36 +71,36 @@
         <div class="head"><span class="no">01 / 08</span><h2>先看结论</h2></div><p class="lede">Edit 模型不是单一“画质问题”，而是保真、可编辑、局部性、延迟四个目标的约束优化。FlashEdit 最值得借鉴的是分治架构，不是孤立的 150× 数字。</p>
         <div class="verdict reveal">
           <article class="vcard"><span class="index">01</span><h3>先解耦，再加速</h3><p>让噪声只承担可编辑性，让视觉适配器携带身份；把背景保持从损失函数的软愿望，变成注意力路径上的结构约束。</p></article>
-          <article class="vcard"><span class="index">02</span><h3>优化单位变了</h3><p>传统优化单位是 denoising step；FlashEdit 的优化单位是“信息职责”：噪声、图像特征、背景记忆、目标 token 各司其职。</p></article>
+          <article class="vcard"><span class="index">02</span><h3>优化单位变了</h3><p>传统优化单位是 <button type="button" class="term" data-term="denoisingstep">denoising step</button>；FlashEdit 的优化单位是“信息职责”：噪声、图像特征、背景记忆、目标 <button type="button" class="term" data-term="token">token</button> 各司其职。</p></article>
           <article class="vcard"><span class="index">03</span><h3>一步不是免费午餐</h3><p>单步模型把在线计算转移到训练、蒸馏与数据覆盖。大幅结构变化、精细文字、遮挡关系和开放域长尾仍需回退到多步或重生成模型。</p></article>
-          <article class="vcard wide"><span class="index">04</span><h3>FlashEdit 适合局部属性编辑</h3><p>颜色、材质、局部对象替换等“有明确编辑区域、背景应冻结”的任务最匹配。全局风格迁移与大布局变化会和 BG‑Shield 的强保持先验发生冲突。</p></article>
+          <article class="vcard wide"><span class="index">04</span><h3>FlashEdit 适合局部属性编辑</h3><p>颜色、材质、局部对象替换等“有明确编辑区域、背景应冻结”的任务最匹配。全局风格迁移与大布局变化会和 <button type="button" class="term" data-term="bgshield">BG‑Shield</button> 的强保持先验发生冲突。</p></article>
           <article class="vcard wide"><span class="index">05</span><h3>生产系统应做双路路由</h3><p>快速路径用一步/少步局部编辑；复杂路径用高容量 instruction editor 或 flow-based 方法。由编辑范围、结构变化和文字/人脸敏感度自动选择。</p></article>
         </div>
-        <div class="warning reveal"><b>复现状态</b><p>截至 2026-08-22，官方 GitHub 仓库页面仅展示 README 与素材目录，未见可运行训练/推理代码或权重。最新 arXiv 为 v6（2026-05-18），摘要已使用 <strong>COSI</strong>（Cycle-Consistent One-Step Inversion），而早期正文/仓库仍出现 <strong>OSIE</strong>。本页按最新摘要称 COSI，并保留版本差异说明。</p></div>
+        <div class="warning reveal"><b>复现状态</b><p>截至 2026-08-22，官方 GitHub 仓库页面仅展示 README 与素材目录，未见可运行训练/推理代码或权重。最新 arXiv 为 v6（2026-05-18），摘要已使用 <button type="button" class="term" data-term="cosi">COSI</button>（Cycle-Consistent One-Step Inversion），而早期正文/仓库仍出现 <button type="button" class="term" data-term="osie">OSIE</button>。本页按最新摘要称 COSI，并保留版本差异说明。</p></div>
       </section>
 
       <section id="anatomy">
         <div class="head"><span class="no">02 / 08</span><h2>FlashEdit 三层控制</h2></div><p class="lede">时间、空间、语义依次收紧。每层解决一种错误传播路径，三者叠加才形成“快而不漂”的局部编辑。</p>
-        <div class="pipeline reveal"><div class="node"><span class="label">Input</span><b>源图 + 源/目标提示词</b><small>自引导掩码定位编辑区域</small></div><div class="node"><span class="label">COSI / 早期称 OSIE</span><b>一步反演 + 一步编辑</b><small>视觉适配器承载身份，噪声保持可塑性</small></div><div class="node"><span class="label">Output</span><b>局部编辑结果</b><small>背景 KV 回放，目标 token 稀疏注入</small></div></div>
+        <div class="pipeline reveal"><div class="node"><span class="label">Input</span><b>源图 + 源/目标提示词</b><small>自引导<button type="button" class="term" data-term="mask">掩码</button>定位编辑区域</small></div><div class="node"><span class="label"><button type="button" class="term" data-term="cosi">COSI</button> / 早期称 OSIE</span><b>一步反演 + 一步编辑</b><small><button type="button" class="term" data-term="visualadapter">视觉适配器</button>承载身份，噪声保持可塑性</small></div><div class="node"><span class="label">Output</span><b>局部编辑结果</b><small>背景 <button type="button" class="term" data-term="kv">K/V</button> 回放，目标 token 稀疏注入</small></div></div>
         <div class="layers reveal">
-          <div class="axis">CONTROL<br>GRANULARITY →</div><div><span class="label">Temporal</span><h3>COSI</h3><p>Anchor-and-Refine 两阶段训练与 cycle consistency，压缩反演和生成轨迹。</p></div><div><span class="label">Spatial</span><h3>BG‑Shield</h3><p>源分支缓存背景 K/V；目标分支重组前景特征，并用高斯羽化软融合边界。</p></div><div><span class="label">Semantic</span><h3>SSCA</h3><p>在 softmax 前选出 top‑k 相关文本 token，只在掩码内计算并散射回特征图。</p></div>
+          <div class="axis">CONTROL<br>GRANULARITY →</div><div><span class="label">Temporal / 时间</span><h3><button type="button" class="term" data-term="cosi">COSI</button></h3><p><button type="button" class="term" data-term="anchorrefine">Anchor-and-Refine</button> 两阶段训练与 <button type="button" class="term" data-term="cycleconsistency">cycle consistency</button>，压缩反演和生成轨迹。</p></div><div><span class="label">Spatial / 空间</span><h3><button type="button" class="term" data-term="bgshield">BG‑Shield</button></h3><p>源分支缓存背景 K/V；目标分支重组前景特征，并用高斯羽化软融合边界。</p></div><div><span class="label">Semantic / 语义</span><h3><button type="button" class="term" data-term="ssca">SSCA</button></h3><p>在 <button type="button" class="term" data-term="softmax">softmax</button> 前选出 <button type="button" class="term" data-term="topk">top‑k</button> 相关文本 token，只在掩码内计算并散射回特征图。</p></div>
         </div>
         <div class="deep reveal">
-          <details open><summary><span class="no">A</span><h3>COSI：把“保真”从噪声中卸载</h3></summary><div class="detail"><div><p><b>冲突：</b>反演噪声既要精确重建源图，又要接近可编辑的高斯先验；过度承载身份会让编辑变僵。</p><p><b>做法：</b>视觉适配器直接向解码器提供源图特征，噪声专注于可塑性。Anchor 阶段用合成的真值噪声/图像对监督；Refine 阶段用真实图像与教师生成先验校正分布。</p></div><div class="formula">ε_inv = Iθ(z₀, c_src)<br>ẑ₀ = G(ε_inv, c_src, c_img)<br>ε_cycle = Iθ(ẑ₀, c_src)<br><br>L_cycle = ‖ε_inv − ε_cycle‖²</div></div></details>
-          <details><summary><span class="no">B</span><h3>BG‑Shield：缓存背景，而非事后修图</h3></summary><div class="detail"><p><b>源分支：</b>在 self-attention 中缓存背景位置的 K*<sub>B</sub>, V*<sub>B</sub>。<br><br><b>目标分支：</b>背景位置复用缓存，前景位置使用当前 K/V，再让目标 Q 对重组后的完整 K/V 做注意力。高斯模糊掩码形成过渡带，降低硬边与光照断层。</p><p><b>工程代价：</b>需要源/目标双分支以及 attention processor 改造；显存开销与被注入层数、token 数成正比。若掩码漏检，所谓“保证”只在错误掩码定义下成立。</p></div></details>
-          <details><summary><span class="no">C</span><h3>SSCA：在 softmax 竞争前清场</h3></summary><div class="detail"><p><b>根因：</b>所有词元同时竞争时，强属性词可能压制主体词，并把颜色/材质泄漏到背景。仅对 attention map 后缩放，干预已发生得太晚。</p><p><b>机制：</b>用掩码内图像 query 与文本 key 的聚合相似度选 top‑k；仅为前景 query 计算稀疏 cross-attention；背景位置写零。它同时减少无关 token 的算力，但主要收益是语义纯度。</p></div></details>
+          <details open><summary><span class="no">A</span><h3>COSI：把“保真”从噪声中卸载</h3></summary><div class="detail"><div><p><b>冲突：</b>反演噪声既要精确重建源图，又要接近可编辑的<button type="button" class="term" data-term="gaussianprior">高斯先验</button>；过度承载身份会让编辑变僵。</p><p><b>做法：</b>视觉适配器直接向解码器提供源图特征，噪声专注于可塑性。Anchor 阶段用合成的真值噪声/图像对监督；Refine 阶段用真实图像与<button type="button" class="term" data-term="teacherprior">教师生成先验</button>校正分布。</p></div><div class="formula">ε_inv = Iθ(z₀, c_src)<br>ẑ₀ = G(ε_inv, c_src, c_img)<br>ε_cycle = Iθ(ẑ₀, c_src)<br><br>L_cycle = ‖ε_inv − ε_cycle‖²</div></div></details>
+          <details><summary><span class="no">B</span><h3>BG‑Shield：缓存背景，而非事后修图</h3></summary><div class="detail"><p><b>源分支：</b>在 <button type="button" class="term" data-term="selfattention">self-attention</button> 中缓存背景位置的 K*<sub>B</sub>, V*<sub>B</sub>。<br><br><b>目标分支：</b>背景位置复用缓存，前景位置使用当前 K/V，再让目标 <button type="button" class="term" data-term="qkv">Q 对重组后的完整 K/V</button> 做注意力。高斯模糊掩码形成过渡带，降低硬边与光照断层。</p><p><b>工程代价：</b>需要源/目标双分支以及 <button type="button" class="term" data-term="attentionprocessor">attention processor</button> 改造；显存开销与被注入层数、token 数成正比。若掩码漏检，所谓“保证”只在错误掩码定义下成立。</p></div></details>
+          <details><summary><span class="no">C</span><h3>SSCA：在 softmax 竞争前清场</h3></summary><div class="detail"><p><b>根因：</b>所有词元同时竞争时，强属性词可能压制主体词，并把颜色/材质泄漏到背景。仅对 <button type="button" class="term" data-term="attentionmap">attention map</button> 后缩放，干预已发生得太晚。</p><p><b>机制：</b>用掩码内图像 <button type="button" class="term" data-term="querykey">query 与文本 key</button> 的聚合相似度选 top‑k；仅为前景 query 计算稀疏 <button type="button" class="term" data-term="crossattention">cross-attention</button>；背景位置写零。它同时减少无关 token 的算力，但主要收益是语义纯度。</p></div></details>
         </div>
       </section>
 
       <section id="evidence">
-        <div class="head"><span class="no">03 / 08</span><h2>证据与边界</h2></div><p class="lede">以下是 FlashEdit 论文在 PIE-Bench 上的作者报告值。背景指标只在非编辑区计算；CLIP‑Edited 衡量掩码区域与目标文本的对齐，不等同于人类偏好。</p>
-        <div class="table-scroll reveal"><table class="matrix"><thead><tr><th>方法</th><th>采样范式</th><th>PSNR ↑</th><th>LPIPS×10³ ↓</th><th>MSE×10⁴ ↓</th><th>SSIM×10² ↑</th><th>CLIP Edited ↑</th><th>相对速度</th></tr></thead><tbody>
-          <tr><td>DDIM + P2P</td><td>多步反演 + 多步编辑</td><td>17.87</td><td>208.80</td><td>219.88</td><td>71.14</td><td>22.44</td><td>1.00×</td></tr>
-          <tr><td>TurboEdit</td><td>8 NFE 反演 + 4 NFE/编辑</td><td>22.51</td><td>107.27</td><td>9.32</td><td>80.09</td><td>21.82</td><td>19.68×</td></tr>
+        <div class="head"><span class="no">03 / 08</span><h2>证据与边界</h2></div><p class="lede">以下是 FlashEdit 论文在 PIE-Bench 上的作者报告值。背景指标只在非编辑区计算；<button type="button" class="term" data-term="clipedited">CLIP‑Edited</button> 衡量掩码区域与目标文本的对齐，不等同于人类偏好。</p>
+        <div class="table-scroll reveal"><table class="matrix"><thead><tr><th>方法</th><th>采样范式</th><th><button type="button" class="term" data-term="psnr">PSNR ↑</button></th><th><button type="button" class="term" data-term="lpips">LPIPS×10³ ↓</button></th><th><button type="button" class="term" data-term="mse">MSE×10⁴ ↓</button></th><th><button type="button" class="term" data-term="ssim">SSIM×10² ↑</button></th><th><button type="button" class="term" data-term="clipedited">CLIP Edited ↑</button></th><th>相对速度</th></tr></thead><tbody>
+          <tr><td><button type="button" class="term" data-term="ddim">DDIM</button> + <button type="button" class="term" data-term="p2p">P2P</button></td><td>多步反演 + 多步编辑</td><td>17.87</td><td>208.80</td><td>219.88</td><td>71.14</td><td>22.44</td><td>1.00×</td></tr>
+          <tr><td>TurboEdit</td><td>8 <button type="button" class="term" data-term="nfe">NFE</button> 反演 + 4 NFE/编辑</td><td>22.51</td><td>107.27</td><td>9.32</td><td>80.09</td><td>21.82</td><td>19.68×</td></tr>
           <tr><td>SwiftEdit</td><td>一步反演 + 一步编辑</td><td>23.31</td><td>71.54</td><td>6.18</td><td>82.25</td><td>21.91</td><td>113.01×</td></tr>
           <tr><td class="hi">FlashEdit</td><td><span class="pill hi">ONE STEP</span></td><td><b>25.33</b></td><td><b>62.25</b></td><td><b>4.28</b></td><td><b>83.32</b></td><td><b>22.29</b></td><td><b>150.84×</b></td></tr>
         </tbody></table></div>
-        <div class="bars reveal"><div class="chart"><h3>相对速度 / DDIM+P2P</h3><div class="barrow"><span>TurboEdit</span><div class="track"><div class="fill" style="width:13%"></div></div><b>19.68×</b></div><div class="barrow"><span>SwiftEdit</span><div class="track"><div class="fill" style="width:75%"></div></div><b>113.01×</b></div><div class="barrow hot"><span>FlashEdit</span><div class="track"><div class="fill" style="width:100%"></div></div><b>150.84×</b></div></div><div class="chart"><h3>读数纪律</h3><p>速度比依赖 A6000、实现、分辨率、提示词编码是否计时以及 warm-up；不能直接外推到 Ascend、消费卡或服务端并发。官方仓库未提供代码，当前无法独立核对端到端计时口径。</p></div></div>
+        <div class="bars reveal"><div class="chart"><h3>相对速度 / DDIM+P2P</h3><div class="barrow"><span>TurboEdit</span><div class="track"><div class="fill" style="width:13%"></div></div><b>19.68×</b></div><div class="barrow"><span>SwiftEdit</span><div class="track"><div class="fill" style="width:75%"></div></div><b>113.01×</b></div><div class="barrow hot"><span>FlashEdit</span><div class="track"><div class="fill" style="width:100%"></div></div><b>150.84×</b></div></div><div class="chart"><h3>读数纪律</h3><p>速度比依赖 A6000、实现、分辨率、提示词编码是否计时以及 <button type="button" class="term" data-term="warmup">warm-up</button>；不能直接外推到 Ascend、消费卡或服务端并发。官方仓库未提供代码，当前无法独立核对端到端计时口径。</p></div></div>
       </section>
 
       <section id="landscape">
@@ -104,13 +108,13 @@
         <div class="controls" role="group" aria-label="优化类型筛选"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="latency">延迟</button><button class="filter" data-filter="quality">质量</button><button class="filter" data-filter="train">训练</button><button class="filter" data-filter="system">系统</button></div>
         <div class="opt-grid reveal">
           <article class="opt" data-cat="latency quality train"><div class="opt-top"><h3>一步蒸馏 / 反演</h3><span class="pill hi">FlashEdit</span></div><p>用一致性、分布匹配或教师先验把多步轨迹压进一次前向；再以视觉支路弥补身份信息。交互延迟最低，训练门槛最高。</p><dl><dt>代表</dt><dd>FlashEdit、SwiftEdit</dd><dt>风险</dt><dd>开放域长尾、强结构编辑、教师偏差</dd></dl></article>
-          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>少步迭代纠错</h3><span class="pill">FEW STEP</span></div><p>保留少量 NFE，让重建误差逐步纠正。速度不及一步，但常提供更平滑的质量—延迟旋钮。</p><dl><dt>代表</dt><dd>TurboEdit：8 NFE 反演 + 4 NFE/编辑</dd><dt>适合</dt><dd>批量复用同一源图、多次修改</dd></dl></article>
-          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>无反演路径</h3><span class="pill good">NO INVERSION</span></div><p>InfEdit 用虚拟反演/一致性采样；FlowEdit 为 rectified-flow 构造源分布到目标分布的直接 ODE，避免绕行高斯噪声。</p><dl><dt>收益</dt><dd>减少反演误差与架构耦合</dd><dt>代价</dt><dd>仍可能多步；路径是启发式而非最优传输保证</dd></dl></article>
-          <article class="opt" data-cat="quality"><div class="opt-top"><h3>注意力与掩码控制</h3><span class="pill hi">LOCALITY</span></div><p>缓存/注入源特征、统一 self/cross attention 控制、token 剪枝与空间门控。最直接地控制“该改哪里、哪里别动”。</p><dl><dt>代表</dt><dd>BG‑Shield、SSCA、UAC、P2P</dd><dt>风险</dt><dd>掩码错误、边界接缝、对模型内部结构敏感</dd></dl></article>
+          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>少步迭代纠错</h3><span class="pill">FEW STEP</span></div><p>保留少量 <button type="button" class="term" data-term="nfe">NFE</button>，让重建误差逐步纠正。速度不及一步，但常提供更平滑的质量—延迟旋钮。</p><dl><dt>代表</dt><dd>TurboEdit：8 NFE 反演 + 4 NFE/编辑</dd><dt>适合</dt><dd>批量复用同一源图、多次修改</dd></dl></article>
+          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>无反演路径</h3><span class="pill good">NO INVERSION</span></div><p><button type="button" class="term" data-term="infedit">InfEdit</button> 用虚拟反演/一致性采样；<button type="button" class="term" data-term="flowedit">FlowEdit</button> 为 <button type="button" class="term" data-term="rectifiedflow">rectified flow</button> 构造源分布到目标分布的直接 <button type="button" class="term" data-term="ode">ODE</button>，避免绕行高斯噪声。</p><dl><dt>收益</dt><dd>减少反演误差与架构耦合</dd><dt>代价</dt><dd>仍可能多步；路径是启发式而非<button type="button" class="term" data-term="optimaltransport">最优传输</button>保证</dd></dl></article>
+          <article class="opt" data-cat="quality"><div class="opt-top"><h3>注意力与掩码控制</h3><span class="pill hi">LOCALITY</span></div><p>缓存/注入源特征、统一 self/cross attention 控制、token 剪枝与空间门控。最直接地控制“该改哪里、哪里别动”。</p><dl><dt>代表</dt><dd>BG‑Shield、SSCA、<button type="button" class="term" data-term="uac">UAC</button>、P2P</dd><dt>风险</dt><dd>掩码错误、边界接缝、对模型内部结构敏感</dd></dl></article>
           <article class="opt" data-cat="quality train"><div class="opt-top"><h3>数据与渐进对齐</h3><span class="pill">DATA</span></div><p>构建“源图—指令—目标图”三元组，按编辑类型与难度平衡；从 T2I 的重生成能力逐步对齐到保真编辑。</p><dl><dt>代表</dt><dd>SeedEdit、Step1X‑Edit</dd><dt>关键</dt><dd>反向编辑、长尾任务、元信息与指令改写</dd></dl></article>
-          <article class="opt" data-cat="quality train"><div class="opt-top"><h3>奖励与偏好优化</h3><span class="pill">ALIGN</span></div><p>把指令遵循、身份保持、美感、OCR、局部一致性拆成专门奖励；联合 diffusion loss，避免只追求单一 CLIP 指标。</p><dl><dt>代表</dt><dd>SeedEdit 3.0 的 diffusion + reward 联合学习</dd><dt>风险</dt><dd>奖励投机、指标冲突、标注偏差</dd></dl></article>
-          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>低精度与编译</h3><span class="pill">RUNTIME</span></div><p>BF16/FP16 基线，逐层评估 FP8/INT8；融合 QKV、norm、RoPE、attention 与 VAE 算子，减少 launch 和带宽开销。</p><dl><dt>先做</dt><dd>固定 shape、图编译、算子 profiling</dd><dt>后做</dt><dd>混合精度敏感层保留、量化校准</dd></dl></article>
-          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>缓存与请求复用</h3><span class="pill">SERVING</span></div><p>源图 VAE latent、视觉特征、文本 embedding、背景 K/V 可跨同源编辑复用；动态批处理按分辨率和编辑路由分桶。</p><dl><dt>FlashEdit</dt><dd>BG memory 天然适合多轮同图编辑</dd><dt>约束</dt><dd>缓存版本、掩码与 prompt 必须纳入 key</dd></dl></article>
+          <article class="opt" data-cat="quality train"><div class="opt-top"><h3>奖励与偏好优化</h3><span class="pill">ALIGN</span></div><p>把指令遵循、身份保持、美感、<button type="button" class="term" data-term="ocr">OCR</button>、局部一致性拆成专门奖励；联合 <button type="button" class="term" data-term="diffusionloss">diffusion loss</button>，避免只追求单一 CLIP 指标。</p><dl><dt>代表</dt><dd>SeedEdit 3.0 的 diffusion + reward 联合学习</dd><dt>风险</dt><dd>奖励投机、指标冲突、标注偏差</dd></dl></article>
+          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>低精度与编译</h3><span class="pill">RUNTIME</span></div><p><button type="button" class="term" data-term="bf16">BF16/FP16</button> 基线，逐层评估 <button type="button" class="term" data-term="fp8int8">FP8/INT8</button>；融合 <button type="button" class="term" data-term="qkv">QKV</button>、norm、RoPE、attention 与 <button type="button" class="term" data-term="vae">VAE</button> 算子，减少 launch 和带宽开销。</p><dl><dt>先做</dt><dd>固定 shape、图编译、算子 <button type="button" class="term" data-term="profiling">profiling</button></dd><dt>后做</dt><dd>混合精度敏感层保留、量化校准</dd></dl></article>
+          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>缓存与请求复用</h3><span class="pill">SERVING</span></div><p>源图 VAE <button type="button" class="term" data-term="latent">latent</button>、视觉特征、文本 <button type="button" class="term" data-term="embedding">embedding</button>、背景 K/V 可跨同源编辑复用；动态批处理按分辨率和编辑路由分桶。</p><dl><dt>FlashEdit</dt><dd>BG memory 天然适合多轮同图编辑</dd><dt>约束</dt><dd>缓存版本、掩码与 prompt 必须纳入 <button type="button" class="term" data-term="cachekey">cache key</button></dd></dl></article>
         </div>
       </section>
 
@@ -118,29 +122,29 @@
         <div class="head"><span class="no">05 / 08</span><h2>工程优化栈</h2></div><p class="lede">最有效的顺序通常是：先减少模型调用次数，再减少每次调用的数据移动与算子开销，最后才追逐极限量化。</p>
         <div class="stack reveal">
           <article><span class="tag">L0 / PRODUCT</span><h3>任务路由</h3><p>将编辑按范围与结构变化分级。</p><ul><li>局部属性 → FlashEdit 类快速路</li><li>对象增删 → 少步/通用 editor</li><li>布局重构 → 强重生成模型</li></ul><span class="priority">最高 ROI</span></article>
-          <article><span class="tag">L1 / MODEL</span><h3>调用压缩</h3><p>一步蒸馏、少步 consistency、无反演 flow path。</p><ul><li>固定质量预算比较 NFE</li><li>训练时覆盖真实噪声分布</li><li>保留复杂样例回退</li></ul><span class="priority">主导延迟</span></article>
-          <article><span class="tag">L2 / GRAPH</span><h3>数据复用</h3><p>缓存不变条件，避免双分支重复计算。</p><ul><li>VAE / 文本 / 图像 embedding</li><li>背景 K/V 分层缓存</li><li>静态 shape 与内存池</li></ul><span class="priority">多轮编辑关键</span></article>
-          <article><span class="tag">L3 / KERNEL</span><h3>硬件贴合</h3><p>在真实 edit shape 上优化算子。</p><ul><li>fused attention / norm / MLP</li><li>BF16 → FP8/INT8 逐层敏感性</li><li>VAE 与主干异步流水</li></ul><span class="priority">最后一公里</span></article>
+          <article><span class="tag">L1 / MODEL</span><h3>调用压缩</h3><p>一步蒸馏、少步 <button type="button" class="term" data-term="consistencysampling">consistency</button>、无反演 flow path。</p><ul><li>固定质量预算比较 NFE</li><li>训练时覆盖真实噪声分布</li><li>保留复杂样例回退</li></ul><span class="priority">主导延迟</span></article>
+          <article><span class="tag">L2 / GRAPH</span><h3>数据复用</h3><p>缓存不变条件，避免双分支重复计算。</p><ul><li>VAE / 文本 / 图像 embedding</li><li>背景 K/V 分层缓存</li><li><button type="button" class="term" data-term="staticshape">静态 shape</button> 与内存池</li></ul><span class="priority">多轮编辑关键</span></article>
+          <article><span class="tag">L3 / KERNEL</span><h3>硬件贴合</h3><p>在真实 edit shape 上优化算子。</p><ul><li><button type="button" class="term" data-term="fusedkernel">fused attention / norm / MLP</button></li><li>BF16 → FP8/INT8 逐层敏感性</li><li>VAE 与主干异步流水</li></ul><span class="priority">最后一公里</span></article>
         </div>
       </section>
 
       <section id="evaluation">
-        <div class="head"><span class="no">06 / 08</span><h2>评测不能只看 CLIP</h2></div><p class="lede">保真与编辑强度天然冲突。一个可信的优化实验必须同时报告四个维度，并按编辑类型切片，而不是用单一均值掩盖失败模式。</p>
+        <div class="head"><span class="no">06 / 08</span><h2>评测不能只看 <button type="button" class="term" data-term="clip">CLIP</button></h2></div><p class="lede">保真与编辑强度天然冲突。一个可信的优化实验必须同时报告四个维度，并按编辑类型切片，而不是用单一均值掩盖失败模式。</p>
         <div class="table-scroll reveal"><table class="matrix"><thead><tr><th>维度</th><th>核心问题</th><th>推荐指标</th><th>必须切片</th></tr></thead><tbody>
           <tr><td>背景保持</td><td>没要求改的地方是否真的没变？</td><td>Masked PSNR / SSIM / LPIPS / MSE</td><td>纹理、光照、人脸、文字、小物体</td></tr>
-          <tr><td>编辑遵循</td><td>目标属性/对象是否正确出现？</td><td>CLIP‑Edited、VLM judge、人类偏好</td><td>颜色、材质、增删、动作、布局</td></tr>
-          <tr><td>结构/身份</td><td>主体身份与几何是否保持？</td><td>DINO、ArcFace、关键点/分割 IoU</td><td>人脸、商品、宠物、多主体遮挡</td></tr>
-          <tr><td>系统性能</td><td>用户实际等待多久、花多少资源？</td><td>P50/P95 E2E、warm/cold、显存、吞吐</td><td>分辨率、批量、并发、缓存命中</td></tr>
+          <tr><td>编辑遵循</td><td>目标属性/对象是否正确出现？</td><td>CLIP‑Edited、<button type="button" class="term" data-term="vlmjudge">VLM judge</button>、人类偏好</td><td>颜色、材质、增删、动作、布局</td></tr>
+          <tr><td>结构/身份</td><td>主体身份与几何是否保持？</td><td><button type="button" class="term" data-term="dino">DINO</button>、<button type="button" class="term" data-term="arcface">ArcFace</button>、关键点/分割 <button type="button" class="term" data-term="iou">IoU</button></td><td>人脸、商品、宠物、多主体遮挡</td></tr>
+          <tr><td>系统性能</td><td>用户实际等待多久、花多少资源？</td><td><button type="button" class="term" data-term="p50p95">P50/P95</button> <button type="button" class="term" data-term="e2e">E2E</button>、warm/cold、显存、吞吐</td><td>分辨率、批量、并发、缓存命中</td></tr>
         </tbody></table></div>
-        <div class="warning reveal"><b>消融建议</b><p>至少测试 COSI → +BG‑Shield → +SSCA；再扫描掩码膨胀/羽化 σ、top‑k token、注入层范围与精度。报告 Pareto 前沿：在相同背景保真下比较编辑分数，在相同编辑分数下比较延迟。</p></div>
+        <div class="warning reveal"><b>消融建议</b><p>至少测试 COSI → +BG‑Shield → +SSCA；再扫描掩码膨胀/羽化 σ、top‑k token、注入层范围与精度。报告 <button type="button" class="term" data-term="pareto">Pareto 前沿</button>：在相同背景保真下比较编辑分数，在相同编辑分数下比较延迟。</p></div>
       </section>
 
       <section id="roadmap">
         <div class="head"><span class="no">07 / 08</span><h2>三阶段落地路线</h2></div><p class="lede">由于 FlashEdit 官方代码尚不可用，最稳妥的策略是先建立可测基线，再复刻机制，最后做硬件特化；每阶段都有明确退出门。</p>
         <div class="roadmap reveal">
           <article><h3>基线与数据切片</h3><p>先用公开可运行的 SwiftEdit / TurboEdit / FlowEdit 建立速度—质量基线，并固定 PIE‑Bench + 自有真实请求集。</p><ul><li>统一 512/1024 分辨率与计时边界</li><li>记录源图复用与单次编辑两种模式</li><li>人工标注局部/结构/全局三类任务</li></ul><span class="gate">GATE：指标可重复，P95 方差 &lt; 5%</span></article>
-          <article><h3>机制复刻</h3><p>在一步基础模型上逐项实现视觉适配器、cycle loss、背景 K/V 重组、mask feathering 与 top‑k SSCA。</p><ul><li>每个模块独立消融</li><li>检查掩码错误的灾难性边界</li><li>对比自动掩码与 GT mask</li></ul><span class="gate">GATE：同等编辑分数下背景指标显著提升</span></article>
-          <article><h3>Ascend / 服务化</h3><p>导出静态图，围绕双分支 attention 与 VAE 做 profiling；优先条件缓存与算子融合，再进入低精度。</p><ul><li>源图级 cache key 与失效策略</li><li>BF16 → FP8/INT8 敏感层扫描</li><li>按任务风险自动路由/回退</li></ul><span class="gate">GATE：满足 P95、显存和失败率 SLO</span></article>
+          <article><h3>机制复刻</h3><p>在一步基础模型上逐项实现视觉适配器、cycle loss、背景 K/V 重组、<button type="button" class="term" data-term="maskfeathering">mask feathering</button> 与 top‑k SSCA。</p><ul><li>每个模块独立消融</li><li>检查掩码错误的灾难性边界</li><li>对比自动掩码与 <button type="button" class="term" data-term="gtmask">GT mask</button></li></ul><span class="gate">GATE：同等编辑分数下背景指标显著提升</span></article>
+          <article><h3>Ascend / 服务化</h3><p>导出静态图，围绕双分支 attention 与 VAE 做 profiling；优先条件缓存与算子融合，再进入低精度。</p><ul><li>源图级 cache key 与失效策略</li><li>BF16 → FP8/INT8 敏感层扫描</li><li>按任务风险自动路由/回退</li></ul><span class="gate">GATE：满足 P95、显存和失败率 <button type="button" class="term" data-term="slo">SLO</button></span></article>
         </div>
       </section>
 
@@ -163,7 +167,10 @@
     </main>
   </div>
 
-  <footer class="wrap"><span>ASCEND PLAYGROUND / EDIT MODEL SYSTEMS</span><span>RESEARCH NOTE · 2026.08.22</span></footer><button class="top" aria-label="返回顶部" title="返回顶部">↑</button>
+  <footer class="wrap"><span>ASCEND PLAYGROUND / EDIT MODEL SYSTEMS</span><span>ANNOTATED EDITION · 2026.08.24</span></footer>
+  <button class="glossary-fab" type="button" data-term="guide" aria-haspopup="dialog" aria-expanded="false">术语注释 · 61</button>
+  <aside class="term-tip" id="term-tip" role="dialog" aria-live="polite" aria-label="术语解释"><button class="tip-close" type="button" aria-label="关闭术语解释">×</button><span class="tip-kicker">TERM NOTE / 浮动注释</span><h3></h3><p></p></aside>
+  <button class="top" aria-label="返回顶部" title="返回顶部">↑</button>
   <script>
     const progress=document.querySelector('.progress'),topBtn=document.querySelector('.top');
     const sections=[...document.querySelectorAll('main section')],links=[...document.querySelectorAll('.side a')];
@@ -171,6 +178,77 @@
     addEventListener('scroll',onScroll,{passive:true});onScroll();topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
     const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}}),{threshold:.06});document.querySelectorAll('.reveal').forEach(x=>observer.observe(x));
     const filters=[...document.querySelectorAll('.filter')],opts=[...document.querySelectorAll('.opt')];filters.forEach(btn=>btn.onclick=()=>{filters.forEach(x=>x.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;opts.forEach(x=>x.classList.toggle('hidden',f!=='all'&&!x.dataset.cat.split(' ').includes(f)))});
+    const glossary={
+      guide:['怎样使用术语注释','蓝色虚线词都是可交互注释。电脑上可以悬停或点击，手机上直接点击；按 Esc、点关闭按钮或点击空白处即可收起。解释优先回答“它是什么、这里为什么用它”。'],
+      inversion:['Inversion / 反演','把一张现有图片倒推回模型内部的噪声或隐空间起点。得到这个起点后，再换一段文字向前生成，就能在保留原图的同时修改内容。'],
+      piebench:['PIE-Bench / 图像编辑基准','一套用于比较文字引导图像编辑方法的测试图片、编辑指令和评测流程。它让不同方法在相同题目上比较，而不是各自挑最好看的案例。'],
+      ddim:['DDIM','一种扩散模型采样方法，也常被反向运行来做图像反演。它通常需要许多步骤，因此效果稳定但速度较慢。'],
+      p2p:['P2P / Prompt-to-Prompt','通过复用和修改文字注意力图来编辑图片的方法。直观理解：尽量保留原句和原图的对应关系，只改变被替换的词。'],
+      psnr:['PSNR / 峰值信噪比','衡量两张图像像素差异的指标，数值越高越相似。这里仅在“不应被修改的背景区域”计算，所以高分代表背景保存较好。'],
+      clipedited:['CLIP-Edited','只在编辑区域内，用 CLIP 判断结果与目标文字有多匹配。分数越高通常表示修改更符合指令，但它不保证细节自然或人类一定更喜欢。'],
+      denoisingstep:['Denoising step / 去噪步','模型从噪声逐步恢复图像时的一次迭代。传统扩散模型会运行几十次；一步模型试图用一次前向完成同样的工作。'],
+      token:['Token / 词元','模型实际处理的文字小片段。一个英文单词可能是一个或多个 token；注意力机制把图像区域与这些 token 建立联系。'],
+      bgshield:['BG-Shield / 背景护盾','FlashEdit 的背景保护模块。它记住源图背景的注意力特征，编辑时把这些特征放回去，减少颜色、光照和纹理被意外改动。'],
+      cosi:['COSI','Cycle-Consistent One-Step Inversion，循环一致的单步反演。最新论文版本使用的名称：一次前向得到可编辑噪声，并用“反演—重建—再反演”约束结果稳定。'],
+      osie:['OSIE','One-Step Inversion-and-Editing，单步反演与编辑。FlashEdit 早期版本的模块名称；最新 arXiv 摘要改称 COSI，概念重点转向循环一致性。'],
+      mask:['Mask / 掩码','一张与图片同尺寸的区域标记图：白色或 1 表示要编辑，黑色或 0 表示保持不变。掩码越准，局部编辑越可靠。'],
+      visualadapter:['Visual Adapter / 视觉适配器','一条专门把源图外观和身份特征送入生成器的轻量支路。这样噪声不必独自记住所有细节，可以保留更多编辑空间。'],
+      kv:['K/V / Key-Value','注意力层中的“索引”和“内容”。Query 先和 Key 比较相关性，再按相关性读取 Value；缓存背景 K/V 等于保存了背景可被读取的记忆。'],
+      anchorrefine:['Anchor-and-Refine','“先锚定、再精修”的两阶段训练。先用能得到真值噪声的合成数据学会基本反演，再用真实图片和教师模型适应真实分布。'],
+      cycleconsistency:['Cycle consistency / 循环一致性','一个操作做完再反向回来，结果应接近起点。例如图片反演成噪声、重建成图片、再反演后，前后噪声应保持一致。'],
+      ssca:['SSCA','Sparsified Spatial Cross-Attention，稀疏空间交叉注意力。它只让编辑区域关注最相关的少量文字 token，减少颜色或属性泄漏到背景。'],
+      softmax:['Softmax','把一组分数变成总和为 1 的权重。注意力中所有 token 会在这里竞争；无关词参与竞争可能冲淡或污染真正需要的编辑信号。'],
+      topk:['Top-k','只保留得分最高的 k 个候选。这里指选出与编辑区域最相关的少量文字 token，过滤其余噪声信息。'],
+      gaussianprior:['Gaussian prior / 高斯先验','扩散模型通常假设生成从标准高斯噪声开始。反演结果越接近这种熟悉的噪声分布，模型往往越容易继续做自然编辑。'],
+      teacherprior:['Teacher prior / 教师生成先验','用更强或更成熟的生成模型提供“合理图像应该长什么样”的约束，帮助学生模型在真实图片上训练，即使没有真实噪声答案。'],
+      selfattention:['Self-attention / 自注意力','让同一张图里的每个位置查看其他位置，从而保持整体结构和关系。副作用是前景编辑信号也可能沿这条全局连接污染背景。'],
+      qkv:['Q/K/V','Query、Key、Value 的缩写。可类比检索：Q 是问题，K 是目录索引，V 是被取回的内容；三者矩阵乘法构成注意力的核心计算。'],
+      attentionprocessor:['Attention processor','实现注意力计算的可替换代码模块。改造它可以注入缓存、掩码或稀疏规则，而不必重写整个模型。'],
+      attentionmap:['Attention map / 注意力图','显示每个图像位置对哪些文字或图像位置最关注的权重图。它常被用来定位编辑区域或复用源图结构。'],
+      querykey:['Query 与 Key','Query 表示当前位置想找什么，Key 表示每条候选信息的标签。两者相似度越高，对应 Value 被读取的权重越大。'],
+      crossattention:['Cross-attention / 交叉注意力','让图像特征读取文字特征，从而知道“红色”“猫”等文字应该影响哪些像素区域。'],
+      lpips:['LPIPS','用深度网络特征衡量两张图的感知差异，比逐像素误差更接近人眼感受。越低代表越相似。'],
+      mse:['MSE / 均方误差','把对应像素的差平方后取平均。越低越相似，但很小的位移也可能造成较大误差。'],
+      ssim:['SSIM / 结构相似性','比较亮度、对比度和局部结构的图像指标。越高越接近原图，比单纯像素误差更关注结构。'],
+      nfe:['NFE','Number of Function Evaluations，模型主干实际被调用多少次。它比笼统的“步数”更接近计算成本；NFE 越少通常越快。'],
+      warmup:['Warm-up / 预热','首次正式计时前先运行几次，让模型加载、显存分配和内核编译完成。否则冷启动成本会让速度结果失真。'],
+      infedit:['InfEdit','一种免显式反演的编辑方法，通过特殊一致性采样实现“虚拟反演”，并统一控制自注意力与交叉注意力。'],
+      flowedit:['FlowEdit','面向流模型的免反演编辑方法。它不先绕到高斯噪声，而是建立源图分布到目标图分布的直接路径。'],
+      rectifiedflow:['Rectified flow / 整流流','一种学习“速度场”把噪声连续运输成图像的生成模型。路径较直，因此常能用较少数值积分步骤采样。'],
+      ode:['ODE / 常微分方程','描述一个状态怎样随连续时间变化的方程。流模型沿 ODE 给出的速度方向，把源状态逐步移动到目标状态。'],
+      optimaltransport:['Optimal transport / 最优传输','在两个概率分布之间寻找总体移动成本最小的映射。FlowEdit 的直接路径受这个直觉启发，但论文明确它是启发式方法，并非数学保证的最优解。'],
+      uac:['UAC','Unified Attention Control，统一注意力控制。InfEdit 中把文字—图像的交叉注意力和图像内部的自注意力放在同一框架里调节。'],
+      ocr:['OCR / 文字识别','Optical Character Recognition，识别图片中的文字。编辑模型的 OCR 能力常用来检查招牌、海报和包装文字是否正确。'],
+      diffusionloss:['Diffusion loss / 扩散损失','训练模型预测噪声、速度或干净图像的基础目标。它保证生成能力，奖励损失则进一步纠正“是否符合人类编辑意图”。'],
+      bf16:['BF16 / FP16','两种 16 位浮点格式，比 FP32 更省显存、更快。BF16 动态范围更大，通常是生成模型训练和推理的稳健基线。'],
+      fp8int8:['FP8 / INT8','8 位浮点或整数低精度格式，能进一步减少带宽和计算，但需要校准；敏感层用错可能导致颜色、纹理或身份明显漂移。'],
+      vae:['VAE','Variational Autoencoder，变分自编码器。它把像素图压缩成较小的 latent 供主模型处理，最后再解码回图片。'],
+      profiling:['Profiling / 性能剖析','用工具测量每个算子耗时、显存、带宽和设备空闲时间，先找到真正瓶颈，再决定优化哪里。'],
+      latent:['Latent / 隐变量','图片在压缩特征空间中的表示。模型在 latent 上生成通常比直接处理全部像素便宜得多。'],
+      embedding:['Embedding / 向量表示','把文字或图片编码成一串数字向量，使模型可以计算语义相似度并作为生成条件。'],
+      cachekey:['Cache key / 缓存键','用来唯一识别缓存内容的组合标识。源图、模型版本、提示词和掩码变化时，key 必须变化，否则会错误复用旧结果。'],
+      consistencysampling:['Consistency sampling / 一致性采样','让模型从不同噪声时间点都能直接预测接近最终图像，从而把几十步采样压缩到一步或少数几步。'],
+      staticshape:['Static shape / 静态形状','提前固定张量尺寸，让编译器生成高度优化的执行图。代价是不同分辨率或批量需要分别编译和分桶。'],
+      fusedkernel:['Fused kernel / 融合算子','把多个连续小算子合并成一次设备执行，减少中间数据读写与启动开销；结果不变，但运行更高效。'],
+      clip:['CLIP','把图片和文字编码到同一向量空间的模型。相似度可粗略衡量“图是否符合文字”，但对细节、计数、空间关系和真实感并不可靠。'],
+      vlmjudge:['VLM judge / 视觉语言模型裁判','让能看图并读文字的大模型按规则评价编辑是否成功。覆盖面比单一 CLIP 分数广，但会受到提示词和裁判模型偏见影响。'],
+      dino:['DINO','一种自监督视觉特征模型。编辑前后主体的 DINO 特征越接近，通常说明整体外观和结构保存得更好。'],
+      arcface:['ArcFace','常用的人脸身份识别模型。比较编辑前后的人脸特征，可检查换衣、换背景等操作有没有意外改变人物身份。'],
+      iou:['IoU / 交并比','预测区域与真实区域的重叠面积除以两者并集面积。越接近 1，位置和轮廓越一致。'],
+      p50p95:['P50 / P95','延迟分布的中位数和第 95 百分位。P50 代表典型体验，P95 代表大多数用户能遇到的较慢情况。'],
+      e2e:['E2E / 端到端','End-to-End，从请求进入到最终图片返回的全部时间，不只计算模型主干，还包括编码、解码、传输和排队。'],
+      pareto:['Pareto frontier / 帕累托前沿','一组无法在不牺牲某个目标的情况下继续改善另一目标的方案。这里用来找“同等质量下最快”或“同等延迟下最好”的配置。'],
+      maskfeathering:['Mask feathering / 掩码羽化','把掩码硬边变成渐变过渡区，让编辑区域和原背景更自然地融合，减少明显接缝。'],
+      gtmask:['GT mask / 真值掩码','Ground-Truth mask，由人工标注或可靠数据直接提供的正确编辑区域，用来判断自动掩码本身造成了多少误差。'],
+      slo:['SLO / 服务目标','Service Level Objective，服务承诺的可量化目标，例如 95% 请求在 1 秒内完成、失败率低于 0.1%。']
+    };
+    const tip=document.querySelector('#term-tip'),tipTitle=tip.querySelector('h3'),tipText=tip.querySelector('p'),tipClose=tip.querySelector('.tip-close'),fab=document.querySelector('.glossary-fab');
+    const termButtons=[...document.querySelectorAll('.term')];let activeTerm=null,pinned=false;
+    function positionTip(anchor){if(matchMedia('(max-width:680px)').matches)return;const r=anchor.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,pad=12;let left=Math.min(innerWidth-w-pad,Math.max(pad,r.left+r.width/2-w/2));let top=r.bottom+10;if(top+h>innerHeight-pad)top=r.top-h-10;tip.style.left=left+'px';tip.style.top=Math.max(pad,top)+'px';tip.style.right='auto';tip.style.bottom='auto'}
+    function showTerm(anchor,lock=false){const item=glossary[anchor.dataset.term];if(!item)return;if(activeTerm&&activeTerm!==anchor)activeTerm.setAttribute('aria-expanded','false');activeTerm=anchor;pinned=lock;anchor.setAttribute('aria-expanded','true');tipTitle.textContent=item[0];tipText.textContent=item[1];tip.classList.add('show');requestAnimationFrame(()=>positionTip(anchor))}
+    function hideTerm(force=false){if(pinned&&!force)return;if(activeTerm)activeTerm.setAttribute('aria-expanded','false');activeTerm=null;pinned=false;tip.classList.remove('show')}
+    termButtons.forEach(btn=>{btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label',btn.textContent.trim()+'：查看术语解释');btn.addEventListener('mouseenter',()=>{if(!pinned)showTerm(btn)});btn.addEventListener('mouseleave',()=>hideTerm());btn.addEventListener('focus',()=>{if(!pinned)showTerm(btn)});btn.addEventListener('blur',()=>hideTerm());btn.addEventListener('click',e=>{e.stopPropagation();if(activeTerm===btn&&pinned)hideTerm(true);else showTerm(btn,true)})});
+    fab.addEventListener('click',e=>{e.stopPropagation();if(activeTerm===fab&&pinned)hideTerm(true);else showTerm(fab,true)});tipClose.addEventListener('click',()=>hideTerm(true));tip.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>hideTerm(true));document.addEventListener('keydown',e=>{if(e.key==='Escape')hideTerm(true)});addEventListener('resize',()=>activeTerm&&positionTip(activeTerm));addEventListener('scroll',()=>{if(activeTerm){if(pinned)positionTip(activeTerm);else hideTerm(true)}},{passive:true});
   </script>
 </body>
 </html>
