@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="面向 LingBot-Video、LingBot-World、LingBot-VA 与 LingBot-VLA 的生成式模型优化与加速工程图谱：训练、推理、显存、并行、低精度与昇腾迁移。">
+  <title>LingBot 系列｜生成式模型优化与加速图谱</title>
+  <style>
+    :root{
+      --ink:#e9edf0;--muted:#96a0a7;--night:#081013;--panel:#101a1f;--panel2:#142229;
+      --line:#2a3940;--acid:#d8ff52;--cyan:#5edbd3;--coral:#ff785f;--gold:#f7bd5b;
+      --paper:#eef0e9;--paper-ink:#172126;--sans:"Bahnschrift","Noto Sans SC","Microsoft YaHei UI",sans-serif;
+      --serif:"STKaiti","KaiTi","Noto Serif SC",serif;--mono:"Cascadia Mono","JetBrains Mono",Consolas,monospace;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--night);font:16px/1.72 var(--sans);overflow-x:hidden}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.28;background-image:linear-gradient(rgba(216,255,82,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(216,255,82,.035) 1px,transparent 1px);background-size:32px 32px}
+    a{color:var(--cyan);text-underline-offset:3px}.progress{position:fixed;z-index:20;left:0;top:0;width:0;height:3px;background:var(--acid);box-shadow:0 0 18px var(--acid)}
+    .hero{position:relative;min-height:720px;padding:72px max(28px,calc((100vw - 1460px)/2));overflow:hidden;border-bottom:1px solid var(--line);display:flex;align-items:center}
+    .hero::before{content:"LING / BOT";position:absolute;right:-.04em;bottom:-.17em;color:transparent;-webkit-text-stroke:1px rgba(216,255,82,.12);font:900 clamp(8rem,22vw,23rem)/.8 var(--sans);letter-spacing:-.09em;white-space:nowrap}
+    .orb{position:absolute;border-radius:50%;border:1px solid rgba(94,219,211,.3)}.orb.one{width:520px;height:520px;right:9%;top:-240px;box-shadow:0 0 0 55px rgba(94,219,211,.025),0 0 0 110px rgba(94,219,211,.018)}.orb.two{width:160px;height:160px;right:35%;bottom:70px;border-color:rgba(255,120,95,.4)}
+    .hero-inner{position:relative;z-index:1;width:100%;max-width:1120px;min-width:0}.eyebrow{display:flex;align-items:center;gap:13px;color:var(--acid);font:800 .72rem/1 var(--mono);letter-spacing:.2em;text-transform:uppercase}.eyebrow::before{content:"";width:44px;height:3px;background:var(--acid);flex:0 0 auto}
+    h1{margin:29px 0 20px;max-width:1100px;font:800 clamp(3.4rem,8vw,8rem)/.9 var(--serif);letter-spacing:-.06em}.slash{color:var(--acid);font-family:var(--sans)}
+    .hero-lede{max-width:900px;color:#c7d0d4;font-size:clamp(1.02rem,1.7vw,1.35rem)}.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0}.hero-meta span{padding:7px 10px;border:1px solid #3a484f;color:#bdc7cc;font:700 .66rem/1 var(--mono);letter-spacing:.04em}
+    .verdict{display:grid;grid-template-columns:1fr 230px;gap:22px;max-width:1070px;margin-top:36px;padding:24px 26px;background:rgba(16,26,31,.82);border-left:7px solid var(--acid);backdrop-filter:blur(12px)}.verdict>*{min-width:0;overflow-wrap:anywhere}.verdict p{margin:0}.verdict b{color:var(--acid)}.verdict-score{border-left:1px solid var(--line);padding-left:22px}.verdict-score strong{display:block;color:var(--acid);font:800 2rem/1.1 var(--serif)}.verdict-score small{color:var(--muted)}
+    .layout{position:relative;width:min(1460px,100%);margin:auto;display:grid;grid-template-columns:240px minmax(0,1fr);gap:54px;padding:46px 36px 120px}
+    nav{position:sticky;top:24px;align-self:start;border-top:5px solid var(--acid);padding-top:15px}nav .nav-label{color:var(--muted);font:800 .65rem var(--mono);letter-spacing:.18em}nav a{display:block;padding:8px 0;border-bottom:1px solid rgba(150,160,167,.18);color:#bdc5ca;text-decoration:none;font-size:.82rem;transition:.2s}nav a:hover,nav a.active{color:var(--acid);padding-left:6px}.stamp{margin-top:18px;color:#718087;font:.67rem/1.6 var(--mono)}
+    main{min-width:0}section{padding:28px 0 62px;border-bottom:1px solid var(--line);scroll-margin-top:24px}section:last-child{border:0}.kicker{color:var(--coral);font:800 .67rem/1 var(--mono);letter-spacing:.18em;text-transform:uppercase}h2{margin:11px 0 22px;font:800 clamp(2.2rem,4.5vw,4.4rem)/.98 var(--serif);letter-spacing:-.045em}h3{margin:25px 0 10px;font-size:1.1rem}.lede{max-width:940px;color:#c4cdd1;font:1.12rem/1.7 var(--serif)}
+    .scope{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin:24px 0}.scope>div{padding:23px;border:1px solid var(--line);background:var(--panel)}.scope strong{color:var(--acid)}.scope p{margin:7px 0;color:#b0bbc0;font-size:.88rem}
+    .grid2,.grid3,.grid4{display:grid;gap:13px;margin:22px 0}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
+    .card{position:relative;padding:21px;background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--cyan)}.card.acid{border-top-color:var(--acid)}.card.coral{border-top-color:var(--coral)}.card.gold{border-top-color:var(--gold)}.card p,.card li{color:#aeb8bd;font-size:.86rem}.card ul{margin:8px 0;padding-left:18px}.card h3{margin:0 0 8px;color:#f2f4f5}.tag{display:inline-block;margin-bottom:12px;padding:5px 8px;color:#0a1417;background:var(--cyan);font:900 .61rem/1 var(--mono);letter-spacing:.06em}.acid .tag{background:var(--acid)}.coral .tag{background:var(--coral)}.gold .tag{background:var(--gold)}
+    .metric{min-height:150px;padding:19px;background:var(--paper);color:var(--paper-ink)}.metric strong{display:block;color:#137b76;font:900 2rem/1 var(--serif)}.metric.coral strong{color:#c64735}.metric.gold strong{color:#936217}.metric b{display:block;margin:12px 0 5px}.metric small{display:block;color:#536168;line-height:1.5}
+    .family-map{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:28px 0}.family{min-height:190px;padding:18px;background:var(--panel2);border:1px solid var(--line)}.family i{color:var(--acid);font:700 .61rem var(--mono);font-style:normal}.family b{display:block;margin:10px 0 6px}.family span{display:block;color:#aab5ba;font-size:.76rem;line-height:1.5}.family .arrow{margin-top:16px;color:var(--coral);font:800 .68rem var(--mono)}
+    .formula{overflow:auto;margin:23px 0;padding:18px 20px;color:var(--acid);background:#0b1519;border:1px solid var(--line);font:700 .8rem/1.7 var(--mono);white-space:nowrap}
+    .callout{margin:22px 0;padding:22px 25px;border-left:7px solid var(--acid);background:var(--panel2);color:#d6dde0;font:1.03rem/1.65 var(--serif)}.callout strong{color:var(--acid)}
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin:25px 0 15px}.filters button{appearance:none;padding:9px 12px;color:#b8c2c7;background:transparent;border:1px solid #415057;cursor:pointer;font:800 .68rem/1 var(--mono);transition:.2s}.filters button:hover,.filters button.active{color:#101719;background:var(--acid);border-color:var(--acid)}
+    .table-wrap{overflow:auto;border:1px solid var(--line)}table{width:100%;border-collapse:collapse;background:var(--panel);font-size:.8rem}th,td{padding:12px 13px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}th{position:sticky;top:0;color:var(--acid);background:#0d171b;font:800 .66rem/1.35 var(--mono);letter-spacing:.05em}tbody tr:hover td{background:rgba(216,255,82,.035)}td:first-child{color:#edf1f3;font-weight:800}.hidden-row{display:none}.evidence{display:inline-block;padding:4px 7px;border-radius:99px;white-space:nowrap;font:900 .59rem/1 var(--mono)}.evidence.a{color:#173414;background:#cceea8}.evidence.b{color:#5c430a;background:#f1d58b}.evidence.c{color:#70251b;background:#f4b2a5}.good{color:var(--cyan);font-weight:800}.warn{color:var(--gold);font-weight:800}.risk{color:var(--coral);font-weight:800}code{padding:.12em .34em;color:#dff8f5;background:#1b2b31;font: .86em var(--mono)}
+    .playbook{display:grid;grid-template-columns:130px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--line)}.playbook .num{color:var(--acid);font:900 3.2rem/.9 var(--serif)}.playbook h3{margin:0}.playbook p{color:#aeb9be;font-size:.88rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{padding:5px 8px;border:1px solid #3c4c53;color:#b7c1c6;font:700 .61rem var(--mono)}
+    .roadmap{margin:28px 0 0 10px;border-left:2px solid #37474e}.road{position:relative;margin:0 0 22px 30px;padding-bottom:12px}.road::before{content:"";position:absolute;left:-39px;top:4px;width:13px;height:13px;border:3px solid var(--coral);border-radius:50%;background:var(--night)}.road b{color:#f1f4f5}.road p{margin:6px 0;color:#a7b2b7;font-size:.87rem}.gate{display:inline-block;padding:4px 7px;color:#172126;background:var(--acid);font:800 .62rem var(--mono)}
+    details{margin:12px 0;border:1px solid var(--line);background:var(--panel)}details[open]{border-top:4px solid var(--cyan)}summary{cursor:pointer;padding:16px 18px;color:#eef2f3;font-weight:800}details>div{padding:0 20px 18px;color:#adb8bd;font-size:.86rem}.codeblock{overflow:auto;padding:16px;background:#071014;color:#c8d1d4;font:.75rem/1.7 var(--mono);white-space:pre}.codeblock em{color:var(--acid);font-style:normal}
+    .benchmark-box{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:20px;border:1px dashed #536168;background:var(--panel)}.benchmark-box p{margin:0;color:#aeb8bd;font-size:.84rem}.copy-btn{padding:10px 13px;color:#111a1d;background:var(--acid);border:0;cursor:pointer;font:900 .67rem var(--mono)}.copy-btn:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+    .sources{counter-reset:source;list-style:none;padding:0}.sources li{position:relative;padding:12px 10px 12px 52px;border-bottom:1px solid var(--line);color:#aeb8bd;font-size:.82rem}.sources li::before{counter-increment:source;content:counter(source,decimal-leading-zero);position:absolute;left:8px;color:var(--acid);font:800 .7rem var(--mono)}.method{color:#85949b;font-size:.79rem}.updated{padding:14px 16px;border:1px dashed var(--line);color:#94a1a7;font-size:.78rem}
+    footer{padding:30px max(28px,calc((100vw - 1460px)/2));color:#8f9da3;background:#050b0d;border-top:1px solid var(--line);font:.7rem/1.6 var(--mono)}
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}.reveal.visible{opacity:1;transform:none}
+    @media(max-width:1080px){.layout{grid-template-columns:1fr;padding:34px 27px 90px}nav{display:none}.grid4,.family-map{grid-template-columns:repeat(2,1fr)}.hero{min-height:680px}.verdict{grid-template-columns:1fr}.verdict-score{border:0;border-top:1px solid var(--line);padding:18px 0 0}}
+    @media(max-width:700px){h1{font-size:3.1rem}.eyebrow,.hero-lede{overflow-wrap:anywhere}.grid2,.grid3,.grid4,.family-map,.scope{grid-template-columns:1fr}.hero{padding:56px 20px;min-height:760px}.verdict{padding:22px 18px}.layout{padding:26px 20px 70px}.playbook{grid-template-columns:1fr}.playbook .num{font-size:2rem}.benchmark-box{grid-template-columns:1fr}.table-wrap{margin-right:-20px}.orb.one{right:-320px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}}
+    @media print{body{color:#111;background:white}body::before,.progress,.orb,nav,.filters,.copy-btn{display:none}.hero{min-height:auto;color:#111;padding:35px;border-bottom:3px solid #111}.hero::before{display:none}.hero-lede,.verdict,.lede,.card p,.card li,.playbook p,.road p,.scope p,.sources li{color:#333}.layout{display:block;padding:25px}.card,.scope>div,.family,.verdict,table,.benchmark-box,details{background:white;border-color:#777}.metric{border:1px solid #777}.reveal{opacity:1;transform:none}section,.card,.metric{break-inside:avoid}h2,h3,.card h3,.playbook h3{color:#111}footer{background:white;color:#333}}
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="hero">
+    <div class="orb one" aria-hidden="true"></div><div class="orb two" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <div class="eyebrow">Generative Systems Field Guide · 2026/08</div>
+      <h1>变分 / 生成模型<br><span class="slash">优化与加速</span></h1>
+      <p class="hero-lede">以 LingBot-Video、LingBot-World、LingBot-VA 与 LingBot-VLA 为工程样本，把算法减负、模型结构、训练并行、推理内核、显存治理与服务调度放到同一张图上。</p>
+      <div class="hero-meta"><span>研究快照 2026-08-24</span><span>训练 + 推理</span><span>CUDA / NPU 双视角</span><span>证据分级</span></div>
+      <div class="verdict">
+        <p><b>核心判断：</b>先减少“必须做的计算”，再加速“剩下的计算”。对 LingBot 系列，最高优先级通常是少步蒸馏 / 稀疏激活 / 局部因果注意力，其次是 KV Cache、条件复用、FSDP + Context Parallel、融合注意力与编译；低比特只有命中硬件原生 kernel 并通过时序、几何或动作质量回归时才算真正加速。</p>
+        <div class="verdict-score"><strong>算法 × 系统</strong><small>任何单层优化都会遇到 Amdahl 瓶颈</small></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav aria-label="报告目录"><div class="nav-label">FIELD INDEX</div>
+      <a href="#scope">01 / 范围与模型谱系</a><a href="#cost">02 / 成本模型</a><a href="#levers">03 / 加速手段总表</a><a href="#playbooks">04 / LingBot 专项策略</a><a href="#training">05 / 训练优化</a><a href="#inference">06 / 推理优化</a><a href="#ascend">07 / 昇腾迁移映射</a><a href="#roadmap">08 / 落地与验收</a><a href="#sources">09 / 来源与边界</a>
+      <div class="stamp">LINGBOT SERIES<br>OPTIMIZATION ATLAS<br>CONFIDENCE-LABELED</div>
+    </nav>
+
+    <main>
+      <section id="scope" class="reveal">
+        <span class="kicker">01 · Scope & taxonomy</span><h2>先把“变分”说清楚</h2>
+        <div class="scope">
+          <div><strong>本文主线：生成式迭代模型</strong><p>这里把“变分模型”按工程语境扩展为扩散、流匹配及其视频 / 动作生成变体。它们共享“多步去噪或流积分 + Transformer 主干 + VAE / 感知编码器”的主要成本结构。</p></div>
+          <div><strong>不混为一谈</strong><p>LingBot-Depth、Map、Vision 属于重要感知与几何模块，但不直接套用“减采样步数”逻辑；它们适用的是编码器编译、分辨率分桶、蒸馏和算子融合。</p></div>
+        </div>
+        <div class="family-map" aria-label="LingBot 模型谱系">
+          <div class="family"><i>VIDEO GENERATION</i><b>LingBot-Video</b><span>Dense 1.3B；MoE 30B-A3B + Refiner。T2I / T2V / TI2V，主成本为多步 DiT、专家路由、VAE 与两阶段精炼。</span><div class="arrow">→ MoE / CP8 / FP8</div></div>
+          <div class="family"><i>WORLD SIMULATION</i><b>World 1.0 / 2.0</b><span>基于 Wan2.2 的因果视频世界模型；2.0 公开 14B causal-fast，采用分块生成、KV 缓存与局部注意力参数。</span><div class="arrow">→ distill / KV cache</div></div>
+          <div class="family"><i>VIDEO + ACTION</i><b>LingBot-VA</b><span>自回归扩散视频—动作世界模型；双流 MoT 将视觉动力学与动作推断解耦协同。</span><div class="arrow">→ async / dual stream</div></div>
+          <div class="family"><i>ROBOT POLICY</i><b>LingBot-VLA 1 / 2</b><span>4B → 6B；动作专家使用稀疏 MoE，深度与未来视觉查询参与蒸馏，策略头为少步生成。</span><div class="arrow">→ compile / sparse expert</div></div>
+        </div>
+        <div class="grid4">
+          <div class="metric"><strong>≈3×</strong><b>Video MoE 官方表述</b><small>30B 总容量、约 3B 激活参数，以稀疏激活平衡容量与推理成本；不是所有硬件上的无条件倍数。</small></div>
+          <div class="metric coral"><strong>720p60</strong><b>World 2.0 目标</b><small>官方对蒸馏实时版本的系统能力表述；公开仓库示例仍为 480P 多 GPU，需区分演示系统与可复现实验。</small></div>
+          <div class="metric gold"><strong>1.5–2.8×</strong><b>VLA 训练代码库</b><small>官方相对既有 VLA 代码库的训练加速范围；261 samples/s 是多 GPU 聚合吞吐，不是单卡。</small></div>
+          <div class="metric"><strong>5 steps</strong><b>VLA 快速评估</b><small>官方部署示例允许把动作去噪步数设为 5；速度—成功率必须在目标机器人与任务上重验。</small></div>
+        </div>
+      </section>
+
+      <section id="cost" class="reveal">
+        <span class="kicker">02 · Cost anatomy</span><h2>优化对象不是一个模型</h2>
+        <p class="lede">端到端延迟由条件编码、多步主干、可选专家通信、VAE、后处理与调度共同构成。视频长度和空间分辨率同时放大 token 数；全注意力的时间与显存又对 token 数近似呈二次增长。</p>
+        <div class="formula">T<sub>e2e</sub> = T<sub>encode</sub> + N<sub>steps</sub> × [T<sub>attn</sub>(S) + T<sub>MLP/MoE</sub> + T<sub>comm</sub>] + T<sub>VAE</sub> + T<sub>post</sub> + T<sub>queue</sub></div>
+        <div class="grid3">
+          <article class="card acid"><span class="tag">MULTIPLIER</span><h3>采样步数 N</h3><p>每少一步就少一次主干前向，通常是最直接的一阶收益。可用一致性 / flow / progressive distillation、改进求解器或任务允许的动态早停。</p></article>
+          <article class="card"><span class="tag">TOKEN SCALE</span><h3>序列长度 S</h3><p>压缩 VAE、时空 patch、帧率、分辨率、局部 / 稀疏注意力与 context parallel 都围绕 S。长视频应优先改复杂度，而不只是换更快 GEMM。</p></article>
+          <article class="card coral"><span class="tag">BOTTLENECK</span><h3>非主干成本</h3><p>VAE 解码、Depth / DINO teacher、渲染与传输可能在主干加速后接管火焰图；必须持续重做端到端 profiling。</p></article>
+        </div>
+        <div class="callout"><strong>判断顺序：</strong>若目标是最低单请求延迟，先看步数、因果缓存和编译；若目标是最大吞吐，先看 batch / bucket、并行拓扑、专家路由与服务调度；若目标是单卡可运行，先看模型选择、FSDP / offload、顺序 CFG、VAE tiling 与量化。</div>
+      </section>
+
+      <section id="levers" class="reveal">
+        <span class="kicker">03 · Optimization matrix</span><h2>加速手段总表</h2>
+        <p class="lede">点击模型筛选，只显示与该路径直接相关的手段。证据 A 表示 LingBot 官方代码 / 报告已出现；B 表示机制可迁移；C 表示必须以目标硬件实验确认。</p>
+        <div class="filters" role="group" aria-label="按模型筛选">
+          <button class="active" data-filter="all">全部</button><button data-filter="video">Video</button><button data-filter="world">World</button><button data-filter="va">VA</button><button data-filter="vla">VLA</button>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>手段</th><th>作用层</th><th>收益机制</th><th>代价 / 风险</th><th>优先级</th><th>证据</th></tr></thead><tbody>
+          <tr data-models="video world va vla"><td>少步蒸馏 / 求解器</td><td>算法</td><td>直接减少主干调用次数</td><td>时序漂移、动作成功率或细节退化</td><td class="good">P0</td><td><span class="evidence a">A 官方路径</span></td></tr>
+          <tr data-models="video vla"><td>稀疏 MoE</td><td>架构</td><td>总容量增长而激活计算近似固定</td><td>路由不均、all-to-all、专家 kernel 碎片化</td><td class="good">P0</td><td><span class="evidence a">A 官方结构</span></td></tr>
+          <tr data-models="world va"><td>因果分块 + KV Cache</td><td>算法 / 推理</td><td>复用历史 K/V，避免重算完整上下文</td><td>缓存显存线性增长；错误也会长期传播</td><td class="good">P0</td><td><span class="evidence a">A 官方代码</span></td></tr>
+          <tr data-models="world va video"><td>局部 / 滑窗注意力</td><td>架构</td><td>把长序列注意力从全局二次成本压低</td><td>长程一致性依赖 sink / 全局 token 设计</td><td class="good">P0</td><td><span class="evidence a">A World 2</span></td></tr>
+          <tr data-models="video world va vla"><td>Flash / fused attention</td><td>算子</td><td>减少 HBM 读写和中间张量</td><td>mask、head dim、dtype 与后端覆盖有限</td><td class="good">P0</td><td><span class="evidence a">A 依赖项</span></td></tr>
+          <tr data-models="video world vla"><td>FSDP + Context Parallel</td><td>分布式</td><td>参数分片；沿 token 维拆长序列</td><td>通信、主机加载峰值、拓扑敏感</td><td class="good">P0</td><td><span class="evidence a">A 官方脚本</span></td></tr>
+          <tr data-models="video world va vla"><td>BF16 / FP16 混合精度</td><td>数值</td><td>更高 Tensor Core / AI Core 吞吐与更低显存</td><td>归一化、VAE、softmax 需保留高精度区域</td><td class="good">P0</td><td><span class="evidence a">A 默认配置</span></td></tr>
+          <tr data-models="video world vla"><td>FP8 / INT8 / 4-bit</td><td>数值</td><td>压缩权重 / KV / 激活并提升 GEMM 吞吐</td><td>需原生 kernel、校准集与逐模块质量门禁</td><td class="warn">P1</td><td><span class="evidence b">B 部分已实现</span></td></tr>
+          <tr data-models="video world va vla"><td>torch.compile / 静态 bucket</td><td>编译</td><td>融合 pointwise、降低 Python 与 launch 开销</td><td>动态 shape 触发重编译和 graph break</td><td class="warn">P1</td><td><span class="evidence a">A VLA 开关</span></td></tr>
+          <tr data-models="video"><td>VAE tiling / slicing</td><td>显存</td><td>把高分辨率解码峰值切成可控小块</td><td>重叠区额外计算；只省显存且可能更慢</td><td class="warn">P1</td><td><span class="evidence a">A Video 脚本</span></td></tr>
+          <tr data-models="video world va vla"><td>条件 / teacher 特征缓存</td><td>数据流</td><td>复用文本、深度、DINO、控制条件</td><td>缓存键需包含模型 revision 与预处理版本</td><td class="warn">P1</td><td><span class="evidence b">B 可迁移</span></td></tr>
+          <tr data-models="va"><td>视觉—动作异步执行</td><td>流水线</td><td>双流并行，隐藏较短分支与数据准备开销</td><td>同步点、状态陈旧与调度复杂度</td><td class="good">P0</td><td><span class="evidence a">A VA 结构</span></td></tr>
+          <tr data-models="video world"><td>跨步特征缓存</td><td>近似推理</td><td>跳过稳定 timestep 的部分 block</td><td>长视频误差积累；官方未声明直接支持</td><td class="risk">P2</td><td><span class="evidence c">C 需实测</span></td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section id="playbooks" class="reveal">
+        <span class="kicker">04 · Model playbooks</span><h2>四条专项路线</h2>
+        <div class="playbook"><div class="num">01</div><div><h3>LingBot-Video：先选对模型，再优化两阶段流水线</h3><p>单卡 / 快速迭代先用 Dense 1.3B；质量上限才选 30B-A3B MoE + Refiner。官方已提供 direct diffusers 与 SGLang Diffusion、CP8 + FSDP、多 GPU、顺序 CFG、base 释放、条件复用、VAE tiling 及 MoE FP8 expert 路径。关键不是把开关全开，而是分别测 base、refiner、VAE 和 rewriter。</p><div class="chips"><span>MODEL ROUTING</span><span>CP8 + FSDP</span><span>GROUPED EXPERT</span><span>RELEASE BASE</span><span>VAE TILE</span></div></div></div>
+        <div class="playbook"><div class="num">02</div><div><h3>LingBot-World 2.0：长上下文必须做复杂度治理</h3><p>官方 causal-fast 推理按帧块生成并启用 KV cache，示例暴露 <code>local_attn_size=18</code> 与 <code>sink_size=6</code>。优先调块长、局部窗口与 sink token，而非一味扩大缓存；再用 FSDP + Ulysses / context parallel 承载长序列。把“720p60”视为官方系统目标，不当作仓库默认命令的可复现单机结果。</p><div class="chips"><span>FEW-STEP DISTILL</span><span>CHUNKED CAUSAL</span><span>KV CACHE</span><span>LOCAL WINDOW</span><span>SINK TOKEN</span></div></div></div>
+        <div class="playbook"><div class="num">03</div><div><h3>LingBot-VA：让视频世界与动作策略异步协作</h3><p>双流 MoT 的价值在于不同频率和不同成本的视觉 / 动作流可以重叠执行。部署时分别记录 action latency、video latency、控制周期 deadline miss 与缓存命中；动作通道、SNR shift、归一化统计必须与 checkpoint 对齐，不能为了吞吐牺牲闭环稳定性。</p><div class="chips"><span>DUAL STREAM</span><span>ASYNC EXEC</span><span>KV CACHE</span><span>CONTROL DEADLINE</span></div></div></div>
+        <div class="playbook"><div class="num">04</div><div><h3>LingBot-VLA 2.0：稀疏动作专家 + 少步策略头</h3><p>6B native-depth 模型把稀疏 MoE 放入 action expert，并用 LingBot-Depth / DINO-Video 双查询蒸馏。推理先采用官方 compile 路径与 5-step 快速配置，再做视觉骨干、动作专家分区量化；训练则优先数据预处理离线化、FSDP2、FlexAttention / 融合注意力和通信计算重叠。</p><div class="chips"><span>SPARSE ACTION EXPERT</span><span>DUAL-QUERY DISTILL</span><span>5-STEP</span><span>COMPILE</span></div></div></div>
+      </section>
+
+      <section id="training" class="reveal">
+        <span class="kicker">05 · Training stack</span><h2>训练：把 GPU 等待变成有效样本</h2>
+        <div class="grid3">
+          <article class="card acid"><span class="tag">DATA</span><h3>先离线化昂贵 teacher</h3><ul><li>缓存 text / depth / DINO teacher 特征</li><li>统一短边、帧数、动作长度 bucket</li><li>异步 decode、pin memory、预取与持久 worker</li><li>先过滤失配 / 模糊 / 静止数据再进训练</li></ul></article>
+          <article class="card"><span class="tag">PARALLEL</span><h3>分片策略按瓶颈组合</h3><ul><li>FSDP2 分参数 / 梯度 / 优化器状态</li><li>CP 沿时空 token 切长序列</li><li>MoE EP 沿专家切分并优化 all-to-all</li><li>梯度累积只解决显存，不等于吞吐提升</li></ul></article>
+          <article class="card gold"><span class="tag">NUMERICS</span><h3>低精度分区而非一刀切</h3><ul><li>BF16 作为稳定基线</li><li>GEMM / expert 尝试 FP8</li><li>norm、softmax、loss、VAE 敏感区保高精度</li><li>记录 overflow、amax、grad norm 与 loss parity</li></ul></article>
+        </div>
+        <div class="grid2">
+          <article class="card coral"><span class="tag">MEMORY</span><h3>选择性激活重计算</h3><p>只 checkpoint 显存占用高、重算性价比好的 Transformer block；避免对 teacher、VAE 或小算子全量重算。activation offload 只有传输能被计算隐藏时才成立。</p></article>
+          <article class="card"><span class="tag">COMMUNICATION</span><h3>拓扑决定理论值能否兑现</h3><p>把 CP / TP / EP 优先放在高速互联域内，DP 跨域；用分层 all-reduce、梯度 bucket、通信计算重叠，并单独报告网络等待占比与专家负载偏斜。</p></article>
+        </div>
+        <details><summary>训练优化的最小实验顺序</summary><div><div class="codeblock">00  freeze data + seed + checkpoint revision
+01  BF16 baseline → samples/s, MFU, peak memory, loss curve
+02  fused attention / FlexAttention <em>[numerical parity first]</em>
+03  FSDP2 → add CP only when sequence length requires it
+04  input buckets + offline teacher cache + prefetch
+05  selective activation checkpoint + compile repeated blocks
+06  FP8 GEMM / expert <em>[keep sensitive ops in BF16/FP32]</em>
+07  scale 8 → 16 → 32… devices and report efficiency, not only throughput</div></div></details>
+      </section>
+
+      <section id="inference" class="reveal">
+        <span class="kicker">06 · Inference stack</span><h2>推理：六层漏斗</h2>
+        <div class="grid3">
+          <article class="card acid"><span class="tag">L0 / REQUEST</span><h3>路由</h3><p>按延迟、质量和显存预算选择 Dense / MoE、base / fast、是否 Refiner、分辨率与帧数。模型路由往往比内核微调收益更大。</p></article>
+          <article class="card acid"><span class="tag">L1 / ALGORITHM</span><h3>减步与缓存</h3><p>少步蒸馏、动态步数、因果 KV cache、条件复用。优先消灭整次前向，再谈单次前向更快。</p></article>
+          <article class="card"><span class="tag">L2 / GRAPH</span><h3>编译与分桶</h3><p>固定帧数 / 分辨率 / batch bucket，编译 repeated blocks；监控 guards、recompile 与 graph break。</p></article>
+          <article class="card"><span class="tag">L3 / KERNEL</span><h3>融合算子</h3><p>fused attention、RMSNorm、RoPE、grouped GEMM、fused MoE。以内存带宽与 kernel launch 火焰图决定投入。</p></article>
+          <article class="card gold"><span class="tag">L4 / MEMORY</span><h3>精度与驻留</h3><p>BF16 → FP8 / INT8；base 与 refiner 分阶段驻留；VAE tiling；必要时 text encoder CPU offload。</p></article>
+          <article class="card coral"><span class="tag">L5 / SERVICE</span><h3>调度</h3><p>预热、编译缓存、continuous batching、同 bucket 合批、背压、超时降级和模型池。分开报告排队与执行延迟。</p></article>
+        </div>
+        <div class="callout"><strong>三条禁区：</strong>不要把“显存下降”写成“延迟下降”；不要把多卡聚合吞吐写成单卡吞吐；不要以 CLIP / FID 一项替代长视频一致性、几何稳定性和机器人闭环成功率。</div>
+      </section>
+
+      <section id="ascend" class="reveal">
+        <span class="kicker">07 · Ascend translation</span><h2>昇腾：迁移机制，不照搬开关</h2>
+        <p class="lede">LingBot 官方仓库主要给出 CUDA 路径。迁移到昇腾时，先保留算法结构与张量语义，再替换后端：FlashAttention 对应 NPU 融合注意力，CUDA Graph / compile 对应稳定 shape 的图执行，FSDP / CP 对应分片并行；SGLang fused MoE、FP8 expert 与自定义 CUDA 扩展不能假设直接可用。</p>
+        <div class="table-wrap"><table><thead><tr><th>CUDA / 官方路径</th><th>昇腾落点</th><th>首要检查</th><th>策略</th></tr></thead><tbody>
+          <tr><td>flash-attn / SDPA</td><td>torch_npu 融合注意力或原生 SDPA 后端</td><td>mask、causal、head dim、layout、精度</td><td class="good">先等价，再融合</td></tr>
+          <tr><td>torch.compile</td><td>NPU 编译后端 + 静态 bucket</td><td>graph break、重编译、动态帧长</td><td class="good">只编稳定子图</td></tr>
+          <tr><td>CP8 / Ulysses</td><td>沿时空 token 的 context parallel</td><td>all-to-all 占比与 HCCS / 网络拓扑</td><td class="warn">由长序列触发</td></tr>
+          <tr><td>grouped_mm / fused MoE</td><td>Grouped MatMul / 自定义 MoE kernel</td><td>路由排序、padding、专家负载与通信</td><td class="warn">Video / VLA 专项</td></tr>
+          <tr><td>FP8 / NF4</td><td>目标 NPU 原生低精度格式与量化工具链</td><td>是否真有计算 kernel，Q/DQ 是否抵消收益</td><td class="risk">不得仅转换权重</td></tr>
+          <tr><td>VAE tiling</td><td>框架无关的 tile / overlap 解码</td><td>tile seam、峰值显存与额外耗时</td><td class="good">可优先迁移</td></tr>
+        </tbody></table></div>
+        <div class="updated"><b>边界：</b>本节是机制级迁移建议，不宣称 LingBot 官方已验证昇腾支持。具体 API、精度格式与算子覆盖随 CANN / torch_npu 版本变化，落地时需锁定版本矩阵并以目标设备实测。</div>
+      </section>
+
+      <section id="roadmap" class="reveal">
+        <span class="kicker">08 · Delivery roadmap</span><h2>四阶段落地与验收</h2>
+        <div class="roadmap">
+          <div class="road"><b>Phase 0｜一周：冻结基线</b><p>锁定 checkpoint、prompt / 视频 / 任务集、随机种子、分辨率、步数、硬件与软件版本；分段埋点 encode / DiT / VAE / refiner / queue。</p><span class="gate">GATE：分段耗时合计与 e2e 误差 &lt; 3%</span></div>
+          <div class="road"><b>Phase 1｜一至两周：官方快路</b><p>启用官方 fast / compile / KV cache / FSDP / CP / sequential CFG / VAE tiling；先建立每条路径的 Pareto 基线。</p><span class="gate">GATE：质量门禁全通过且 P50 / P95 可复现</span></div>
+          <div class="road"><b>Phase 2｜二至四周：图、算子与低精度</b><p>静态 bucket、融合注意力、grouped expert、FP8 / INT8 分区量化、条件缓存；逐项 A/B，不叠开关猜收益。</p><span class="gate">GATE：速度收益扣除预热 / 编译成本后仍成立</span></div>
+          <div class="road"><b>Phase 3｜持续：服务与硬件专项</b><p>continuous batching、模型池、缓存淘汰、NPU 自定义热点算子；对漂移样本自动回退到保守路径。</p><span class="gate">GATE：线上 SLO、成本与质量报警闭环</span></div>
+        </div>
+        <h3>最小验收矩阵</h3>
+        <div class="table-wrap"><table><thead><tr><th>维度</th><th>必须报告</th><th>LingBot 特有门禁</th></tr></thead><tbody>
+          <tr><td>性能</td><td>冷 / 热 P50、P95、吞吐、TTFF、单步耗时、设备利用率</td><td>World / VA 的控制响应周期；VLA 动作输出 deadline miss</td></tr>
+          <tr><td>资源</td><td>峰值设备显存、主机内存、通信量、模型加载 / 编译缓存</td><td>KV cache 随时长增长；MoE 专家负载偏斜</td></tr>
+          <tr><td>生成质量</td><td>同 seed 对照、感知指标 + 人评、失败样本桶</td><td>时序一致性、物理合理性、长时漂移、Refiner 细节</td></tr>
+          <tr><td>机器人</td><td>成功率、partial score、动作平滑度、闭环延迟</td><td>跨本体、扰动场景、深度失效与长任务恢复能力</td></tr>
+        </tbody></table></div>
+        <div class="benchmark-box"><p id="benchmarkText">建议命名：model@revision / hardware×count / dtype / H×W×F / steps / batch / parallel / warmup / repeats / quality-gate。所有倍数只与同硬件、同输入、同质量档基线比较。</p><button class="copy-btn" type="button" aria-describedby="benchmarkText">复制模板</button></div>
+      </section>
+
+      <section id="sources" class="reveal">
+        <span class="kicker">09 · Sources & caveats</span><h2>来源与证据边界</h2>
+        <ol class="sources">
+          <li><a href="https://github.com/Robbyant/lingbot-video">LingBot-Video 官方仓库</a>：模型规格、SGLang / diffusers、FSDP + CP8、顺序 CFG、VAE tiling、FP8 MoE 与基准入口。</li>
+          <li><a href="https://github.com/Robbyant/lingbot-world-v2">LingBot-World 2.0 / Infinity 官方仓库</a>：14B causal-fast、分块因果推理、KV cache、local attention 与 sink 参数。</li>
+          <li><a href="https://github.com/Robbyant/lingbot-world">LingBot-World 1.0 官方仓库</a>：Base / Fast 路线、FSDP / Ulysses、T5 CPU offload 与社区 NF4 路径。</li>
+          <li><a href="https://github.com/Robbyant/lingbot-va">LingBot-VA 官方仓库</a>：自回归扩散、双流 MoT、异步执行与 KV cache。</li>
+          <li><a href="https://github.com/Robbyant/lingbot-vla">LingBot-VLA 1.0 官方仓库</a>：4B / depth 版本、训练加速口径、Torch Compile 与 5-step 部署示例。</li>
+          <li><a href="https://github.com/Robbyant/lingbot-vla-v2">LingBot-VLA 2.0 官方仓库</a>：6B native-depth、55 维动作表示、稀疏动作专家与双查询蒸馏。</li>
+          <li><a href="https://arxiv.org/abs/2601.20540">Advancing Open-source World Models</a> 与 <a href="https://arxiv.org/abs/2601.18692">A Pragmatic VLA Foundation Model</a>：模型方法与论文口径。</li>
+          <li><a href="https://docs.pytorch.org/docs/stable/generated/torch.compile.html">PyTorch torch.compile 官方文档</a>：guard、重编译限制、fullgraph 与编译缓存边界。</li>
+          <li><a href="https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html">NVIDIA Transformer Engine FP8 指南</a>：低精度格式、缩放与敏感算子边界。</li>
+        </ol>
+        <p class="method"><b>方法：</b>截至 2026-08-24 阅读公开仓库、模型卡与论文；仅把明确出现于 LingBot 官方资料的能力标为 A。官方演示指标、社区量化和本文工程目标采用不同口径，不互相替代。页面中的 P0 / P1 / P2 是实施优先级，不是性能承诺。</p>
+      </section>
+    </main>
+  </div>
+
+  <footer>ASCEND PLAYGROUND · LINGBOT GENERATIVE OPTIMIZATION ATLAS · STATIC / PRINT-READY</footer>
+  <script>
+    const progress=document.querySelector('.progress');
+    const onScroll=()=>{const max=document.documentElement.scrollHeight-innerHeight;progress.style.width=(max>0?scrollY/max*100:0)+'%'};
+    addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+    const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add('visible')}),{threshold:.08});
+    document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
+
+    const navLinks=[...document.querySelectorAll('nav a')];
+    const sectionObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id))}}),{rootMargin:'-20% 0px -65% 0px'});
+    document.querySelectorAll('main section').forEach(section=>sectionObserver.observe(section));
+
+    const filterButtons=[...document.querySelectorAll('.filters button')];
+    const matrixRows=[...document.querySelectorAll('#levers tbody tr')];
+    filterButtons.forEach(button=>button.addEventListener('click',()=>{
+      filterButtons.forEach(item=>item.classList.remove('active'));button.classList.add('active');
+      const filter=button.dataset.filter;
+      matrixRows.forEach(row=>row.classList.toggle('hidden-row',filter!=='all'&&!row.dataset.models.split(' ').includes(filter)));
+    }));
+
+    document.querySelector('.copy-btn').addEventListener('click',async event=>{
+      const text=document.querySelector('#benchmarkText').textContent.trim();
+      try{await navigator.clipboard.writeText(text);event.currentTarget.textContent='已复制';}
+      catch{event.currentTarget.textContent='复制失败';}
+      setTimeout(()=>event.currentTarget.textContent='复制模板',1600);
+    });
+  </script>
+</body>
+</html>

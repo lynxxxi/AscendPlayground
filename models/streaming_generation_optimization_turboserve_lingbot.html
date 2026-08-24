@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="流式视频生成模型优化与加速研究：重点解析 TurboServe 的会话调度、状态迁移与弹性扩缩容，并给出 LingBot-World / LingBot-Video 的适配路线。">
+  <title>流式生成加速：TurboServe × LingBot 工程研究</title>
+  <style>
+    :root{
+      --bg:#0b0d0c;--panel:#111512;--panel2:#171c18;--ink:#edf1e5;--muted:#9ba69b;
+      --line:#313a32;--lime:#d7ff63;--mint:#67e0ae;--amber:#ffae57;--red:#ff6f61;--cyan:#75d9e8;
+      --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+      --sans:"Aptos","Noto Sans SC","Microsoft YaHei UI",sans-serif;
+      --mono:"Cascadia Mono","IBM Plex Mono",Consolas,monospace;--max:1360px;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font:16px/1.75 var(--sans)}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;background:linear-gradient(rgba(215,255,99,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(215,255,99,.025) 1px,transparent 1px);background-size:38px 38px}
+    a{color:var(--mint);text-underline-offset:4px}a:hover{color:var(--lime)}code{font:.88em var(--mono);color:var(--lime);background:#1f2820;padding:.12em .35em;border-radius:3px}.wrap{width:min(var(--max),100%);margin:auto;padding:0 42px}
+    .top{position:sticky;top:0;z-index:30;background:rgba(11,13,12,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(18px)}
+    .top .wrap{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font:700 .7rem var(--mono);letter-spacing:.15em;text-transform:uppercase}.brand i{display:inline-block;width:8px;height:8px;margin-right:10px;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+    .top nav{display:flex;gap:20px;overflow:auto}.top nav a{color:var(--muted);font:.68rem var(--mono);text-decoration:none;white-space:nowrap}.top nav a:hover{color:var(--lime)}
+    .hero{position:relative;min-height:760px;overflow:hidden;border-bottom:1px solid var(--line);padding:92px 0 68px;background:radial-gradient(circle at 82% 22%,rgba(103,224,174,.12),transparent 28rem)}
+    .hero::after{content:"STREAM";position:absolute;right:-2vw;bottom:-5rem;color:transparent;-webkit-text-stroke:1px rgba(215,255,99,.12);font:900 clamp(7rem,18vw,18rem)/1 var(--mono);letter-spacing:-.1em}
+    .eyebrow,.kicker{color:var(--lime);font:700 .69rem var(--mono);letter-spacing:.15em;text-transform:uppercase}.eyebrow{display:flex;align-items:center;gap:12px}.eyebrow::before{content:"";width:44px;height:2px;background:var(--lime)}
+    h1{position:relative;z-index:1;max-width:1050px;margin:25px 0 25px;font:800 clamp(3.2rem,7.4vw,7.4rem)/.98 var(--serif);letter-spacing:-.06em}h1 em{color:var(--lime);font-style:normal}
+    .dek{position:relative;z-index:1;max-width:900px;color:#cad2c8;font:1.2rem/1.75 var(--serif)}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:34px 0}.pill{padding:7px 10px;border:1px solid var(--line);color:var(--muted);font:.66rem var(--mono)}
+    .verdict{position:relative;z-index:1;display:grid;grid-template-columns:1.45fr .55fr;max-width:1050px;margin-top:42px;background:var(--lime);color:#11150f}.verdict>div{padding:25px 28px}.verdict b{font:700 1.12rem var(--serif)}.verdict p{margin:7px 0 0;font-size:.9rem}.verdict .number{border-left:1px solid rgba(0,0,0,.22)}.number strong{display:block;font:900 2.7rem/1 var(--mono)}.number small{font-size:.72rem}
+    main section{padding:84px 0;border-bottom:1px solid var(--line);scroll-margin-top:65px}.head{display:grid;grid-template-columns:100px minmax(0,1fr);gap:30px;margin-bottom:38px}.secno{padding-top:12px;color:var(--lime);font:.75rem var(--mono)}h2{margin:0;font:750 clamp(2.2rem,4.8vw,4.7rem)/1.1 var(--serif);letter-spacing:-.045em}.lead{max-width:920px;margin:18px 0 0;color:var(--muted);font-size:1.08rem}
+    .grid3,.grid4,.two{display:grid;gap:14px}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr 1fr}.card{min-width:0;padding:24px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(23,28,24,.92),rgba(17,21,18,.75))}.card h3{margin:18px 0 9px;font-size:1.18rem}.card p,.card li{color:var(--muted);font-size:.88rem}.tag{display:inline-block;padding:4px 7px;color:var(--lime);border:1px solid currentColor;font:700 .61rem var(--mono);letter-spacing:.06em}.tag.orange{color:var(--amber)}.tag.cyan{color:var(--cyan)}.tag.red{color:var(--red)}
+    .metric{min-height:168px;padding:22px;background:var(--panel2);border-top:4px solid var(--lime)}.metric strong{display:block;color:var(--lime);font:800 2rem/1 var(--mono)}.metric b{display:block;margin:18px 0 6px}.metric small{color:var(--muted)}
+    .callout{margin:24px 0;padding:22px 25px;border-left:6px solid var(--lime);background:#172018;font:1rem/1.7 var(--serif)}.callout strong{color:var(--lime)}.warning{border-color:var(--amber);background:#211b14}.warning strong{color:var(--amber)}
+    .layer-map{display:grid;grid-template-columns:1fr 70px 1fr 70px 1fr;align-items:stretch;margin:28px 0}.layer{padding:26px;border:1px solid var(--line);background:var(--panel)}.layer h3{margin:18px 0 12px;font-size:1.32rem}.layer ul{padding-left:18px;color:var(--muted);font-size:.86rem}.layer-arrow{display:grid;place-items:center;color:var(--lime);font:900 1.5rem var(--mono)}.layer.hot{border-color:var(--lime);box-shadow:inset 0 0 0 1px rgba(215,255,99,.12)}
+    .flow{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:25px 0}.flow .node{position:relative;min-height:148px;padding:16px;background:var(--panel2);border-top:3px solid var(--mint)}.flow .node::after{content:"→";position:absolute;right:-9px;top:44%;z-index:3;color:var(--amber);font-weight:900}.flow .node:last-child::after{display:none}.node b{display:block;margin:10px 0 5px}.node span{color:var(--muted);font-size:.76rem}.node i{color:var(--mint);font:700 .63rem var(--mono);font-style:normal}
+    .filterbar{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}.filterbar button{padding:8px 12px;border:1px solid var(--line);background:transparent;color:var(--muted);font:.69rem var(--mono);cursor:pointer}.filterbar button:hover,.filterbar button.active{color:#10140f;background:var(--lime);border-color:var(--lime)}
+    .tablewrap{overflow:auto;border:1px solid var(--line)}table{width:100%;min-width:960px;border-collapse:collapse;font-size:.82rem}th,td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top}th{text-align:left;color:var(--lime);background:var(--panel2);font:700 .66rem var(--mono);letter-spacing:.04em}td{color:#c6cec4}td:first-child{color:var(--ink);font-weight:700}tr:last-child td{border:0}tr[hidden]{display:none}.hi{color:var(--lime);font-weight:800}.mid{color:var(--amber);font-weight:800}.low{color:var(--muted);font-weight:800}
+    .turbo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.cycle{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cycle div{padding:18px;background:var(--panel2);border:1px solid var(--line)}.cycle b{display:block;color:var(--lime);font:700 .72rem var(--mono)}.cycle p{margin:8px 0 0;color:var(--muted);font-size:.82rem}.facts{padding:25px;background:var(--lime);color:#10140f}.facts h3{margin-top:0}.facts strong{display:block;margin:18px 0 3px;font:900 2rem var(--mono)}.facts p{margin:0;font-size:.84rem}
+    .fit{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.fit article{padding:23px;border:1px solid var(--line)}.fit h3{margin:16px 0 8px}.fit p{color:var(--muted);font-size:.85rem}.fit .best{border-color:var(--lime);background:rgba(215,255,99,.045)}
+    .roadmap{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}.roadmap article{min-height:270px;padding:25px;border-right:1px solid var(--line)}.roadmap article:last-child{border:0}.roadmap .step{color:var(--lime);font:.7rem var(--mono)}.roadmap h3{margin:35px 0 10px}.roadmap p{color:var(--muted);font-size:.84rem}.gate{display:inline-block;margin-top:10px;color:var(--cyan);font:.68rem var(--mono)}
+    details{margin:10px 0;border:1px solid var(--line);background:var(--panel)}summary{cursor:pointer;padding:16px 18px;font-weight:700}details>div{padding:0 20px 18px;color:var(--muted);font-size:.87rem}.code{overflow:auto;padding:16px;background:#080a09;color:#cbd5c9;font:.76rem/1.65 var(--mono);white-space:pre}.code b{color:var(--lime)}
+    .sources{columns:2;column-gap:38px;list-style:none;padding:0}.sources li{break-inside:avoid;padding:13px 0;border-bottom:1px solid var(--line);font-size:.84rem}.sources span{display:block;color:var(--muted);font-size:.72rem}.method{padding:18px;border:1px dashed var(--line);color:var(--muted);font-size:.82rem}footer{padding:28px 0;color:var(--muted);font:.7rem var(--mono)}
+    .reveal{opacity:0;transform:translateY(16px);transition:.55s ease}.reveal.on{opacity:1;transform:none}
+    @media(max-width:1000px){.wrap{padding:0 25px}.grid4{grid-template-columns:1fr 1fr}.grid3,.fit{grid-template-columns:1fr}.layer-map{grid-template-columns:1fr}.layer-arrow{min-height:45px;transform:rotate(90deg)}.flow{grid-template-columns:repeat(3,1fr)}.turbo-grid{grid-template-columns:1fr}.roadmap{grid-template-columns:1fr 1fr}.roadmap article:nth-child(2){border-right:0}.roadmap article{border-bottom:1px solid var(--line)}}
+    @media(max-width:650px){.top nav{display:none}.hero{min-height:700px;padding-top:65px}.verdict,.head,.two{grid-template-columns:1fr}.verdict .number{border-left:0;border-top:1px solid rgba(0,0,0,.22)}.head{gap:10px}.grid4,.flow,.cycle,.roadmap{grid-template-columns:1fr}.roadmap article{border-right:0}.flow .node::after{display:none}.sources{columns:1}h1{font-size:3.05rem}.wrap{padding:0 19px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}}
+    @media print{.top,.filterbar{display:none}body{background:#fff;color:#111}.hero,.card,.layer,.metric,.node,details{background:#fff;color:#111}.dek,.lead,.card p,.card li,.layer li,.node span,td,.method{color:#333}.reveal{opacity:1;transform:none}.wrap{padding:0 20px}.hero{min-height:auto}.hero::after{display:none}main section{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="wrap"><div class="brand"><i></i>AscendPlayground / Model Systems</div><nav aria-label="快速导航"><a href="#map">优化全景</a><a href="#turbo">TurboServe</a><a href="#lingbot">LingBot</a><a href="#roadmap">落地路线</a><a href="#sources">来源</a></nav></div></header>
+  <section class="hero"><div class="wrap">
+    <div class="eyebrow">Research dossier · 2026-08-24</div>
+    <h1>流式生成加速<br><em>TurboServe × LingBot</em></h1>
+    <p class="dek">从“单个 chunk 算得更快”到“长会话在多 GPU 上稳定、经济地持续生成”：拆解模型、执行引擎与服务系统三层优化，并给出 LingBot-World / LingBot-Video 的可执行适配判断。</p>
+    <div class="meta"><span class="pill">对象：流式视频 / 世界模型</span><span class="pill">重点：TurboServe</span><span class="pill">模型：LingBot 系列</span><span class="pill">指标：TTFC / TPC / FPS / Cost</span><span class="pill">证据：论文 + 官方仓库</span></div>
+    <div class="verdict"><div><b>一句话结论</b><p>LingBot-World v2 已具备因果生成、KV cache 与按块推理，是接入 TurboServe 思路的最佳起点；先把模型执行封装成可暂停、可迁移的有状态 worker，再引入合批、迁移与弹性扩缩容。LingBot-Video 更适合先做离线/在线请求级加速，不宜直接宣称已支持长会话流式服务。</p></div><div class="number"><strong>3 层</strong><small>模型效率 × Runtime × Serving；缺一层都可能被 Amdahl 瓶颈吞掉。</small></div></div>
+  </div></section>
+
+  <main class="wrap">
+    <section id="summary" class="reveal"><div class="head"><div class="secno">01 / READOUT</div><div><h2>先统一“流式”的口径</h2><p class="lead">本文讨论的是视频或世界模型持续输出 frame chunk 的长会话服务。它不同于 LLM 的逐 token 输出，也不同于“离线生成完成后再分片播放”。真正的系统目标是：每个 chunk 都按时、状态不断、多人并发时成本可控。</p></div></div>
+      <div class="grid4">
+        <div class="metric"><strong>TTFC</strong><b>首块延迟</b><small>从请求进入到第一个可播放 chunk；受预处理、条件编码和预热影响。</small></div>
+        <div class="metric"><strong>TPC</strong><b>块间延迟</b><small>Time per chunk；实时体验的硬约束，需同时看 P50 / P95 / max。</small></div>
+        <div class="metric"><strong>FPS</strong><b>生产速率</b><small>生成速度必须持续高于播放消耗速度，平均快但抖动大仍会卡顿。</small></div>
+        <div class="metric"><strong>$/min</strong><b>会话成本</b><small>长会话下 GPU 常驻、空闲状态和过度预留比单次吞吐更重要。</small></div>
+      </div>
+      <div class="callout"><strong>判断原则：</strong>“模型快”解决单 worker 的服务时间；“Runtime 快”解决 kernel、并行与内存；TurboServe 解决长会话在集群里的放置、合批、迁移和供给。37.5% / 37.2% 是 TurboServe 在其生产 trace 与基线设定下的系统级结果，不能外推成 LingBot 的即得收益。</div>
+    </section>
+
+    <section id="map" class="reveal"><div class="head"><div class="secno">02 / STACK</div><div><h2>优化全景：三层联动</h2><p class="lead">最有效的路线通常从减少模型工作量开始，再压缩单次前向成本，最后让服务层把波动、空闲与长尾消化掉。</p></div></div>
+      <div class="layer-map">
+        <article class="layer"><span class="tag">MODEL</span><h3>模型与算法</h3><ul><li>少步蒸馏 / consistency / trajectory distillation</li><li>因果与局部注意力、attention sink、KV cache</li><li>稀疏 MoE、低秩与结构化剪枝</li><li>特征 / timestep / block 缓存</li><li>低分辨率生成 + refiner / VAE 解码</li></ul></article>
+        <div class="layer-arrow">→</div>
+        <article class="layer"><span class="tag cyan">RUNTIME</span><h3>执行引擎</h3><ul><li>Flash / Sage / fused attention</li><li>FP8 / INT8 / INT4 与硬件原生 kernel</li><li>图编译、算子融合、静态 shape bucket</li><li>FSDP / TP / CP / EP 与通信重叠</li><li>预分配、零拷贝、异步 VAE / 编码</li></ul></article>
+        <div class="layer-arrow">→</div>
+        <article class="layer hot"><span class="tag orange">SERVING</span><h3>TurboServe 所在层</h3><ul><li>同 GPU 活跃会话的 chunk 合批</li><li>空闲会话 GPU→CPU 状态卸载</li><li>NCCL GPU→GPU 在线状态迁移</li><li>迁移感知的会话重平衡</li><li>负载驱动的 GPU 弹性供给</li></ul></article>
+      </div>
+      <div class="flow" aria-label="流式生成端到端链路"><div class="node"><i>01 / ONCE</i><b>条件编码</b><span>文本、首帧、动作与相机轨迹；跨 chunk 复用。</span></div><div class="node"><i>02 / REPEAT</i><b>DiT 去噪</b><span>步数 × CFG × token 数，是主要算力项。</span></div><div class="node"><i>03 / STATE</i><b>上下文更新</b><span>KV、latent、历史帧特征与 RNG 状态。</span></div><div class="node"><i>04 / DECODE</i><b>VAE 解码</b><span>可与下一 chunk 的 DiT 异步流水。</span></div><div class="node"><i>05 / TRANSFER</i><b>编码与传输</b><span>GPU→CPU、视频编码、网络 backpressure。</span></div><div class="node"><i>06 / LOOP</i><b>下一块</b><span>保持 deadline；响应动作或暂停会话。</span></div></div>
+    </section>
+
+    <section id="matrix" class="reveal"><div class="head"><div class="secno">03 / LEVERS</div><div><h2>优化手段与适用边界</h2><p class="lead">点击层级筛选。优先级按流式视频服务的一般收益/风险排序，实际部署必须用目标硬件和质量集做 Pareto 验证。</p></div></div>
+      <div class="filterbar" role="group" aria-label="优化层筛选"><button class="active" data-filter="all">全部</button><button data-filter="model">模型</button><button data-filter="runtime">Runtime</button><button data-filter="serving">Serving</button></div>
+      <div class="tablewrap"><table><thead><tr><th>手段</th><th>层级</th><th>主要收益</th><th>流式特有价值</th><th>风险 / 前提</th><th>优先级</th></tr></thead><tbody>
+        <tr data-layer="model"><td>少步蒸馏</td><td>模型</td><td>直接减少每块 DiT 前向次数</td><td>同时改善 TTFC 与 TPC，是最大的一阶杠杆</td><td>需重新训练；动态、细节和可控性要回归</td><td class="hi">P0</td></tr>
+        <tr data-layer="model"><td>因果 / 局部注意力 + KV cache</td><td>模型</td><td>避免对全部历史帧重复计算</td><td>上下文随时间近线性扩张而非全量回看</td><td>缓存体积成为迁移与显存压力；需训练匹配</td><td class="hi">P0</td></tr>
+        <tr data-layer="runtime"><td>Flash / fused attention</td><td>Runtime</td><td>减少 HBM 读写与 kernel launch</td><td>每个 denoise step 均受益，通常质量零损</td><td>mask、head dim、精度与硬件兼容性</td><td class="hi">P0</td></tr>
+        <tr data-layer="runtime"><td>FP8 / INT8 / INT4</td><td>模型 + Runtime</td><td>降显存、带宽与 GEMM 成本</td><td>提高单卡会话容量，利于合批</td><td>无原生 kernel 可能只省显存不提速；需校准</td><td class="mid">P1</td></tr>
+        <tr data-layer="runtime"><td>图编译与算子融合</td><td>Runtime</td><td>消除 Python / launch 开销</td><td>小步数、短 chunk 时固定开销占比更高</td><td>动态 shape、MoE 路由和 graph break</td><td class="mid">P1</td></tr>
+        <tr data-layer="model"><td>TeaCache / block cache 类</td><td>模型 + Runtime</td><td>复用相邻 timestep 的稳定特征</td><td>可降低每块重复计算</td><td>误差跨 chunk 累积；要设刷新与漂移回退</td><td class="mid">P1</td></tr>
+        <tr data-layer="runtime"><td>TP / CP / FSDP / EP</td><td>Runtime</td><td>让大模型跨卡运行或缩短单步</td><td>满足 deadline；MoE 可做专家并行</td><td>通信可能抵消计算收益；迁移状态更复杂</td><td class="mid">P1</td></tr>
+        <tr data-layer="runtime"><td>DiT–VAE 异步流水</td><td>Runtime</td><td>重叠下一块生成与当前块解码/编码</td><td>降低可见块间间隔</td><td>增加缓冲与显存；需背压防止队列无限增长</td><td class="hi">P0</td></tr>
+        <tr data-layer="serving"><td>Coalesced chunk batching</td><td>Serving</td><td>活跃会话在同 GPU 合批</td><td>提高利用率且尊重 chunk deadline</td><td>不能只追大 batch；等待会抬高尾延迟</td><td class="hi">P0</td></tr>
+        <tr data-layer="serving"><td>状态卸载 / 恢复</td><td>Serving</td><td>空闲会话释放 GPU 显存</td><td>交互停顿期不必独占昂贵 GPU</td><td>PCIe / NUMA 搬运；需异步预取和带宽预算</td><td class="hi">P0</td></tr>
+        <tr data-layer="serving"><td>GPU 状态迁移</td><td>Serving</td><td>运行中重平衡长短会话</td><td>修复随会话持续时间产生的放置老化</td><td>迁移收益须大于复制成本；状态需可序列化</td><td class="mid">P1</td></tr>
+        <tr data-layer="serving"><td>负载驱动 autoscaling</td><td>Serving</td><td>随活跃会话数调整 GPU 预算</td><td>吸收 burst / idle 的时间异质性</td><td>冷启动、模型载入和云资源到位时间</td><td class="mid">P1</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="turbo" class="reveal"><div class="head"><div class="secno">04 / TURBOSERVE</div><div><h2>TurboServe：它到底加速什么</h2><p class="lead">TurboServe 把服务建模为在线调度问题，联合决定“会话放在哪张 GPU”和“此刻应启用多少 GPU”。它补的是多用户、长会话、负载波动下的系统效率，不取代 DiT 推理引擎。</p></div></div>
+      <div class="turbo-grid"><div class="cycle">
+        <div><b>① Observe</b><p>收集每个 session 的 active / idle、deadline、状态大小和 GPU 负载。</p></div><div><b>② Place</b><p>迁移感知控制器降低最拥塞 GPU 的预计 per-chunk latency。</p></div><div><b>③ Provision</b><p>根据活跃负载改变 GPU budget，减少固定满池的闲置成本。</p></div><div><b>④ Execute</b><p>活跃会话 coalesce；空闲状态卸载；必要时通过 NCCL 迁移。</p></div>
+      </div><aside class="facts"><h3>论文 / 仓库公开结果</h3><strong>−37.5%</strong><p>最差 per-chunk latency 的平均降幅</p><strong>−37.2%</strong><p>GPU 总运营成本的平均降幅</p><strong>≤ 64 × B300</strong><p>公开摘要所述最大评测集群规模</p></aside></div>
+      <div class="warning callout"><strong>边界：</strong>公开仓库自称是核心调度与 runtime workflow 的 trace-driven demo，示例配置使用 1.3B 随机初始化模型并要求 8 张可见 NVIDIA GPU。它是研究原型与调度验证入口，不等同于已封装好任意 LingBot checkpoint 的通用生产后端。</div>
+      <h3>接入一个新模型必须暴露的最小契约</h3>
+      <div class="grid3"><article class="card"><span class="tag">STATE</span><h3>状态可描述</h3><p>列出 KV cache、latent history、条件特征、scheduler / RNG、动作历史；给出大小、生命周期与一致性边界。</p></article><article class="card"><span class="tag cyan">CHUNK</span><h3>按块可执行</h3><p>提供 <code>prefill()</code>、<code>generate_chunk()</code>、<code>suspend()</code>、<code>resume()</code>，并能报告预测执行时间。</p></article><article class="card"><span class="tag orange">MOVE</span><h3>状态可移动</h3><p>异步 GPU↔CPU、GPU↔GPU 打包与恢复；迁移后输出需与未迁移路径满足确定性/质量容差。</p></article></div>
+    </section>
+
+    <section id="lingbot" class="reveal"><div class="head"><div class="secno">05 / LINGBOT</div><div><h2>LingBot 系列：适配度分层</h2><p class="lead">“LingBot”不是单一模型。与流式生成服务直接相关的，是能持续按块产生视频或世界状态的分支；VLA / VA 还要额外满足机器人控制周期和安全约束。</p></div></div>
+      <div class="fit">
+        <article class="best"><span class="tag">BEST FIT</span><h3>LingBot-World v2</h3><p>官方公开 <code>generate.py</code> 以 KV cache 做 causal、chunk-by-chunk 推理；14B causal-fast 支持 480P 多 GPU，项目宣称蒸馏实时版可驱动 720p 60fps。因果长时生成与 TurboServe 的 session 模型最匹配。</p><p><b>缺口：</b>官方明确不计划公开部署代码；需要自行补 serving adapter、状态序列化、合批与迁移。</p></article>
+        <article><span class="tag cyan">PARTIAL FIT</span><h3>LingBot-Video</h3><p>提供 Dense 1.3B 与 MoE 30B-A3B + Refiner；支持 Diffusers / SGLang backend、FSDP、FP8 MoE 路径，官方称 MoE 推理约快 3×。它当前公开工作流偏 T2I / T2V / TI2V 请求级生成。</p><p><b>建议：</b>先用 Dense 1.3B 打通在线 API 与 profile；若要长会话，需改造成因果 chunk 接口并定义跨块状态。</p></article>
+        <article><span class="tag orange">OTHER SLA</span><h3>LingBot-VA / VLA</h3><p>LingBot-VA 已强调自回归 diffusion、异步双流与 KV cache，并支持 server-client；但其核心指标是动作控制周期、成功率与安全，不是纯视频播放 FPS。</p><p><b>建议：</b>可借用 TurboServe 的会话/资源思想，但调度目标必须加入 action deadline 与 stale-observation 约束。</p></article>
+      </div>
+      <h3>推荐的 LingBot-World v2 服务切分</h3>
+      <div class="flow"><div class="node"><i>GATEWAY</i><b>Session API</b><span>prompt / image / action；连接与播放背压。</span></div><div class="node"><i>CONTROL</i><b>Turbo scheduler</b><span>admit、place、scale、migrate 决策。</span></div><div class="node"><i>ADAPTER</i><b>LingBot worker</b><span>封装 causal chunk 与 deadline 预测。</span></div><div class="node"><i>STATE</i><b>State manager</b><span>KV / latent / RNG / condition 的分层存储。</span></div><div class="node"><i>GPU</i><b>Execution backend</b><span>FlashAttention、FSDP / CP、编译与量化。</span></div><div class="node"><i>MEDIA</i><b>Decode & stream</b><span>VAE、编码、传输；与生成异步流水。</span></div></div>
+      <details><summary>建议的 adapter 伪接口</summary><div class="code">class StreamingWorldWorker:
+    def prefill(self, request) -&gt; SessionState: ...
+    def estimate(self, state, chunk_spec) -&gt; Cost: ...
+    def generate_chunk(self, states, actions) -&gt; tuple[Frames, list[SessionState]]: ...
+    def pack_state(self, state, target="cpu", non_blocking=True) -&gt; Handle: ...
+    def restore_state(self, handle, device) -&gt; SessionState: ...
+
+# 状态至少包含
+# <b>KV cache / causal latent history / condition features / scheduler step / RNG / action history</b></div></details>
+    </section>
+
+    <section id="roadmap" class="reveal"><div class="head"><div class="secno">06 / ROADMAP</div><div><h2>落地路线：先单会话，再多租户</h2><p class="lead">不要一开始就把模型优化、量化、并行、迁移和 autoscaling 全部叠加。每阶段只引入一类变量，并设置明确验收门槛。</p></div></div>
+      <div class="roadmap">
+        <article><span class="step">PHASE 0 / BASELINE</span><h3>冻结基线</h3><p>固定模型 revision、分辨率、chunk 帧数、动作 trace、seed 与硬件；分解 DiT / VAE / encode / transfer 时间。</p><span class="gate">GATE · 100+ chunk 无漂移；耗时归因误差 &lt;3%</span></article>
+        <article><span class="step">PHASE 1 / WORKER</span><h3>单会话快且稳</h3><p>启用官方 causal KV path；评估 FlashAttention、编译、混合精度与 DiT–VAE 流水；建立质量回归。</p><span class="gate">GATE · 生产 FPS &gt; 播放 FPS；P99 TPC 达标</span></article>
+        <article><span class="step">PHASE 2 / MULTIPLEX</span><h3>多会话合批</h3><p>实现 deadline-aware coalescing、背压和状态内存池；按 active / idle 切换，不做迁移。</p><span class="gate">GATE · 负载升高时尾延迟可控；无 OOM</span></article>
+        <article><span class="step">PHASE 3 / TURBO</span><h3>迁移与弹性</h3><p>补 CPU offload、NCCL migration、placement controller 与 autoscaling；用真实 session trace 回放。</p><span class="gate">GATE · 成本–SLO Pareto 优于固定满池基线</span></article>
+      </div>
+      <h3>最小 benchmark 矩阵</h3><div class="tablewrap"><table><thead><tr><th>维度</th><th>至少覆盖</th><th>核心指标</th><th>失败保护</th></tr></thead><tbody>
+        <tr><td>模型</td><td>World v2 14B causal-fast；Video Dense 1.3B（对照）</td><td>step / chunk、质量、显存</td><td>固定 seed + 视觉/时序质量集</td></tr>
+        <tr><td>会话</td><td>短/长、持续活跃、突发交互、长 idle 后恢复</td><td>TTFC、TPC P50/P95/P99/max、stall rate</td><td>deadline miss 自动降级或拒绝接入</td></tr>
+        <tr><td>负载</td><td>steady、burst、昼夜波动、热点 GPU</td><td>有效 GPU 利用率、每生成分钟成本</td><td>容量保底与扩容冷启动预算</td></tr>
+        <tr><td>迁移</td><td>GPU↔CPU、GPU↔GPU、迁移中动作到达</td><td>迁移耗时、字节数、恢复首块延迟</td><td>版本校验、超时回滚、幂等恢复</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="risks" class="reveal"><div class="head"><div class="secno">07 / RISKS</div><div><h2>容易踩错的四个判断</h2></div></div>
+      <div class="grid4"><article class="card"><span class="tag red">01</span><h3>平均 FPS ≠ 不会卡</h3><p>流式体验由最慢 chunk 和抖动决定；必须报告 P99 / max TPC 与 stall rate。</p></article><article class="card"><span class="tag red">02</span><h3>量化 ≠ 必然提速</h3><p>没有硬件匹配 kernel 时，Q/DQ、路由和通信可能吞掉收益；先看 kernel trace。</p></article><article class="card"><span class="tag red">03</span><h3>迁移 ≠ 越多越好</h3><p>只有未来负载改善大于状态复制、同步与缓存冷却成本时，迁移才值得。</p></article><article class="card"><span class="tag red">04</span><h3>Demo ≠ 通用后端</h3><p>TurboServe demo 与 LingBot-World inference code 之间仍有明确 adapter 工程缺口。</p></article></div>
+    </section>
+
+    <section id="sources" class="reveal"><div class="head"><div class="secno">08 / SOURCES</div><div><h2>来源与证据口径</h2><p class="lead">优先引用论文与官方仓库。页面中的“建议、适配度、优先级”属于基于公开接口的工程推断，不是项目方已经发布的性能承诺。</p></div></div>
+      <ol class="sources">
+        <li><a href="https://arxiv.org/abs/2606.19271">TurboServe: Serving Streaming Video Generation Efficiently and Economically</a><span>论文，2026-06；系统设计与评测结论。</span></li>
+        <li><a href="https://github.com/shengshu-ai/TurboServe">shengshu-ai/TurboServe</a><span>官方仓库；trace-driven demo、配置与运行边界。</span></li>
+        <li><a href="https://arxiv.org/abs/2607.07534">Infinite Worlds with Versatile Interactions</a><span>LingBot-World 2.0 / Infinity 技术报告。</span></li>
+        <li><a href="https://github.com/Robbyant/lingbot-world-v2">Robbyant/lingbot-world-v2</a><span>官方推理代码；causal KV cache、chunk-by-chunk 与部署声明。</span></li>
+        <li><a href="https://arxiv.org/abs/2607.07675">Scaling Mixture-of-Experts Video Pretraining for Embodied Intelligence</a><span>LingBot-Video 技术报告。</span></li>
+        <li><a href="https://github.com/Robbyant/lingbot-video">Robbyant/lingbot-video</a><span>官方模型、Diffusers / SGLang、FSDP、FP8 与推理工作流。</span></li>
+        <li><a href="https://github.com/Robbyant/lingbot-va">Robbyant/lingbot-va</a><span>官方 VA 仓库；异步执行、KV cache 与 server-client。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/recipes/Robbyant/LingBot-Video.md">vLLM-Omni: LingBot-Video recipe</a><span>社区 runtime 集成边界与在线 API 示例。</span></li>
+        <li><a href="https://arxiv.org/abs/2411.19108">TeaCache: Timestep Embedding Aware Cache</a><span>扩散 Transformer 缓存的代表性论文。</span></li>
+        <li><a href="https://arxiv.org/abs/2411.10958">SageAttention2</a><span>低精度 attention 加速代表性论文。</span></li>
+      </ol>
+      <div class="method"><b>研究快照：</b>2026-08-24。TurboServe 数字来自其论文摘要与官方 README 所述生产 trace 对比；LingBot 规格来自 2026-08-24 可见的官方仓库。未将第三方站点宣传语作为事实依据。AutoGLM 深度研究本地服务本次返回 HTTP 502，因此改用公开网页对三份关键官方仓库进行定向检索与深读。</div>
+    </section>
+  </main>
+  <footer><div class="wrap">ASCENDPLAYGROUND · MODEL SYSTEMS DOSSIER · STATIC HTML / PRINT READY</div></footer>
+  <script>
+    const buttons=[...document.querySelectorAll('[data-filter]')], rows=[...document.querySelectorAll('tr[data-layer]')];
+    buttons.forEach(btn=>btn.addEventListener('click',()=>{buttons.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;rows.forEach(r=>r.hidden=f!=='all'&&r.dataset.layer!==f)}));
+    const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.08});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  </script>
+</body>
+</html>
