@@ -18,12 +18,14 @@
     main{min-width:0}section{padding:38px 0 70px;border-bottom:2px solid var(--ink);scroll-margin-top:20px}.kicker{color:#b42f20}h2{margin:12px 0 25px;font-size:clamp(2.6rem,5.5vw,5.6rem);line-height:.92}.lede{max-width:930px;color:#38413e;font-size:1.17rem}.formula{overflow:auto;margin:27px 0;padding:22px 24px;color:var(--lime);background:var(--dark);border-left:8px solid var(--red);font:700 .88rem/1.8 var(--mono);white-space:nowrap}
     .grid2,.grid3,.grid4{display:grid;gap:12px;margin:25px 0}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.card{position:relative;padding:23px;background:rgba(231,228,218,.92);border:1px solid var(--line);border-top:5px solid var(--ink)}.card.hot{border-top-color:var(--red)}.card.cool{border-top-color:#118d87}.card h3{margin:3px 0 9px;font-size:1.12rem}.card p,.card li{color:#4b5450;font-size:.88rem}.card ul{margin:8px 0;padding-left:18px}.tag{display:inline-block;padding:5px 8px;color:white;background:var(--ink);font:800 .61rem/1 var(--mono);letter-spacing:.06em}.hot .tag{background:var(--red)}.cool .tag{background:#118d87}.metric{min-height:185px;padding:22px;color:white;background:var(--dark)}.metric strong{display:block;color:var(--lime);font:900 2.35rem/1 var(--sans)}.metric b{display:block;margin:18px 0 7px}.metric small{color:#aeb7b2}
     .callout{margin:24px 0;padding:23px 26px;color:#e9eee9;background:var(--dark);border-left:8px solid var(--lime)}.callout strong{color:var(--lime)}.filters{display:flex;flex-wrap:wrap;gap:7px;margin:25px 0 14px}.filters button{padding:9px 13px;color:var(--ink);background:transparent;border:1px solid var(--ink);cursor:pointer;font:800 .67rem var(--mono)}.filters button:hover,.filters button.active{color:white;background:var(--red);border-color:var(--red)}
+    .tip{position:relative;display:inline;border-bottom:1px dashed currentColor;cursor:help;outline:none}.tip::after{content:attr(data-tip);position:absolute;z-index:40;left:50%;bottom:calc(100% + 9px);width:min(310px,80vw);padding:10px 12px;color:#f2f5ee;background:var(--dark);border:1px solid var(--lime);box-shadow:0 10px 28px rgba(0,0,0,.24);font:500 .76rem/1.55 var(--serif);text-align:left;transform:translate(-50%,5px);opacity:0;visibility:hidden;pointer-events:none}.tip:hover::after,.tip:focus::after,.tip.open::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:25px 0}.compare>article{padding:24px;border:1px solid var(--ink);background:var(--panel)}.compare>article.frontier{color:#e9eee9;background:var(--dark)}.compare h3{margin:7px 0 12px}.compare .frontier h3{color:var(--lime)}.compare ul{padding-left:19px}.compare li{margin:7px 0;font-size:.88rem}.model-graph{display:grid;grid-template-columns:repeat(6,1fr);margin:28px 0}.model-graph>div{position:relative;min-height:155px;padding:17px;background:var(--panel);border:1px solid var(--ink)}.model-graph>div+div{border-left:0}.model-graph>div:not(:last-child)::after{content:"→";position:absolute;z-index:2;right:-15px;top:46%;width:29px;color:var(--lime);background:var(--dark);text-align:center;font:800 1rem var(--mono)}.model-graph i{color:#a42e22;font:800 .62rem var(--mono);font-style:normal}.model-graph b{display:block;margin:11px 0 7px;font-family:var(--sans);font-size:.88rem}.model-graph span{color:var(--muted);font-size:.76rem}
     .table-wrap{overflow:auto;border:1px solid var(--ink)}table{width:100%;border-collapse:collapse;background:rgba(242,239,230,.96);font-size:.81rem}th,td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}th{color:var(--lime);background:var(--dark);font:800 .67rem/1.4 var(--mono);letter-spacing:.04em}td:first-child{font-weight:800}.hidden-row{display:none}.pill{display:inline-block;padding:4px 7px;border-radius:20px;white-space:nowrap;font:900 .59rem var(--mono)}.p0{color:#17310f;background:#ccea94}.p1{color:#603e05;background:#f0d079}.risk{color:#781c12;background:#f5b2a9}.good{color:#08716c;font-weight:800}.warn{color:#9c3a2d;font-weight:800}
     .pipeline{display:grid;grid-template-columns:repeat(5,1fr);margin:30px 0}.step{position:relative;min-height:180px;padding:20px;background:var(--panel);border:1px solid var(--ink)}.step+ .step{border-left:0}.step:not(:last-child)::after{content:"→";position:absolute;z-index:2;right:-15px;top:47%;width:29px;text-align:center;color:var(--lime);background:var(--ink);font:800 1.1rem var(--mono)}.step i{font:800 .65rem var(--mono);font-style:normal;color:#a42e22}.step b{display:block;margin:12px 0 7px;font-family:var(--sans)}.step span{color:var(--muted);font-size:.79rem}
     details{margin:12px 0;border:1px solid var(--ink);background:var(--panel)}summary{cursor:pointer;padding:17px 20px;font-family:var(--sans);font-weight:800}details>div{padding:0 20px 20px;color:#46504b;font-size:.88rem}.code{overflow:auto;padding:18px;color:#cbd6d0;background:#0b100e;font:.76rem/1.7 var(--mono);white-space:pre}.code em{color:var(--lime);font-style:normal}
     .road{display:grid;grid-template-columns:110px 1fr;gap:20px;padding:22px 0;border-top:1px solid var(--line)}.road .num{color:var(--red);font:900 2.8rem/.9 var(--sans)}.road h3{margin:0}.road p{margin:6px 0;color:var(--muted)}.sources{counter-reset:s;list-style:none;padding:0}.sources li{position:relative;padding:12px 8px 12px 50px;border-bottom:1px solid var(--line);color:#4e5753;font-size:.83rem}.sources li::before{counter-increment:s;content:counter(s,decimal-leading-zero);position:absolute;left:8px;color:var(--red);font:800 .7rem var(--mono)}.note{padding:15px;border:1px dashed #777f7a;color:#646d69;font-size:.79rem}footer{padding:30px max(24px,calc((100vw - 1440px)/2));color:#94a09a;background:#0b100e;font:.7rem var(--mono)}
-    :focus-visible{outline:3px solid var(--red);outline-offset:3px}@media(max-width:1050px){.layout{grid-template-columns:1fr;padding:35px 25px 90px}nav{display:none}.grid4{grid-template-columns:repeat(2,1fr)}.pipeline{grid-template-columns:1fr 1fr}.step+ .step{border-left:1px solid var(--ink)}.step::after{display:none}.hero-grid{grid-template-columns:1fr 1fr}.hero-grid>div{border-bottom:1px solid #45504b}}
-    @media(max-width:680px){body{overflow-x:hidden}.hero{min-height:780px;padding:48px 20px}.hero-grid,.grid2,.grid3,.grid4,.pipeline{grid-template-columns:minmax(0,1fr)}.hero-grid>div{border-right:0}.layout{padding:25px 18px 70px}.road{grid-template-columns:1fr}.table-wrap{margin-right:-18px}h1{font-size:4rem}}
+    :focus-visible{outline:3px solid var(--red);outline-offset:3px}@media(max-width:1050px){.layout{grid-template-columns:1fr;padding:35px 25px 90px}nav{display:none}.grid4{grid-template-columns:repeat(2,1fr)}.pipeline,.model-graph{grid-template-columns:1fr 1fr}.step+ .step,.model-graph>div+div{border-left:1px solid var(--ink)}.step::after,.model-graph>div::after{display:none}.hero-grid{grid-template-columns:1fr 1fr}.hero-grid>div{border-bottom:1px solid #45504b}}
+    @media(max-width:680px){body{overflow-x:hidden}.hero{min-height:780px;padding:48px 20px}.hero-grid,.grid2,.grid3,.grid4,.pipeline,.model-graph,.compare{grid-template-columns:minmax(0,1fr)}.hero-grid>div{border-right:0}.layout{padding:25px 18px 70px}.road{grid-template-columns:1fr}.table-wrap{margin-right:-18px}h1{font-size:4rem}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{.progress,nav,.filters{display:none}.hero{min-height:auto;padding:35px;color:#111;background:white;border-color:#111}.hero::before{display:none}.hero-grid{color:#111}.hero-grid strong{color:#111}.layout{display:block;padding:25px}section,.card,.metric,.step{break-inside:avoid}.metric,.callout{color:#111;background:white;border:1px solid #111}.metric strong,.callout strong{color:#111}footer{color:#111;background:white}}
   </style>
 </head>
@@ -37,7 +39,7 @@
   </div></header>
 
   <div class="layout"><nav aria-label="目录"><b>FIELD INDEX</b>
-    <a href="#scope">01 / 推理目标</a><a href="#anatomy">02 / 单轮成本</a><a href="#matrix">03 / 优化手段</a><a href="#gradients">04 / 梯度估计</a><a href="#paths">05 / 推理路径</a><a href="#systems">06 / 运行时加速</a><a href="#decision">07 / 决策路线</a><a href="#validation">08 / 验收方法</a><a href="#sources">09 / 来源</a>
+    <a href="#scope">01 / 推理目标</a><a href="#architecture">02 / 模型结构</a><a href="#anatomy">03 / 单轮成本</a><a href="#matrix">04 / 优化手段</a><a href="#gradients">05 / 梯度估计</a><a href="#paths">06 / 推理路径</a><a href="#systems">07 / 运行时加速</a><a href="#decision">08 / 决策路线</a><a href="#validation">09 / 验收方法</a><a href="#sources">10 / 来源</a>
     <div class="stamp">VI / SVI / VAE<br>ALGORITHM × SYSTEM<br>STATIC · PRINT READY</div>
   </nav><main id="content">
     <section id="scope"><span class="kicker">01 · Scope</span><h2>“变分”是推断问题</h2>
@@ -46,13 +48,31 @@
       <div class="grid4"><div class="metric"><strong>统计效率</strong><b>多少步达到目标</b><small>梯度方差、优化器、参数化与初始化决定收敛速度。</small></div><div class="metric"><strong>计算效率</strong><b>每一步多快</b><small>小批量、粒子向量化、编译、融合、精度与并行决定墙钟时间。</small></div><div class="metric"><strong>近似质量</strong><b>q 是否够表达</b><small>mean-field 便宜但可能低估相关性和不确定性。</small></div><div class="metric"><strong>下游效用</strong><b>结果是否可用</b><small>预测、校准、生成或决策指标不能被 ELBO 单独替代。</small></div></div>
     </section>
 
-    <section id="anatomy"><span class="kicker">02 · Cost anatomy</span><h2>一轮推理迭代花在哪里</h2>
+    <section id="architecture"><span class="kicker">02 · Model architecture</span><h2>先分清“生成模型”和“推断网络”</h2>
+      <p class="lede">变分模型不是单一网络，而是两个方向相反、共同训练的结构：<span class="tip" tabindex="0" data-tip="Generative model：描述潜变量 z 如何产生观测 x，即 pθ(x,z)。">生成模型 p<sub>θ</sub></span> 负责解释数据如何产生，<span class="tip" tabindex="0" data-tip="Variational posterior / guide：用可计算分布 qφ(z|x) 近似真实后验 pθ(z|x)。">变分后验 q<sub>φ</sub></span> 负责从观测反推潜变量。普通 CAVI 为每个样本单独求 q；VAE 等前沿深度模型用 encoder 一次预测 q 的参数，再按需要做 flow 或局部精修。</p>
+      <div class="compare">
+        <article><span class="tag">CLASSICAL VI</span><h3>每个数据集 / 样本重新优化</h3><ul><li>根据<span class="tip" tabindex="0" data-tip="概率图中每个随机变量及其条件依赖关系；结构决定哪些期望和消息可以分解。">概率图结构</span>把 q 分成若干因子。</li><li><span class="tip" tabindex="0" data-tip="Coordinate Ascent Variational Inference：固定其他因子，轮流更新一个变分因子。">CAVI</span> 或自然梯度迭代至收敛，单次灵活但重复成本高。</li><li>适合共轭、结构清晰、需要可解释局部变量的模型。</li></ul></article>
+        <article class="frontier"><span class="tag">AMORTIZED / STRUCTURED</span><h3>学习一个可复用的推断器</h3><ul><li>encoder 将 x 映射为均值、方差或更复杂后验参数，推断变成一次前向。</li><li><span class="tip" tabindex="0" data-tip="Normalizing Flow：连续可逆变换及其 Jacobian，把简单基础分布变成更灵活的后验。">Normalizing Flow</span>、低秩协方差或离散枚举补足 mean-field 表达力。</li><li>用“摊销热启动 + 少量局部 refinement”平衡吞吐与样本级精度。</li></ul></article>
+      </div>
+      <div class="model-graph" aria-label="摊销变分模型训练与推断流程">
+        <div><i>01 / OBSERVE</i><b>输入 x</b><span>图像、序列、计数或任意观测；训练时也作为重建目标。</span></div>
+        <div><i>02 / ENCODE</i><b>推断网络 qφ</b><span>预测后验族参数；经典 VI 则在此保存并优化局部参数。</span></div>
+        <div><i>03 / SAMPLE</i><b>重参数化 z</b><span>z=μ+σε 让梯度穿过采样；离散变量需枚举或 score-function。</span></div>
+        <div><i>04 / TRANSFORM</i><b>结构化后验</b><span>可选 flow、低秩相关或层次依赖；表达力越强，Jacobian/通信越贵。</span></div>
+        <div><i>05 / DECODE</i><b>生成模型 pθ</b><span>从 z 预测 x 或似然参数，并与先验共同给出 log p(x,z)。</span></div>
+        <div><i>06 / LEARN</i><b>ELBO 更新</b><span>重建项推动解释数据，KL 项约束后验接近先验；同时更新 θ 与 φ。</span></div>
+      </div>
+      <div class="grid3"><article class="card"><span class="tag">TRAIN</span><h3>训练数据流</h3><p>x → encoder → q 参数 → K 个 z 粒子 → decoder / log p → ELBO → 反向更新 θ、φ。K、后验结构和离散处理共同决定显存与梯度方差。</p></article><article class="card hot"><span class="tag">INFERENCE</span><h3>部署数据流</h3><p>新 x → encoder 一次前向 → 可选局部精修 → 后验样本/统计量 → 预测或决策。部署阶段通常不需要 decoder，除非要重建、生成或算 likelihood。</p></article><article class="card cool"><span class="tag">KEY DIFFERENCE</span><h3>与普通前馈网络不同</h3><p>输出不是单点标签，而是分布；正确性不仅看任务精度，还要看不确定性校准、后验覆盖和 ELBO/重要性采样估计。</p></article></div>
+      <div class="callout"><strong>结构—优化因果链：</strong>encoder 决定摊销推断延迟；后验族决定 q 的表达力与 Jacobian 成本；粒子数 K 决定 Monte Carlo 方差与向量化宽度。先定位是哪一段不够，再选择 kernel、flow 或局部优化。</div>
+    </section>
+
+    <section id="anatomy"><span class="kicker">03 · Cost anatomy</span><h2>一轮推理迭代花在哪里</h2>
       <div class="pipeline"><div class="step"><i>01 / DATA</i><b>抽取小批量</b><span>全局—局部模型还需按 N/B 缩放局部似然。</span></div><div class="step"><i>02 / GUIDE</i><b>生成 q 参数</b><span>摊销网络或每个样本的局部变分参数。</span></div><div class="step"><i>03 / SAMPLE</i><b>K 个粒子</b><span>连续重参数化；离散枚举或 score-function。</span></div><div class="step"><i>04 / LOG DENSITY</i><b>模型与 guide</b><span>计算 log p、log q、Jacobian 和解析 KL。</span></div><div class="step"><i>05 / UPDATE</i><b>梯度与优化</b><span>反向传播、自然梯度/Adam、全局参数同步。</span></div></div>
       <div class="formula">T<sub>step</sub> ≈ T<sub>input</sub> + T<sub>guide</sub>(B) + K × [T<sub>model</sub>(B) + T<sub>log_prob</sub>] + T<sub>backward</sub> + T<sub>sync</sub></div>
       <div class="callout"><strong>最常见误判：</strong>增加粒子 K 能降低部分 Monte Carlo 噪声，却近似线性增加计算；更紧的 IWAE bound 也不保证 inference network 的梯度信噪比同步改善。先画 ELBO、梯度方差、active units、吞吐与显存的联合曲线。</div>
     </section>
 
-    <section id="matrix"><span class="kicker">03 · Optimization matrix</span><h2>手段与代价总表</h2>
+    <section id="matrix"><span class="kicker">04 · Optimization matrix</span><h2>手段与代价总表</h2>
       <p class="lede">按作用层筛选。P0 通常先做；P1 由诊断触发；P2 需要更强假设或实现成本。</p>
       <div class="filters" role="group" aria-label="筛选优化手段"><button class="active" data-filter="all">全部</button><button data-filter="objective">目标与优化</button><button data-filter="gradient">梯度估计</button><button data-filter="posterior">后验结构</button><button data-filter="system">系统执行</button></div>
       <div class="table-wrap"><table><thead><tr><th>手段</th><th>解决什么</th><th>收益机制</th><th>代价 / 风险</th><th>优先级</th></tr></thead><tbody>
@@ -74,7 +94,7 @@
       </tbody></table></div>
     </section>
 
-    <section id="gradients"><span class="kicker">04 · Gradient estimators</span><h2>先把梯度噪声降下来</h2>
+    <section id="gradients"><span class="kicker">05 · Gradient estimators</span><h2>先把梯度噪声降下来</h2>
       <div class="grid3"><article class="card cool"><span class="tag">CONTINUOUS</span><h3>可重参数化变量</h3><p>Normal、LogNormal 等优先使用 pathwise gradient。对约束变量在无约束空间参数化，再稳定地变换；scale 用 softplus 并设合理下界。</p></article><article class="card hot"><span class="tag">DISCRETE</span><h3>离散潜变量</h3><p>小状态空间优先精确枚举；否则用 Rao–Blackwell、RELAX/VIMCO 一类控制变量。Gumbel-Softmax 是有偏松弛，温度必须做消融。</p></article><article class="card"><span class="tag">MULTI-SAMPLE</span><h3>多粒子目标</h3><p>K&gt;1 前先向量化；IWAE 的 guide 梯度可考虑 DReG。不要仅看 bound 更紧，还要看梯度 SNR、ESS 和单位时间提升。</p></article></div>
       <details><summary>可执行的方差诊断</summary><div><div class="code">固定同一 mini-batch 与参数快照
 重复 R 次估计梯度 g₁…gᵣ
@@ -84,7 +104,7 @@
 最终指标：<em>达到同一验证目标的 wall-clock，而非单步 loss</em></div></div></details>
     </section>
 
-    <section id="paths"><span class="kicker">05 · Inference paths</span><h2>四条推理路线怎么选</h2>
+    <section id="paths"><span class="kicker">06 · Inference paths</span><h2>四条推理路线怎么选</h2>
       <div class="grid2">
         <article class="card cool"><span class="tag">CAVI / MESSAGE PASSING</span><h3>有共轭结构：吃尽解析解</h3><p>对每个变分因子使用闭式最优更新，或把共轭子图交给消息传递；采用残差优先、异步或分块调度。它通常比通用自动微分快，也更稳定，但要求模型结构可推导。</p></article>
         <article class="card"><span class="tag">STOCHASTIC VI</span><h3>大数据：局部快、全局稳</h3><p>小批量估计全局自然梯度，局部变量并行优化；局部容差无需远高于全局更新精度。对流式数据使用递减步长或遗忘因子，并监控概念漂移。</p></article>
@@ -94,7 +114,7 @@
       <div class="callout"><strong>VAE 只是摊销推理的一种实现：</strong>若 KL 迅速趋零、active units 过少或 decoder 忽略 z，先诊断 posterior collapse，再考虑 KL warm-up、free bits 或改变 decoder/连接。不要把这种训练病态误判成“推理已经收敛”。</div>
     </section>
 
-    <section id="systems"><span class="kicker">06 · Inference runtime</span><h2>让每次后验求解更便宜</h2>
+    <section id="systems"><span class="kicker">07 · Inference runtime</span><h2>让每次后验求解更便宜</h2>
       <div class="grid3"><article class="card cool"><span class="tag">VECTORIZE</span><h3>批量化所有独立轴</h3><p>数据 plate、粒子 K、局部变量和必要时多重初始化都应成为张量维度。优先消除 Python for-loop，再做算子融合。</p></article><article class="card"><span class="tag">COMPILE</span><h3>固定结构与 bucket</h3><p>按 batch/序列长度分桶，编译稳定的 model+guide loss。把动态控制流留在图外，并分别计入首次编译和稳态时间。</p></article><article class="card hot"><span class="tag">PRECISION</span><h3>分区低精度</h3><p>神经网络 GEMM 用 BF16；概率密度、Jacobian、方差、logsumexp 和全局充分统计量保 FP32。低精度必须通过 ELBO parity 与后验校准。</p></article></div>
       <div class="grid2"><article class="card"><h3>在线服务：按难度路由</h3><p>简单样本走 amortized 一次前向；低置信度样本追加局部精修或更多粒子；超时则返回保守后验。按 latent 维度、序列长度与 K 分桶合批，并分开报告编码、优化与后验采样延迟。</p></article><article class="card"><h3>缓存与预计算</h3><p>静态特征、稀疏设计矩阵、索引和不随 φ/θ 变化的项可缓存；流式场景缓存充分统计量与上一时刻 q。缓存键必须包含数据版本、模型 revision、预处理和变分族。</p></article></div>
       <details><summary>推理服务的延迟预算模板</summary><div><div class="code">T_total = T_preprocess + T_guide + N_local × T_ELBO + K × T_posterior_sample + T_post
@@ -103,7 +123,7 @@ P95 路径：warm-start → local refinement → convergence / timeout
 优化顺序：<em>减少 N_local → 向量化 K → batch/bucket → compile → mixed precision</em></div></div></details>
     </section>
 
-    <section id="decision"><span class="kicker">07 · Decision route</span><h2>按症状选第一步</h2>
+    <section id="decision"><span class="kicker">08 · Decision route</span><h2>按症状选第一步</h2>
       <div class="road"><div class="num">01</div><div><h3>ELBO 抖动、seed 差异大</h3><p>固定 batch 重复测梯度方差 → 连续变量重参数化 → 解析 KL / Rao–Blackwell → 离散枚举或 baseline → 最后才增加粒子。</p></div></div>
       <div class="road"><div class="num">02</div><div><h3>ELBO 高但预测或校准差</h3><p>检查 likelihood 与数据标度 → posterior predictive check → mean-field 改低秩/结构化 → flow / mixture → 必要时用 MCMC 对小模型校准。</p></div></div>
       <div class="road"><div class="num">03</div><div><h3>数据一大就跑不动</h3><p>拆全局/局部变量 → 小批量 SVI 与正确 plate scaling → 摊销局部推断 → 稀疏计算与缓存 → 再做数据并行。</p></div></div>
@@ -111,12 +131,12 @@ P95 路径：warm-start → local refinement → convergence / timeout
       <div class="road"><div class="num">05</div><div><h3>线上后验延迟超 SLO</h3><p>先设 amortized 快路径 → 置信度门控局部精修 → warm-start 与自适应早停 → 粒子/精度按预算降级 → 后台异步做高质量平滑或校准。</p></div></div>
     </section>
 
-    <section id="validation"><span class="kicker">08 · Validation</span><h2>四道验收门</h2>
+    <section id="validation"><span class="kicker">09 · Validation</span><h2>四道验收门</h2>
       <div class="table-wrap"><table><thead><tr><th>门槛</th><th>必须报告</th><th>常见失败</th></tr></thead><tbody><tr><td>正确性</td><td>解析小模型 / 枚举基准、shape、plate scaling、梯度检查</td><td>小批量似然缩放错、事件维与批维混淆</td></tr><tr><td>收敛</td><td>ELBO gap、局部迭代数、梯度方差、达到容差的 wall-clock</td><td>固定迭代浪费简单样本；只报最终 loss</td></tr><tr><td>后验质量</td><td>posterior predictive、校准、覆盖率、ESS、下游风险</td><td>以 ELBO 单指标替代后验效用</td></tr><tr><td>推理效率</td><td>冷/热 P50/P95 延迟、QPS、K/N_local、峰值显存、超时率</td><td>隐藏编译与排队；把显存下降写成加速</td></tr></tbody></table></div>
       <div class="note"><b>推荐基准命名：</b>model@revision / variational-family / estimator / K / batch / dtype / device×count / compile / seed×N / quality-gate。所有“×倍加速”只与同数据、同后验族或明确标注的质量等价基线比较。</div>
     </section>
 
-    <section id="sources"><span class="kicker">09 · Primary sources</span><h2>来源与边界</h2>
+    <section id="sources"><span class="kicker">10 · Primary sources</span><h2>来源与边界</h2>
       <ol class="sources">
         <li><a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>：重参数化 ELBO 与摊销推断。</li>
         <li><a href="https://www.jmlr.org/papers/v14/hoffman13a.html">Stochastic Variational Inference</a>：大数据小批量 SVI、全局—局部结构与自然梯度。</li>
@@ -136,6 +156,7 @@ P95 路径：warm-start → local refinement → convergence / timeout
     const bar=document.querySelector('.progress');const update=()=>{const m=document.documentElement.scrollHeight-innerHeight;bar.style.width=(m?scrollY/m*100:0)+'%'};addEventListener('scroll',update,{passive:true});update();
     const links=[...document.querySelectorAll('nav a')];if('IntersectionObserver'in window){const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}),{rootMargin:'-20% 0px -68%'});document.querySelectorAll('main section').forEach(s=>o.observe(s))}
     const buttons=[...document.querySelectorAll('.filters button')],rows=[...document.querySelectorAll('#matrix tbody tr')];buttons.forEach(b=>b.addEventListener('click',()=>{buttons.forEach(x=>x.classList.remove('active'));b.classList.add('active');rows.forEach(r=>r.classList.toggle('hidden-row',b.dataset.filter!=='all'&&r.dataset.cat!==b.dataset.filter))}));
+    document.querySelectorAll('.tip').forEach(t=>t.addEventListener('click',e=>{e.stopPropagation();document.querySelectorAll('.tip.open').forEach(x=>x!==t&&x.classList.remove('open'));t.classList.toggle('open')}));document.addEventListener('click',()=>document.querySelectorAll('.tip.open').forEach(t=>t.classList.remove('open')));
   </script>
 </body>
 </html>

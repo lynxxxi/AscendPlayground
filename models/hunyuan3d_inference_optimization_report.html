@@ -40,14 +40,16 @@
     table{width:100%;margin:20px 0;border-collapse:collapse;background:rgba(255,253,248,.72);font-size:.84rem}th,td{padding:11px 12px;border:1px solid var(--line);vertical-align:top}th{text-align:left;color:var(--white);background:var(--navy);font:700 .7rem/1.3 var(--mono);letter-spacing:.03em}tr:nth-child(even) td{background:rgba(16,43,43,.035)}.yes{color:var(--green);font-weight:800}.maybe{color:#955512;font-weight:800}.no{color:var(--red);font-weight:800}
     .evidence{display:inline-block;padding:3px 7px;border-radius:99px;font:800 .61rem/1 var(--mono);white-space:nowrap}.evidence.a{color:#104d3b;background:#c9e5b5}.evidence.b{color:#734207;background:#f0d5a4}.evidence.c{color:#8a2f2a;background:#efc3be}
     .note{margin:15px 0;padding:14px 16px;background:rgba(57,118,140,.09);border-left:4px solid var(--blue);font-size:.84rem;color:#405159}
+    .tip{position:relative;display:inline;border-bottom:1px dashed currentColor;cursor:help;outline:none}.tip::after{content:attr(data-tip);position:absolute;z-index:30;left:50%;bottom:calc(100% + 9px);width:min(310px,80vw);padding:10px 12px;color:#f5f7ef;background:var(--navy);border:1px solid rgba(213,229,95,.55);box-shadow:0 9px 25px rgba(0,0,0,.22);font:500 .75rem/1.55 var(--sans);text-align:left;transform:translate(-50%,5px);opacity:0;visibility:hidden;pointer-events:none}.tip:hover::after,.tip:focus::after,.tip.open::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}.compare>article{padding:22px;border:1px solid var(--line);background:rgba(255,253,248,.72)}.compare>article.frontier{color:var(--white);background:var(--navy);border-color:var(--navy)}.compare>article h3{margin:5px 0 12px}.compare>article.frontier h3{color:var(--acid)}.compare ul{padding-left:19px}.compare li{margin:7px 0;font-size:.87rem}.arch-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:24px 0}.arch-flow>div{position:relative;min-height:145px;padding:15px;color:var(--white);background:var(--navy)}.arch-flow>div:nth-child(even){background:#225548}.arch-flow>div:not(:last-child)::after{content:"→";position:absolute;z-index:2;right:-10px;top:45%;color:var(--orange);font-weight:900}.arch-flow b{display:block;margin:8px 0;font-size:.84rem}.arch-flow span{color:#d1ddd6;font-size:.74rem}.arch-flow i{color:var(--acid);font:700 .61rem var(--mono);font-style:normal}
     .roadmap{margin:25px 0 0 10px;border-left:2px solid var(--line)}.road{position:relative;margin:0 0 19px 27px;padding:0 0 11px}.road::before{content:"";position:absolute;left:-35px;top:5px;width:13px;height:13px;border:3px solid var(--orange);border-radius:50%;background:var(--paper)}.road b{display:block;color:var(--navy)}.road p{margin:4px 0;color:var(--muted);font-size:.87rem}.road .gate{display:inline-block;padding:3px 7px;background:#e1e5d2;font:700 .64rem var(--mono)}
     .matrix td:first-child{font-weight:800;color:var(--navy)}.priority{font:800 .7rem var(--mono)}.p0{color:var(--red)}.p1{color:#955512}.p2{color:var(--blue)}
     details{margin:12px 0;border:1px solid var(--line);background:rgba(255,253,248,.75)}details[open]{border-top:4px solid var(--green)}summary{cursor:pointer;padding:16px 18px;color:var(--navy);font-weight:800}details>div{padding:0 20px 18px;font-size:.88rem}.codeblock{overflow:auto;padding:16px;background:#122c2b;color:#dce7df;font: .75rem/1.65 var(--mono);white-space:pre}.codeblock em{color:var(--acid);font-style:normal}
     .source-list{padding-left:20px}.source-list li{padding:6px 0;font-size:.84rem}.method{color:var(--muted);font-size:.82rem}.updated{padding:15px 17px;border:1px dashed var(--line);color:var(--muted);font-size:.8rem}
     footer{padding:28px 58px;background:var(--navy);color:#c7d3cc;font:.72rem/1.6 var(--mono)}
     .reveal{opacity:1;transform:none}
-    @media(max-width:1080px){.shell{grid-template-columns:1fr;padding:34px 28px 80px}nav{display:none}.pipeline{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.hero{padding:58px 28px}.hero-verdict{grid-template-columns:1fr}.hero-score{border-left:0;border-top:1px solid rgba(255,255,255,.2);padding:15px 0 0}}
-    @media(max-width:680px){h1{font-size:3rem}.grid3,.grid4,.two,.pipeline{grid-template-columns:1fr}.pipe::after{display:none}.hero{padding:46px 20px}.hero p{overflow-wrap:anywhere}.shell{padding:26px 20px 65px}.mast{min-height:720px}table{display:block;overflow-x:auto}.hero-verdict{padding:20px}}
+    @media(max-width:1080px){.shell{grid-template-columns:1fr;padding:34px 28px 80px}nav{display:none}.pipeline{grid-template-columns:repeat(3,1fr)}.arch-flow{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.hero{padding:58px 28px}.hero-verdict{grid-template-columns:1fr}.hero-score{border-left:0;border-top:1px solid rgba(255,255,255,.2);padding:15px 0 0}}
+    @media(max-width:680px){h1{font-size:3rem}.grid3,.grid4,.two,.pipeline,.arch-flow,.compare{grid-template-columns:1fr}.pipe::after,.arch-flow>div::after{display:none}.hero{padding:46px 20px}.hero p{overflow-wrap:anywhere}.shell{padding:26px 20px 65px}.mast{min-height:720px}table{display:block;overflow-x:auto}.hero-verdict{padding:20px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}}
     @media print{body::before,nav,.mast::before,.mast::after{display:none}.mast{min-height:auto;color:var(--ink);background:white;border-bottom:3px solid #000}.hero p,.hero-verdict{color:var(--ink)}.hero-verdict{background:white;border:1px solid #888}.hero-score{border-color:#888}.hero-score strong,.hero-verdict b,.eyebrow{color:var(--ink)}.shell{display:block;padding:20px}.reveal{opacity:1;transform:none}section{break-inside:avoid}.card,.metric{break-inside:avoid}.metric{color:var(--ink);background:white;border:1px solid #777}.metric small{color:#333}a{color:#000;text-decoration:none}}
   </style>
@@ -68,7 +70,7 @@
 
   <div class="shell">
     <nav aria-label="报告目录"><b>CONTENTS</b>
-      <a href="#summary">01 / 执行摘要</a><a href="#anatomy">02 / 成本解剖</a><a href="#paths">03 / 优化路径</a><a href="#frameworks">04 / 框架对照</a><a href="#papers">05 / 3D 论文启示</a><a href="#ascend">06 / 昇腾落地</a><a href="#roadmap">07 / 实施路线</a><a href="#benchmark">08 / 验收基准</a><a href="#risks">09 / 风险边界</a><a href="#sources">10 / 来源与方法</a>
+      <a href="#summary">01 / 执行摘要</a><a href="#architecture">02 / 模型结构</a><a href="#anatomy">03 / 成本解剖</a><a href="#paths">04 / 优化路径</a><a href="#frameworks">05 / 框架对照</a><a href="#papers">06 / 3D 论文启示</a><a href="#ascend">07 / 昇腾落地</a><a href="#roadmap">08 / 实施路线</a><a href="#benchmark">09 / 验收基准</a><a href="#risks">10 / 风险边界</a><a href="#sources">11 / 来源与方法</a>
       <div class="stamp">INFERENCE DOSSIER<br>HUNYUAN3D 2.x<br>CONFIDENCE-LABELED</div>
     </nav>
 
@@ -90,8 +92,34 @@
         <div class="note"><b>证据标记：</b><span class="evidence a">A 已验证</span> 官方代码/论文明确支持；<span class="evidence b">B 可迁移</span> 已在相近 DiT/扩散框架验证；<span class="evidence c">C 假设</span> 需要在 Hunyuan3D 与目标硬件上实测。文中所有收益目标均按此口径解释。</div>
       </section>
 
+      <section id="architecture" class="reveal">
+        <span class="kicker">02 · Architecture primer</span><h2>它不是“视频 DiT 换成 3D token”</h2>
+        <p class="lede">普通图像/视频生成通常在规则二维或时空潜变量网格上一次性去噪，输出仍是像素帧；Hunyuan3D 2.x 则把资产生成拆成<strong>几何</strong>与<strong>材质</strong>两个基础模型，中间必须经过隐式三维场、显式网格和多视图渲染。结构差异决定了它既有扩散模型瓶颈，也有稀疏三维查询与图形学瓶颈。</p>
+        <div class="compare">
+          <article><span class="tag">ORDINARY 2D / VIDEO</span><h3>规则 latent 上生成像素序列</h3><ul><li><span class="tip" tabindex="0" data-tip="把图像或视频压缩成规则的二维/时空特征网格，模型在这个网格中去噪。">VAE latent grid</span> 的 token 拓扑固定，注意力与卷积容易批处理。</li><li>主干通常是 <span class="tip" tabindex="0" data-tip="Diffusion Transformer：用 Transformer 预测扩散噪声、速度或流场，是当前视频生成常见主干。">DiT</span> / 3D U-Net；解码后直接得到帧。</li><li>一致性主要是时间维问题，不需要保证网格拓扑、法线和 UV 可编辑。</li></ul></article>
+          <article class="frontier"><span class="tag">HUNYUAN3D 2.x</span><h3>隐式几何 → 显式网格 → 材质</h3><ul><li><span class="tip" tabindex="0" data-tip="用连续时间流匹配目标速度场，把简单噪声分布运输到三维形状 latent 分布。">Flow-matching DiT</span> 先生成紧凑的形状 latent。</li><li><span class="tip" tabindex="0" data-tip="3D 变分自编码器：将形状压缩为 latent，再通过空间查询恢复占据或表面信息。">3D VAE</span> 只在候选近表面位置做分层查询，查询数随几何复杂度变化。</li><li><span class="tip" tabindex="0" data-tip="从隐式占据场或符号距离场提取三角网格表面的经典算法。">Marching Cubes</span> 输出 mesh，再由多视图纹理扩散生成一致外观并回投至 UV。</li></ul></article>
+        </div>
+        <h3>形状分支：条件如何变成可编辑网格</h3>
+        <div class="arch-flow" aria-label="Hunyuan3D 形状生成结构流程">
+          <div><i>01 / CONDITION</i><b>图像 / 文本编码</b><span>CLIP、DINO 等视觉语义作为 cross-attention 条件；文本路径通常先得到参考图。</span></div>
+          <div><i>02 / SHAPE LATENT</i><b>噪声三维 latent</b><span>不是像素帧，而是描述整体几何的压缩表示。</span></div>
+          <div><i>03 / HY3D-DIT</i><b>流式扩散 Transformer</b><span>条件注意力逐步把噪声运输为形状 latent；Turbo 版本压缩采样步数。</span></div>
+          <div><i>04 / VAE3D</i><b>分层近表面查询</b><span>由粗到细筛出可能靠近表面的空间点，解码占据/距离，避免遍历完整稠密体素。</span></div>
+          <div><i>05 / MESH</i><b>表面提取与清理</b><span>隐式场转三角网格，修正孤岛、法线与面数，成为可编辑资产。</span></div>
+        </div>
+        <h3>纹理分支：为什么不是给单张图“贴上去”</h3>
+        <div class="arch-flow" aria-label="Hunyuan3D 纹理生成结构流程">
+          <div><i>01 / CAMERA RIG</i><b>固定多视角渲染</b><span>从 mesh 得到多视图位置图、法线与遮挡条件。</span></div>
+          <div><i>02 / PAINT DIFFUSION</i><b>几何感知多视图去噪</b><span>扩散先验补全不可见区域，同时约束相邻视图颜色与纹理一致。</span></div>
+          <div><i>03 / VIEW FUSION</i><b>跨视图融合</b><span>处理接缝、遮挡和同一表面在不同视角的冲突。</span></div>
+          <div><i>04 / UV PROJECT</i><b>回投到 UV</b><span>把视图颜色映射到二维纹理坐标，而非保留为相机相关图像。</span></div>
+          <div><i>05 / ASSET</i><b>烘焙可渲染资产</b><span>输出 mesh + texture，可继续简化、绑定、动画与实时渲染。</span></div>
+        </div>
+        <div class="callout"><strong>结构—优化因果链：</strong>少步蒸馏减少 Shape/Paint 主干调用；FlashVDM 减少动态三维查询；多视图条件缓存复用渲染结果。三者分别命中不同模块，不能互相替代。</div>
+      </section>
+
       <section id="anatomy" class="reveal">
-        <span class="kicker">02 · Cost anatomy</span><h2>先把成本拆对</h2>
+        <span class="kicker">03 · Cost anatomy</span><h2>先把成本拆对</h2>
         <div class="pipeline" aria-label="Hunyuan3D 推理流水线">
           <div class="pipe"><i>01 / CPU+ACC</i><b>输入预处理</b><span>去背景、缩放、alpha mask；小但易造成同步。</span></div>
           <div class="pipe"><i>02 / ONCE</i><b>条件编码</b><span>CLIP / DINO 图像特征；同图多样本可缓存。</span></div>
@@ -114,7 +142,7 @@
       </section>
 
       <section id="paths" class="reveal">
-        <span class="kicker">03 · Optimization stack</span><h2>六条优化路径</h2>
+        <span class="kicker">04 · Optimization stack</span><h2>六条优化路径</h2>
         <table class="matrix">
           <thead><tr><th>路径</th><th>具体动作</th><th>预期作用</th><th>质量风险</th><th>优先级 / 证据</th></tr></thead>
           <tbody>
@@ -133,7 +161,7 @@
       </section>
 
       <section id="frameworks" class="reveal">
-        <span class="kicker">04 · Framework transfer</span><h2>其他推理框架怎么做</h2>
+        <span class="kicker">05 · Framework transfer</span><h2>其他推理框架怎么做</h2>
         <p class="lede">可迁移的不是某个框架名称，而是四类机制：稳定输入形状、图级融合、低精度 kernel、跨 timestep 复用。Hunyuan3D 的动态 3D 后处理决定了“整网单引擎”通常不现实，最稳妥的是分段编译。</p>
         <table>
           <thead><tr><th>框架 / 体系</th><th>核心做法</th><th>对 Hunyuan3D 的可迁移部分</th><th>不宜照搬</th></tr></thead>
@@ -150,7 +178,7 @@
       </section>
 
       <section id="papers" class="reveal">
-        <span class="kicker">05 · Research transfer</span><h2>3D 优化论文给出的边界</h2>
+        <span class="kicker">06 · Research transfer</span><h2>3D 优化论文给出的边界</h2>
         <div class="grid3">
           <article class="card"><span class="tag">Fast3Dcache · 2025/26</span><h3>按体素稳定性缓存</h3><p>论文指出直接套用 2D/视频缓存会破坏几何一致性；用体素稳定模式约束缓存额度，并依据速度/加速度选择稳定特征。公开结果报告最高 <b>27.12%</b> 加速、<b>54.8%</b> FLOPs 降低，Chamfer 与 F-score 退化分别约 2.48% 与 1.95%。</p><p><span class="evidence a">A 论文结果</span> 但需在 Hunyuan3D 重验。</p></article>
           <article class="card blue"><span class="tag">Hash3D · 2024</span><h3>跨时间与视角复用</h3><p>对相邻 timestep 和相邻相机位置的 feature map 做自适应网格哈希复用；覆盖多种 text/image-to-3D 模型，论文报告 1.3–4× 效率提升。最适合借鉴到纹理多视图与 optimization-based 3D，而非直接等同 Hunyuan Shape DiT。</p><p><span class="evidence b">B 机制可迁移</span></p></article>
@@ -170,7 +198,7 @@
       </section>
 
       <section id="ascend" class="reveal">
-        <span class="kicker">06 · Ascend execution plan</span><h2>昇腾落地：先迁通，再跑快</h2>
+        <span class="kicker">07 · Ascend execution plan</span><h2>昇腾落地：先迁通，再跑快</h2>
         <p class="lede">Hunyuan3D 官方实现仍有明显 CUDA 假设：默认设备字符串、SageAttention、纹理 custom rasterizer / differentiable renderer，以及可能的 CUDA-only 第三方算子。昇腾迁移的第一里程碑应是算子覆盖率与数值一致性，不是立即追求整网图编译。</p>
         <div class="grid4">
           <article class="card"><span class="tag">L0 / DEVICE</span><h3>设备抽象</h3><p>统一 <code>device</code>、autocast、generator、synchronize；清理硬编码 <code>cuda</code>；锁定 TorchNPU / PyTorch / CANN 配套版本。</p></article>
@@ -201,7 +229,7 @@
       </section>
 
       <section id="roadmap" class="reveal">
-        <span class="kicker">07 · Delivery roadmap</span><h2>四阶段实施路线</h2>
+        <span class="kicker">08 · Delivery roadmap</span><h2>四阶段实施路线</h2>
         <div class="roadmap">
           <div class="road"><b>Phase 0｜1–2 周：可复现基线与火焰图</b><p>冻结 30–100 个输入、模型 revision、seed、分辨率与硬件；为 6 个流水线阶段埋点；记录 P50/P95、峰值内存、算子 top-30、graph break、mesh/texture 指标。</p><span class="gate">GATE：单次结果可复现，分段耗时合计误差 &lt; 3%</span></div>
           <div class="road"><b>Phase 1｜2–3 周：官方快路 + 工程零损优化</b><p>建立 Turbo/Fast/原版路由；启用 FlashVDM；条件与 position-map 精确缓存；shape/paint 错峰驻留；预热与静态 bucket；消除无效同步和重复搬运。</p><span class="gate">GATE：质量等价档无回归，吞吐/延迟获得明确 Pareto 改善</span></div>
@@ -221,7 +249,7 @@
       </section>
 
       <section id="benchmark" class="reveal">
-        <span class="kicker">08 · Measurement contract</span><h2>验收不能只看秒数</h2>
+        <span class="kicker">09 · Measurement contract</span><h2>验收不能只看秒数</h2>
         <div class="grid3">
           <article class="card"><span class="tag">PERFORMANCE</span><h3>性能</h3><ul><li>cold / warm P50、P95</li><li>shape / VAE / mesh / paint 分段</li><li>峰值显存与 allocator reserved</li><li>samples/hour、设备利用率</li><li>编译时间、缓存命中与重编译次数</li></ul></article>
           <article class="card blue"><span class="tag">GEOMETRY</span><h3>几何</h3><ul><li>Chamfer Distance、F-score</li><li>法线一致性、silhouette IoU</li><li>连通分量、非流形边、自交</li><li>薄结构召回、孔洞与部件完整性</li><li>固定 seed 的 vertex/face 差异</li></ul></article>
@@ -242,7 +270,7 @@
       </section>
 
       <section id="risks" class="reveal">
-        <span class="kicker">09 · Decision boundaries</span><h2>风险与不确定性</h2>
+        <span class="kicker">10 · Decision boundaries</span><h2>风险与不确定性</h2>
         <div class="two">
           <article class="card risk"><span class="tag">高风险</span><h3>动态 3D 子图</h3><p>octree 每层活跃点数依赖前一层输出，容易触发 graph break、shape specialization 与频繁重编译。解决办法是按 query-count bucket + padding/mask，且只在 padding 成本低于重编译成本时启用。</p></article>
           <article class="card risk"><span class="tag">高风险</span><h3>CUDA 自定义依赖</h3><p>纹理 rasterizer 与 differentiable renderer 不是简单把 <code>cuda</code> 改成 <code>npu</code>。应先定义功能等价 CPU 路径，再依据 profile 决定是否开发 AscendC custom op。</p></article>
@@ -253,7 +281,7 @@
       </section>
 
       <section id="sources" class="reveal">
-        <span class="kicker">10 · Sources & method</span><h2>来源与研究方法</h2>
+        <span class="kicker">11 · Sources & method</span><h2>来源与研究方法</h2>
         <p class="method">资料优先级：官方代码 / 技术报告 / 论文 → 框架官方文档 → 机制相近论文。代码层结论来自对 shape pipeline、Hunyuan3D-DiT attention、3D VAE volume decoder、FlashVDM 示例与 texture pipeline 的定向阅读。框架迁移结论均明确标注为“已验证”或“待迁移验证”。</p>
         <ol class="source-list">
           <li><a href="https://github.com/Tencent-Hunyuan/Hunyuan3D-2">Tencent Hunyuan3D-2 官方仓库</a>：模型族、显存说明、Turbo/Fast/FlashVDM、代码入口与部署状态。</li>
@@ -286,6 +314,8 @@
       }), { threshold: .06 });
       items.forEach(item => observer.observe(item));
     } else { items.forEach(item => item.classList.add('visible')); }
+    document.querySelectorAll('.tip').forEach(t=>t.addEventListener('click',e=>{e.stopPropagation();document.querySelectorAll('.tip.open').forEach(x=>x!==t&&x.classList.remove('open'));t.classList.toggle('open')}));
+    document.addEventListener('click',()=>document.querySelectorAll('.tip.open').forEach(t=>t.classList.remove('open')));
   </script>
 </body>
 </html>

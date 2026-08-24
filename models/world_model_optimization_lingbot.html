@@ -22,11 +22,13 @@
     .matrix{width:100%;border-collapse:collapse;font-size:.76rem}.matrix th{padding:12px 11px;color:#071315;background:var(--paper);font:800 .68rem/1.3 var(--mono);text-align:left}.matrix td{padding:13px 11px;border-bottom:1px solid var(--line);vertical-align:top}.matrix tr{background:rgba(13,29,32,.73)}.matrix tr:hover{background:var(--panel2)}.matrix .method{color:var(--paper);font-weight:800}.matrix .fit{color:var(--lime)}.matrix .risk{color:#f6a994}.matrix tr.hidden{display:none}.badge{display:inline-block;min-width:28px;padding:4px 6px;text-align:center;font:900 .58rem/1 var(--mono)}.p0{color:#111;background:var(--orange)}.p1{color:#111;background:var(--yellow)}.p2{color:#111;background:var(--cyan)}.a{color:#111;background:var(--lime)}.b{color:var(--yellow);border:1px solid var(--yellow)}.c{color:var(--muted);border:1px solid var(--line)}
     .split{display:grid;grid-template-columns:1fr 1fr;gap:11px}.stack{counter-reset:item}.stack-item{position:relative;margin-bottom:9px;padding:18px 18px 18px 62px;background:var(--panel);border:1px solid var(--line);counter-increment:item}.stack-item:before{content:counter(item,decimal-leading-zero);position:absolute;left:17px;top:20px;color:var(--orange);font:900 .72rem/1 var(--mono)}.stack-item b{display:block;margin-bottom:6px;font-size:.85rem}.stack-item span{color:var(--muted);font-size:.75rem}.stack-item em{color:var(--lime);font-style:normal}
     .code-flow{overflow:auto;margin:26px 0;padding:24px;color:#bdd0cb;background:#030b0d;border:1px solid var(--line);border-left:5px solid var(--lime);font:700 .73rem/1.8 var(--mono);white-space:pre}.code-flow .accent{color:var(--orange)}.code-flow .ok{color:var(--lime)}
+    .tip{position:relative;display:inline;border-bottom:1px dashed currentColor;cursor:help;outline:none}.tip::after{content:attr(data-tip);position:absolute;z-index:40;left:50%;bottom:calc(100% + 9px);width:min(310px,80vw);padding:10px 12px;color:var(--paper);background:#02090b;border:1px solid var(--lime);box-shadow:0 10px 30px rgba(0,0,0,.45);font:500 .75rem/1.55 var(--sans);text-align:left;transform:translate(-50%,5px);opacity:0;visibility:hidden;pointer-events:none}.tip:hover::after,.tip:focus::after,.tip.open::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:26px 0}.compare>article{padding:23px;background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--cyan)}.compare>article.frontier{border-top-color:var(--lime);background:#142a2d}.compare h3{margin:15px 0 10px;font:800 1.2rem var(--serif)}.compare ul{padding-left:18px;color:var(--muted);font-size:.8rem}.compare li{margin:8px 0}.state-map{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:24px 0}.state-map>article{padding:18px;background:var(--panel);border:1px solid var(--line)}.state-map h3{margin:10px 0 7px;color:var(--paper);font-size:.87rem}.state-map p{margin:0;color:var(--muted);font-size:.73rem}
     .roadmap{position:relative}.roadmap:before{content:"";position:absolute;left:21px;top:12px;bottom:12px;width:2px;background:var(--line)}.road{position:relative;margin:0 0 11px;padding:18px 20px 18px 66px;background:var(--panel);border:1px solid var(--line)}.road:before{content:attr(data-step);position:absolute;z-index:1;left:8px;top:18px;display:grid;place-items:center;width:28px;height:28px;color:#071315;background:var(--lime);border:5px solid var(--bg);font:900 .62rem var(--mono)}.road b{display:block;margin-bottom:6px}.road p{margin:0;color:var(--muted);font-size:.77rem}.gate{display:inline-block;margin-top:9px;color:var(--cyan);font:700 .64rem/1.5 var(--mono)}
     .source-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.source{display:block;padding:15px 17px;color:#bacac6;background:var(--panel);border:1px solid var(--line);text-decoration:none;font-size:.75rem}.source:hover{border-color:var(--lime);transform:translateY(-2px)}.source b{display:block;color:var(--paper);font-size:.82rem}.source span{color:var(--muted);font:600 .62rem/1.5 var(--mono)}.fineprint{margin-top:20px;color:#6f8984;font-size:.68rem}.fineprint b{color:var(--orange)}
-    footer{padding:32px 24px;border-top:1px solid var(--line);color:#6f8984;text-align:center;font:700 .63rem/1.7 var(--mono)}.reveal{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}.reveal.show{opacity:1;transform:none}
+    footer{padding:32px 24px;border-top:1px solid var(--line);color:#6f8984;text-align:center;font:700 .63rem/1.7 var(--mono)}.reveal{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}.reveal.show,.reveal:target{opacity:1;transform:none}
     @media(max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}.pipeline{grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:760px){header{min-height:auto}.hero{grid-template-columns:minmax(0,1fr);margin-top:50px;gap:35px;padding-bottom:76px}.hero>*{min-width:0;overflow-wrap:anywhere}h1{font-size:3rem}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}.thesis,.family,.split,.source-list{grid-template-columns:minmax(0,1fr)}.family .card{min-height:0}.pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{padding:64px 14px}.matrix{display:block;overflow-x:auto}.topbar{padding:22px 16px}.stamp{display:none}}
+    @media(max-width:760px){header{min-height:auto}.hero{grid-template-columns:minmax(0,1fr);margin-top:50px;gap:35px;padding-bottom:76px}.hero>*{min-width:0;overflow-wrap:anywhere}h1{font-size:3rem}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}.thesis,.family,.split,.source-list,.compare,.state-map{grid-template-columns:minmax(0,1fr)}.family .card{min-height:0}.pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{padding:64px 14px}.matrix{display:block;overflow-x:auto}.topbar{padding:22px 16px}.stamp{display:none}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.source:hover{transform:none}}
   </style>
 </head>
@@ -48,7 +50,7 @@
   </div>
 
   <div class="layout">
-    <nav class="toc" aria-label="页面目录"><div class="toc-title">CONTENTS / 目录</div><a href="#summary">01 · 核心结论</a><a href="#family">02 · LingBot 谱系</a><a href="#stack">03 · 优化全景</a><a href="#matrix">04 · 手段矩阵</a><a href="#lingbot">05 · LingBot 拆解</a><a href="#training">06 · 训练优化</a><a href="#inference">07 · 推理部署</a><a href="#ascend">08 · 昇腾迁移判断</a><a href="#roadmap">09 · 落地路线</a><a href="#benchmark">10 · 验收体系</a><a href="#sources">11 · 资料与边界</a></nav>
+    <nav class="toc" aria-label="页面目录"><div class="toc-title">CONTENTS / 目录</div><a href="#summary">01 · 核心结论</a><a href="#family">02 · LingBot 谱系</a><a href="#architecture">03 · 模型结构</a><a href="#stack">04 · 优化全景</a><a href="#matrix">05 · 手段矩阵</a><a href="#lingbot">06 · LingBot 拆解</a><a href="#training">07 · 训练优化</a><a href="#inference">08 · 推理部署</a><a href="#ascend">09 · 昇腾迁移判断</a><a href="#roadmap">10 · 落地路线</a><a href="#benchmark">11 · 验收体系</a><a href="#sources">12 · 资料与边界</a></nav>
     <main>
       <section class="section reveal" id="summary"><span class="kicker">01 / Executive summary</span><h2>先减问题，再快算。</h2><p class="lede">世界模型的成本由视频 token 数、上下文长度、去噪步数和模型宽度共同放大。LingBot 的路线清楚展示了优先级：把双向扩散适配为分块因果模型，用 KV Cache 消除历史重算，再将多步教师蒸馏成少步学生；最后通过混合并行、编译内核与异步流式系统补齐实时性。</p>
         <div class="thesis">
@@ -67,12 +69,24 @@
         </div>
       </section>
 
-      <section class="section reveal" id="stack"><span class="kicker">03 / Optimization stack</span><h2>优化是链，不是点。</h2><p class="lede">从输入数据到用户看到第一帧，每一层都会决定下一层的上限。最稳妥的顺序是先固定质量门槛与负载，再沿关键路径逐层消除冗余。</p>
+      <section class="section reveal" id="architecture"><span class="kicker">03 / Architecture primer</span><h2>世界模型，不只是“会听指令的视频模型”。</h2><p class="lede">普通视频 DiT 学的是“给定文本或首帧，生成一段视觉上合理的固定时长视频”；LingBot‑World 学的是“给定当前可见状态和动作，预测动作造成的下一段世界”。它仍使用视频扩散主干，但因果掩码、动作注入、可持续状态和自回滚训练改变了信息流。</p>
+        <div class="compare">
+          <article><span class="tag">ORDINARY VIDEO DIT</span><h3>离线、双向、固定时域</h3><ul><li>整段 noisy latent 同时进入 Transformer，时空 token 可双向互看。</li><li>文本、首帧或参考图提供条件；没有“动作必须导致后果”的硬语义。</li><li>每个请求独立采样，结束后丢弃状态；下一段常需重算或拼接。</li><li>训练在真实视频片段上去噪，推理很少连续消费自身输出。</li></ul></article>
+          <article class="frontier"><span class="tag green">LINGBOT WORLD MODEL</span><h3>在线、因果、动作闭环</h3><ul><li><span class="tip" tabindex="0" data-tip="Block-causal attention：当前视频块可看过去块和本块已允许的位置，但不能读取未来块。">块因果注意力</span>让 chunk 只依赖历史，从而能流式输出并复用 KV。</li><li>动作、相机与局部提示进入 <span class="tip" tabindex="0" data-tip="Adaptive Layer Normalization：用条件向量调制 Transformer 层的归一化尺度与偏置。">AdaLN</span> / cross-attention，显式控制未来动力学。</li><li>会话保存 KV、latent 历史、位置与随机数状态；新动作到来后继续同一世界。</li><li><span class="tip" tabindex="0" data-tip="Self-rollout：训练时让学生连续消费自己生成的历史，暴露并学习修正推理期误差。">自回滚训练</span>缩小 teacher-forcing 与真实部署的分布差。</li></ul></article>
+        </div>
+        <h3>单个 chunk 内部：从状态和动作到下一段画面</h3>
+        <div class="pipeline" aria-label="LingBot 世界模型单块结构流程"><div class="stage"><i>01 / STATE</i><b>历史 latent / KV</b><span>已生成世界的压缩视觉状态、时间位置与长期/局部缓存。</span></div><div class="stage"><i>02 / CONTROL</i><b>动作与提示编码</b><span>键鼠、轨迹、机器人动作、chunk prompt；按时间对齐。</span></div><div class="stage core"><i>03 / CAUSAL DIT</i><b>少步噪声预测</b><span>因果 self-attention 读历史，cross-attention / AdaLN 注入控制。</span></div><div class="stage core"><i>04 / UPDATE</i><b>写入会话状态</b><span>追加新 K/V 与 latent；按窗口、sink 或相关性淘汰旧缓存。</span></div><div class="stage"><i>05 / DECODE</i><b>VAE / Refiner</b><span>latent 解码为基础帧；空间增强与插帧可在独立 worker 中异步执行。</span></div><div class="stage"><i>06 / LOOP</i><b>输出并接收新动作</b><span>播放当前 chunk 的同时生成下一块，形成感知—动作—预测闭环。</span></div></div>
+        <h3>四类状态：TurboServe 真正需要搬动什么</h3>
+        <div class="state-map"><article><span class="tag green">SEMANTIC</span><h3>条件状态</h3><p>全局 prompt、局部 chunk prompt、首帧视觉特征、动作历史。更新频率低但影响语义连续。</p></article><article><span class="tag">ATTENTION</span><h3>计算状态</h3><p>每层 K/V、RoPE 位置与 mask 元数据。体积最大，决定恢复和迁移成本。</p></article><article><span class="tag orange">GENERATION</span><h3>采样状态</h3><p>当前 latent、scheduler/timestep、seed 与 RNG；缺一项可能无法确定性续跑。</p></article><article><span class="tag">MEDIA</span><h3>输出状态</h3><p>待解码 latent、帧序号、编码队列与播放背压；决定用户是否看到卡顿。</p></article></div>
+        <div class="callout"><b>MoBA 的位置：</b><span class="tip" tabindex="0" data-tip="Mixture of Bidirectional and Autoregressive：在同一训练框架中混合双向块与自回归/因果块的注意力可见性。">MoBA</span> 不是另一种服务缓存，而是预训练时的注意力可见性设计：保留部分双向建模能力以维持画质，同时训练因果路径承担持续预测。部署仍走可缓存的 causal path。</div>
+      </section>
+
+      <section class="section reveal" id="stack"><span class="kicker">04 / Optimization stack</span><h2>优化是链，不是点。</h2><p class="lede">从输入数据到用户看到第一帧，每一层都会决定下一层的上限。最稳妥的顺序是先固定质量门槛与负载，再沿关键路径逐层消除冗余。</p>
         <div class="pipeline" aria-label="优化流水线"><div class="stage"><i>01 / DATA</i><b>数据与 curriculum</b><span>分辨率/时长 bucket、镜头切分、动作对齐、长序列课程</span></div><div class="stage core"><i>02 / MODEL</i><b>因果架构</b><span>latent、chunk、局部/混合注意、动作适配器</span></div><div class="stage core"><i>03 / ALGO</i><b>少步蒸馏</b><span>CD、DMD、self-rollout、截断反传</span></div><div class="stage"><i>04 / RUNTIME</i><b>缓存与内核</b><span>KV、FlashAttention、compile、量化</span></div><div class="stage"><i>05 / SCALE</i><b>混合并行</b><span>FSDP、CP/Ulysses、序列/张量/流水线</span></div><div class="stage"><i>06 / SERVE</i><b>异步流式</b><span>VAE worker、增量帧、背压、会话路由</span></div></div>
         <div class="split"><div class="card"><span class="tag green">LATENCY PATH</span><h3>交互优先</h3><p>少步学生 → 小 chunk → 预填充/缓存 → 首帧增量解码 → 异步传输。允许后续增强或插帧在首帧之后完成。</p></div><div class="card"><span class="tag orange">THROUGHPUT PATH</span><h3>离线吞吐优先</h3><p>较大 bucket → 高设备占用 → 序列并行/批处理 → VAE 批量解码 → 更激进的编译与量化。未必获得最佳交互手感。</p></div></div>
       </section>
 
-      <section class="section reveal" id="matrix"><span class="kicker">04 / Method matrix</span><h2>手段、收益与风险。</h2><p class="lede">点击筛选查看不同层级。证据 A 表示 LingBot 官方论文或仓库明确使用；B 表示机制可迁移但需在目标版本重验；C 表示工程候选，不能宣称已有 LingBot 结果。</p>
+      <section class="section reveal" id="matrix"><span class="kicker">05 / Method matrix</span><h2>手段、收益与风险。</h2><p class="lede">点击筛选查看不同层级。证据 A 表示 LingBot 官方论文或仓库明确使用；B 表示机制可迁移但需在目标版本重验；C 表示工程候选，不能宣称已有 LingBot 结果。</p>
         <div class="toolbar" role="group" aria-label="优化方法筛选"><button class="active" data-filter="all">全部 15</button><button data-filter="model">模型/算法</button><button data-filter="runtime">推理运行时</button><button data-filter="train">训练</button><button data-filter="serve">服务</button></div>
         <table class="matrix"><thead><tr><th>方法</th><th>主要作用</th><th>LingBot 适配</th><th>风险 / 代价</th><th>优先级</th></tr></thead><tbody>
           <tr data-cat="model"><td class="method">因果分块 / MoBA</td><td>避免全视频双向重算，支持流式 AR</td><td class="fit">v1 block-causal；v2 MoBA</td><td class="risk">暴露偏差、chunk 边界伪影</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
@@ -93,7 +107,7 @@
         </tbody></table>
       </section>
 
-      <section class="section reveal" id="lingbot"><span class="kicker">05 / LingBot deep dive</span><h2>LingBot 的快路，分两代。</h2><p class="lede">v1 的核心是把强大的双向视频教师“改造”为可缓存的因果学生；v2 则把因果性提前到预训练，并用 MoBA 保留双向生成先验，再在部署端补上动态记忆与完整流式系统。</p>
+      <section class="section reveal" id="lingbot"><span class="kicker">06 / LingBot deep dive</span><h2>LingBot 的快路，分两代。</h2><p class="lede">v1 的核心是把强大的双向视频教师“改造”为可缓存的因果学生；v2 则把因果性提前到预训练，并用 MoBA 保留双向生成先验，再在部署端补上动态记忆与完整流式系统。</p>
         <div class="split"><div><span class="tag">V1 · ADAPT</span><div class="stack"><div class="stack-item"><b>从 Wan2.2 视频先验起步</b><span>避免从零学习视觉真实性、物体恒存与基础动态。</span></div><div class="stack-item"><b>中期训练世界知识与长序列</b><span>双专家 MoE；动作通过 AdaLN 适配器注入，主干冻结以保护画质。</span></div><div class="stack-item"><b>高噪声专家初始化因果学生</b><span>论文认为其动态建模更强；用 block causal attention 支持 <em>KV Cache</em>。</span></div><div class="stack-item"><b>DMD + 自回滚 + 对抗优化</b><span>少步化同时在学生自己的长轨迹上训练；只对最近 K 步反传。</span></div></div></div>
           <div><span class="tag green">V2 · NATIVE CAUSAL</span><div class="stack"><div class="stack-item"><b>MoBA 因果预训练</b><span>teacher-forcing mask 旁加入双向块，抑制只复制上下文导致的画质退化。</span></div><div class="stack-item"><b>无泄漏 cross-attention</b><span>chunk prompt 按下三角因果访问；全局 prompt 供双向组件使用。</span></div><div class="stack-item"><b>Consistency + long-rollout DMD</b><span>前者压缩步数，后者让学生分布在长自回滚中贴近真实数据。</span></div><div class="stack-item"><b>动态 KV + 异步全链路</b><span>只保留当前控制最相关历史；生成、VAE、增强和传输重叠。</span></div></div></div></div>
         <div class="code-flow"><span class="accent">input image / current state / action / chunk prompt</span>
@@ -111,7 +125,7 @@ incremental encode & stream ── first visible frame ── continuous playbac
         <div class="callout"><b>不要误读 60fps：</b>v2 论文明确包含空间增强与时间插帧 refiner。因此展示输出的 60fps 不等价于 DiT 原生生成 60 个独立物理状态/秒。评测交互世界时应分别报告“基础 latent 生成频率、解码帧率、插帧后显示帧率”。</div>
       </section>
 
-      <section class="section reveal" id="training"><span class="kicker">06 / Training efficiency</span><h2>长视频训练：显存只是第一关。</h2><p class="lede">训练优化的目标不是单纯“塞进去”，而是让有效 token/秒随设备数增长，同时保证因果学生真正见过部署时的自身误差分布。</p>
+      <section class="section reveal" id="training"><span class="kicker">07 / Training efficiency</span><h2>长视频训练：显存只是第一关。</h2><p class="lede">训练优化的目标不是单纯“塞进去”，而是让有效 token/秒随设备数增长，同时保证因果学生真正见过部署时的自身误差分布。</p>
         <table class="matrix"><thead><tr><th>瓶颈</th><th>优先手段</th><th>LingBot 依据</th><th>验收指标</th></tr></thead><tbody>
           <tr><td class="method">28B 权重/优化器</td><td>FSDP2；通信计算重叠；分片 checkpoint</td><td class="fit">v1 官方训练架构</td><td>MFU、每卡峰值、扩展效率、保存恢复时间</td></tr>
           <tr><td class="method">分钟级 token 激活</td><td>Ulysses CP + 选择性激活检查点；长度/分辨率 bucket</td><td class="fit">v1 Ulysses 按序列切分</td><td>all-to-all 占比、padding 浪费、token/s</td></tr>
@@ -122,12 +136,12 @@ incremental encode & stream ── first visible frame ── continuous playbac
         <div class="callout"><b>推荐组合：</b>数据端先做时长/分辨率/运动强度 bucket；模型端 BF16 基线；状态用 FSDP2；序列用 CP；只在确有显存压力的 block 启用 checkpoint。每加一种并行维度，都要记录通信占比和有效 token/s，避免“能训练但更慢”。</div>
       </section>
 
-      <section class="section reveal" id="inference"><span class="kicker">07 / Inference & serving</span><h2>实时性是一条关键路径。</h2><p class="lede">把一次交互拆为编码、预填充、少步 DiT、VAE、增强、编码与传输。先 profile 端到端，再决定下一项投资；只测单个 DiT kernel 会漏掉首帧排队和解码尾延迟。</p>
+      <section class="section reveal" id="inference"><span class="kicker">08 / Inference & serving</span><h2>实时性是一条关键路径。</h2><p class="lede">把一次交互拆为编码、预填充、少步 DiT、VAE、增强、编码与传输。先 profile 端到端，再决定下一项投资；只测单个 DiT kernel 会漏掉首帧排队和解码尾延迟。</p>
         <div class="split"><div class="card"><span class="tag green">ZERO / LOW LOSS</span><h3>先做的四件事</h3><ul class="facts"><li>固定常用分辨率、chunk 长度和 CFG 路径，预热编译缓存</li><li>使用 causal-fast 权重与 KV Cache，检查缓存命中/增长</li><li>启用合适的 fused attention，消除隐式 CPU 同步</li><li>VAE 解码与下一 chunk 生成并行，首帧增量发送</li></ul></div><div class="card"><span class="tag orange">QUALITY TRADE</span><h3>再做的四件事</h3><ul class="facts"><li>降低 NFE / 使用更激进蒸馏学生</li><li>缩小 native 分辨率后做超分与插帧</li><li>权重 INT8/FP8/4-bit；敏感层保留 BF16</li><li>稀疏或裁剪 KV；以事件/控制相关性保留记忆</li></ul></div></div>
         <h3>量化的正确验收</h3><table class="matrix"><thead><tr><th>对象</th><th>建议</th><th>必须观察</th></tr></thead><tbody><tr><td class="method">Text encoder</td><td>可先权重量化或 CPU/offload；提示重复时做 embedding cache</td><td>prompt 跟随、首帧和 PCIe/NPU 传输</td></tr><tr><td class="method">DiT Linear</td><td>从 weight-only 开始；逐层敏感度扫描；确认低精度 kernel</td><td>真实 latency 而非仅显存；长时漂移与动作误差</td></tr><tr><td class="method">Attention / Norm</td><td>保守保留 BF16，再评估 FP8；softmax/归一化通常更敏感</td><td>NaN、颜色漂移、时序闪烁、极端 prompt</td></tr><tr><td class="method">VAE</td><td>优先异步/tiling，量化排在后面</td><td>细纹理、色带、tile seam、解码吞吐</td></tr></tbody></table>
       </section>
 
-      <section class="section reveal" id="ascend"><span class="kicker">08 / Ascend transfer</span><h2>迁移到昇腾：先保主路径。</h2><p class="lede">开源 LingBot 实现以 CUDA、FlashAttention、torchrun/FSDP/Ulysses 为基线；v2 论文中的 TensorRT refiner 也属于 NVIDIA 部署栈。因此昇腾迁移应把“论文机制可迁移”和“现成代码可运行”分开评估。</p>
+      <section class="section reveal" id="ascend"><span class="kicker">09 / Ascend transfer</span><h2>迁移到昇腾：先保主路径。</h2><p class="lede">开源 LingBot 实现以 CUDA、FlashAttention、torchrun/FSDP/Ulysses 为基线；v2 论文中的 TensorRT refiner 也属于 NVIDIA 部署栈。因此昇腾迁移应把“论文机制可迁移”和“现成代码可运行”分开评估。</p>
         <table class="matrix"><thead><tr><th>模块</th><th>迁移判断</th><th>优先动作</th><th>主要风险</th></tr></thead><tbody>
           <tr><td class="method">Causal DiT</td><td class="fit">最高价值；标准算子为主</td><td>先 BF16 eager 对齐 → 固定 bucket 编译 → attention 融合</td><td>RoPE/QKV layout、动态 mask、graph break</td></tr>
           <tr><td class="method">KV Cache</td><td class="fit">机制完全可迁移</td><td>预分配连续缓存；chunk/会话级生命周期；动态裁剪</td><td>显存碎片、频繁 concat、cache layout 转换</td></tr>
@@ -139,14 +153,14 @@ incremental encode & stream ── first visible frame ── continuous playbac
         <div class="callout"><b>昇腾 P0：</b>把 14B causal-fast 的单 chunk BF16 数值跑通，打通 block-causal mask 与 KV Cache，再测 attention、MLP、VAE 三段火焰图。不要先移植 Agentic Harness 或时空 refiner，它们不在最小生成闭环上。</div>
       </section>
 
-      <section class="section reveal" id="roadmap"><span class="kicker">09 / Delivery roadmap</span><h2>四阶段落地。</h2><div class="roadmap">
+      <section class="section reveal" id="roadmap"><span class="kicker">10 / Delivery roadmap</span><h2>四阶段落地。</h2><div class="roadmap">
         <div class="road" data-step="0"><b>基线：建立可复现的端到端账本</b><p>锁定模型 revision、权重、分辨率、帧数、chunk、NFE、seed 与硬件；同时记录冷/热启动、TTFF、稳定 fps、峰值内存和各阶段耗时。</p><span class="gate">GATE · 分段耗时合计与端到端误差 &lt; 5%；固定输入结果可复现</span></div>
         <div class="road" data-step="1"><b>官方快路：因果学生 + KV + 异步 VAE</b><p>优先使用 causal-fast；核实 KV 真正复用；固定 shape bucket；把 VAE 放到下一 chunk 的并行支路；增量输出首帧。</p><span class="gate">GATE · 画质/动作门槛通过；TTFF 与稳定吞吐均形成明确收益</span></div>
         <div class="road" data-step="2"><b>运行时：融合、编译、混合精度与并行</b><p>attention backend A/B；编译重复 DiT block；按拓扑选择 CP/TP；对 Linear 做逐层量化敏感度扫描。</p><span class="gate">GATE · 无频繁重编译/fallback；低精度端到端确有实速而非仅省显存</span></div>
         <div class="road" data-step="3"><b>高级策略：动态记忆与质量恢复</b><p>根据控制/场景相关性选择 KV；加入周期性关键帧刷新；低 native 分辨率配套轻量超分/插帧；建立失败自动回退。</p><span class="gate">GATE · 进入质量—延迟 Pareto 前沿；60 分钟压力测试无灾难性漂移</span></div>
       </div></section>
 
-      <section class="section reveal" id="benchmark"><span class="kicker">10 / Measurement contract</span><h2>不要只报 fps。</h2><p class="lede">世界模型优化最容易“偷换口径”。一份可信报告必须同时给出计算效率、交互响应、视觉质量、动力学/控制正确性和长时稳定性。</p>
+      <section class="section reveal" id="benchmark"><span class="kicker">11 / Measurement contract</span><h2>不要只报 fps。</h2><p class="lede">世界模型优化最容易“偷换口径”。一份可信报告必须同时给出计算效率、交互响应、视觉质量、动力学/控制正确性和长时稳定性。</p>
         <table class="matrix"><thead><tr><th>维度</th><th>指标</th><th>注意事项</th></tr></thead><tbody>
           <tr><td class="method">延迟</td><td>TTFF、每 chunk P50/P95、控制到可见响应、cold/warm</td><td>包含排队、文本编码、VAE、编码和网络</td></tr>
           <tr><td class="method">吞吐</td><td>native latent fps、decoded fps、refined/display fps、samples/h</td><td>三种 fps 分开，注明设备数和并行方式</td></tr>
@@ -157,7 +171,7 @@ incremental encode & stream ── first visible frame ── continuous playbac
         </tbody></table>
       </section>
 
-      <section class="section reveal" id="sources"><span class="kicker">11 / Sources & caveats</span><h2>来源与证据边界。</h2><p class="lede">本页以官方论文、官方 GitHub 和模型发布说明为主。日期截点为 2026‑08‑24；后续权重、部署代码与许可证状态可能变化。</p>
+      <section class="section reveal" id="sources"><span class="kicker">12 / Sources & caveats</span><h2>来源与证据边界。</h2><p class="lede">本页以官方论文、官方 GitHub 和模型发布说明为主。日期截点为 2026‑08‑24；后续权重、部署代码与许可证状态可能变化。</p>
         <div class="source-list">
           <a class="source" href="https://arxiv.org/abs/2601.20540" target="_blank" rel="noreferrer"><b>LingBot‑World · Advancing Open-source World Models</b><span>ARXIV 2601.20540 · 架构、FSDP2/Ulysses、因果适配、DMD</span></a>
           <a class="source" href="https://github.com/Robbyant/lingbot-world" target="_blank" rel="noreferrer"><b>LingBot‑World 官方仓库</b><span>FAST INFERENCE · KV CACHE · NF4 提示 · 运行参数</span></a>
@@ -178,6 +192,7 @@ incremental encode & stream ── first visible frame ── continuous playbac
     addEventListener('scroll',()=>{const d=document.documentElement;const max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%';let active=sections[0];for(const s of sections)if(s.getBoundingClientRect().top<=130)active=s;tocLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id));},{passive:true});
     document.querySelectorAll('.toolbar button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.toolbar button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;document.querySelectorAll('#matrix tbody tr').forEach(row=>row.classList.toggle('hidden',f!=='all'&&row.dataset.cat!==f));}));
     const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target)}}),{threshold:.06});document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+    document.querySelectorAll('.tip').forEach(t=>t.addEventListener('click',e=>{e.stopPropagation();document.querySelectorAll('.tip.open').forEach(x=>x!==t&&x.classList.remove('open'));t.classList.toggle('open')}));document.addEventListener('click',()=>document.querySelectorAll('.tip.open').forEach(t=>t.classList.remove('open')));
   </script>
 </body>
 </html>

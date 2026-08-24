@@ -189,12 +189,28 @@
     .tip:hover::after, .tip:focus::after, .tip.on::after {
       transform: translateX(-50%) translateY(0);
     }
+    .architecture-compare { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
+    .architecture-compare article { padding:30px; border:1px solid var(--line); border-top:5px solid var(--cyan); background:rgba(22,25,22,.72); }
+    .architecture-compare article.streaming { border-top-color:var(--acid); }
+    .architecture-compare h3 { margin:24px 0 13px; font-size:27px; }
+    .architecture-compare ul { padding-left:19px; color:var(--muted); font-size:14px; }
+    .architecture-compare li { margin:9px 0; }
+    .architecture-flow { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; margin:26px 0; }
+    .architecture-flow article { position:relative; min-height:165px; padding:18px 15px; border:1px solid var(--line); background:var(--paper-2); }
+    .architecture-flow article:not(:last-child)::after { content:"→"; position:absolute; z-index:2; right:-11px; top:45%; color:var(--acid); font-weight:900; }
+    .architecture-flow i { color:var(--cyan); font:600 10px "IBM Plex Mono"; font-style:normal; }
+    .architecture-flow b { display:block; margin:13px 0 7px; font-size:14px; }
+    .architecture-flow span { color:var(--muted); font-size:12px; }
+    .memory-layers { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:24px; }
+    .memory-layers article { padding:22px; border:1px solid var(--line); }
+    .memory-layers h3 { margin:12px 0 8px; font-size:18px; }.memory-layers p { margin:0; color:var(--muted); font-size:13px; }
     footer { padding: 44px 0 70px; color: var(--muted); font-size: 12px; }
     .reveal { opacity: 0; transform: translateY(18px); transition: .65s cubic-bezier(.2,.7,.2,1); }
     .reveal.visible { opacity: 1; transform: none; }
+    section:target .reveal { opacity: 1; transform: none; }
     @media (max-width: 850px) {
       .nav { display: none; } .hero { min-height: auto; }
-      .hero-grid, .event-card, .assessment { grid-template-columns: 1fr; }
+      .hero-grid, .event-card, .assessment, .architecture-compare { grid-template-columns: 1fr; }
       .hero-aside { margin-top: 20px; }
       .section-head { grid-template-columns: 1fr; gap: 8px; }
       .thesis-grid, .mechanism-notes, .roadmap { grid-template-columns: 1fr; }
@@ -202,7 +218,7 @@
       .mechanism { grid-template-columns: 1fr; } .versus { padding: 4px; }
       .timeline, .timeline-controls { margin-left: 0; }
       .event { grid-template-columns: 70px 1fr; padding-left: 20px; }
-      .frontier { grid-template-columns: 1fr; } .sources { columns: 1; }
+      .frontier, .architecture-flow, .memory-layers { grid-template-columns: 1fr; } .architecture-flow article::after { display:none; } .sources { columns: 1; }
     }
     @media print {
       .topbar, .scrollmark, .timeline-controls { display: none; }
@@ -219,7 +235,7 @@
     <div class="shell">
       <div class="brand"><i></i>Long Video / Research File 08</div>
       <nav class="nav" aria-label="章节导航">
-        <a href="#thesis">结论</a><a href="#timeline">演进</a><a href="#self-forcing">Self-Forcing</a><a href="#matrix">对比</a><a href="#frontier">前沿</a><a href="#sources">来源</a>
+        <a href="#thesis">结论</a><a href="#architecture">模型结构</a><a href="#timeline">演进</a><a href="#self-forcing">Self-Forcing</a><a href="#matrix">对比</a><a href="#frontier">前沿</a><a href="#sources">来源</a>
       </nav>
     </div>
   </header>
@@ -255,9 +271,24 @@
       </div>
     </section>
 
+    <section id="architecture">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-no">02 / ARCHITECTURE</div><div><h2>普通视频 DiT 与长视频模型，差在信息怎么流</h2><p class="lead">两者都可能使用 VAE + Diffusion Transformer，但普通模型把整段 clip 当成一个可双向观察的张量；前沿长视频模型把时间改造成因果序列，显式维护短期计算缓存与长期语义记忆，并让训练也经历自身生成误差。</p></div></div>
+        <div class="architecture-compare reveal">
+          <article><span class="tag">ORDINARY VIDEO DIT</span><h3>固定 clip 的联合去噪</h3><ul><li>文本 / 首帧编码后，与整段 noisy video latent 共同输入 <span class="tip" tabindex="0" data-tip="Diffusion Transformer：将视频 latent 切为 token，用 Transformer 预测噪声、速度或流场。">Video DiT</span>。</li><li>时间注意力通常双向：当前帧可以读取未来帧，适合整段质量，不适合边生成边提交。</li><li>每个 timestep 重算整段 token；长度增长时 attention、激活和 VAE 解码成本一起增加。</li><li>训练与推理都针对固定时长 clip，超出训练窗口主要依赖重叠拼接或位置外推。</li></ul></article>
+          <article class="streaming"><span class="tag">CAUSAL LONG-VIDEO MODEL</span><h3>按 chunk 自回归展开</h3><ul><li><span class="tip" tabindex="0" data-tip="Block-causal mask：当前块可看过去块，但不能读取尚未生成的未来块。">block-causal mask</span> 把视频切成可提交的时间块；历史只读，新块负责产生未来。</li><li>每层历史 K/V 可缓存，下一块只计算新 token；rolling window 让单步显存有界。</li><li><span class="tip" tabindex="0" data-tip="Few-step student：经蒸馏后只需少数去噪步骤的快速学生模型。">少步学生</span>把几十次前向压到 1–4 次，VAE 与下一块 DiT 可并行。</li><li>Self-Forcing / 长 rollout 让训练消费自身输出，直接优化长轨迹而非只拟合干净短片。</li></ul></article>
+        </div>
+        <h3>前沿流式模型的一次循环</h3>
+        <div class="architecture-flow reveal" aria-label="长视频因果模型单块生成流程"><article><i>01 / CONDITION</i><b>全局与局部条件</b><span>全局 prompt 管身份/场景；chunk prompt 或动作控制当前事件。</span></article><article><i>02 / CONTEXT</i><b>读取历史状态</b><span>rolling KV、首帧 sink、memory token 与时间位置。</span></article><article><i>03 / DENOISE</i><b>少步 causal DiT</b><span>只为新 chunk 预测 latent；未来块严格不可见。</span></article><article><i>04 / COMMIT</i><b>提交并更新缓存</b><span>新 K/V 写入；旧状态淘汰、压缩或合并进长期记忆。</span></article><article><i>05 / DECODE</i><b>流式 VAE 解码</b><span>当前 latent 转帧，并与下一 chunk 生成异步重叠。</span></article><article><i>06 / ROLLOUT</i><b>自身输出成为历史</b><span>推理继续循环；训练时也走这条链才能看见 exposure bias。</span></article></div>
+        <h3>“记忆”至少有四层，KV 只覆盖其中一部分</h3>
+        <div class="memory-layers reveal"><article><span class="tag">L0 / PIXEL</span><h3>局部运动连续</h3><p>最近几帧 / latent 保持速度、光流和纹理衔接，生命周期最短。</p></article><article><span class="tag">L1 / COMPUTE</span><h3>注意力 KV</h3><p>避免历史 token 重投影；它是计算缓存，不天然等于可解释的世界记忆。</p></article><article><span class="tag">L2 / ENTITY</span><h3>身份与空间状态</h3><p>角色外观、物体关系、场景布局需要 memory token、检索或显式对象状态。</p></article><article><span class="tag">L3 / STORY</span><h3>事件与叙事摘要</h3><p>目标、因果、伏笔和 prompt 变化需要结构化摘要与规划器，当前模型仍很薄弱。</p></article></div>
+        <div class="callout reveal"><b>真正的结构差异</b><span>普通模型优化的是“一个 clip 的联合样本质量”；长视频模型优化的是“状态更新算子在重复调用后是否仍稳定”。因此必须同时评测单块画质、chunk 边界、漂移曲线、缓存预算与长时语义，而不能只看首段 VBench。</span></div>
+      </div>
+    </section>
+
     <section id="timeline">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">02 / EVOLUTION</div><div><h2>五次范式迁移</h2><p class="lead">筛选时间线可观察三条交织路线：推理技巧（不训练）、模型/训练范式、以及记忆与系统工程。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">03 / EVOLUTION</div><div><h2>五次范式迁移</h2><p class="lead">筛选时间线可观察三条交织路线：推理技巧（不训练）、模型/训练范式、以及记忆与系统工程。</p></div></div>
         <div class="timeline-controls reveal" role="group" aria-label="筛选技术路线">
           <button class="active" data-filter="all">ALL</button><button data-filter="inference">推理扩展</button><button data-filter="training">训练范式</button><button data-filter="memory">记忆机制</button><button data-filter="system">系统效率</button>
         </div>
@@ -276,7 +307,7 @@
 
     <section id="self-forcing">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">03 / DEEP DIVE</div><div><h2>Self-Forcing 到底改变了什么？</h2><p class="lead">把训练流程画成两条链，差异就很明确：模型是否在学习时承担自己上一刻决策造成的后果。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">04 / DEEP DIVE</div><div><h2>Self-Forcing 到底改变了什么？</h2><p class="lead">把训练流程画成两条链，差异就很明确：模型是否在学习时承担自己上一刻决策造成的后果。</p></div></div>
         <div class="mechanism reveal">
           <article class="panel"><div class="label">BEFORE · TEACHER / DIFFUSION FORCING</div><h3>干净上下文训练</h3><div class="flow"><div class="node"><span class="tip" tabindex="0" data-tip="真实的视频帧（ground truth）。训练时用它做条件；推理时没有真实数据，只能换成模型自己生成的内容。">真实视频前缀 x₁…xₜ</span></div><div class="arrow">↓ 作为条件</div><div class="node">去噪未来 <span class="tip" tabindex="0" data-tip="一小段视频，分块生成的基本单位。">chunk</span></div><div class="arrow">↓</div><div class="node">局部 / 帧级训练损失</div><div class="arrow">⚠</div><div class="node">推理时换成模型生成前缀</div></div></article>
           <div class="versus">VS</div>
@@ -294,7 +325,7 @@
 
     <section id="matrix">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">04 / MATRIX</div><div><h2>代表路线横向对比</h2><p class="lead">“无限”一栏只表示算法可持续输出，不表示具有无限语义记忆。速度数字来自不同硬件、分辨率与计时口径，不可直接排行。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">05 / MATRIX</div><div><h2>代表路线横向对比</h2><p class="lead">“无限”一栏只表示算法可持续输出，不表示具有无限语义记忆。速度数字来自不同硬件、分辨率与计时口径，不可直接排行。</p></div></div>
         <div class="matrix-wrap reveal"><table>
           <thead><tr><th>方法</th><th>核心单位</th><th>需训练</th><th>自生成上下文训练</th><th>长期记忆</th><th>成本随总长度</th><th>主要收益</th><th>典型短板</th></tr></thead>
           <tbody>
@@ -314,7 +345,7 @@
 
     <section id="frontier">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">05 / FRONTIER</div><div><h2>接下来会演进到哪里</h2><p class="lead">以下是基于现有论文路线作出的技术推断，而非已经兑现的产品能力。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">06 / FRONTIER</div><div><h2>接下来会演进到哪里</h2><p class="lead">以下是基于现有论文路线作出的技术推断，而非已经兑现的产品能力。</p></div></div>
         <div class="frontier">
           <article class="frontier-card reveal" data-index="1"><div class="eyebrow">Memory</div><h3>从缓存帧到结构化世界状态</h3><p>未来记忆不会只保存首帧或若干 KV，而会分层保存身份、几何、对象关系、事件摘要，并在需要时检索。Echo-Infinity 的可学习演化记忆是这一方向的早期形态。</p><div class="bar"><i style="--w:86%"></i></div></article>
           <article class="frontier-card reveal" data-index="2"><div class="eyebrow">Training</div><h3>从短教师蒸馏到自改进长 rollout</h3><p>Self-Forcing++ 已展示用学生自己的长样本暴露远期错误，再让短教师对采样片段提供局部纠偏。下一步很可能结合<span class="tip" tabindex="0" data-tip="学会判断哪种输出更符合人类喜好的模型，用于筛选或奖励。">偏好模型</span>、<span class="tip" tabindex="0" data-tip="检查生成内容是否符合物理规律（如重力、碰撞）的模块。">物理一致性验证器</span>与 <span class="tip" tabindex="0" data-tip="课程学习：训练时逐步加长时间跨度，由易到难。">curriculum horizon</span>。</p><div class="bar"><i style="--w:78%"></i></div></article>
@@ -326,7 +357,7 @@
 
     <section id="assessment">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">06 / VERDICT</div><div><h2>如何评价 Self-Forcing</h2><p class="lead">这是基于公开证据的相对判断，不是跨论文统一 benchmark 的精确分数。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">07 / VERDICT</div><div><h2>如何评价 Self-Forcing</h2><p class="lead">这是基于公开证据的相对判断，不是跨论文统一 benchmark 的精确分数。</p></div></div>
         <div class="assessment reveal">
           <div class="scorecard">
             <div class="score"><span>训练范式创新</span><div class="track"><div class="fill" style="--score:92%"></div></div><output>9.2</output></div>
@@ -342,7 +373,7 @@
 
     <section id="ascend">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">07 / ASCEND</div><div><h2>对 AscendPlayground 的实现启示</h2><p class="lead">如果目标是把此类模型迁移到昇腾，优先级应围绕可验证的系统闭环，而不是一次性复刻全部论文技巧。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">08 / ASCEND</div><div><h2>对 AscendPlayground 的实现启示</h2><p class="lead">如果目标是把此类模型迁移到昇腾，优先级应围绕可验证的系统闭环，而不是一次性复刻全部论文技巧。</p></div></div>
         <div class="roadmap reveal">
           <article><h3>先跑通因果基线</h3><p>实现 <span class="tip" tabindex="0" data-tip="以块（chunk）为单位只允许过去块的信息参与注意力，当前块不能看到未来块。">block-causal attention</span>、chunk 级 rollout 与正确的 <span class="tip" tabindex="0" data-tip="在时间维度上施加的旋转位置编码，给每帧位置信息。">temporal RoPE</span>；建立短视频质量基线与逐 chunk <span class="tip" tabindex="0" data-tip="衡量生成质量随长度/时间下滑程度的曲线。">漂移曲线</span>。</p></article>
           <article><h3>再做 rolling KV</h3><p>明确 sink/local window 淘汰策略，记录 cache 显存、<span class="tip" tabindex="0" data-tip="数据在显存之间搬运的速度和流量。">搬运带宽</span>与长程主体一致性；KV 格式先 FP16/BF16，再评估 <span class="tip" tabindex="0" data-tip="INT8：8 位整数；FP8：8 位浮点。位数越少越省显存越快，但精度越低。">INT8/FP8</span>。</p></article>
@@ -354,7 +385,7 @@
 
     <section id="sources">
       <div class="shell">
-        <div class="section-head reveal"><div class="section-no">08 / SOURCES</div><div><h2>一手来源</h2><p class="lead">正文事实以论文与官方项目页为主；2026 年工作仍较新，结论应随复现和同行评议更新。</p></div></div>
+        <div class="section-head reveal"><div class="section-no">09 / SOURCES</div><div><h2>一手来源</h2><p class="lead">正文事实以论文与官方项目页为主；2026 年工作仍较新，结论应随复现和同行评议更新。</p></div></div>
         <ol class="sources reveal">
           <li><span class="source-no">01</span><a href="https://arxiv.org/abs/2211.13221">Latent Video Diffusion Models for High-Fidelity Long Video Generation</a></li>
           <li><span class="source-no">02</span><a href="https://arxiv.org/abs/2305.18264">Gen-L-Video: Multi-Text to Long Video Generation via Temporal Co-Denoising</a></li>
