@@ -54,7 +54,7 @@
         <article><span class="tag">CLASSICAL VI</span><h3>每个数据集 / 样本重新优化</h3><ul><li>根据<span class="tip" tabindex="0" data-tip="概率图中每个随机变量及其条件依赖关系；结构决定哪些期望和消息可以分解。">概率图结构</span>把 q 分成若干因子。</li><li><span class="tip" tabindex="0" data-tip="Coordinate Ascent Variational Inference：固定其他因子，轮流更新一个变分因子。">CAVI</span> 或自然梯度迭代至收敛，单次灵活但重复成本高。</li><li>适合共轭、结构清晰、需要可解释局部变量的模型。</li></ul></article>
         <article class="frontier"><span class="tag">AMORTIZED / STRUCTURED</span><h3>学习一个可复用的推断器</h3><ul><li>encoder 将 x 映射为均值、方差或更复杂后验参数，推断变成一次前向。</li><li><span class="tip" tabindex="0" data-tip="Normalizing Flow：连续可逆变换及其 Jacobian，把简单基础分布变成更灵活的后验。">Normalizing Flow</span>、低秩协方差或离散枚举补足 mean-field 表达力。</li><li>用“摊销热启动 + 少量局部 refinement”平衡吞吐与样本级精度。</li></ul></article>
       </div>
-      <div class="model-graph" aria-label="摊销变分模型训练与推断流程">
+      <div class="model-graph" aria-label="摊销变分推断的离线拟合与部署流程">
         <div><i>01 / OBSERVE</i><b>输入 x</b><span>图像、序列、计数或任意观测；训练时也作为重建目标。</span></div>
         <div><i>02 / ENCODE</i><b>推断网络 qφ</b><span>预测后验族参数；经典 VI 则在此保存并优化局部参数。</span></div>
         <div><i>03 / SAMPLE</i><b>重参数化 z</b><span>z=μ+σε 让梯度穿过采样；离散变量需枚举或 score-function。</span></div>
@@ -62,7 +62,8 @@
         <div><i>05 / DECODE</i><b>生成模型 pθ</b><span>从 z 预测 x 或似然参数，并与先验共同给出 log p(x,z)。</span></div>
         <div><i>06 / LEARN</i><b>ELBO 更新</b><span>重建项推动解释数据，KL 项约束后验接近先验；同时更新 θ 与 φ。</span></div>
       </div>
-      <div class="grid3"><article class="card"><span class="tag">TRAIN</span><h3>训练数据流</h3><p>x → encoder → q 参数 → K 个 z 粒子 → decoder / log p → ELBO → 反向更新 θ、φ。K、后验结构和离散处理共同决定显存与梯度方差。</p></article><article class="card hot"><span class="tag">INFERENCE</span><h3>部署数据流</h3><p>新 x → encoder 一次前向 → 可选局部精修 → 后验样本/统计量 → 预测或决策。部署阶段通常不需要 decoder，除非要重建、生成或算 likelihood。</p></article><article class="card cool"><span class="tag">KEY DIFFERENCE</span><h3>与普通前馈网络不同</h3><p>输出不是单点标签，而是分布；正确性不仅看任务精度，还要看不确定性校准、后验覆盖和 ELBO/重要性采样估计。</p></article></div>
+      <div class="grid3"><article class="card"><span class="tag">OFFLINE FIT · BRIEF</span><h3>推断器如何得到</h3><p>用 ELBO 等目标专门拟合 encoder / guide，产出可部署的摊销推断器；训练并行、反向传播与数据管线不作为本报告重点。</p></article><article class="card hot"><span class="tag">INFERENCE</span><h3>部署数据流</h3><p>新 x → encoder 一次前向 → 可选局部精修 → 后验样本/统计量 → 预测或决策。部署阶段通常不需要 decoder，除非要重建、生成或算 likelihood。</p></article><article class="card cool"><span class="tag">KEY DIFFERENCE</span><h3>与普通前馈网络不同</h3><p>输出不是单点标签，而是分布；正确性不仅看任务精度，还要看不确定性校准、后验覆盖和 ELBO/重要性采样估计。</p></article></div>
+      <div class="callout"><strong>术语边界：</strong>后文的 ELBO optimization 指“对后验做变分推断/局部精修”，不等同于训练视频生成基础模型；分析仍以部署前向、采样与运行时加速为主。</div>
       <div class="callout"><strong>结构—优化因果链：</strong>encoder 决定摊销推断延迟；后验族决定 q 的表达力与 Jacobian 成本；粒子数 K 决定 Monte Carlo 方差与向量化宽度。先定位是哪一段不够，再选择 kernel、flow 或局部优化。</div>
     </section>
 

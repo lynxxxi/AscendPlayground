@@ -115,7 +115,7 @@
           <div><i>04 / UV PROJECT</i><b>回投到 UV</b><span>把视图颜色映射到二维纹理坐标，而非保留为相机相关图像。</span></div>
           <div><i>05 / ASSET</i><b>烘焙可渲染资产</b><span>输出 mesh + texture，可继续简化、绑定、动画与实时渲染。</span></div>
         </div>
-        <div class="callout"><strong>结构—优化因果链：</strong>少步蒸馏减少 Shape/Paint 主干调用；FlashVDM 减少动态三维查询；多视图条件缓存复用渲染结果。三者分别命中不同模块，不能互相替代。</div>
+        <div class="callout"><strong>结构—优化因果链：</strong>少步 checkpoint 减少 Shape/Paint 主干调用；FlashVDM 减少动态三维查询；多视图条件缓存复用渲染结果。Fast / Turbo / guidance-distilled 权重视为上游专门训练产物，本报告不展开其训练 recipe。</div>
       </section>
 
       <section id="anatomy" class="reveal">

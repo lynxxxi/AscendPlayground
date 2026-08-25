@@ -76,14 +76,14 @@
       <div class="flow" aria-label="普通视频生成与流式模型结构差异流程"><div class="node"><i>01 / PREFILL</i><b>条件与首块</b><span>文本、图像、动作编码一次；建立 causal mask 与初始 KV。</span></div><div class="node"><i>02 / FEW-STEP DIT</i><b>生成 latent chunk</b><span>只对新 token 去噪；历史 K/V 只读不重算。</span></div><div class="node"><i>03 / COMMIT</i><b>提交会话状态</b><span>追加 KV、latent、RoPE 位置、scheduler 与 RNG。</span></div><div class="node"><i>04 / ASYNC MEDIA</i><b>解码 / 增强 / 编码</b><span>独立 stream 或 worker 处理当前块。</span></div><div class="node"><i>05 / CONTROL</i><b>接收动作 / prompt</b><span>控制信号在下个 chunk 边界进入，避免未来信息泄漏。</span></div><div class="node"><i>06 / REPEAT</i><b>按 deadline 循环</b><span>活跃时合批；空闲时暂停并卸载状态。</span></div></div>
       <h3>会话状态不是一个 KV 张量</h3>
       <div class="state-legend"><article><span class="tag">ATTENTION</span><h3>层级 KV</h3><p>每层历史 key/value、mask、RoPE 位置；通常是最大迁移对象。</p></article><article><span class="tag cyan">LATENT</span><h3>视觉历史</h3><p>当前/近邻 chunk latent、首帧或长期 memory token；用于连续性与恢复。</p></article><article><span class="tag orange">SAMPLER</span><h3>采样器状态</h3><p>timestep/sigma、seed、RNG、guidance 配置；决定暂停后是否能一致续跑。</p></article><article><span class="tag red">MEDIA</span><h3>媒体与背压</h3><p>待解码块、帧序、编码缓冲、客户端播放水位；决定是否该继续生产。</p></article></div>
-      <div class="callout"><strong>边界分工：</strong>因果模型定义“能否增量计算”；Runtime 决定“一块算多快”；TurboServe 决定“哪组会话何时在哪张卡上算”。如果模型仍要求看到完整未来 clip，就没有可安全迁移的长会话状态，TurboServe 也无法把它变成真正流式模型。</div>
+      <div class="callout"><strong>边界分工：</strong>因果模型定义“能否增量计算”；Runtime 决定“一块算多快”；TurboServe 决定“哪组会话何时在哪张卡上算”。因果 mask 与少步 checkpoint 需要上游专门训练/蒸馏；本页从可用权重开始，不展开训练系统。</div>
     </section>
 
     <section id="map" class="reveal"><div class="head"><div class="secno">03 / STACK</div><div><h2>优化全景：三层联动</h2><p class="lead">最有效的路线通常从减少模型工作量开始，再压缩单次前向成本，最后让服务层把波动、空闲与长尾消化掉。</p></div></div>
       <div class="layer-map">
         <article class="layer"><span class="tag">MODEL</span><h3>模型与算法</h3><ul><li>少步蒸馏 / consistency / trajectory distillation</li><li>因果与局部注意力、attention sink、KV cache</li><li>稀疏 MoE、低秩与结构化剪枝</li><li>特征 / timestep / block 缓存</li><li>低分辨率生成 + refiner / VAE 解码</li></ul></article>
         <div class="layer-arrow">→</div>
-        <article class="layer"><span class="tag cyan">RUNTIME</span><h3>执行引擎</h3><ul><li>Flash / Sage / fused attention</li><li>FP8 / INT8 / INT4 与硬件原生 kernel</li><li>图编译、算子融合、静态 shape bucket</li><li>FSDP / TP / CP / EP 与通信重叠</li><li>预分配、零拷贝、异步 VAE / 编码</li></ul></article>
+        <article class="layer"><span class="tag cyan">RUNTIME</span><h3>执行引擎</h3><ul><li>Flash / Sage / fused attention</li><li>FP8 / INT8 / INT4 与硬件原生 kernel</li><li>图编译、算子融合、静态 shape bucket</li><li>TP / CP / PP / EP 与通信重叠</li><li>预分配、零拷贝、异步 VAE / 编码</li></ul></article>
         <div class="layer-arrow">→</div>
         <article class="layer hot"><span class="tag orange">SERVING</span><h3>TurboServe 所在层</h3><ul><li>同 GPU 活跃会话的 chunk 合批</li><li>空闲会话 GPU→CPU 状态卸载</li><li>NCCL GPU→GPU 在线状态迁移</li><li>迁移感知的会话重平衡</li><li>负载驱动的 GPU 弹性供给</li></ul></article>
       </div>
@@ -93,13 +93,13 @@
     <section id="matrix" class="reveal"><div class="head"><div class="secno">04 / LEVERS</div><div><h2>优化手段与适用边界</h2><p class="lead">点击层级筛选。优先级按流式视频服务的一般收益/风险排序，实际部署必须用目标硬件和质量集做 Pareto 验证。</p></div></div>
       <div class="filterbar" role="group" aria-label="优化层筛选"><button class="active" data-filter="all">全部</button><button data-filter="model">模型</button><button data-filter="runtime">Runtime</button><button data-filter="serving">Serving</button></div>
       <div class="tablewrap"><table><thead><tr><th>手段</th><th>层级</th><th>主要收益</th><th>流式特有价值</th><th>风险 / 前提</th><th>优先级</th></tr></thead><tbody>
-        <tr data-layer="model"><td>少步蒸馏</td><td>模型</td><td>直接减少每块 DiT 前向次数</td><td>同时改善 TTFC 与 TPC，是最大的一阶杠杆</td><td>需重新训练；动态、细节和可控性要回归</td><td class="hi">P0</td></tr>
+        <tr data-layer="model"><td>少步 checkpoint</td><td>模型</td><td>直接减少每块 DiT 前向次数</td><td>同时改善 TTFC 与 TPC，是最大的一阶杠杆</td><td>需上游专门蒸馏；部署侧加载产物并做质量回归</td><td class="hi">P0</td></tr>
         <tr data-layer="model"><td>因果 / 局部注意力 + KV cache</td><td>模型</td><td>避免对全部历史帧重复计算</td><td>上下文随时间近线性扩张而非全量回看</td><td>缓存体积成为迁移与显存压力；需训练匹配</td><td class="hi">P0</td></tr>
         <tr data-layer="runtime"><td>Flash / fused attention</td><td>Runtime</td><td>减少 HBM 读写与 kernel launch</td><td>每个 denoise step 均受益，通常质量零损</td><td>mask、head dim、精度与硬件兼容性</td><td class="hi">P0</td></tr>
         <tr data-layer="runtime"><td>FP8 / INT8 / INT4</td><td>模型 + Runtime</td><td>降显存、带宽与 GEMM 成本</td><td>提高单卡会话容量，利于合批</td><td>无原生 kernel 可能只省显存不提速；需校准</td><td class="mid">P1</td></tr>
         <tr data-layer="runtime"><td>图编译与算子融合</td><td>Runtime</td><td>消除 Python / launch 开销</td><td>小步数、短 chunk 时固定开销占比更高</td><td>动态 shape、MoE 路由和 graph break</td><td class="mid">P1</td></tr>
         <tr data-layer="model"><td>TeaCache / block cache 类</td><td>模型 + Runtime</td><td>复用相邻 timestep 的稳定特征</td><td>可降低每块重复计算</td><td>误差跨 chunk 累积；要设刷新与漂移回退</td><td class="mid">P1</td></tr>
-        <tr data-layer="runtime"><td>TP / CP / FSDP / EP</td><td>Runtime</td><td>让大模型跨卡运行或缩短单步</td><td>满足 deadline；MoE 可做专家并行</td><td>通信可能抵消计算收益；迁移状态更复杂</td><td class="mid">P1</td></tr>
+        <tr data-layer="runtime"><td>TP / CP / PP / EP</td><td>Runtime</td><td>让大模型跨卡运行或缩短单步</td><td>满足 deadline；MoE 可做专家并行</td><td>通信可能抵消计算收益；迁移状态更复杂</td><td class="mid">P1</td></tr>
         <tr data-layer="runtime"><td>DiT–VAE 异步流水</td><td>Runtime</td><td>重叠下一块生成与当前块解码/编码</td><td>降低可见块间间隔</td><td>增加缓冲与显存；需背压防止队列无限增长</td><td class="hi">P0</td></tr>
         <tr data-layer="serving"><td>Coalesced chunk batching</td><td>Serving</td><td>活跃会话在同 GPU 合批</td><td>提高利用率且尊重 chunk deadline</td><td>不能只追大 batch；等待会抬高尾延迟</td><td class="hi">P0</td></tr>
         <tr data-layer="serving"><td>状态卸载 / 恢复</td><td>Serving</td><td>空闲会话释放 GPU 显存</td><td>交互停顿期不必独占昂贵 GPU</td><td>PCIe / NUMA 搬运；需异步预取和带宽预算</td><td class="hi">P0</td></tr>
@@ -120,11 +120,11 @@
     <section id="lingbot" class="reveal"><div class="head"><div class="secno">06 / LINGBOT</div><div><h2>LingBot 系列：适配度分层</h2><p class="lead">“LingBot”不是单一模型。与流式生成服务直接相关的，是能持续按块产生视频或世界状态的分支；VLA / VA 还要额外满足机器人控制周期和安全约束。</p></div></div>
       <div class="fit">
         <article class="best"><span class="tag">BEST FIT</span><h3>LingBot-World v2</h3><p>官方公开 <code>generate.py</code> 以 KV cache 做 causal、chunk-by-chunk 推理；14B causal-fast 支持 480P 多 GPU，项目宣称蒸馏实时版可驱动 720p 60fps。因果长时生成与 TurboServe 的 session 模型最匹配。</p><p><b>缺口：</b>官方明确不计划公开部署代码；需要自行补 serving adapter、状态序列化、合批与迁移。</p></article>
-        <article><span class="tag cyan">PARTIAL FIT</span><h3>LingBot-Video</h3><p>提供 Dense 1.3B 与 MoE 30B-A3B + Refiner；支持 Diffusers / SGLang backend、FSDP、FP8 MoE 路径，官方称 MoE 推理约快 3×。它当前公开工作流偏 T2I / T2V / TI2V 请求级生成。</p><p><b>建议：</b>先用 Dense 1.3B 打通在线 API 与 profile；若要长会话，需改造成因果 chunk 接口并定义跨块状态。</p></article>
+        <article><span class="tag cyan">PARTIAL FIT</span><h3>LingBot-Video</h3><p>提供 Dense 1.3B 与 MoE 30B-A3B + Refiner；支持 Diffusers / SGLang backend、FP8 MoE 与多卡推理路径，官方称 MoE 推理约快 3×。它当前公开工作流偏 T2I / T2V / TI2V 请求级生成。</p><p><b>建议：</b>先用 Dense 1.3B 打通在线 API 与 profile；若要长会话，需改造成因果 chunk 接口并定义跨块状态。</p></article>
         <article><span class="tag orange">OTHER SLA</span><h3>LingBot-VA / VLA</h3><p>LingBot-VA 已强调自回归 diffusion、异步双流与 KV cache，并支持 server-client；但其核心指标是动作控制周期、成功率与安全，不是纯视频播放 FPS。</p><p><b>建议：</b>可借用 TurboServe 的会话/资源思想，但调度目标必须加入 action deadline 与 stale-observation 约束。</p></article>
       </div>
       <h3>推荐的 LingBot-World v2 服务切分</h3>
-      <div class="flow"><div class="node"><i>GATEWAY</i><b>Session API</b><span>prompt / image / action；连接与播放背压。</span></div><div class="node"><i>CONTROL</i><b>Turbo scheduler</b><span>admit、place、scale、migrate 决策。</span></div><div class="node"><i>ADAPTER</i><b>LingBot worker</b><span>封装 causal chunk 与 deadline 预测。</span></div><div class="node"><i>STATE</i><b>State manager</b><span>KV / latent / RNG / condition 的分层存储。</span></div><div class="node"><i>GPU</i><b>Execution backend</b><span>FlashAttention、FSDP / CP、编译与量化。</span></div><div class="node"><i>MEDIA</i><b>Decode & stream</b><span>VAE、编码、传输；与生成异步流水。</span></div></div>
+      <div class="flow"><div class="node"><i>GATEWAY</i><b>Session API</b><span>prompt / image / action；连接与播放背压。</span></div><div class="node"><i>CONTROL</i><b>Turbo scheduler</b><span>admit、place、scale、migrate 决策。</span></div><div class="node"><i>ADAPTER</i><b>LingBot worker</b><span>封装 causal chunk 与 deadline 预测。</span></div><div class="node"><i>STATE</i><b>State manager</b><span>KV / latent / RNG / condition 的分层存储。</span></div><div class="node"><i>GPU</i><b>Execution backend</b><span>FlashAttention、TP / CP、编译与量化。</span></div><div class="node"><i>MEDIA</i><b>Decode & stream</b><span>VAE、编码、传输；与生成异步流水。</span></div></div>
       <details><summary>建议的 adapter 伪接口</summary><div class="code">class StreamingWorldWorker:
     def prefill(self, request) -&gt; SessionState: ...
     def estimate(self, state, chunk_spec) -&gt; Cost: ...

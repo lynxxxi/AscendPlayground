@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="世界模型优化与加速技术地图：以 LingBot-World、LingBot-World 2.0/Infinity 与 LingBot-VA 为主线，覆盖训练、蒸馏、推理、缓存、并行、量化和部署。">
+  <meta name="description" content="世界模型推理优化与加速技术地图：以 LingBot-World 系列为主线，分析少步采样、KV Cache、高效注意力、编译、并行、量化、异步解码与流式服务。">
   <meta name="theme-color" content="#071315">
   <title>世界模型优化与加速：LingBot 系列技术地图</title>
   <style>
@@ -37,7 +37,7 @@
   <header>
     <div class="topbar"><div class="brand">ASCEND PLAYGROUND / MODEL RESEARCH</div><div class="stamp">RESEARCH CUT · 2026-08-24</div></div>
     <div class="hero">
-      <div><div class="eyebrow">WORLD MODEL SYSTEMS MAP</div><h1>让世界模型<br>跑得更快、更久。</h1><p>以 LingBot‑World 系列为坐标，拆解世界模型从数据、架构、训练到实时部署的优化手段。重点不是孤立的“某个快算子”，而是如何把<strong>因果生成、少步蒸馏、长时记忆与系统流水线</strong>组合成可持续交互的完整路径。</p></div>
+      <div><div class="eyebrow">WORLD MODEL INFERENCE MAP</div><h1>让世界模型<br>推得更快、更久。</h1><p>以 LingBot‑World 系列为坐标，沿真实推理关键路径拆解少步采样、KV Cache、高效 attention、编译、并行、量化、异步 VAE 与流式服务。模型结构只用于解释<strong>计算从哪里来、哪一段可以省、怎样验证没有偷换质量</strong>。</p></div>
       <aside class="hero-aside"><span class="label">ONE-LINE VERDICT</span><strong>最大收益来自改变计算问题本身，其次才是把相同计算做快。</strong><p>先减少去噪步数与重复上下文计算，再优化 attention、并行、编译和精度；否则只是在给高复杂度路径打磨常数项。</p><div class="formula">收益层级 ≈ 架构/蒸馏 ＞ 缓存/并行 ＞ 内核/精度 ＞ 服务调度</div></aside>
     </div>
   </header>
@@ -50,7 +50,7 @@
   </div>
 
   <div class="layout">
-    <nav class="toc" aria-label="页面目录"><div class="toc-title">CONTENTS / 目录</div><a href="#summary">01 · 核心结论</a><a href="#family">02 · LingBot 谱系</a><a href="#architecture">03 · 模型结构</a><a href="#stack">04 · 优化全景</a><a href="#matrix">05 · 手段矩阵</a><a href="#lingbot">06 · LingBot 拆解</a><a href="#training">07 · 训练优化</a><a href="#inference">08 · 推理部署</a><a href="#ascend">09 · 昇腾迁移判断</a><a href="#roadmap">10 · 落地路线</a><a href="#benchmark">11 · 验收体系</a><a href="#sources">12 · 资料与边界</a></nav>
+    <nav class="toc" aria-label="页面目录"><div class="toc-title">CONTENTS / 目录</div><a href="#summary">01 · 核心结论</a><a href="#family">02 · 推理版本</a><a href="#architecture">03 · 执行结构</a><a href="#stack">04 · 推理关键路径</a><a href="#matrix">05 · 加速手段</a><a href="#lingbot">06 · 快路拆解</a><a href="#training">07 · 训练前提（简）</a><a href="#inference">08 · 推理部署</a><a href="#ascend">09 · 昇腾迁移判断</a><a href="#roadmap">10 · 落地路线</a><a href="#benchmark">11 · 验收体系</a><a href="#sources">12 · 资料与边界</a></nav>
     <main>
       <section class="section reveal" id="summary"><span class="kicker">01 / Executive summary</span><h2>先减问题，再快算。</h2><p class="lede">世界模型的成本由视频 token 数、上下文长度、去噪步数和模型宽度共同放大。LingBot 的路线清楚展示了优先级：把双向扩散适配为分块因果模型，用 KV Cache 消除历史重算，再将多步教师蒸馏成少步学生；最后通过混合并行、编译内核与异步流式系统补齐实时性。</p>
         <div class="thesis">
@@ -63,7 +63,7 @@
 
       <section class="section reveal" id="family"><span class="kicker">02 / LingBot family</span><h2>三个分支，三个“快”的定义。</h2><p class="lede">LingBot 不是单一模型。World 分支模拟可交互视频世界；VA 分支把世界预测用于机器人闭环控制；VLA 则是直接策略模型。优化时必须先区分目标，否则“画面帧率”和“控制频率”会被混为一谈。</p>
         <div class="family">
-          <article class="card v1"><span class="tag">WORLD · V1</span><h3>LingBot‑World</h3><p>基于 Wan2.2 的视频扩散世界模型，经历通用先验、中期世界知识/动作控制、因果适配与少步蒸馏三阶段。</p><ul class="facts"><li><b>Base：</b>双向扩散，14B 推理模型；基础世界模型论文描述为双专家合计 28B</li><li><b>Fast：</b>分块因果生成 + KV Cache</li><li><b>训练：</b>FSDP2 + Ulysses 上下文并行</li><li><b>目标：</b>16fps、亚秒响应、分钟级连贯性</li></ul></article>
+          <article class="card v1"><span class="tag">WORLD · V1</span><h3>LingBot‑World</h3><p>基于 Wan2.2 的视频扩散世界模型，公开 Base 与面向低延迟执行的 Fast 路径。</p><ul class="facts"><li><b>Base：</b>双向扩散，14B 推理模型；基础世界模型论文描述为双专家合计 28B</li><li><b>Fast：</b>分块因果生成 + KV Cache + 少步 checkpoint</li><li><b>状态：</b>历史 K/V、latent、动作条件与时间位置</li><li><b>目标：</b>16fps、亚秒响应、分钟级连贯性</li></ul></article>
           <article class="card v2"><span class="tag green">WORLD · V2 / INFINITY</span><h3>LingBot‑World 2.0</h3><p>从“有限长后训练”进一步转向原生因果预训练，引入 MoBA mask、长自回滚 DMD 和动态 KV 管理。</p><ul class="facts"><li><b>公开：</b>14B causal-fast 权重与推理代码</li><li><b>蒸馏：</b>一致性蒸馏 + 长轨迹 DMD</li><li><b>系统：</b>异步 VAE、编译、混合并行、流式输出</li><li><b>目标：</b>官方栈 720p/60fps、无界交互</li></ul></article>
           <article class="card va"><span class="tag orange">ROBOT · VA</span><h3>LingBot‑VA</h3><p>视频与动作 token 交错的自回归扩散世界模型，用视觉想象辅助逆动力学动作解码，强调低延迟闭环。</p><ul class="facts"><li><b>架构：</b>双流 MoT，共享跨模态注意</li><li><b>降本：</b>部分去噪，不追求像素完美</li><li><b>缓存：</b>视频—动作历史 KV Cache</li><li><b>调度：</b>预测与动作执行异步重叠，论文消融报告任务完成速度 2×</li></ul></article>
         </div>
@@ -72,7 +72,7 @@
       <section class="section reveal" id="architecture"><span class="kicker">03 / Architecture primer</span><h2>世界模型，不只是“会听指令的视频模型”。</h2><p class="lede">普通视频 DiT 学的是“给定文本或首帧，生成一段视觉上合理的固定时长视频”；LingBot‑World 学的是“给定当前可见状态和动作，预测动作造成的下一段世界”。它仍使用视频扩散主干，但因果掩码、动作注入、可持续状态和自回滚训练改变了信息流。</p>
         <div class="compare">
           <article><span class="tag">ORDINARY VIDEO DIT</span><h3>离线、双向、固定时域</h3><ul><li>整段 noisy latent 同时进入 Transformer，时空 token 可双向互看。</li><li>文本、首帧或参考图提供条件；没有“动作必须导致后果”的硬语义。</li><li>每个请求独立采样，结束后丢弃状态；下一段常需重算或拼接。</li><li>训练在真实视频片段上去噪，推理很少连续消费自身输出。</li></ul></article>
-          <article class="frontier"><span class="tag green">LINGBOT WORLD MODEL</span><h3>在线、因果、动作闭环</h3><ul><li><span class="tip" tabindex="0" data-tip="Block-causal attention：当前视频块可看过去块和本块已允许的位置，但不能读取未来块。">块因果注意力</span>让 chunk 只依赖历史，从而能流式输出并复用 KV。</li><li>动作、相机与局部提示进入 <span class="tip" tabindex="0" data-tip="Adaptive Layer Normalization：用条件向量调制 Transformer 层的归一化尺度与偏置。">AdaLN</span> / cross-attention，显式控制未来动力学。</li><li>会话保存 KV、latent 历史、位置与随机数状态；新动作到来后继续同一世界。</li><li><span class="tip" tabindex="0" data-tip="Self-rollout：训练时让学生连续消费自己生成的历史，暴露并学习修正推理期误差。">自回滚训练</span>缩小 teacher-forcing 与真实部署的分布差。</li></ul></article>
+          <article class="frontier"><span class="tag green">LINGBOT WORLD MODEL</span><h3>在线、因果、动作闭环</h3><ul><li><span class="tip" tabindex="0" data-tip="Block-causal attention：当前视频块可看过去块和本块已允许的位置，但不能读取未来块。">块因果注意力</span>让 chunk 只依赖历史，从而能流式输出并复用 KV。</li><li>动作、相机与局部提示进入 <span class="tip" tabindex="0" data-tip="Adaptive Layer Normalization：用条件向量调制 Transformer 层的归一化尺度与偏置。">AdaLN</span> / cross-attention，显式控制未来动力学。</li><li>会话保存 KV、latent 历史、位置与随机数状态；新动作到来后继续同一世界。</li><li>专门训练只提供“能承受自身历史”的 checkpoint；线上优化从状态复用、少步执行和 deadline 控制开始。</li></ul></article>
         </div>
         <h3>单个 chunk 内部：从状态和动作到下一段画面</h3>
         <div class="pipeline" aria-label="LingBot 世界模型单块结构流程"><div class="stage"><i>01 / STATE</i><b>历史 latent / KV</b><span>已生成世界的压缩视觉状态、时间位置与长期/局部缓存。</span></div><div class="stage"><i>02 / CONTROL</i><b>动作与提示编码</b><span>键鼠、轨迹、机器人动作、chunk prompt；按时间对齐。</span></div><div class="stage core"><i>03 / CAUSAL DIT</i><b>少步噪声预测</b><span>因果 self-attention 读历史，cross-attention / AdaLN 注入控制。</span></div><div class="stage core"><i>04 / UPDATE</i><b>写入会话状态</b><span>追加新 K/V 与 latent；按窗口、sink 或相关性淘汰旧缓存。</span></div><div class="stage"><i>05 / DECODE</i><b>VAE / Refiner</b><span>latent 解码为基础帧；空间增强与插帧可在独立 worker 中异步执行。</span></div><div class="stage"><i>06 / LOOP</i><b>输出并接收新动作</b><span>播放当前 chunk 的同时生成下一块，形成感知—动作—预测闭环。</span></div></div>
@@ -82,34 +82,30 @@
       </section>
 
       <section class="section reveal" id="stack"><span class="kicker">04 / Optimization stack</span><h2>优化是链，不是点。</h2><p class="lede">从输入数据到用户看到第一帧，每一层都会决定下一层的上限。最稳妥的顺序是先固定质量门槛与负载，再沿关键路径逐层消除冗余。</p>
-        <div class="pipeline" aria-label="优化流水线"><div class="stage"><i>01 / DATA</i><b>数据与 curriculum</b><span>分辨率/时长 bucket、镜头切分、动作对齐、长序列课程</span></div><div class="stage core"><i>02 / MODEL</i><b>因果架构</b><span>latent、chunk、局部/混合注意、动作适配器</span></div><div class="stage core"><i>03 / ALGO</i><b>少步蒸馏</b><span>CD、DMD、self-rollout、截断反传</span></div><div class="stage"><i>04 / RUNTIME</i><b>缓存与内核</b><span>KV、FlashAttention、compile、量化</span></div><div class="stage"><i>05 / SCALE</i><b>混合并行</b><span>FSDP、CP/Ulysses、序列/张量/流水线</span></div><div class="stage"><i>06 / SERVE</i><b>异步流式</b><span>VAE worker、增量帧、背压、会话路由</span></div></div>
+        <div class="pipeline" aria-label="推理优化流水线"><div class="stage"><i>01 / BASELINE</i><b>冻结请求形状</b><span>分辨率、chunk 帧数、NFE、CFG、并发与质量门槛</span></div><div class="stage core"><i>02 / MODEL CALLS</i><b>减少前向次数</b><span>直接使用 causal-fast / few-step checkpoint，消除多步与重复 CFG</span></div><div class="stage core"><i>03 / STATE</i><b>复用历史计算</b><span>KV、条件 embedding、RoPE 位置、latent 与动态记忆</span></div><div class="stage"><i>04 / RUNTIME</i><b>单步算得更快</b><span>fused attention、compile、量化、内存布局与预分配</span></div><div class="stage"><i>05 / SCALE</i><b>跨卡满足 deadline</b><span>CP/TP/PP/EP；按拓扑权衡通信与单步时延</span></div><div class="stage"><i>06 / SERVE</i><b>隐藏与摊薄延迟</b><span>异步 VAE、增量编码、合批、背压与会话路由</span></div></div>
         <div class="split"><div class="card"><span class="tag green">LATENCY PATH</span><h3>交互优先</h3><p>少步学生 → 小 chunk → 预填充/缓存 → 首帧增量解码 → 异步传输。允许后续增强或插帧在首帧之后完成。</p></div><div class="card"><span class="tag orange">THROUGHPUT PATH</span><h3>离线吞吐优先</h3><p>较大 bucket → 高设备占用 → 序列并行/批处理 → VAE 批量解码 → 更激进的编译与量化。未必获得最佳交互手感。</p></div></div>
       </section>
 
       <section class="section reveal" id="matrix"><span class="kicker">05 / Method matrix</span><h2>手段、收益与风险。</h2><p class="lede">点击筛选查看不同层级。证据 A 表示 LingBot 官方论文或仓库明确使用；B 表示机制可迁移但需在目标版本重验；C 表示工程候选，不能宣称已有 LingBot 结果。</p>
-        <div class="toolbar" role="group" aria-label="优化方法筛选"><button class="active" data-filter="all">全部 15</button><button data-filter="model">模型/算法</button><button data-filter="runtime">推理运行时</button><button data-filter="train">训练</button><button data-filter="serve">服务</button></div>
+        <div class="toolbar" role="group" aria-label="优化方法筛选"><button class="active" data-filter="all">全部 12</button><button data-filter="model">模型快路</button><button data-filter="runtime">推理运行时</button><button data-filter="train">训练前提（简）</button><button data-filter="serve">服务</button></div>
         <table class="matrix"><thead><tr><th>方法</th><th>主要作用</th><th>LingBot 适配</th><th>风险 / 代价</th><th>优先级</th></tr></thead><tbody>
           <tr data-cat="model"><td class="method">因果分块 / MoBA</td><td>避免全视频双向重算，支持流式 AR</td><td class="fit">v1 block-causal；v2 MoBA</td><td class="risk">暴露偏差、chunk 边界伪影</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="model"><td class="method">少步蒸馏（CD + DMD）</td><td>直接减少 DiT 调用次数</td><td class="fit">v1/v2 Fast 主路径</td><td class="risk">细节、动作跟随和长时漂移</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
-          <tr data-cat="model"><td class="method">Self-rollout 长时训练</td><td>缩小 teacher forcing 的训推差异</td><td class="fit">v1 rolling KV；v2 长轨迹 DMD</td><td class="risk">训练昂贵；需截断梯度</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
+          <tr data-cat="train"><td class="method">专门训练 / 蒸馏</td><td>产出可缓存的因果少步 checkpoint</td><td class="fit">v1/v2 Fast 的必要前提；部署侧直接加载产物</td><td class="risk">不在推理服务中重复；只需回归画质、动作与漂移</td><td><span class="badge p0">前提</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="runtime"><td class="method">KV Cache / 动态调度</td><td>复用历史；约束有效上下文</td><td class="fit">v1/v2/VA 均采用</td><td class="risk">显存随时长增长；陈旧记忆干扰</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="runtime"><td class="method">高效 Attention 内核</td><td>减少 HBM 读写与中间张量</td><td class="fit">仓库要求 flash_attn</td><td class="risk">形状/精度/后端兼容</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="runtime"><td class="method">图编译与算子融合</td><td>降低 launch、融合 pointwise/QKV</td><td class="fit">v2 官方部署明确使用 compiler</td><td class="risk">动态 shape 重编译与 graph break</td><td><span class="badge p1">P1</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="runtime"><td class="method">FP8 / INT8 / 4-bit 权重</td><td>降权重带宽与显存</td><td class="fit">v1 仓库推荐社区 NF4 低显存版</td><td class="risk">时序一致性和小目标退化；kernel 决定实速</td><td><span class="badge p1">P1</span> <span class="badge b">B</span></td></tr>
           <tr data-cat="runtime"><td class="method">VAE 切片 / tiling / 独立 worker</td><td>降低峰值并移出生成关键路径</td><td class="fit">v2 异步专用 worker</td><td class="risk">边界、传输和排队开销</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
-          <tr data-cat="train"><td class="method">FSDP2</td><td>分片参数、梯度与优化器状态</td><td class="fit">v1 28B 中期训练</td><td class="risk">通信与 checkpoint 复杂度</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
-          <tr data-cat="train"><td class="method">Ulysses 上下文并行</td><td>按时间/序列切长视频 token</td><td class="fit">v1 论文与推理脚本均有入口</td><td class="risk">all-to-all 对拓扑敏感</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
-          <tr data-cat="train"><td class="method">激活检查点 / 选择性重算</td><td>以算力换显存，延长训练序列</td><td class="fit">长视频训练通用</td><td class="risk">过度重算显著降吞吐</td><td><span class="badge p1">P1</span> <span class="badge b">B</span></td></tr>
-          <tr data-cat="train"><td class="method">动作适配器参数高效微调</td><td>冻结主 DiT，少量参数学习控制</td><td class="fit">v1 AdaLN action adapter</td><td class="risk">控制容量受限</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="serve"><td class="method">混合并行推理</td><td>拆模型/序列，扩大分辨率和帧长</td><td class="fit">v2 多 GPU 部署</td><td class="risk">单请求成本高；通信尾延迟</td><td><span class="badge p1">P1</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="serve"><td class="method">异步生成—解码—传输</td><td>隐藏 VAE/网络延迟，缩短 TTFF</td><td class="fit">v2 官方部署核心</td><td class="risk">队列背压与帧序管理</td><td><span class="badge p0">P0</span> <span class="badge a">A</span></td></tr>
           <tr data-cat="serve"><td class="method">时空超分 / 插帧后处理</td><td>低成本主干 + 轻量恢复 720p/高 fps</td><td class="fit">v2 TensorRT 多 GPU refiner</td><td class="risk">显示帧率 ≠ 原生物理仿真频率</td><td><span class="badge p1">P1</span> <span class="badge a">A</span></td></tr>
         </tbody></table>
       </section>
 
-      <section class="section reveal" id="lingbot"><span class="kicker">06 / LingBot deep dive</span><h2>LingBot 的快路，分两代。</h2><p class="lede">v1 的核心是把强大的双向视频教师“改造”为可缓存的因果学生；v2 则把因果性提前到预训练，并用 MoBA 保留双向生成先验，再在部署端补上动态记忆与完整流式系统。</p>
-        <div class="split"><div><span class="tag">V1 · ADAPT</span><div class="stack"><div class="stack-item"><b>从 Wan2.2 视频先验起步</b><span>避免从零学习视觉真实性、物体恒存与基础动态。</span></div><div class="stack-item"><b>中期训练世界知识与长序列</b><span>双专家 MoE；动作通过 AdaLN 适配器注入，主干冻结以保护画质。</span></div><div class="stack-item"><b>高噪声专家初始化因果学生</b><span>论文认为其动态建模更强；用 block causal attention 支持 <em>KV Cache</em>。</span></div><div class="stack-item"><b>DMD + 自回滚 + 对抗优化</b><span>少步化同时在学生自己的长轨迹上训练；只对最近 K 步反传。</span></div></div></div>
-          <div><span class="tag green">V2 · NATIVE CAUSAL</span><div class="stack"><div class="stack-item"><b>MoBA 因果预训练</b><span>teacher-forcing mask 旁加入双向块，抑制只复制上下文导致的画质退化。</span></div><div class="stack-item"><b>无泄漏 cross-attention</b><span>chunk prompt 按下三角因果访问；全局 prompt 供双向组件使用。</span></div><div class="stack-item"><b>Consistency + long-rollout DMD</b><span>前者压缩步数，后者让学生分布在长自回滚中贴近真实数据。</span></div><div class="stack-item"><b>动态 KV + 异步全链路</b><span>只保留当前控制最相关历史；生成、VAE、增强和传输重叠。</span></div></div></div></div>
+      <section class="section reveal" id="lingbot"><span class="kicker">06 / Fast path anatomy</span><h2>同一模型家族，推理路径完全不同。</h2><p class="lede">部署时首先选对 checkpoint 和执行模式：Base 路径保画质但步数多、历史重算重；Causal‑Fast 路径用少步、KV 复用和按块提交换取实时性。下面只分析推理时实际发生的差异。</p>
+        <div class="split"><div><span class="tag">BASE · OFFLINE PATH</span><div class="stack"><div class="stack-item"><b>整段 latent 一次建模</b><span>双向 attention 读取完整 clip；不具备安全提交未来 chunk 的因果边界。</span></div><div class="stack-item"><b>多步 scheduler 循环</b><span>NFE 与 CFG 直接倍乘 DiT 调用，是单请求延迟的第一大项。</span></div><div class="stack-item"><b>历史重复进入主干</b><span>延长窗口时旧 token 反复参与 QKV/attention，长度增加会放大成本。</span></div><div class="stack-item"><b>完成后统一解码</b><span>必须等待整段 latent 就绪，VAE 与编码难以提前流水。</span></div></div></div>
+          <div><span class="tag green">CAUSAL‑FAST · STREAMING PATH</span><div class="stack"><div class="stack-item"><b>小 chunk 增量提交</b><span>只生成新增时间块，输出边界清晰，允许连续接收动作与提示。</span></div><div class="stack-item"><b>少步 checkpoint</b><span>部署直接加载蒸馏产物；推理不运行 DMD，只执行少数 scheduler step。</span></div><div class="stack-item"><b>KV / condition 精确复用</b><span>历史 K/V、文本与动作 embedding 跨 chunk 保存，新块只算新增 token。</span></div><div class="stack-item"><b>异步媒体流水</b><span>DiT(n+1) 与 VAE/refiner/encode(n) 重叠，降低可见块间隔。</span></div></div></div></div>
         <div class="code-flow"><span class="accent">input image / current state / action / chunk prompt</span>
     │
     ├─ text & action encode ── exact cache
@@ -125,15 +121,9 @@ incremental encode & stream ── first visible frame ── continuous playbac
         <div class="callout"><b>不要误读 60fps：</b>v2 论文明确包含空间增强与时间插帧 refiner。因此展示输出的 60fps 不等价于 DiT 原生生成 60 个独立物理状态/秒。评测交互世界时应分别报告“基础 latent 生成频率、解码帧率、插帧后显示帧率”。</div>
       </section>
 
-      <section class="section reveal" id="training"><span class="kicker">07 / Training efficiency</span><h2>长视频训练：显存只是第一关。</h2><p class="lede">训练优化的目标不是单纯“塞进去”，而是让有效 token/秒随设备数增长，同时保证因果学生真正见过部署时的自身误差分布。</p>
-        <table class="matrix"><thead><tr><th>瓶颈</th><th>优先手段</th><th>LingBot 依据</th><th>验收指标</th></tr></thead><tbody>
-          <tr><td class="method">28B 权重/优化器</td><td>FSDP2；通信计算重叠；分片 checkpoint</td><td class="fit">v1 官方训练架构</td><td>MFU、每卡峰值、扩展效率、保存恢复时间</td></tr>
-          <tr><td class="method">分钟级 token 激活</td><td>Ulysses CP + 选择性激活检查点；长度/分辨率 bucket</td><td class="fit">v1 Ulysses 按序列切分</td><td>all-to-all 占比、padding 浪费、token/s</td></tr>
-          <tr><td class="method">动作数据稀缺</td><td>冻结 DiT 主干，仅训练 embedding/AdaLN adapter</td><td class="fit">v1 参数高效控制微调</td><td>动作跟随、基础画质遗忘、可训练参数比例</td></tr>
-          <tr><td class="method">长时暴露偏差</td><td>self-rollout；rolling KV；最近 K 步截断反传</td><td class="fit">v1 官方后训练</td><td>1/5/20/60 分钟漂移曲线，不只看短片 FVD</td></tr>
-          <tr><td class="method">多步学生成本</td><td>先一致性蒸馏，再 DMD/对抗长轨迹校正</td><td class="fit">v2 官方路线</td><td>NFE—质量 Pareto、控制准确、长时身份保持</td></tr>
-        </tbody></table>
-        <div class="callout"><b>推荐组合：</b>数据端先做时长/分辨率/运动强度 bucket；模型端 BF16 基线；状态用 FSDP2；序列用 CP；只在确有显存压力的 block 启用 checkpoint。每加一种并行维度，都要记录通信占比和有效 token/s，避免“能训练但更慢”。</div>
+      <section class="section reveal" id="training"><span class="kicker">07 / Training prerequisite · brief</span><h2>训练只决定“有没有这条快路”。</h2><p class="lede">普通双向、多步视频 checkpoint 不能仅靠服务框架变成 causal‑fast。需要专门做因果适配、少步蒸馏，并让模型见过自生成历史；部署侧拿到合格 checkpoint 后，不再关心 FSDP、反向传播或训练吞吐。</p>
+        <div class="thesis"><article data-n="1"><span class="tag orange">CAUSAL</span><h3>因果适配</h3><p>产物必须支持 block-causal mask、chunk 接口和可复用 KV；否则不能增量提交。</p></article><article data-n="2"><span class="tag green">FEW STEP</span><h3>少步蒸馏</h3><p>把几十步教师压成少步学生；部署只验证 NFE—画质—控制 Pareto，不展开训练算法。</p></article><article data-n="3"><span class="tag">ROLL OUT</span><h3>长时专门训练</h3><p>让 checkpoint 能承受自身历史误差；推理验收看逐 chunk 漂移，不看训练 loss。</p></article></div>
+        <div class="callout"><b>报告边界：</b>FSDP2、激活检查点、训练数据 bucket 和反向传播策略不属于本页优化主线。它们只影响快模型如何被训练出来，不直接降低线上 TTFF、TPC 或单 chunk latency。</div>
       </section>
 
       <section class="section reveal" id="inference"><span class="kicker">08 / Inference & serving</span><h2>实时性是一条关键路径。</h2><p class="lede">把一次交互拆为编码、预填充、少步 DiT、VAE、增强、编码与传输。先 profile 端到端，再决定下一项投资；只测单个 DiT kernel 会漏掉首帧排队和解码尾延迟。</p>

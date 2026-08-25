@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MindIE-SD 社区基础设施与社区运营对比分析：测试、构建、文档、CI/CD、性能、质量、发布、自动化、兼容性、治理与开发环境。">
+  <title>MindIE-SD 社区基础设施与运营审计｜2026-08</title>
+  <style>
+    :root {
+      --paper: #f3f0e7;
+      --paper-2: #e8e2d3;
+      --ink: #17201d;
+      --muted: #5b645f;
+      --line: #b9b2a2;
+      --deep: #102c28;
+      --deep-2: #183c36;
+      --signal: #e85d35;
+      --lime: #c4db55;
+      --gold: #cf962e;
+      --blue: #31758f;
+      --red: #a8463e;
+      --white: #fffdf7;
+      --serif: "Iowan Old Style", "Baskerville", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      --sans: "Aptos", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+      --shadow: 0 18px 46px rgba(24, 34, 30, .12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 4%, rgba(196,219,85,.18), transparent 24rem),
+        linear-gradient(rgba(16,44,40,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,44,40,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 28px 28px, 28px 28px, auto;
+      font-family: var(--sans);
+      line-height: 1.72;
+    }
+    a { color: var(--blue); text-underline-offset: 3px; }
+    a:hover { color: var(--signal); }
+    code { font-family: var(--mono); font-size: .9em; padding: .1em .34em; border-radius: 3px; background: rgba(16,44,40,.08); }
+    .progress { position: fixed; z-index: 200; top: 0; left: 0; width: 0; height: 4px; background: linear-gradient(90deg,var(--signal),var(--gold),var(--lime)); }
+    .topbar { position: sticky; z-index: 120; top: 0; color: var(--white); background: rgba(16,44,40,.95); border-bottom: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); }
+    .topbar-inner { width: min(1500px, calc(100% - 40px)); min-height: 58px; margin: auto; display: flex; align-items: center; gap: 24px; }
+    .brand { flex: none; font: 800 .72rem/1 var(--mono); letter-spacing: .14em; color: var(--lime); }
+    nav { display: flex; gap: 17px; overflow-x: auto; scrollbar-width: none; }
+    nav a { flex: none; padding: 19px 0 15px; border-bottom: 3px solid transparent; color: #d1ddd8; text-decoration: none; font-size: .76rem; }
+    nav a:hover, nav a.active { color: var(--white); border-color: var(--signal); }
+    .print { margin-left: auto; flex: none; border: 1px solid rgba(255,255,255,.3); color: var(--white); background: transparent; padding: 7px 10px; font: 700 .68rem/1 var(--mono); cursor: pointer; }
+    .hero {
+      min-height: 720px;
+      position: relative;
+      overflow: hidden;
+      color: var(--white);
+      background:
+        linear-gradient(120deg, rgba(232,93,53,.13), transparent 42%),
+        repeating-linear-gradient(135deg, transparent 0 15px, rgba(255,255,255,.025) 15px 16px),
+        var(--deep);
+      border-bottom: 9px solid var(--lime);
+    }
+    .hero::after { content: "OPS"; position: absolute; right: -2vw; bottom: -11rem; font: 900 clamp(14rem,31vw,35rem)/1 var(--sans); letter-spacing: -.1em; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.1); }
+    .hero-inner { width: min(1400px, calc(100% - 80px)); margin: auto; padding: 88px 0 68px; position: relative; z-index: 1; }
+    .eyebrow { display: flex; align-items: center; gap: 12px; font: 800 .73rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); }
+    .eyebrow::before { content: ""; width: 42px; height: 3px; background: var(--signal); }
+    h1 { max-width: 1100px; margin: 30px 0 20px; overflow-wrap: anywhere; font: 700 clamp(3.25rem,7.5vw,8rem)/.92 var(--serif); letter-spacing: -.065em; }
+    .hero-lead { max-width: 980px; margin: 0; color: #dce8e3; font: 1.23rem/1.72 var(--serif); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 42px; }
+    .pill { padding: 8px 11px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(255,255,255,.04); font: 700 .7rem/1 var(--mono); }
+    .hero-score { width: min(620px,100%); display: grid; grid-template-columns: 145px 1fr; gap: 20px; align-items: end; margin-top: 48px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.23); }
+    .score-big { font: 800 4.2rem/.85 var(--serif); color: var(--lime); }
+    .score-copy b { display:block; color: var(--white); }
+    .score-copy span { color:#b9cbc4; font-size:.85rem; }
+    .shell { width: min(1500px, calc(100% - 56px)); margin: 0 auto; }
+    section { scroll-margin-top: 76px; padding: 74px 0; border-bottom: 1px solid var(--line); }
+    section:last-child { border-bottom: 0; }
+    .section-head { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 28px; margin-bottom: 30px; }
+    .secno { padding-top: 12px; font: 800 .72rem/1 var(--mono); color: var(--signal); letter-spacing: .13em; }
+    .kicker { font: 800 .68rem/1 var(--mono); color: var(--blue); letter-spacing: .14em; text-transform: uppercase; }
+    h2 { margin: 8px 0 14px; overflow-wrap: anywhere; font: 700 clamp(2.2rem,4.5vw,5rem)/.98 var(--serif); letter-spacing: -.052em; color: var(--deep); }
+    h3 { margin: 12px 0 9px; color: var(--deep); font-size: 1.12rem; line-height: 1.32; }
+    .lead { max-width: 1040px; margin: 0; color: #35423d; font: 1.08rem/1.76 var(--serif); }
+    .callout { margin: 20px 0; padding: 27px 29px; color: var(--white); background: var(--deep); border-left: 8px solid var(--signal); box-shadow: var(--shadow); font: 1.1rem/1.68 var(--serif); }
+    .callout strong { color: var(--lime); }
+    .callout.light { color: var(--ink); background: rgba(255,253,247,.75); border-color: var(--gold); box-shadow: none; }
+    .grid2,.grid3,.grid4 { display: grid; gap: 14px; }
+    .grid2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .grid4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card { position: relative; overflow: hidden; min-width: 0; padding: 22px; background: rgba(255,253,247,.78); border: 1px solid var(--line); }
+    .card::before { content: ""; position:absolute; top:0; left:0; width:100%; height:4px; background:var(--blue); }
+    .card.good::before { background:var(--lime); }
+    .card.warn::before { background:var(--gold); }
+    .card.risk::before { background:var(--red); }
+    .card p,.card li { margin-top: 7px; color: var(--muted); font-size: .89rem; }
+    .card ul { margin: 9px 0 0; padding-left: 18px; }
+    .tag { display: inline-block; padding: 5px 8px; color: var(--white); background: var(--deep-2); font: 800 .63rem/1 var(--mono); letter-spacing: .08em; }
+    .tag.fact { background:var(--blue); }.tag.sample{background:var(--gold)}.tag.infer{background:var(--signal)}.tag.target{background:var(--red)}
+    .metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:24px 0; }
+    .metric { min-height: 125px; padding: 18px; background: rgba(255,253,247,.8); border:1px solid var(--line); }
+    .metric b { display:block; margin-bottom:10px; color:var(--deep); font:700 2rem/1 var(--serif); }
+    .metric small { display:block; color:var(--muted); font-size:.74rem; line-height:1.45; }
+    .table-wrap { overflow:auto; background:rgba(255,253,247,.72); border:1px solid var(--line); }
+    table { width:100%; border-collapse:collapse; min-width:980px; }
+    th,td { padding:12px 13px; border-bottom:1px solid #d6d0c3; text-align:left; vertical-align:top; font-size:.79rem; }
+    th { position:sticky; top:0; z-index:2; color:var(--white); background:var(--deep); font:700 .67rem/1.3 var(--mono); letter-spacing:.04em; white-space:nowrap; }
+    tbody tr:hover { background:rgba(196,219,85,.12); }
+    tbody tr:last-child td { border-bottom:0; }
+    .target-row { background:rgba(232,93,53,.055); }
+    .target-row td:first-child { font-weight:800; color:var(--signal); }
+    .muted { color:var(--muted); }
+    .yes { color:#176b50; font-weight:800; }.partial{color:#a06f16;font-weight:800}.no{color:var(--red);font-weight:800}.na{color:#7a7d79}
+    .legend,.filterbar { display:flex; gap:8px; flex-wrap:wrap; margin:15px 0; }
+    .legend span,.filterbar button { border:1px solid var(--line); padding:7px 10px; background:rgba(255,253,247,.62); color:var(--ink); font:700 .66rem/1 var(--mono); }
+    .filterbar button { cursor:pointer; border-radius:999px; }
+    .filterbar button.active,.filterbar button:hover { color:var(--white); background:var(--deep); border-color:var(--deep); }
+    .heat { text-align:center; font-weight:900; font-family:var(--mono); min-width:48px; }
+    .h5 { background:#c5dd66; }.h4 { background:#dce79f; }.h3 { background:#f0d797; }.h2 { background:#efb08d; }.h1 { background:#dc8981; }.h0 { background:#d8d4ca; }
+    .avg { font-weight:900; color:var(--deep); }
+    .bar-chart { display:grid; gap:9px; margin:20px 0; }
+    .bar-row { display:grid; grid-template-columns:155px minmax(160px,1fr) 88px; gap:12px; align-items:center; font-size:.78rem; }
+    .bar-track { height:15px; background:#ddd7ca; position:relative; }
+    .bar { height:100%; min-width:2px; background:var(--blue); }
+    .bar.issue { background:var(--signal); }.bar.pr{background:var(--blue)}
+    .bar-value { text-align:right; font:800 .68rem/1 var(--mono); }
+    .pipeline { display:grid; grid-template-columns:repeat(5,minmax(125px,1fr)); gap:9px; margin:26px 0; }
+    .stage { min-height:160px; padding:18px 15px; color:var(--white); background:var(--deep); position:relative; }
+    .stage:nth-child(even){background:var(--deep-2)}
+    .stage::after { content:"→"; position:absolute; z-index:2; right:-13px; top:46%; color:var(--signal); font-size:1.3rem; font-weight:900; }
+    .stage:last-child::after { display:none; }
+    .stage i { display:block; color:var(--lime); font:800 .63rem/1 var(--mono); font-style:normal; }
+    .stage b { display:block; margin:10px 0 6px; }
+    .stage span { color:#c7d6d0; font-size:.75rem; line-height:1.45; }
+    .scoreboard { display:grid; grid-template-columns:1.05fr .95fr; gap:18px; }
+    .score-panel { padding:26px; color:var(--white); background:var(--deep); }
+    .score-panel .n { color:var(--lime); font:700 5rem/.9 var(--serif); }
+    .score-panel p { color:#c6d4cf; }
+    .gaps { display:grid; gap:9px; }
+    .gap { display:grid; grid-template-columns:90px 1fr; gap:12px; padding:13px 15px; background:rgba(255,253,247,.74); border-left:5px solid var(--gold); }
+    .gap b { font:800 .68rem/1.4 var(--mono); color:var(--deep); }
+    .gap span { color:var(--muted); font-size:.82rem; }
+    .book { display:grid; grid-template-columns:150px minmax(0,1fr); gap:20px; padding:25px 0; border-top:1px solid var(--line); }
+    .book:first-child { border-top:0; }
+    .book-index { font:800 .67rem/1.5 var(--mono); color:var(--signal); }
+    .book h3 { font:700 1.5rem/1.2 var(--serif); }
+    .book p { color:var(--muted); }
+    .lens { display:inline-block; margin:2px 4px 2px 0; padding:4px 7px; color:var(--deep); background:rgba(196,219,85,.45); font:700 .63rem/1 var(--mono); }
+    .roadmap { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .phase { min-height:250px; padding:21px; background:rgba(255,253,247,.78); border-top:5px solid var(--signal); }
+    .phase:nth-child(2){border-color:var(--gold)}.phase:nth-child(3){border-color:var(--blue)}.phase:nth-child(4){border-color:var(--lime)}
+    .phase .week { font:800 .65rem/1 var(--mono); color:var(--signal); }
+    .phase ul { padding-left:17px; color:var(--muted); font-size:.82rem; }
+    .exit { display:block; margin-top:13px; color:#19694f; font:800 .65rem/1.5 var(--mono); }
+    .source-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; counter-reset:src; }
+    .source { position:relative; min-width:0; padding:15px 16px 15px 50px; background:rgba(255,253,247,.7); border:1px solid var(--line); }
+    .source::before { counter-increment:src; content:counter(src,decimal-leading-zero); position:absolute; left:16px; top:17px; color:var(--signal); font:800 .68rem/1 var(--mono); }
+    .source a { font-size:.85rem; font-weight:700; overflow-wrap:anywhere; }
+    .source span { display:block; color:var(--muted); font-size:.72rem; }
+    details { margin:10px 0; background:rgba(255,253,247,.66); border:1px solid var(--line); }
+    summary { cursor:pointer; padding:13px 15px; color:var(--deep); font-weight:800; }
+    details > div { padding:0 16px 15px; color:var(--muted); font-size:.83rem; }
+    footer { padding:32px 0 60px; color:#77807b; font:700 .68rem/1.7 var(--mono); }
+    .reveal { opacity:0; transform:translateY(12px); transition:.5s ease; }
+    .reveal.on { opacity:1; transform:none; }
+    @media(max-width:1050px){.grid4,.metrics,.roadmap{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.scoreboard{grid-template-columns:1fr}.pipeline{grid-template-columns:1fr}.stage::after{content:"↓";right:50%;top:auto;bottom:-20px}.section-head{grid-template-columns:110px 1fr}}
+    @media(max-width:720px){.topbar-inner{width:calc(100% - 24px);display:block;padding-top:13px}.brand{margin-bottom:7px}.print{display:none}nav a{padding:10px 0 13px}.hero-inner,.shell{width:calc(100% - 28px)}.hero-inner{padding-top:65px}.eyebrow{align-items:flex-start;font-size:.62rem;line-height:1.45;letter-spacing:.1em}.eyebrow::before{flex:none;margin-top:.42em}h1{font-size:clamp(2.65rem,13vw,3.25rem);line-height:.96;letter-spacing:-.045em}.hero-lead{font-size:1.05rem;line-height:1.65}.hero-meta{margin-top:30px}.hero-score{grid-template-columns:1fr}.section-head{grid-template-columns:1fr;gap:5px}.section-head h2{font-size:clamp(2rem,10vw,2.75rem);line-height:1.04}.grid2,.grid4,.metrics,.roadmap,.source-grid{grid-template-columns:1fr}.bar-row{grid-template-columns:105px 1fr 70px}.book{grid-template-columns:1fr;gap:2px}.gap{grid-template-columns:1fr}.hero{min-height:780px}}
+    @media print{.topbar,.progress,.filterbar,.print{display:none!important}.hero{min-height:0;break-after:page}.reveal{opacity:1;transform:none}.shell,.hero-inner{width:100%}section{padding:35px 0}.card,.metric,.phase,.source,.table-wrap{break-inside:avoid}body{background:#fff}.source-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#verdict">结论</a><a href="#method">口径</a><a href="#landscape">全景</a><a href="#matrix">矩阵</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#governance">治理</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Infrastructure × Community Health · 2026.08.24</div>
+      <h1>MindIE-SD<br>社区运行系统审计</h1>
+      <p class="hero-lead">不只问“代码能不能跑”，而是追问一个开源项目能否稳定地接纳变更、发现回归、发布版本、回答用户、培养维护者，并把昇腾多模态生态的协作成本持续降下来。</p>
+      <div class="hero-meta"><span class="pill">UT / E2E / NIGHTLY</span><span class="pill">BUILD TIME</span><span class="pill">DOCS / CI/CD</span><span class="pill">PERF / QUALITY</span><span class="pill">RELEASE / BOTS</span><span class="pill">COMPATIBILITY</span><span class="pill">GOVERNANCE / CHAOSS</span></div>
+      <div class="hero-score"><div class="score-big">2.9<span style="font-size:1.2rem"> / 5</span></div><div class="score-copy"><b>基础设施已成型，持续运营尚未闭环</b><span>强在代码质量、双语文档和 PR 多架构构建；弱在公开 E2E/nightly、构建时长可观测、发布自动化、机器人分诊和贡献者晋升机制。</span></div></div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="verdict" class="reveal">
+      <div class="section-head"><div class="secno">01 / VERDICT</div><div><span class="kicker">Executive readout</span><h2>不是“缺 CI”，而是 PR 门禁之后出现断层</h2><p class="lead">MindIE-SD 已具备一个企业主导型开源项目的基本骨架：3 条公开 GitCode workflow、x86/ARM 多 ABI 构建、CPU 友好 UT、pre-commit、增量测试、覆盖率门禁、双语 Sphinx/ReadTheDocs、OWNERS 与治理文档。真正拉开它与第一梯队差距的，是 merge 后、nightly、release 三段没有形成公开且可量化的持续看护。</p></div></div>
+      <div class="grid3">
+        <article class="card good"><span class="tag fact">已观察事实</span><h3>PR 基础门禁有真实工程深度</h3><p>文档变更可跳过构建；非文档变更并行执行 x86 ABI1、ARM ABI1、ARM ABI0 构建和 ARM UT；新增 Python 文件设 60% 行覆盖、30% 分支覆盖门槛。</p></article>
+        <article class="card warn"><span class="tag fact">公开缺口</span><h3>没有 E2E / nightly / release workflow</h3><p>当前树中未观察到公开的 E2E 目录、定时 workflow、性能回归门禁或发布流水线。NPU 精度与模型兼容性更多体现为文档/示例能力，而不是持续回归资产。</p></article>
+        <article class="card risk"><span class="tag infer">运营推断</span><h3>“微信群快答”可能制造隐性支持债</h3><p>README 将微信群作为快速交流入口，但关键决策、FAQ 与故障经验若不回流公开 Issue/文档，会让搜索者重复提问，也让维护者承担不可复用的私域答疑。</p></article>
+      </div>
+      <div class="callout"><strong>一句话策略：</strong>先不追求复制 vLLM/SGLang 的全部规模；优先把现有 PR 构建/UT 资产接成 <em>PR → merge → nightly → release</em> 四段闭环，再用分目录 OWNERS、贡献者阶梯和 CHAOSS 指标把“谁负责、多久响应、何时升级”公开化。</div>
+      <div class="metrics"><div class="metric"><b>3</b><small>公开 GitCode workflow<br>PR 主流程 + 构建复用 + UT 复用</small></div><div class="metric"><b>84</b><small>当前树中 test-like Python 文件<br>是文件数，不是 test case 数</small></div><div class="metric"><b>0</b><small>公开定时 workflow / E2E 目录<br>“未观察到”不等于内部没有</small></div><div class="metric"><b>126</b><small>GitCode open issues<br>2026-08-24 公开快照</small></div><div class="metric"><b>35</b><small>GitCode open PRs<br>公开快照</small></div></div>
+    </section>
+
+    <section id="method" class="reveal">
+      <div class="section-head"><div class="secno">02 / METHOD</div><div><span class="kicker">Evidence before score</span><h2>事实、样本、推断和目标，四种证据不混写</h2><p class="lead">技术事实来自各项目 2026-08-24 当前默认分支的仓库树、官方文档与公开 workflow；仓库规模来自 GitHub/GitCode 公开页面/API；治理效率采用最近关闭项的滚动样本。所有评分都是分析判断，不是社区官方评级。</p></div></div>
+      <div class="legend"><span><span class="tag fact">事实</span> 仓库/官方文档可直接验证</span><span><span class="tag sample">样本</span> 有窗口和样本量限制</span><span><span class="tag infer">推断</span> 从事实推导的分析</span><span><span class="tag target">目标</span> 建议 SLO，不是现状</span></div>
+      <div class="grid2">
+        <article class="card"><h3>对标集：两类社区，不能只排一个榜</h3><ul><li><b>通用推理/后端：</b>vLLM、vllm-ascend、SGLang、TensorRT-LLM。</li><li><b>多模态生成：</b>vLLM-Omni、Cache-DiT、LightX2V、FastVideo、DiffSynth-Studio。</li><li><b>审计对象：</b>MindIE-SD，既是 NPU 加速套件，又向多个上层社区提供后端能力。</li></ul></article>
+        <article class="card"><h3>滚动效率样本的正确读法</h3><ul><li>GitHub Issue：最近更新的 30 个已关闭 Issue，其“创建→关闭”年龄中位数。</li><li>GitHub PR：最近 30 个 closed PR 中已合入项的“创建→合入”中位数。</li><li>GitCode：最近 10 个公开关闭 Issue / 合入 PR。</li><li>它不测首次响应；高值可能代表主动清理旧债，小时级低值也可能代表维护者自合并或机器人。</li></ul></article>
+      </div>
+      <details><summary>评分规则（0–5）</summary><div><b>0</b> 未观察到资产；<b>1</b> 手工/零散；<b>2</b> 有基础入口但未形成门禁；<b>3</b> PR 级可重复且有文档；<b>4</b> PR/merge/nightly/release 多层闭环并可观测；<b>5</b> 元数据驱动、跨硬件、成本治理、自动恢复和公开运营机制均成熟。总分是 11 维简单平均，用于定位差距，不用于替代逐项证据。</div></details>
+      <details><summary>当前提交快照</summary><div><code>MindIE-SD 881c739</code> · <code>vLLM 79bb395e</code> · <code>vllm-ascend 1a086ce8</code> · <code>SGLang 76d14018</code> · <code>TensorRT-LLM 958d651b</code> · <code>vLLM-Omni d150a4fd</code> · <code>Cache-DiT f86744a</code> · <code>LightX2V 08c0d480</code> · <code>FastVideo a837fe84</code> · <code>DiffSynth-Studio 72fb128e</code>。</div></details>
+    </section>
+
+    <section id="landscape" class="reveal">
+      <div class="section-head"><div class="secno">03 / LANDSCAPE</div><div><span class="kicker">Scale is context, not health</span><h2>先看规模与节奏，再看机制</h2><p class="lead">Star、fork 和关闭速度只能描述“社区负载”，不能证明治理健康。大型项目需要分层 ownership、机器人和硬件成本治理；小型项目可以很快合入，但如果没有贡献指南、发布流程和角色晋升，速度并不自动转化为可持续性。</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>类型</th><th>Stars</th><th>Forks</th><th>Open issue+PR</th><th>最近关闭 Issue 年龄中位</th><th>最近合入 PR 中位</th><th>样本说明</th></tr></thead><tbody>
+        <tr class="target-row" data-group="target"><td>MindIE-SD</td><td>NPU 多模态后端</td><td>87</td><td>136</td><td>161（126+35）</td><td>0.91 天</td><td>1.74 天</td><td>GitCode n=10 / n=10</td></tr>
+        <tr data-group="engine"><td>vLLM</td><td>通用引擎</td><td>89,869</td><td>21,112</td><td>6,997</td><td>62.11 天</td><td>3.83 天</td><td>Issue n=30；PR n=14</td></tr>
+        <tr data-group="engine"><td>vllm-ascend</td><td>NPU 插件</td><td>2,692</td><td>2,103</td><td>2,672</td><td>16.02 天</td><td>5.43 天</td><td>Issue n=30；PR n=16</td></tr>
+        <tr data-group="engine"><td>SGLang</td><td>通用引擎</td><td>32,353</td><td>8,151</td><td>4,910</td><td>60.66 天</td><td>2.52 天</td><td>Issue n=30；PR n=26</td></tr>
+        <tr data-group="engine"><td>TensorRT-LLM</td><td>通用引擎</td><td>14,462</td><td>2,687</td><td>1,459</td><td>338.54 天</td><td>3.86 天</td><td>Issue n=30；PR n=25；含旧债清理</td></tr>
+        <tr data-group="mm"><td>vLLM-Omni</td><td>多模态服务</td><td>6,291</td><td>1,539</td><td>1,679</td><td>11.39 天</td><td>1.38 天</td><td>Issue n=30；PR n=18</td></tr>
+        <tr data-group="mm"><td>Cache-DiT</td><td>扩散缓存</td><td>1,257</td><td>79</td><td>87</td><td>0.83 天</td><td>0.01 天</td><td>PR 小时级，需防自合并偏差</td></tr>
+        <tr data-group="mm"><td>LightX2V</td><td>视频推理</td><td>2,714</td><td>259</td><td>190</td><td>6.01 天</td><td>0.06 天</td><td>Issue n=30；PR n=24</td></tr>
+        <tr data-group="mm"><td>FastVideo</td><td>视频训练/推理</td><td>4,042</td><td>414</td><td>154</td><td>266.33 天</td><td>1.06 天</td><td>PR 快、Issue 旧债年龄高</td></tr>
+        <tr data-group="mm"><td>DiffSynth-Studio</td><td>模型生态</td><td>12,980</td><td>1,276</td><td>554</td><td>5.84 天</td><td>0.01 天</td><td>Issue n=30；PR n=24</td></tr>
+      </tbody></table></div>
+      <div class="callout light"><strong>不要误读：</strong>TensorRT-LLM 与 FastVideo 的高 Issue 年龄中位数说明“最近关闭的一批 Issue 很老”，它也可能是健康的 backlog 清理；Cache-DiT 与 DiffSynth 的分钟级 PR 中位数说明快速合入，但不能证明外部贡献者获得了同等速度。下一步应采集 CHAOSS 的 <em>Time to First Response</em>、首次 review、外部/内部作者拆分和 reopen 率。</div>
+    </section>
+
+    <section id="matrix" class="reveal">
+      <div class="section-head"><div class="secno">04 / MATRIX</div><div><span class="kicker">Eleven-dimensional maturity</span><h2>MindIE-SD 位于“结构化起步”层</h2><p class="lead">第一梯队的共同点不是 workflow 数量多，而是测试元数据、硬件路由、时机分层、构建/测试时间预算、失败治理、发布与文档都能互相闭环。MindIE-SD 已越过“脚本堆积”阶段，但尚未把资产编成一个可持续运行系统。</p></div></div>
+      <div class="filterbar" aria-label="矩阵筛选"><button class="active" data-filter="all">全部</button><button data-filter="target">MindIE-SD</button><button data-filter="engine">通用引擎 / 后端</button><button data-filter="mm">多模态社区</button></div>
+      <div class="table-wrap"><table id="score-table"><thead><tr><th>项目</th><th>测试</th><th>构建</th><th>文档/DX</th><th>CI/CD</th><th>性能</th><th>质量</th><th>发布</th><th>机器人</th><th>兼容性</th><th>治理</th><th>运营</th><th>均分</th></tr></thead><tbody>
+        <tr class="target-row" data-group="target"><td>MindIE-SD</td><td class="heat h3">2.5</td><td class="heat h3">3.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h2">1.5</td><td class="heat h4">3.5</td><td class="heat h3">3.0</td><td class="heat h3">2.5</td><td class="avg">2.9</td></tr>
+        <tr data-group="engine"><td>vLLM</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="avg">4.6</td></tr>
+        <tr data-group="engine"><td>vllm-ascend</td><td class="heat h5">4.8</td><td class="heat h5">4.5</td><td class="heat h5">4.3</td><td class="heat h5">4.8</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.8</td><td class="heat h5">5.0</td><td class="heat h4">4.0</td><td class="heat h4">3.7</td><td class="avg">4.5</td></tr>
+        <tr data-group="engine"><td>SGLang</td><td class="heat h5">5.0</td><td class="heat h5">4.7</td><td class="heat h4">4.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.8</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="avg">4.6</td></tr>
+        <tr data-group="engine"><td>TensorRT-LLM</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h3">3.0</td><td class="avg">4.6</td></tr>
+        <tr data-group="mm"><td>vLLM-Omni</td><td class="heat h5">4.8</td><td class="heat h5">4.5</td><td class="heat h5">4.7</td><td class="heat h5">4.8</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.8</td><td class="heat h4">3.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="avg">4.5</td></tr>
+        <tr data-group="mm"><td>Cache-DiT</td><td class="heat h3">2.5</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h4">3.5</td><td class="heat h5">4.5</td><td class="heat h3">3.0</td><td class="heat h4">3.5</td><td class="heat h2">2.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">3.1</td></tr>
+        <tr data-group="mm"><td>LightX2V</td><td class="heat h2">1.5</td><td class="heat h2">2.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h5">4.5</td><td class="heat h3">2.5</td><td class="heat h3">2.5</td><td class="heat h1">1.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.5</td></tr>
+        <tr data-group="mm"><td>FastVideo</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h3">2.5</td><td class="avg">3.9</td></tr>
+        <tr data-group="mm"><td>DiffSynth-Studio</td><td class="heat h1">1.0</td><td class="heat h2">2.0</td><td class="heat h4">4.0</td><td class="heat h2">2.0</td><td class="heat h3">3.0</td><td class="heat h2">1.5</td><td class="heat h4">3.5</td><td class="heat h1">1.0</td><td class="heat h5">4.5</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.5</td></tr>
+      </tbody></table></div>
+      <div class="legend"><span class="h5">4.5–5 领先</span><span class="h4">3.5–4.4 成熟</span><span class="h3">2.5–3.4 成型</span><span class="h2">1.5–2.4 初级</span><span class="h1">0.5–1.4 零散</span></div>
+      <div class="callout light"><strong>对标选择：</strong>测试与硬件治理优先学 SGLang / vllm-ascend / TensorRT-LLM；多模态分层和性能/质量分离优先学 vLLM-Omni；轻量发布与文档体验可参考 Cache-DiT；FastVideo 说明专业多模态社区也能建立较完整 CI，而不是只有通用引擎才做得到。</div>
+    </section>
+
+    <section id="testing" class="reveal">
+      <div class="section-head"><div class="secno">05 / TESTING</div><div><span class="kicker">UT → E2E → nightly → release</span><h2>MindIE-SD 的 UT 已经像一层，E2E/nightly 还不像系统</h2><p class="lead">当前测试文档明确区分 CPU 兼容与 NPU 依赖测试，提供 <code>--cpu_only</code> / <code>--npu_only</code> / <code>--all</code>，还具备增量 test finder。但公开 PR workflow 实际只调用 CPU 友好的 <code>run_UT_test.sh</code>；NPU 用例、模型 E2E、精度、性能和长稳没有公开触发时机与硬件归属。</p></div></div>
+      <div class="pipeline"><div class="stage"><i>L0 / CPU</i><b>逻辑 UT</b><span>配置、工具、编译逻辑；硬件 mock；每 PR 必跑。</span></div><div class="stage"><i>L1 / 1 NPU</i><b>算子/组件</b><span>真实 NPU 算子，小输入，不起完整模型服务。</span></div><div class="stage"><i>L2 / 1 NPU</i><b>模型 E2E</b><span>减层/随机权重；单模型基本推理、API、输出结构。</span></div><div class="stage"><i>L3 / 2–8 NPU</i><b>集成/兼容</b><span>并行、量化、缓存、编译、框架组合，merge 后运行。</span></div><div class="stage"><i>L4 / POOL</i><b>精度/性能/长稳</b><span>真实权重，nightly/weekly/release；基线与方差带。</span></div></div>
+      <div class="table-wrap"><table><thead><tr><th>社区</th><th>UT</th><th>E2E / 集成</th><th>Nightly / Weekly</th><th>资源治理亮点</th><th>MindIE-SD 可复制项</th></tr></thead><tbody>
+        <tr class="target-row"><td>MindIE-SD</td><td class="yes">CPU 模式 + coverage</td><td class="partial">仓内 NPU tests，但无公开 E2E 层</td><td class="no">未观察到公开定时流</td><td>文档变更跳过；增量 test finder</td><td>把既有 tests 注册成时机×硬件矩阵</td></tr>
+        <tr><td>vLLM</td><td class="yes">大规模 tests</td><td class="yes">test areas + hardware tests</td><td class="yes">nightly builds</td><td><code>source_file_dependencies</code> / 预编译 wheel</td><td>diff-aware 两级过滤</td></tr>
+        <tr><td>vllm-ascend</td><td class="yes">CPU-only 硬约束</td><td class="yes">PR / nightly / multi-node</td><td class="yes">A2/A3/A5/310P + weekly</td><td>模型减层、估时更新、精确 slash command</td><td>NPU 硬件路由与配置清单</td></tr>
+        <tr><td>SGLang</td><td class="yes">unit/kernel 注册</td><td class="yes">模型/后端/特性注册</td><td class="yes">多后端 scheduled</td><td><code>est_time + stage + runner_config</code>；failure monitor</td><td>用例注册表与失败巡检</td></tr>
+        <tr><td>TensorRT-LLM</td><td class="yes">pre-merge</td><td class="yes">显式 YAML test-db</td><td class="yes">post-merge Jenkins</td><td>最便宜够格 GPU；waive 必带 bug 链接</td><td>显式清单与豁免债务台账</td></tr>
+        <tr><td>vLLM-Omni</td><td class="yes">L1 CPU</td><td class="yes">L2/L3 模型与真实权重</td><td class="yes">L4 nightly / L5 weekly</td><td>L1/L2 &lt;15m、L3 &lt;30m、L4 &lt;3h</td><td>直接采用五层语义与时间预算</td></tr>
+        <tr><td>Cache-DiT</td><td class="yes">CPU tests workflow</td><td class="no">未观察到硬件 E2E 层</td><td class="partial">mkdocs 定时检查</td><td>轻量 CPU 验证适合算法库</td><td>保留为上游接口契约 smoke</td></tr>
+        <tr><td>LightX2V</td><td class="partial">仓内少量 tests</td><td class="no">无公开测试 CI</td><td class="no">无</td><td>仅 lint workflow</td><td>不是测试治理标杆</td></tr>
+        <tr><td>FastVideo</td><td class="yes">丰富测试资产</td><td class="yes">模型 local/E2E fixtures</td><td class="yes">full-suite/nightly markers</td><td>CI 架构文档、聚合状态、slash command</td><td>专业社区的轻量完整闭环</td></tr>
+        <tr><td>DiffSynth-Studio</td><td class="no">未观察到成体系 tests</td><td class="no">无</td><td class="no">无</td><td>发布导向</td><td>不宜作为质量基准</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>P0：先把“跑什么”显式化</h3><p>为每个测试文件补 <code>level</code>、<code>est_time</code>、<code>runner</code>、<code>framework</code>、<code>model</code>、<code>disabled_issue</code>。SGLang 的注册制是当前性价比最高的参考。</p></article><article class="card warn"><h3>P0：把性能与正确性分开</h3><p>模型能生成不代表精度对齐，sanity 也不代表性能稳定。nightly 至少拆功能、精度、性能三条历史曲线，阈值使用相对基线和方差带。</p></article><article class="card risk"><h3>P1：禁止无债主 skip</h3><p>所有跳过/豁免必须带原因、Issue、责任人和到期日；机器人每周巡检。目标不是“全绿”，而是“红得准、有人管、可恢复”。</p></article></div>
+    </section>
+
+    <section id="build" class="reveal">
+      <div class="section-head"><div class="secno">06 / BUILD & CI</div><div><span class="kicker">Build time is a product metric</span><h2>三条构建 lane 已有，构建时间却仍是黑箱</h2><p class="lead">MindIE-SD 的构建并非普通 Python wheel：<code>setup.py::CustomBuildPy</code> 会串联 AscendC/TIK custom OPP、PyTorch plugin、compile_commands 合并与 wheel 打包。PR 流水线并行构建 x86 ABI1、ARM ABI1、ARM ABI0，是正确方向；但公开 workflow 没有 step duration 归档、timeout、缓存命中率或历史趋势，因此无法回答“冷构建多久、哪段最慢、改动后退化多少”。</p></div></div>
+      <div class="scoreboard"><div class="score-panel"><div class="n">N/A</div><h3 style="color:#fff">公开可验证的完整构建时长</h3><p>仓库与公开页面没有给出可复用的 p50/p95 构建时长；本地非 CANN/NPU Windows 环境也不能等价复现。这里明确标记未知，不用一次非同构机器的测速冒充 CI 基线。</p><span class="tag target">必须补观测</span></div><div class="gaps"><div class="gap"><b>已具备</b><span>3 架构/ABI lane 并行、固定 Python 3.11 镜像、docs-only skip、<code>SOURCE_DATE_EPOCH</code>、wheel 模式。</span></div><div class="gap"><b>缺观测</b><span>阶段耗时、队列时间、冷/热构建、缓存命中、产物大小、失败归因、NPU·小时/runner·分钟。</span></div><div class="gap"><b>缺加速</b><span>未观察到 compiler cache、依赖层缓存、OPP/plugin 变更感知、预构建产物复用或 remote cache。</span></div><div class="gap"><b>缺发布链</b><span>PR 只验证 wheel 存在；未观察到公开签名、SBOM、provenance、PyPI/镜像发布和回滚自动化。</span></div></div></div>
+      <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>阶段</th><th>当前事实</th><th>建议采集</th><th>90 天目标 SLO</th><th>优化杠杆</th></tr></thead><tbody>
+        <tr><td>CodeCheck</td><td>pre-commit + gitleaks；每 PR</td><td>排队/执行/失败原因</td><td><span class="tag target">p95 ≤ 5m</span></td><td>镜像内置工具；只检查 diff</td></tr>
+        <tr><td>CPU UT</td><td>ARM runner；先完整 build 再运行</td><td>收集/执行/coverage 分段</td><td><span class="tag target">p95 ≤ 12m</span></td><td>纯 Python UT 不依赖 native full build</td></tr>
+        <tr><td>Native build</td><td>x86/ARM、ABI0/1；每次完整 ops/plugin</td><td>AscendC、TIK、plugin 各自耗时</td><td><span class="tag target">热构建 ≤ 15m</span></td><td>路径依赖、ccache/sccache、分层 artifact</td></tr>
+        <tr><td>PR critical path</td><td>多 lane 并行；无公开 p95</td><td>队列+最长 lane、取消旧运行</td><td><span class="tag target">p95 ≤ 30m</span></td><td>auto-cancel、diff-aware、失败精确重跑</td></tr>
+        <tr><td>Nightly</td><td class="no">未观察到</td><td>NPU·小时、模型缓存、flaky、性能漂移</td><td><span class="tag target">≤ 3h / 95% 准点</span></td><td>模型分片、历史基线、失败隔离</td></tr>
+        <tr><td>Release</td><td>3 releases / 4 tags；无公开 workflow</td><td>重现性、签名、SBOM、发布耗时</td><td><span class="tag target">≤ 60m + 可回滚</span></td><td>从已验证 commit 提升产物，禁止重编</td></tr>
+      </tbody></table></div>
+      <div class="callout light"><strong>关键设计：</strong>PR 构建产物应成为后续测试和发布的输入，而不是每个阶段重新编译。以 commit SHA + 架构 + ABI + Torch/CANN 组合为 artifact key；只有 <code>csrc/</code>、build scripts 或依赖变化才重建 native 层。发布则“提升”已在 release candidate 流程验证过的同一 artifact。</div>
+    </section>
+
+    <section id="operations" class="reveal">
+      <div class="section-head"><div class="secno">07 / OPERATIONS</div><div><span class="kicker">Docs · quality · release · bots · compatibility</span><h2>文档与质量领先于发布和机器人</h2><p class="lead">MindIE-SD 的用户入口已经比很多同规模多模态项目完整：中英文 Sphinx、ReadTheDocs、开发镜像、测试/构建/性能指南、支持矩阵、PyPI 包和 vLLM-Omni 镜像说明。薄弱点在于这些资产尚未被 release 与机器人持续验证。</p></div></div>
+      <div class="grid4">
+        <article class="card good"><span class="tag fact">DOCS / 4.0</span><h3>双语站点是明显优势</h3><p>ReadTheDocs 使用 Python 3.11 分别构建 zh/en，根入口重定向中文；有安装、架构、特性、开发、治理和 release note。下一步应将链接检查、示例 doctest 和 API reference 设门禁。</p></article>
+        <article class="card good"><span class="tag fact">QUALITY / 4.0</span><h3>质量工具链覆盖 Python/C++</h3><p>ruff、mypy、clang-format、clang-tidy、markdownlint、gitleaks、pre-commit、coverage 均可见；新增文件覆盖率门槛是正确的增量策略。缺全仓趋势、复杂度与重复代码看板。</p></article>
+        <article class="card warn"><span class="tag fact">RELEASE / 2.5</span><h3>有版本，没有公开 release engineering</h3><p>公开快照显示 3 releases、4 tags，PyPI 有 3.0.0；但未观察到 release workflow、版本日历、签名/SBOM/provenance、RC 验证清单和兼容窗口政策。</p></article>
+        <article class="card risk"><span class="tag fact">BOTS / 1.5</span><h3>合入机器人不等于运营机器人</h3><p><code>ascend-robot</code> 参与合入，但仓内没有 labeler、stale、welcome、review routing、rerun、backport、failure monitor 等公开 workflow。35 个 open PR 和 126 个 open Issue 已值得自动分诊。</p></article>
+      </div>
+      <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>第一梯队参考</th><th>判定</th><th>下一动作</th></tr></thead><tbody>
+        <tr><td>文档网站</td><td>中英 Sphinx + RTD + 本地预览</td><td>vLLM-Omni / FastVideo 的完整贡献者文档</td><td class="yes">成熟</td><td>linkcheck、代码片段执行、版本化站点</td></tr>
+        <tr><td>开发环境</td><td>Linux、Py≥3.10；Torch/TorchNPU 2.6–2.10；CANN 9.0.1；A2/A3 镜像；devcontainer</td><td>TensorRT-LLM devcontainer；vllm-ascend CPU/单卡/多卡说明</td><td class="yes">较完整</td><td>x86 CPU dev image + 一键 smoke</td></tr>
+        <tr><td>兼容矩阵</td><td>框架×模型×硬件×特性表</td><td>vllm-ascend 版本/硬件/E2E config 数据库</td><td class="partial">文档型</td><td>矩阵即代码：每个 ✅ 绑定 nightly case 和 last-green SHA</td></tr>
+        <tr><td>性能测试</td><td>profiling 方法、特性 benchmark、示例数据</td><td>vLLM dashboard；SGLang CI stats；vLLM-Omni L4 perf</td><td class="partial">手册型</td><td>历史 dashboard + 相对基线门禁 + 环境指纹</td></tr>
+        <tr><td>发布</td><td>PyPI、镜像说明、release notes</td><td>SGLang 多后端 wheel/docker；vLLM-Omni release pipeline</td><td class="partial">人工链</td><td>RC→签名→SBOM→PyPI/镜像→回滚自动化</td></tr>
+        <tr><td>机器人</td><td>平台合入机器人</td><td>SGLang failure monitor / rerun / labeler；K8s Prow</td><td class="no">功能不足</td><td>先上 labeler、welcome、stale、retest、backport、triage SLA</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>兼容性最重要的改造：</strong>把“支持矩阵”从人工维护的表格变成生成物。源数据至少包含 <code>framework / model / hardware / torch / torch_npu / CANN / dtype / feature / test_id / last_green / owner</code>；nightly 结果反向刷新站点，任何 ✅ 都能点到最近一次通过证据。</div>
+    </section>
+
+    <section id="governance" class="reveal">
+      <div class="section-head"><div class="secno">08 / GOVERNANCE</div><div><span class="kicker">Ownership is not yet a ladder</span><h2>角色名单清楚，但权力如何获得仍不清楚</h2><p class="lead">根目录 <code>OWNERS</code> 已列出 5 位 branch keeper、5 位 approver、18 位 reviewer；治理文档也说明 reviewer→approver→branch keeper 的合入链。这比许多同规模多模态项目成熟。但文档没有回答晋升标准、提名/投票、任期、emeritus、罢免、厂商多样性和非代码贡献路径。</p></div></div>
+      <div class="grid3"><article class="card good"><h3>可见的责任链</h3><p>PR 模板要求 Issue、Purpose、Test Plan、Test Report；治理要求 reviewer 评审、approver 确认、branch keeper 合入。角色与受保护分支责任相匹配。</p></article><article class="card warn"><h3>root OWNERS 会成为漏斗</h3><p>仓库跨 ops、compilation、quantization、cache、docs、release 多个专业域，却只有根级名单。所有通知和审批容易集中到同一批人，无法显示实际模块所有权。</p></article><article class="card risk"><h3>公开沟通存在“双轨”</h3><p>Issue 是正式入口，微信群是快速入口。若 RFC、故障决策和路线优先发生在群内，外部贡献者无法检索上下文，也难以靠公开贡献积累 merit。</p></article></div>
+      <div class="bar-chart" aria-label="最近关闭 Issue 年龄中位数"><div class="bar-row"><b>MindIE-SD</b><div class="bar-track"><div class="bar issue" style="width:.3%"></div></div><span class="bar-value">0.91d / n10</span></div><div class="bar-row"><b>vLLM-Omni</b><div class="bar-track"><div class="bar issue" style="width:3.4%"></div></div><span class="bar-value">11.39d / n30</span></div><div class="bar-row"><b>vllm-ascend</b><div class="bar-track"><div class="bar issue" style="width:4.7%"></div></div><span class="bar-value">16.02d / n30</span></div><div class="bar-row"><b>vLLM</b><div class="bar-track"><div class="bar issue" style="width:18.3%"></div></div><span class="bar-value">62.11d / n30</span></div><div class="bar-row"><b>FastVideo</b><div class="bar-track"><div class="bar issue" style="width:78.7%"></div></div><span class="bar-value">266.33d / n30</span></div><div class="bar-row"><b>TensorRT-LLM</b><div class="bar-track"><div class="bar issue" style="width:100%"></div></div><span class="bar-value">338.54d / n30</span></div></div>
+      <div class="callout light"><strong>滚动样本的积极信号：</strong>MindIE-SD 最近公开样本闭环很快，说明维护团队当前响应积极；但它不足以证明长期可持续。真正要看的是首次人工响应、未关闭项年龄分布、外部贡献 PR 首 review、reviewer 负载、reopen、无响应率和贡献者留存。</div>
+      <div class="table-wrap"><table><thead><tr><th>治理问题</th><th>当前可见状态</th><th>风险</th><th>建议机制</th></tr></thead><tbody>
+        <tr><td>谁能 review / approve / merge？</td><td class="yes">OWNERS 明确</td><td>只有根级 ownership</td><td>分目录 OWNERS + team alias + 每版本活跃性审计</td></tr>
+        <tr><td>如何成为 reviewer / approver？</td><td class="no">未文档化</td><td>外部贡献没有可见成长路径</td><td>Contributor Ladder：贡献者→成员→reviewer→approver→maintainer</td></tr>
+        <tr><td>如何做重大决策？</td><td class="partial">要求 RFC，但缺模板/索引/投票规则</td><td>重要决定可能依赖私域沟通</td><td>RFC repo/目录、最短公开评议期、决策记录和异议处理</td></tr>
+        <tr><td>如何发布？</td><td class="partial">branch keeper 负责就绪</td><td>发布标准不可审计</td><td>Release Team、公开 checklist、RC 期、签名与投票记录</td></tr>
+        <tr><td>如何退出/轮换？</td><td class="no">未观察到 emeritus/移除机制</td><td>名单陈旧、bus factor 隐藏</td><td>活跃窗口、emeritus、无活动自动提醒、替补培养</td></tr>
+        <tr><td>如何衡量社区健康？</td><td class="no">未观察到公开 dashboard</td><td>只能靠印象管理 backlog</td><td>CHAOSS starter + CI cost + compatibility last-green 看板</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="books" class="reveal">
+      <div class="section-head"><div class="secno">09 / CLASSICS</div><div><span class="kicker">Books are operating lenses</span><h2>经典框架不是口号，而是检查表</h2><p class="lead">把经典书籍和成熟基金会经验放进同一张审计表，可以看出 MindIE-SD 的主要挑战不是技术资产不足，而是“公开、可复用、可晋升、可量化”四个社区机制尚未跟上代码演进速度。</p></div></div>
+      <div class="book"><div class="book-index">01 / FOGEL<br>Producing OSS</div><div><h3>降低贡献者的“首次成功成本”</h3><span class="lens">透明入口</span><span class="lens">发布节奏</span><span class="lens">可咀嚼任务</span><p>MindIE-SD 已有贡献指南、PR 模板、devcontainer、测试与构建文档；下一步不是再写一份概述，而是让一个外部开发者在无 NPU 环境完成“fork→CPU UT→PR→自动 reviewer→首次反馈”。发布日历、good first issue、已知限制和版本兼容窗口也应公开。</p></div></div>
+      <div class="book"><div class="book-index">02 / EGHBAL<br>Working in Public</div><div><h3>这是一个正在“stadium 化”的企业项目</h3><span class="lens">用户≫贡献者</span><span class="lens">维护者压力</span><span class="lens">私域债务</span><p>随着 vLLM-Omni、Cache-DiT、LightX2V 等生态入口增多，旁观用户会比深度贡献者增长更快。微信群能降低单次答疑延迟，却可能扩大维护者重复劳动。应设“群聊→Issue/FAQ 回流”制度、支持边界、问题模板和轮值 triage，避免核心工程师成为永远在线的客服。</p></div></div>
+      <div class="book"><div class="book-index">03 / ASF<br>Apache Way</div><div><h3>单厂商起步不是问题，权力只在雇佣关系中才是问题</h3><span class="lens">Community over Code</span><span class="lens">公开沟通</span><span class="lens">Merit</span><span class="lens">厂商中立</span><p>现有角色名单显示清楚的公司维护结构，但未说明外部个体如何凭公开贡献获得 reviewer/approver 权限。建议发布晋升证据、公开提名与决策记录；所有技术决策从私域回写公共渠道，并定期披露组织/公司多样性，而非只统计 commit 数。</p></div></div>
+      <div class="book"><div class="book-index">04 / K8S<br>Community</div><div><h3>从根 OWNERS 走向模块 ownership 和 reviewer/approver 双阶段</h3><span class="lens">Contributor Ladder</span><span class="lens">OWNERS</span><span class="lens">SIG</span><span class="lens">Release Team</span><p>MindIE-SD 已有 reviewer、approver、branch keeper 三类角色，适合直接映射 Kubernetes 的两阶段评审。按 <code>ops / compilation / quantization / cache / docs / release</code> 建分目录 OWNERS，并让机器人自动建议 reviewer；建立轻量 SIG/working group 和 Release Team shadow，降低根级名单的通知过载。</p></div></div>
+      <div class="book"><div class="book-index">05 / CNCF<br>Contributor Strategy</div><div><h3>治理文档必须告诉贡献者“领导位置可达到”</h3><span class="lens">角色</span><span class="lens">晋升</span><span class="lens">非代码贡献</span><span class="lens">连续性</span><p>当前治理文件描述“谁在做什么”，还没有“怎样成为他们”。采用 CNCF Maintainer Council + Contributor Ladder 的轻量模板，补晋升、移除、emeritus、投票和非代码贡献路径；不要复制一个听起来漂亮但不符合实际的章程。</p></div></div>
+      <div class="book"><div class="book-index">06 / CHAOSS<br>Health Metrics</div><div><h3>从产出计数转向响应、风险和可持续性</h3><span class="lens">首次响应</span><span class="lens">变更请求</span><span class="lens">Bus factor</span><span class="lens">留存</span><p>Star、commit、closed issue 都是活动量，不等于健康。首期看板只需 8 项：Issue 首次人工响应、PR 首次 review、合入周期、未关闭年龄 p90、flaky、reviewer 负载、首次贡献成功率、90 天贡献者留存。按内部/外部作者拆分，才看得见社区摩擦。</p></div></div>
+      <div class="book"><div class="book-index">07 / TODO Group<br>OSPO</div><div><h3>衡量“上游影响”，而不只衡量下游代码量</h3><span class="lens">Outbound OSS</span><span class="lens">Upstream first</span><span class="lens">维护成本</span><p>MindIE-SD 的生态价值应包括：向 vLLM-Omni、Cache-DiT、LightX2V 等上游合入的 NPU 能力、被接受的接口设计、减少的 downstream patch、版本同步时延和跨社区维护者数量。OSPO 应帮助团队获得跨项目贡献时间和晋升认可，而不是只要求仓库内 commit。</p></div></div>
+    </section>
+
+    <section id="roadmap" class="reveal">
+      <div class="section-head"><div class="secno">10 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
+      <div class="roadmap">
+        <article class="phase"><span class="week">WEEK 0–2 / INVENTORY</span><h3>把存量变成资产</h3><ul><li>所有测试标 L0–L4、硬件、模型、框架、预计耗时</li><li>输出 build/UT 分阶段 duration</li><li>建立 skipped/flaky/compatibility 债务表</li><li>为 ops/compile/quant/cache/docs 划 owner</li></ul><span class="exit">EXIT → 可回答“跑什么、在哪跑、多久、谁负责”</span></article>
+        <article class="phase"><span class="week">WEEK 3–5 / CLOSE THE LOOP</span><h3>接通 merge 与 nightly</h3><ul><li>merge smoke：单 NPU + 减层模型</li><li>nightly：功能、精度、性能三条流</li><li>artifact 复用与 diff-aware 路由</li><li>失败自动建/关联 Issue，禁止裸 skip</li></ul><span class="exit">EXIT → 每个支持矩阵 ✅ 有 last-green</span></article>
+        <article class="phase"><span class="week">WEEK 6–8 / RELEASE</span><h3>版本成为可重复事件</h3><ul><li>发布 checklist、RC 窗口与 release team</li><li>同一 artifact 提升到 PyPI/镜像</li><li>SBOM、签名、provenance、回滚演练</li><li>兼容窗口与弃用政策</li></ul><span class="exit">EXIT → 从 tag 到可验证产物 ≤ 60m</span></article>
+        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>labeler、welcome、retest、stale、backport</li><li>Contributor Ladder + 分目录 OWNERS</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日</span></article>
+      </div>
+      <div class="table-wrap" style="margin-top:20px"><table><thead><tr><th>北极星指标</th><th>计算方式</th><th>初期目标</th><th>报警条件</th><th>Owner</th></tr></thead><tbody>
+        <tr><td>PR 首次 review</td><td>创建→首个人类 review/comment，内外部拆分</td><td>p50≤1d，p90≤2 工作日</td><td>连续 2 周 p90 超标</td><td>Contributor Experience</td></tr>
+        <tr><td>PR critical path</td><td>触发→所有必需 check 完成，不含排队另列</td><td>p95≤30m</td><td>同比回退 &gt;15%</td><td>CI Infra</td></tr>
+        <tr><td>Flaky rate</td><td>重跑转绿 / 失败测试运行</td><td>&lt;2%</td><td>单 case &gt;5% 自动隔离建单</td><td>Test Owner</td></tr>
+        <tr><td>兼容 last-green</td><td>矩阵 ✅ 距最近通过时间</td><td>核心组合≤24h</td><td>&gt;48h 或连续 2 红</td><td>Framework Owner</td></tr>
+        <tr><td>外部首次贡献成功率</td><td>首次 PR 90 天内合入 / 首次 PR</td><td>建立基线后季度提升</td><td>下降 &gt;10pp</td><td>Community Lead</td></tr>
+        <tr><td>Reviewer 负载集中度</td><td>Top 3 reviewer 承担的 review 比例</td><td>&lt;50%</td><td>&gt;65%</td><td>Maintainer Council</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>优先级排序：</strong>P0 是测试注册表、构建时长、merge/nightly、last-green；P1 是 release engineering、机器人、分目录 OWNERS；P2 才是更复杂的 SIG/选举制度和全量社区分析平台。先把机制跑起来，再提高治理复杂度。</div>
+    </section>
+
+    <section id="sources" class="reveal">
+      <div class="section-head"><div class="secno">11 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">在线信息核验于 2026-08-24。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
+      <h3>MindIE-SD 一手证据</h3>
+      <div class="source-grid">
+        <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD">MindIE-SD 官方 GitCode 仓库</a><span>仓库规模、默认分支、Issue/PR、release 与当前代码。</span></div>
+        <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD/tree/dev/.gitcode/workflows">GitCode workflows</a><span>PR 门禁、三构建 lane、UT、docs-only skip。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/test.md">测试指南</a><span>CPU/NPU 分类、入口、500 秒拆分建议。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/build_guide.md">构建指南</a><span>源码 wheel 构建与安装。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/community/governance.md">治理文档</a><span>branch keeper、approver、reviewer 与决策链。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/OWNERS">OWNERS</a><span>当前角色名单。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/.readthedocs.yaml">ReadTheDocs 配置</a><span>中英文构建与 Python 3.11。</span></div>
+        <div class="source"><a href="https://mindie-sd-docs.readthedocs.io/zh-cn/latest/zh/index.html">MindIE-SD 文档站</a><span>公开中文站点。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/features/supported_matrix.md">支持矩阵</a><span>框架、模型、硬件与特性组合。</span></div>
+        <div class="source"><a href="https://pypi.org/project/mindiesd/">mindiesd on PyPI</a><span>公开包版本与分发入口。</span></div>
+      </div>
+      <h3 style="margin-top:30px">对标社区一手证据</h3>
+      <div class="source-grid">
+        <div class="source"><a href="https://github.com/vllm-project/vllm/tree/main/.buildkite">vLLM Buildkite CI</a><span>test areas、硬件测试、release pipeline 与变更感知。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm/tree/main/docs/governance">vLLM Governance</a><span>治理与协作机制。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/developer_guide/contribution/testing.md">vllm-ascend Testing</a><span>CPU UT、PR E2E、nightly、多卡与减层模型。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/tree/main/.github/workflows">vllm-ascend workflows</a><span>A2/A3/A5/310P nightly/weekly、发布、机器人、覆盖率与估时。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/test/registered/README.md">SGLang Registered Tests</a><span>注册发现、unit/kernel/E2E/benchmark 分类。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/tree/main/.github/workflows">SGLang workflows</a><span>多后端 nightly、发布、失败监控、rerun 和 runner utilization。</span></div>
+        <div class="source"><a href="https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/developer-guide/ci-overview.md">TensorRT-LLM CI Overview</a><span>pre/post merge、test-db、waives、资源审批与精确触发。</span></div>
+        <div class="source"><a href="https://github.com/NVIDIA/TensorRT-LLM/tree/main/tests/integration/test_lists/test-db">TensorRT-LLM test-db</a><span>按硬件与 stage 的显式集成测试数据库。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-omni/blob/main/docs/contributing/ci/test_system_overview.md">vLLM-Omni Test System</a><span>L1–L5、时间预算、硬件、频率与目录语义。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-omni/tree/main/.buildkite">vLLM-Omni Buildkite</a><span>CUDA/AMD/NPU ready/merge/nightly/weekly 与 release。</span></div>
+        <div class="source"><a href="https://github.com/vipshop/cache-dit/tree/main/.github/workflows">Cache-DiT workflows</a><span>CPU tests、wheel、mkdocs 与 pre-commit。</span></div>
+        <div class="source"><a href="https://github.com/ModelTC/LightX2V/tree/main/.github/workflows">LightX2V workflows</a><span>公开 lint CI。</span></div>
+        <div class="source"><a href="https://github.com/hao-ai-lab/FastVideo/blob/main/docs/contributing/ci_architecture.md">FastVideo CI Architecture</a><span>专业多模态社区的分层 CI 与贡献者体验。</span></div>
+        <div class="source"><a href="https://github.com/modelscope/DiffSynth-Studio/tree/main/.github/workflows">DiffSynth-Studio workflow</a><span>公开发布流程。</span></div>
+      </div>
+      <h3 style="margin-top:30px">经典治理与指标</h3>
+      <div class="source-grid">
+        <div class="source"><a href="https://producingoss.com/">Producing Open Source Software, 2nd Ed.</a><span>Karl Fogel；开源项目运行手册与在线全文。</span></div>
+        <div class="source"><a href="https://press.stripe.com/working-in-public">Working in Public</a><span>Nadia Eghbal；现代开源生产、维护者压力与社区形态。</span></div>
+        <div class="source"><a href="https://www.apache.org/theapacheway/">The Apache Way</a><span>Community over Code、公开沟通、共识、merit 与厂商中立。</span></div>
+        <div class="source"><a href="https://community.apache.org/apache-way/apache-project-maturity-model.html">Apache Project Maturity Model</a><span>社区、发布、共识、可构建性与可持续性检查表。</span></div>
+        <div class="source"><a href="https://www.kubernetes.dev/docs/guide/owners/">Kubernetes OWNERS</a><span>reviewer/approver 双阶段、自动路由和 ownership 维护。</span></div>
+        <div class="source"><a href="https://github.com/kubernetes/community/blob/master/community-membership.md">Kubernetes Community Membership</a><span>贡献者阶梯与角色责任。</span></div>
+        <div class="source"><a href="https://contribute.cncf.io/projects/best-practices/templates/">CNCF Project Templates</a><span>Contributor Ladder、Governance、Maintainers 与 Reviewing 模板。</span></div>
+        <div class="source"><a href="https://www.chaoss.community/starter-project-health-metrics-model/">CHAOSS Starter Metrics</a><span>首次响应、变更请求、活跃度与项目健康起步指标。</span></div>
+        <div class="source"><a href="https://github.com/todogroup/ospo101">OSPO 101</a><span>企业开源计划与组织能力。</span></div>
+        <div class="source"><a href="https://github.com/todogroup/todogroup.org/blob/main/content/en/guides/outbound-oss.md">TODO Outbound OSS Guide</a><span>企业外部开源流程、上游参与和指标策略。</span></div>
+      </div>
+      <div class="callout light"><strong>限制：</strong>公开仓库看不到内部 runner、未公开流水线、队列容量、真实 GPU/NPU 成本和私域沟通内容；“workflow 文件数”和“test-like 文件数”只用于基础设施指纹，不等同于实际覆盖率。评分应随仓库演进更新，并由项目维护者对事实错误进行校正。</div>
+    </section>
+  </main>
+  <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure & Operations Audit · Snapshot 2026-08-24 · Single-file offline report</div></footer>
+  <script>
+    const progress=document.getElementById('progress');
+    const updateProgress=()=>{const d=document.documentElement,max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%'};
+    addEventListener('scroll',updateProgress,{passive:true});updateProgress();
+    const reveals=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.04});
+    document.querySelectorAll('.reveal').forEach(e=>reveals.observe(e));
+    const sections=[...document.querySelectorAll('main section')],links=[...document.querySelectorAll('nav a')];
+    const spy=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-20% 0px -72% 0px'});
+    sections.forEach(s=>spy.observe(s));
+    document.querySelectorAll('.filterbar button').forEach(btn=>btn.addEventListener('click',()=>{
+      const f=btn.dataset.filter;document.querySelectorAll('.filterbar button').forEach(b=>b.classList.toggle('active',b===btn));
+      document.querySelectorAll('#score-table tbody tr').forEach(row=>row.hidden=f!=='all'&&row.dataset.group!==f);
+    }));
+  </script>
+</body>
+</html>
