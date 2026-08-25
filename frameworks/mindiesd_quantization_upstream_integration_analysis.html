@@ -48,7 +48,8 @@
     .stack{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;align-items:stretch;gap:8px}.layer{padding:24px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.layer small{display:block;font:700 9px/1 var(--mono);letter-spacing:.13em;color:var(--amber);margin-bottom:12px}.arrow{display:grid;place-items:center;color:var(--cyan);font:700 25px/1 var(--mono)}
     .filetree{font:13px/1.75 var(--mono);white-space:pre;overflow:auto;background:#030a09;border:1px solid var(--line2);border-radius:9px;padding:20px;color:#a9bbb6}.filetree b{color:var(--cyan)}
     .codeframe{border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#030a09;min-width:0}.filebar{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:#10201c;border-bottom:1px solid var(--line);font:700 10px/1.4 var(--mono);color:#d6e4df}.filebar span:last-child{color:var(--amber)}
-    .codebox{margin:0;padding:18px 20px;overflow:auto;max-width:100%;color:#c5d4d0;font:12.5px/1.68 var(--mono);white-space:pre}.codebox code{font:inherit;color:inherit;background:transparent;border:0;padding:0}.codebox .c{color:#70847e}.codebox .k{color:var(--amber)}.codebox .t{color:var(--cyan)}
+    .codebox{margin:0;padding:18px 20px;overflow:auto;max-width:100%;color:#c5d4d0;font:12.5px/1.68 var(--mono);white-space:pre}.codebox code{font:inherit;color:inherit;background:transparent;border:0;padding:0}.codebox .c{color:#70847e}.codebox .k{color:var(--amber)}.codebox .t{color:var(--cyan)}.codebox .keep{color:var(--cyan);font-weight:700}.codebox .rewrite{color:var(--amber);font-weight:700}.codebox .new{color:var(--blue);font-weight:700}
+    .marker-legend{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px}.marker-legend span{padding:6px 9px;border:1px solid var(--line);border-radius:999px;font:700 10px/1 var(--mono)}.marker-legend .keep{color:var(--cyan)}.marker-legend .rewrite{color:var(--amber)}.marker-legend .new{color:var(--blue)}
     .steps{counter-reset:item;display:grid;gap:12px}.stepcard{counter-increment:item;display:grid;grid-template-columns:52px 1fr;gap:16px;padding:20px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.stepcard:before{content:counter(item);display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--cyan);color:#032018;font:800 18px/1 var(--mono)}.stepcard p{margin:0;color:#aebdb9}
     .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px;background:rgba(6,15,13,.65)}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;vertical-align:top;padding:14px 15px;border-bottom:1px solid var(--line)}th{background:#10201c;color:#dce8e4;font:700 10px/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase}td{color:#aebdb9;font-size:14px}tr:last-child td{border-bottom:0}td:first-child{color:#edf5f2;font-weight:650}.yes{color:var(--cyan)!important}.mid{color:var(--amber)!important}.no{color:var(--red)!important}
     .term{position:relative;color:#dffaf3;text-decoration:underline dotted var(--cyan);text-underline-offset:3px;cursor:help;outline:none}.term:after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);z-index:50;width:max-content;max-width:290px;transform:translate(-50%,6px);padding:10px 12px;border:1px solid var(--line2);border-radius:7px;background:#142521;color:#effaf7;box-shadow:0 12px 30px rgba(0,0,0,.38);font:12px/1.5 var(--sans);white-space:normal;opacity:0;pointer-events:none;transition:.16s ease}.term:before{content:"";position:absolute;left:50%;bottom:calc(100% + 4px);border:5px solid transparent;border-top-color:var(--line2);transform:translateX(-50%);opacity:0}.term:hover:after,.term:focus:after,.term:hover:before,.term:focus:before{opacity:1;transform:translate(-50%,0)}.term:hover:before,.term:focus:before{transform:translateX(-50%)}
@@ -72,26 +73,26 @@
         <p class="dek">先给修改结论，再给代码。范围只包含 SGLang <code>multimodal_gen</code> 和 vLLM-Omni；两个主仓只用于确认它们继承的量化接口，不展开分析。</p>
         <div class="hero-meta"><span>只改 RUNTIME LAYER</span><span>SGLANG MULTIMODAL_GEN</span><span>VLLM-OMNI</span><span>LINEAR + FA + STEP</span></div>
       </div>
-      <aside class="hero-side"><div class="big">3</div><p>真正要提交的代码包：MindIE runtime facade、SGLang 多模态 bridge、vLLM-Omni bridge。</p><div class="snapshot"><div><b>不做</b><span>改图、模型替换、旧重框架迁移</span></div><div><b>不新造</b><span>checkpoint 格式、调度器、通用模型框架</span></div><div><b>复用</b><span>现有量化 layer、<abbr class="term" tabindex="0" data-tip="Neural Processing Unit：神经网络处理器，这里指 Ascend。">NPU</abbr> 算子与上游钩子</span></div></div></aside>
+      <aside class="hero-side"><div class="big">1+2</div><p>MindIE 增加一个稳定 runtime 入口；两个上游只修改现有 Ascend/NPU 特化类，不新增公开量化类型。</p><div class="snapshot"><div><b>不做</b><span>改图、模型替换、旧重框架迁移</span></div><div><b>不新增</b><span>quant config、CLI 名称、registry 项、FA backend</span></div><div><b>复用</b><span>现有 NPU 类、权重加载、fallback 与平台分发</span></div></div></aside>
     </div>
   </header>
 
   <main>
     <section id="verdict" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">01 / 先说结论</div><div><span class="kicker">What to change</span><h2>把 MindIE layer 改成可被调用的运行时对象</h2><p class="lead">不是让 MindIE 接管模型，也不是设计一套新格式。只增加一个很薄的 Python 接口：上游加载好权重后调用 <code>prepare()</code>，推理时调用 <code>forward()</code>。</p></div></div>
-      <div class="verdict"><div class="verdict-main"><b>最终调用关系只有一条：上游 Linear / Attention → 框架自己的量化方法 → MindIE runtime layer。</b><p>SGLang 和 vLLM-Omni 继续负责模型、权重加载、并行和调度。MindIE 只负责量化权重准备、激活量化和 <abbr class="term" tabindex="0" data-tip="Neural Processing Unit：神经网络处理器，这里指 Ascend。">NPU</abbr> 算子执行。</p></div><div class="verdict-side"><div><strong>3</strong><br><span>个薄层<br>不改模型图</span></div></div></div>
+      <div class="head"><div class="secno">01 / 先说结论</div><div><span class="kicker">What to change</span><h2>不加 MindIE 特化 config；改现有 Ascend/NPU 类</h2><p class="lead">你说的收口方式更符合现状：已有 NPU 量化逻辑本来就是从 MindIE 挪过去的。现在只需在现有特化类内部探测 MindIE；可用则委托 runtime，不可用则继续走当前本地实现。</p></div></div>
+      <div class="verdict"><div class="verdict-main"><b>保留现有 <code>mxfp8</code> / <code>mxfp4</code> / <code>int8</code> 配置与类名；只改方法体，不新增 <code>mindie_runtime</code> 量化类型。</b><p>这和 vLLM-Omni 的 FA、RoPE、LayerNorm 先例一致：NPU 特化实现里检查 MindIE 能力，存在则调用 MindIE，不存在或版本不具备新接口则走 native fallback。</p></div><div class="verdict-side"><div><strong>0</strong><br><span>个新公开 config<br>0 个新 registry 项</span></div></div></div>
       <div class="stack" style="margin-top:18px">
         <article class="layer"><small>多模态框架</small><h3>模型层与权重</h3><p>SGLang <code>LinearBase</code> 或 vLLM <code>LinearBase</code> 持有参数。</p></article><div class="arrow">→</div>
-        <article class="layer"><small>薄适配器</small><h3>Quant Method</h3><p>把 layer 上的 tensor 交给 MindIE，并把 forward context 转成统一参数。</p></article><div class="arrow">→</div>
+        <article class="layer"><small>现有 Ascend/NPU 特化类</small><h3>Quant Method 内部 if</h3><p><code>MindIE 可用 → runtime</code>；否则执行当前复制过来的本地代码。</p></article><div class="arrow">→</div>
         <article class="layer"><small>MindIE 加速库</small><h3>Runtime Layer</h3><p>复用 W8A8、MXFP8、MXFP4、量化 FA 以及 torch_npu/custom op。</p></article>
       </div>
       <div class="grid4" style="margin-top:16px">
-        <article class="card cyan"><h3>MindIE 改一处</h3><p>给 layer 增加从 tensor 构造的入口，去掉“必须自己读文件”的假设。</p></article>
-        <article class="card cyan"><h3>SGLang 加一类</h3><p>新增 <code>MindIERuntimeLinearMethod</code>，挂到 <code>multimodal_gen</code> 的量化 registry。</p></article>
-        <article class="card cyan"><h3>vLLM-Omni 加一类</h3><p>新增 <code>MindIERuntimeConfig/LinearMethod</code>，挂到 Omni factory。</p></article>
-        <article class="card amber"><h3>FA 单独接</h3><p><abbr class="term" tabindex="0" data-tip="Flash Attention：融合注意力计算，减少显存读写。">FA</abbr> 走两个多模态框架已有的 AttentionBackend，不塞进 LinearMethod。</p></article>
+        <article class="card cyan"><h3>MindIE 新增入口</h3><p>给 runtime layer 增加从 tensor 构造的稳定入口，不依赖 MindIE 自己读权重文件。</p></article>
+        <article class="card cyan"><h3>SGLang 改现有类</h3><p>修改 <code>NPUMXFP8DiffusionLinearMethod</code> 等现有 NPU 类的方法体。</p></article>
+        <article class="card cyan"><h3>vLLM-Omni 改现有类</h3><p>修改 <code>NPUMxfp8LinearMethod</code>、<code>NPUInt8LinearMethod</code> 等现有类。</p></article>
+        <article class="card amber"><h3>FA 沿用先例</h3><p>Omni 已经是“MindIE 存在则 FA，否则 SDPA/native”；不新增 backend，只把量化 FA 收口到稳定 runtime 出口。</p></article>
       </div>
-      <div class="callout"><strong>关于 checkpoint：</strong>无需新设计格式。上游现有 loader 继续读它支持的权重文件；adapter 只把加载后的 <code>torch.Tensor</code> 交给 MindIE。报告后文不再讨论 checkpoint 格式。</div>
+      <div class="callout"><strong>用户侧不变：</strong>模型仍配置 <code>mxfp8</code>/<code>mxfp4</code>/<code>int8</code>。MindIE 是否安装、是否命中新 runtime，只是 Ascend/NPU 特化类的内部选择。</div>
     </div></section>
 
     <section id="mindie-code" class="reveal"><div class="wrap">
@@ -169,6 +170,7 @@ def create_linear_runtime(algorithm: str) -> QuantLinearRuntime:
     return {
         "w8a8": W8A8Runtime,
         "mxfp8": MXFP8Runtime,
+        "mxfp8_online": MXFP8OnlineRuntime,
         "mxfp4": MXFP4Runtime,
         "mxfp4_dualscale": MXFP4DualScaleRuntime,
     }[algorithm]()</code></pre></div>
@@ -206,263 +208,270 @@ def create_linear_runtime(algorithm: str) -> QuantLinearRuntime:
     </div></section>
 
     <section id="sglang-code" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">03 / SGLang 多模态</div><div><span class="kicker">Patch 2 · multimodal_gen only</span><h2>新增一个 LinearMethod，替换当前重复的 NPU 算子代码</h2><p class="lead">只改 <code>python/sglang/multimodal_gen</code>。主仓 SRT 只提供设计参考，不是交付范围。现有 <code>NPUMXFP8DiffusionLinearMethod</code> 已经证明挂载点可用，但它把 MindIE 同类算子逻辑复制了一遍。</p></div></div>
-      <div class="codeframe"><div class="filebar"><span>python/sglang/multimodal_gen/runtime/layers/quantization/mindie_runtime.py</span><span>建议新增</span></div><pre class="codebox"><code>import torch
+      <div class="head"><div class="secno">03 / SGLang 多模态</div><div><span class="kicker">Patch 2 · modify existing NPU class</span><h2>不加类：在现有 NPU Method 里加 MindIE 分支</h2><p class="lead"><code>MXFP8Config</code>、注册名 <code>mxfp8</code>、权重参数注册和平台分发全部不动。只修改现有 <code>NPUMXFP8DiffusionLinearMethod</code>；MXFP4 等类按同一方式收口。</p></div></div>
+      <div class="marker-legend"><span class="keep">青色＝现有，保留</span><span class="rewrite">橙色＝现有方法，修改方法体</span><span class="new">蓝色＝新增私有逻辑</span></div>
+      <div class="codeframe"><div class="filebar"><span>.../quantization/mxfp8_npu.py</span><span>原文件内修改，不新增 config / registry</span></div><pre class="codebox"><code>from importlib.util import find_spec
 
-from mindiesd.runtime_quant import (
-    LinearMeta, RuntimeContext, create_linear_runtime
-)
-from sglang.multimodal_gen.runtime.layers.linear import LinearBase, LinearMethodBase
-from sglang.multimodal_gen.runtime.layers.quantization import register_quantization_config
-from sglang.multimodal_gen.runtime.layers.quantization.configs.base_config import QuantizationConfig
-from sglang.multimodal_gen.runtime.managers.forward_context import get_forward_context
-
-@register_quantization_config("mindie_runtime")
-class MindIERuntimeConfig(QuantizationConfig):
-    def __init__(self, algorithm="mxfp8", use_nz=False):
-        super().__init__()
-        self.algorithm = algorithm
-        self.use_nz = use_nz
-
-    @classmethod
-    def get_name(cls): return "mindie_runtime"
-
-    @classmethod
-    def get_supported_act_dtypes(cls):
-        return [torch.bfloat16, torch.float16]
-
-    @classmethod
-    def get_min_capability(cls): return 0  # 不是 CUDA capability
-
-    @staticmethod
-    def get_config_filenames(): return []
-
-    @classmethod
-    def from_config(cls, config):
-        return cls(
-            algorithm=config.get("algorithm", "mxfp8"),
-            use_nz=config.get("use_nz", False),
+<span class="new"># [新增私有 helper] 只做能力探测；不改变公开配置。</span>
+def _try_create_mindie_runtime(algorithm: str):
+    if find_spec("mindiesd") is None:
+        return None
+    try:
+        from mindiesd.runtime_quant import create_linear_runtime
+        return create_linear_runtime(algorithm)
+    except (ImportError, AttributeError, KeyError) as exc:
+        logger.warning_once(
+            "MindIE 已安装但不具备 %s runtime，使用现有 NPU fallback：%s",
+            algorithm, exc,
         )
-
-    def get_quant_method(self, layer, prefix):
-        if isinstance(layer, LinearBase):
-            return MindIERuntimeLinearMethod(self)
         return None
 
-class MindIERuntimeLinearMethod(LinearMethodBase):
-    def __init__(self, config):
-        self.config = config
-        self.runtime = create_linear_runtime(config.algorithm)
+<span class="keep"># [现有 config，不改] MXFP8Config.get_name() 仍返回 "mxfp8"；</span>
+<span class="keep"># [现有 config，不改] get_quant_method() 仍返回下面这个现有类。</span>
 
+<span class="keep"># [现有类，不新增]</span>
+class NPUMXFP8DiffusionLinearMethod(LinearMethodBase):
+    <span class="rewrite"># [现有方法：修改] 新增一个私有字段</span>
+    def __init__(self, quant_config: MXFP8Config):
+        self.quant_config = quant_config
+        self._mindie_runtime = _try_create_mindie_runtime("mxfp8_online")
+
+    <span class="keep"># [现有重写：原样保留] ModelWeightParameter / weight_loader / TP 分片</span>
     def create_weights(self, layer, *args, **kwargs):
-        # 沿用 SGLang 现有 ModelWeightParameter + weight_loader 写法。
-        # 这里注册 weight / weight_scale / bias 等参数，不让 MindIE 读文件。
-        register_sglang_quant_parameters(layer, self.config, *args, **kwargs)
+        ...  # 保留当前 lines 83–112 的完整方法体
 
+    <span class="rewrite"># [现有重写：修改] 先 MindIE，else 后是当前实现</span>
     def process_weights_after_loading(self, layer):
-        tensors = collect_quant_tensors(layer, self.config.algorithm)
-        layer._mindie_state = self.runtime.prepare(
-            tensors,
-            LinearMeta(
-                algorithm=self.config.algorithm,
-                input_size=layer.input_size_per_partition,
-                output_size=layer.output_size_per_partition,
-                dtype=layer.orig_dtype,
-                use_nz=self.config.use_nz,
-            ),
-        )
+        if self._mindie_runtime is not None:
+            layer._mindie_state = self._mindie_runtime.prepare(
+                {"weight": layer.weight.data},
+                LinearMeta(
+                    algorithm="mxfp8_online",
+                    input_size=layer.input_size_per_partition,
+                    output_size=layer.output_size_per_partition,
+                    dtype=layer.orig_dtype,
+                ),
+            )
+            return
 
+        <span class="keep"># [现有 fallback：原样保留]</span>
+        weight_fp = layer.weight.data
+        if weight_fp.dtype not in (torch.float16, torch.bfloat16):
+            weight_fp = weight_fp.to(torch.bfloat16)
+        if not weight_fp.is_npu:
+            weight_fp = weight_fp.to(f"npu:{torch.npu.current_device()}")
+        qw, w_scale = torch_npu.npu_dynamic_mx_quant(
+            weight_fp, dst_type=torch_npu.float8_e4m3fn
+        )
+        layer.weight = Parameter(qw, requires_grad=False)
+        layer.weight_scale_inv = Parameter(w_scale, requires_grad=False)
+
+    <span class="rewrite"># [现有重写：修改] MindIE 分支 + 当前 matmul fallback</span>
     def apply(self, layer, x, bias=None):
-        ctx = get_forward_context()
-        return self.runtime.forward(
-            x, layer._mindie_state, bias,
-            RuntimeContext(step_index=ctx.current_timestep),
-        )
+        if self._mindie_runtime is not None:
+            return self._mindie_runtime.forward(
+                x, layer._mindie_state, bias=bias
+            )
 
-# 上面两个 helper 的实现不是新框架：
-# 1. register_sglang_quant_parameters：直接保留现有
-#    mxfp8_npu.py::create_weights() 的 ModelWeightParameter 注册代码。
-# 2. collect_quant_tensors：只做下面这种属性收集。
-def collect_quant_tensors(layer, algorithm):
-    names = REQUIRED_TENSORS[algorithm]
-    return {name: getattr(layer, name).data for name in names}</code></pre></div>
+        <span class="keep"># [现有 fallback：以下主体原样保留]</span>
+        original_dtype = x.dtype
+        if original_dtype not in (torch.float16, torch.bfloat16):
+            x = x.to(torch.bfloat16)
+            original_dtype = torch.bfloat16
+        input_shape = x.shape
+        qx, input_scale = torch_npu.npu_dynamic_mx_quant(
+            x.reshape(-1, x.shape[-1]),
+            dst_type=torch_npu.float8_e4m3fn,
+        )
+        output = torch_npu.npu_quant_matmul(
+            qx, layer.weight.transpose(0, 1),
+            layer.weight_scale_inv.transpose(0, 1),
+            scale_dtype=torch_npu.float8_e8m0fnu,
+            pertoken_scale=input_scale,
+            pertoken_scale_dtype=torch_npu.float8_e8m0fnu,
+            bias=bias.to(torch.float32) if bias is not None else None,
+            output_dtype=original_dtype,
+            group_sizes=[1, 1, MXFP8_BLOCK_SIZE],
+        )
+        return output.reshape(*input_shape[:-1], output.shape[-1])</code></pre></div>
       <div class="grid3" style="margin-top:16px">
-        <article class="card cyan"><h3>保留</h3><p><code>LinearBase</code>、<code>ModelWeightParameter</code>、<code>weight_loader</code>、<abbr class="term" tabindex="0" data-tip="Tensor Parallel：把同一层权重切到多张卡。">TP</abbr>/<abbr class="term" tabindex="0" data-tip="Fully Sharded Data Parallel：参数、梯度和优化器状态分片。">FSDP</abbr> 流程全部保留。</p></article>
-        <article class="card red"><h3>删除重复</h3><p><code>mxfp8_npu.py</code>、<code>mxfp4_npu.py</code> 中重复的动态量化与 <code>npu_quant_matmul</code> 主体，改为委托 MindIE。</p></article>
-        <article class="card amber"><h3>注册</h3><p>在量化包初始化时 import 新模块；启动参数使用 <code>--quantization mindie_runtime</code>，算法作为配置项传入。</p></article>
+        <article class="card cyan"><h3>公开接口不变</h3><p>仍使用现有 <code>mxfp8</code>/<code>mxfp4</code> 配置。模型配置、命令行和 registry 都看不到 MindIE。</p></article>
+        <article class="card amber"><h3>fallback 暂时保留</h3><p>第一阶段保留原方法体做未安装/旧版 MindIE 的兼容路径，并记录 runtime 命中率。</p></article>
+        <article class="card blue"><h3>只新增私有状态</h3><p><code>_try_create_mindie_runtime()</code>、<code>self._mindie_runtime</code> 和 <code>layer._mindie_state</code>；不是新框架接口。</p></article>
       </div>
     </div></section>
 
     <section id="vllm-code" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">04 / vLLM-Omni</div><div><span class="kicker">Patch 3 · Omni only</span><h2>沿用 component 路由，只替换 NPU LinearMethod 的执行主体</h2><p class="lead">vLLM 主仓和 vLLM-Ascend 只提供 <code>QuantizationConfig</code>/<code>LinearMethodBase</code> 基类。真正修改放在 vLLM-Omni；其 <code>ComponentQuantizationConfig</code> 已能决定 transformer、text encoder、VAE 哪些组件启用量化。</p></div></div>
-      <div class="codeframe"><div class="filebar"><span>vllm_omni/quantization/mindie_runtime_config.py</span><span>建议新增</span></div><pre class="codebox"><code>import torch
-
-from mindiesd.runtime_quant import (
-    LinearMeta, RuntimeContext, create_linear_runtime
-)
-from vllm.model_executor.layers.linear import LinearBase, LinearMethodBase
-from vllm.model_executor.layers.quantization.base_config import QuantizationConfig
-from vllm_omni.diffusion.forward_context import (
-    get_forward_context, is_forward_context_available
-)
-
-class MindIERuntimeConfig(QuantizationConfig):
-    def __init__(self, algorithm="mxfp8", use_nz=False, **_):
-        super().__init__()
-        self.algorithm = algorithm
-        self.use_nz = use_nz
-
-    @classmethod
-    def get_name(cls): return "mindie_runtime"
-
-    @classmethod
-    def get_supported_act_dtypes(cls):
-        return [torch.bfloat16, torch.float16]
-
-    @classmethod
-    def get_min_capability(cls): return 0
-
-    @classmethod
-    def get_config_filenames(cls): return []
-
-    @classmethod
-    def from_config(cls, config): return cls(**config)
-
+      <div class="head"><div class="secno">04 / vLLM-Omni</div><div><span class="kicker">Patch 3 · modify existing NPU classes</span><h2>保留 DiffusionMXFP8Config；只改它返回的 NPU 类</h2><p class="lead"><code>DiffusionMXFP8Config.get_quant_method()</code> 已经按 NPU/XPU 分发，这是正确的社区接口。NPU 分支继续返回现有类；MindIE 是否存在是该类的内部实现细节，不应该变成用户配置。</p></div></div>
+      <div class="marker-legend"><span class="keep">青色＝现有，保留</span><span class="rewrite">橙色＝现有方法，修改方法体</span><span class="new">蓝色＝新增私有逻辑/标准 hook 重写</span></div>
+      <div class="codeframe"><div class="filebar"><span>vllm_omni/quantization/mxfp8_config.py</span><span>原文件内修改</span></div><pre class="codebox"><code><span class="keep"># [现有 config、现有方法：不改]</span>
+class DiffusionMXFP8Config(QuantizationConfig):
     def get_quant_method(self, layer, prefix):
-        if isinstance(layer, LinearBase):
-            return MindIERuntimeLinearMethod(self)
-        return None
+        if isinstance(layer, LinearBase) and current_omni_platform.is_npu():
+            if self.is_checkpoint_mxfp8_serialized:
+                return NPUMxfp8LinearMethod(self)
+            return NPUMxfp8OnlineLinearMethod(self)
+        ...  # XPU 等现有分支保持不变
 
-class MindIERuntimeLinearMethod(LinearMethodBase):
-    def __init__(self, config):
-        self.config = config
-        self.runtime = create_linear_runtime(config.algorithm)
+<span class="keep"># [现有 NPU 特化类，不新增]</span>
+class NPUMxfp8LinearMethod(MXFPLinearMethodBase):
+    <span class="rewrite"># [现有方法：修改] 依据现有 serialized 配置选择 runtime 算法</span>
+    def __init__(self, quant_config):
+        self.quant_config = quant_config
+        self.out_dtype = torch.get_default_dtype()
+        algorithm = (
+            "mxfp8" if quant_config.is_checkpoint_mxfp8_serialized
+            else "mxfp8_online"
+        )
+        self._mindie_runtime = _try_create_mindie_runtime(algorithm)
 
+    <span class="keep"># [现有重写：原样保留] weight / weight_scale 参数注册与 loader</span>
     def create_weights(self, layer, *args, **kwargs):
-        # 复用 vLLM 的参数类和 weight_loader；只注册所需 tensor。
-        register_vllm_quant_parameters(layer, self.config, *args, **kwargs)
+        ...  # 保留当前方法体
 
+    <span class="new"># [新增私有方法] offline/online 子类共用，不是公开接口</span>
+    def _prepare_with_mindie(self, layer) -> bool:
+        if self._mindie_runtime is None:
+            return False
+        tensors = {"weight": layer.weight.data}
+        if hasattr(layer, "weight_scale"):
+            tensors["weight_scale"] = layer.weight_scale.data
+        layer._mindie_state = self._mindie_runtime.prepare(
+            tensors, build_linear_meta_from_vllm(layer, self.quant_config)
+        )
+        layer._already_called_process_weights_after_loading = True
+        return True
+
+    <span class="rewrite"># [现有重写：修改] MindIE 成功接管时提前返回</span>
     def process_weights_after_loading(self, layer):
-        layer._mindie_state = self.runtime.prepare(
-            collect_quant_tensors(layer, self.config.algorithm),
-            build_linear_meta_from_vllm(layer, self.config),
-        )
+        if self._prepare_with_mindie(layer):
+            return
+        <span class="keep"># [现有 fallback] 保留当前权重转置、scale reshape 与 replace_parameter</span>
+        ...
 
-    def apply(self, layer, x, bias=None):
-        step = None
-        if is_forward_context_available():
-            step = get_forward_context().denoise_step_idx
-        return self.runtime.forward(
-            x, layer._mindie_state, bias,
-            RuntimeContext(step_index=step),
-        )
+    <span class="new"># [新增标准 hook 重写] 不重写基类 apply，保留其 reshape/unreshape 骨架</span>
+    def _apply_inner(self, layer, x, bias, ori_dtype):
+        if self._mindie_runtime is not None:
+            return self._mindie_runtime.forward(
+                x, layer._mindie_state, bias=bias
+            )
+        return super()._apply_inner(layer, x, bias, ori_dtype)
 
-# register_vllm_quant_parameters：保留现有 NPU method 的
-# create_weights() 参数注册代码；collect_quant_tensors 与 SGLang 相同，
-# 只从 layer 读取 REQUIRED_TENSORS[algorithm]，不读取文件。</code></pre></div>
+<span class="keep"># [现有子类，不新增]</span>
+class NPUMxfp8OnlineLinearMethod(_LazyWeightMixin, NPUMxfp8LinearMethod):
+    <span class="rewrite"># [现有重写：修改] online 类覆盖了该 hook，也必须加入同一提前返回</span>
+    def process_weights_after_loading(self, layer):
+        if self._prepare_with_mindie(layer):
+            return
+        ...  # 保留当前 BF16 → MXFP8 的本地 fallback</code></pre></div>
 
-      <div class="codeframe" style="margin-top:16px"><div class="filebar"><span>vllm_omni/quantization/factory.py</span><span>增加 builder</span></div><pre class="codebox"><code>def _build_mindie_runtime(**kwargs):
-    from .mindie_runtime_config import MindIERuntimeConfig
-    return MindIERuntimeConfig(**kwargs)
-
-_OVERRIDES = {
-    # 保留现有 int8 / mxfp8 / mxfp4 ...
-    "mindie_runtime": _build_mindie_runtime,
-}
-
-# 多组件模型直接使用现有路由，不加新机制：
-quantization = {
-    "transformer": {
-        "method": "mindie_runtime",
-        "algorithm": "mxfp4_dualscale",
-        "use_nz": True,
-    },
-    "text_encoder": None,
-    "vae": None,
-}</code></pre></div>
-      <div class="callout"><strong>能删什么：</strong>现有 <code>NPUInt8LinearMethod</code>、<code>NPUMxfp8LinearMethod</code>、<code>NPUMxfp4LinearMethod</code> 不必一次删除。第一阶段保留旧类做 A/B 对比；稳定后让这些类内部委托 MindIE runtime，最后再合并重复实现。</div>
+      <div class="tablewrap" style="margin-top:16px"><table><thead><tr><th>对象</th><th>性质</th><th>怎么改</th></tr></thead><tbody>
+        <tr><td><code>DiffusionMXFP8Config</code></td><td class="yes">现有，完全保留</td><td>不新增 MindIE config，不修改 registry 或用户配置。</td></tr>
+        <tr><td><code>NPUMxfp8LinearMethod</code></td><td class="mid">现有类</td><td>修改 <code>__init__</code>/<code>process_weights_after_loading</code>；新增私有 <code>_prepare_with_mindie</code> 与标准 hook <code>_apply_inner</code>。</td></tr>
+        <tr><td><code>NPUMxfp8OnlineLinearMethod</code></td><td class="mid">现有类</td><td>给现有 <code>process_weights_after_loading</code> 加 MindIE 提前返回。</td></tr>
+        <tr><td><code>NPUInt8LinearMethod</code> / MXFP4 类</td><td class="mid">现有类</td><td>同样修改现有 prepare/apply hook；fallback 暂时保留。</td></tr>
+        <tr><td><code>MindIERuntimeConfig</code></td><td class="no">不新增</td><td>MindIE 是 NPU 实现提供者，不是新的量化算法或 checkpoint 类型。</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>为什么放在 Ascend/NPU 特化类里：</strong>正因为已经有这些类，而且 GPU/XPU 各自也有 method。把可选依赖探测放在 NPU 类内部，既能收口复制代码，又不会让 CUDA、ROCm、XPU import MindIE；这比新增 provider 专用 config 更符合当前分发结构。</div>
     </div></section>
 
     <section id="fa-step" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">05 / FA 与 STEP</div><div><span class="kicker">Multimodal-specific</span><h2>Attention 单独包；step 直接读两个框架已有上下文</h2><p class="lead">这两点才是多模态生成特有的接入工作。无需修改模型 forward，也无需继续使用 MindIE 的进程级 <code>TimestepManager</code>。</p></div></div>
+      <div class="head"><div class="secno">05 / OMNI FA 先例</div><div><span class="kicker">Yes — use the same pattern</span><h2>你说得对：Omni 的 FA 就是现成模板</h2><p class="lead">vLLM-Omni 已经把 MindIE 当作 NPU 实现依赖，而不是一种新 Attention 配置。默认解析阶段有 MindIE 就选 FA，没有就选 SDPA；进入 NPU FA 后再延迟导入具体函数。量化 Linear 应照这个模式实现。</p></div></div>
       <div class="grid2">
-        <div class="codeframe"><div class="filebar"><span>SGLang multimodal_gen</span><span>AttentionBackend</span></div><pre class="codebox"><code>class MindIEQuantFABackend(AttentionBackend):
-    def __init__(self, algorithm="mxfp8", **kwargs):
-        self.runtime = create_attention_runtime(algorithm)
+        <div class="codeframe"><div class="filebar"><span>vllm_omni/platforms/npu/platform.py</span><span>现有代码，不改</span></div><pre class="codebox"><code><span class="keep"># [现有] 默认 backend 的包级 fallback</span>
+if find_spec("mindiesd"):
+    import mindiesd  # 提前注册 Ascend custom op
+    return DiffusionAttentionBackendEnum.FLASH_ATTN.get_path()
 
-    def forward(self, query, key, value, attn_metadata=None):
-        ctx = get_forward_context()
-        return self.runtime.forward(
-            query, key, value,
-            metadata=to_mindie_metadata(attn_metadata),
-            context=RuntimeContext(
-                step_index=ctx.current_timestep
-            ),
-        )
+return DiffusionAttentionBackendEnum.TORCH_SDPA.get_path()
 
-# 在 NPU platform resolver 中把新枚举映射到该类。</code></pre></div>
-        <div class="codeframe"><div class="filebar"><span>vLLM-Omni</span><span>Diffusion AttentionBackend</span></div><pre class="codebox"><code>class MindIEQuantFAImpl(AttentionImpl):
-    def __init__(
-        self, num_heads, head_size, softmax_scale,
-        backend_kwargs=None, **kwargs
-    ):
-        algorithm = backend_kwargs["algorithm"]
-        self.runtime = create_attention_runtime(algorithm)
+<span class="keep"># [现有] 用户显式选择 FLASH_ATTN 时也先导入 MindIE，</span>
+<span class="keep"># 让 CANN 在首次查询 custom op 前看到 MindIE vendor 目录。</span></code></pre></div>
+        <div class="codeframe"><div class="filebar"><span>vllm_omni/diffusion/attention/backends/flash_attn.py</span><span>现有类，不新增 backend</span></div><pre class="codebox"><code><span class="keep"># [现有类、现有 NPU 方法]</span>
+class FlashAttentionImpl(AttentionImpl):
+    def forward_npu(self, query, key, value, attn_metadata=None):
+        kv_dtype = attn_metadata.extra.get("kv_cache_dtype")
+        if kv_dtype is not None:
+            return self.forward_fa_quant_npu(
+                query, key, value, attn_metadata
+            )
+        return self.forward_fa_npu(query, key, value, attn_metadata)
 
-    def forward(self, query, key, value, attn_metadata=None):
-        ctx = get_forward_context()
-        return self.runtime.forward(
-            query, key, value,
-            metadata=to_mindie_metadata(attn_metadata),
-            context=RuntimeContext(
-                step_index=ctx.denoise_step_idx
-            ),
-        )
+    def forward_fa_npu(self, query, key, value, attn_metadata=None):
+        try:
+            from mindiesd import attention_forward
+        except ImportError as exc:
+            raise ImportError("NPU FA requires MindIE-SD") from exc
+        return attention_forward(query, key, value, ...)
 
-# registry.py 新增 MINDIE_QUANT_FA 的 class path。</code></pre></div>
+    <span class="rewrite"># [仅改 import 出口] 量化 FA 不再引用 MindIE 内部目录</span>
+    def forward_fa_quant_npu(self, query, key, value, attn_metadata=None):
+        from mindiesd.runtime_quant import fp8_rotate_quant_fa
+        return fp8_rotate_quant_fa(query, key, value, ...)</code></pre></div>
       </div>
+
+      <div class="codeframe" style="margin-top:16px"><div class="filebar"><span>SGLang .../attention/backends/ascend_fa.py</span><span>同样改现有 AscendFAImpl</span></div><pre class="codebox"><code><span class="keep"># [现有类，不新增 MindIEQuantFABackend]</span>
+class AscendFAImpl(AttentionImpl):
+    <span class="rewrite"># [现有方法：修改] 加 runtime 分支，原 torch.ops 代码做 fallback</span>
+    def __init__(self, num_heads, head_size, causal, softmax_scale, **kwargs):
+        self.causal = causal
+        self.softmax_scale = softmax_scale
+        self._mindie_runtime = _try_create_mindie_attention_runtime()
+
+    def forward(self, query, key, value, attn_metadata, return_softmax_lse=False):
+        if self._mindie_runtime is not None:
+            return self._mindie_runtime.forward(
+                query, key, value,
+                metadata=to_mindie_metadata(attn_metadata),
+            )
+
+        <span class="keep"># [现有 fallback] 保留 npu_fused_infer_attention_score 主体</span>
+        return self._forward_with_torch_npu(
+            query, key, value, attn_metadata, return_softmax_lse
+        )</code></pre></div>
       <div class="grid3" style="margin-top:16px">
-        <article class="card cyan"><h3>Linear step</h3><p>W4A4/W4A8 切换直接使用 <code>RuntimeContext.step_index</code>，不再读取全局单例。</p></article>
-        <article class="card cyan"><h3>FA metadata</h3><p>只转换 layout、mask、sequence length、head 数等运行时信息；不传模型对象。</p></article>
-        <article class="card red"><h3>禁止</h3><p>不再通过 <code>layer.fa_quant = ...</code> 注入并要求每个 DiT 模型手工修改 forward。</p></article>
+        <article class="card cyan"><h3>Omni 已有先例</h3><p>FA、RoPE、LayerNorm 都已有 NPU 内检查 MindIE、失败走 native/SDPA 的实现，可直接作为代码风格依据。</p></article>
+        <article class="card blue"><h3>不加 backend</h3><p>vLLM-Omni 保留 <code>FlashAttentionImpl</code>；SGLang 保留 <code>AscendFAImpl</code>，无需新 enum 或 registry。</p></article>
+        <article class="card amber"><h3>step 仍显式传递</h3><p>只有 W4A4/W4A8 等逐 step 策略从框架 forward context 读取 step，再传给 runtime；不恢复 MindIE 全局单例。</p></article>
       </div>
     </div></section>
 
     <section id="analysis" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">06 / 为什么这样改</div><div><span class="kicker">Relevant analysis only</span><h2>两个多模态框架的接入点其实高度一致</h2><p class="lead">只保留与改代码直接相关的差异。主仓量化设计不再单列长篇分析。</p></div></div>
-      <div class="tablewrap"><table><thead><tr><th>问题</th><th>SGLang multimodal_gen</th><th>vLLM-Omni</th><th>MindIE 应对</th></tr></thead><tbody>
-        <tr><td>Linear 挂载点</td><td><code>LinearMethodBase</code></td><td>vLLM <code>LinearMethodBase</code></td><td>同一 runtime 被两个薄 method 调用</td></tr>
-        <tr><td>加载后处理</td><td><code>process_weights_after_loading</code></td><td><code>process_weights_after_loading</code></td><td>都在这里调用 <code>prepare()</code></td></tr>
-        <tr><td>多模态作用域</td><td>transformer loader/config 传递</td><td><code>ComponentQuantizationConfig</code> 最长前缀路由</td><td>MindIE 不参与组件选择</td></tr>
-        <tr><td>当前 step</td><td><code>forward_context.current_timestep</code></td><td><code>ForwardContext.denoise_step_idx</code></td><td>转换成 <code>RuntimeContext.step_index</code></td></tr>
-        <tr><td>Attention</td><td>独立 <code>AttentionBackend</code> + NPU resolver</td><td>独立 Diffusion backend registry</td><td>分别写薄 backend，复用同一 FA runtime</td></tr>
-        <tr><td>多平台</td><td>已有 CUDA/ROCm/NPU/XPU platform</td><td>已有 CUDA/ROCm/NPU/XPU/MUSA platform</td><td>MindIE 只注册 NPU；其他平台保持原实现</td></tr>
+      <div class="head"><div class="secno">06 / 为什么这样改</div><div><span class="kicker">Community fit & platform boundary</span><h2>算法配置统一，设备实现特化</h2><p class="lead">用户选择的是 MXFP8/MXFP4/INT8 算法，不是选择 MindIE 供应商。框架 config 保持统一，再由平台分发到 NPU/GPU/XPU method；MindIE 只藏在 Ascend/NPU method 内部。</p></div></div>
+      <div class="tablewrap"><table><thead><tr><th>设计点</th><th>SGLang multimodal_gen</th><th>vLLM-Omni</th><th>修改结论</th></tr></thead><tbody>
+        <tr><td>公开量化 config</td><td><code>MXFP8Config</code>、<code>NPUMXFP4Config</code></td><td><code>DiffusionMXFP8Config</code>、<code>DiffusionInt8Config</code></td><td class="yes">全部保留；不新增 MindIE config/name</td></tr>
+        <tr><td>平台分发</td><td>现有 NPU quant method</td><td><code>get_quant_method()</code> 按 NPU/XPU 返回不同类</td><td class="yes">MindIE 探测只进入 NPU 类</td></tr>
+        <tr><td>加载后处理</td><td>现有 <code>process_weights_after_loading</code></td><td>offline/online 类各自覆盖该 hook</td><td class="mid">先尝试 runtime <code>prepare()</code>，否则原逻辑</td></tr>
+        <tr><td>推理执行</td><td>现有 <code>apply()</code></td><td>基类 <code>apply()</code> + <code>_apply_inner()</code></td><td class="mid">SGLang 改 apply；Omni 重写内层 hook，不破坏 reshape 骨架</td></tr>
+        <tr><td>MindIE 可用性</td><td colspan="2"><code>find_spec</code> 检查安装，再尝试导入 <code>mindiesd.runtime_quant</code> 检查版本能力</td><td>仅导入失败时 fallback；执行期错误直接暴露，避免静默掩盖算子 bug</td></tr>
+        <tr><td>FA</td><td>现有 <code>AscendFAImpl</code></td><td>现有 <code>FlashAttentionImpl.forward_npu</code></td><td class="yes">改现有类/稳定 import 出口，不新增 backend</td></tr>
+        <tr><td>其他平台</td><td>CUDA/ROCm/XPU</td><td>CUDA/ROCm/XPU/MUSA</td><td class="yes">零改动、零 MindIE import</td></tr>
       </tbody></table></div>
-      <div class="callout"><strong>为什么还提公共接口：</strong>这里只是为了不把 <code>torch_npu</code> 写进 SGLang/vLLM 的公共量化基类。它不是一套大型 <abbr class="term" tabindex="0" data-tip="Application Binary Interface：二进制组件之间必须遵守的调用与数据约定。本文不要求新建 checkpoint ABI。">ABI</abbr> 工程。Python 层只需要稳定的 <code>prepare/forward</code>；GPU 等其他加速库可以提供同名接口，也可以继续使用框架现有实现。</div>
+      <div class="callout"><strong>统一接口仍然有价值，但位置要对：</strong><code>prepare/forward</code> 是 MindIE 加速库对上游 NPU method 提供的稳定 Python <abbr class="term" tabindex="0" data-tip="Application Programming Interface：应用编程接口，这里指 Python 调用约定。">API</abbr>，不是让所有框架新增一个 provider config。GPU 加速库也可在自己的 CUDA method 内用同样的委托模式；框架公共基类无需认识任何供应商。</div>
     </div></section>
 
     <section id="delivery" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">07 / 怎么落地</div><div><span class="kicker">PR order & tests</span><h2>按四个小 PR 提交，不做大重构</h2><p class="lead">先跑通 W8A8 或 MXFP8 Linear，再接 MXFP4 和 FA。每一步都能和当前上游 NPU 实现做结果对比。</p></div></div>
+      <div class="head"><div class="secno">07 / 怎么落地</div><div><span class="kicker">PR order & tests</span><h2>先双路径收口，再删除复制代码</h2><p class="lead">第一阶段不删当前上游 NPU 主体，它正好是兼容 fallback 和数值基线；确认 MindIE runtime 稳定后，再把复制实现从两个上游移除。</p></div></div>
       <div class="steps">
-        <article class="stepcard"><div><h3>MindIE runtime facade</h3><p>新增 tensor 输入接口；旧 layer 改为内部调用 facade。单测确认改造前后同输入完全一致。</p></div></article>
-        <article class="stepcard"><div><h3>SGLang multimodal_gen bridge</h3><p>只接一个算法、一个 DiT 模型；验证加载、<abbr class="term" tabindex="0" data-tip="Tensor Parallel：同一层跨设备分片。">TP</abbr>=1/2、CPU offload 与多 step。</p></div></article>
-        <article class="stepcard"><div><h3>vLLM-Omni bridge</h3><p>复用 component config，仅量化 transformer；与现有 NPU method 做逐层输出和整段 latent trajectory 对比。</p></div></article>
-        <article class="stepcard"><div><h3>FA + 其他算法</h3><p>接量化 AttentionBackend，再迁移 MXFP4、DualScale、MoE。旧重复实现稳定两个版本后再删除。</p></div></article>
+        <article class="stepcard"><div><h3>MindIE 提供稳定 runtime API</h3><p>新增 tensor 输入的 <code>prepare/forward</code>，导出算法能力查询；旧 layer 内部复用它，保证 MindIE 自身兼容。</p></div></article>
+        <article class="stepcard"><div><h3>现有 NPU 类加入可选委托</h3><p>SGLang 和 Omni 各先接 MXFP8 online；不改 config/registry。用环境开关仅做测试强制 fallback，不作为长期用户配置。</p></div></article>
+        <article class="stepcard"><div><h3>双路径比对与观测</h3><p>记录 <code>mindie_runtime</code>/<code>local_fallback</code> 命中，验证 <abbr class="term" tabindex="0" data-tip="Tensor Parallel：同一层跨设备分片。">TP</abbr>=1/2、CPU offload、多 step、并发和整段 latent trajectory。</p></div></article>
+        <article class="stepcard"><div><h3>扩算法并删除复制主体</h3><p>迁移 INT8、MXFP4、DualScale、MoE 与量化 FA。连续两个版本稳定后删除本地 fallback，只保留清晰的缺依赖报错。</p></div></article>
       </div>
       <div class="grid4" style="margin-top:16px">
-        <article class="card"><h4>Import</h4><p>安装 MindIE runtime wheel 后，两个 bridge 可独立 import；不拉入 graph rewrite 模块。</p></article>
-        <article class="card"><h4>Numerics</h4><p>同一 tensor 对比旧 MindIE layer、runtime facade 和两个上游 bridge。</p></article>
+        <article class="card"><h4>Import</h4><p>仅 Ascend/NPU 文件可选 import MindIE runtime；不拉入 graph rewrite 模块，也不污染 GPU 路径。</p></article>
+        <article class="card"><h4>Numerics</h4><p>同一 tensor 对比 MindIE runtime、两个上游现有 NPU fallback 与端到端输出。</p></article>
         <article class="card"><h4>Parallel</h4><p>Row/Column/QKV Linear 在分片后 prepare，不能再次切分或转置错误。</p></article>
         <article class="card"><h4>Concurrency</h4><p>交错执行不同 step，请求结果必须等于逐请求串行结果。</p></article>
       </div>
-      <div class="callout"><strong>首个可合入版本：</strong>建议选择 W8A8 dynamic 或 MXFP8 online Linear。它们没有复杂逐层静态 scale/offset，最容易证明“上游加载权重，MindIE 只负责运行”的边界。</div>
+      <div class="callout"><strong>首个可合入版本：</strong>仍建议选择 MXFP8 online Linear，但命令行和模型配置继续写现有 <code>mxfp8</code>。是否命中 MindIE 只出现在日志/指标里，不成为用户需要理解的新概念。</div>
     </div></section>
 
     <section id="glossary" class="reveal"><div class="wrap">
       <div class="head"><div class="secno">08 / 术语</div><div><span class="kicker">Hover glossary</span><h2>英文缩写速查</h2><p class="lead">正文中带虚线下划线的词可以悬停或键盘聚焦查看解释。</p></div></div>
       <div class="glossary">
         <div><b>API</b><span>应用编程接口；这里指 Python 的 <code>prepare/forward</code> 调用。</span></div>
-        <div><b>ABI</b><span>二进制接口约定；本方案不新建 checkpoint ABI。</span></div>
+        <div><b>ABI</b><span>Application Binary Interface，二进制组件之间的调用与数据布局约定；本文方案只涉及 Python API。</span></div>
         <div><b>SPI</b><span>服务提供者接口；不同加速库可以实现同一小接口。</span></div>
         <div><b>NPU / GPU</b><span>神经网络处理器 / 图形处理器，两类硬件后端。</span></div>
         <div><b>FA</b><span>Flash Attention，融合注意力计算以减少显存读写。</span></div>
@@ -483,7 +492,10 @@ quantization = {
         <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/layers/quantization">SGLang multimodal_gen quantization</a><span>LinearMethod 生命周期与 NPU MX 实现。</span></li>
         <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/layers/attention">SGLang multimodal_gen attention</a><span>AttentionBackend 与 NPU backend resolver。</span></li>
         <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/quantization">vLLM-Omni quantization</a><span>factory、component routing、NPU LinearMethod。</span></li>
-        <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/diffusion/attention/backends">vLLM-Omni diffusion attention</a><span>backend registry、AttentionImpl 与 metadata。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/platforms/npu/platform.py">vLLM-Omni NPU platform</a><span>MindIE 存在时默认选择 FLASH_ATTN，否则回退 TORCH_SDPA。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/diffusion/attention/backends/flash_attn.py">vLLM-Omni FlashAttention</a><span>现有 <code>forward_npu</code> 延迟导入 MindIE，量化 FA 也已走 NPU 专用分支。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/diffusion/layers/rope.py">vLLM-Omni RoPE</a><span>现有 <code>has_mindie</code> 分支：有 MindIE 则加速，否则 <code>forward_native</code>。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/diffusion/layers/norm.py">vLLM-Omni LayerNorm</a><span>MindIE 函数导入失败时告警一次并回退 native，和本方案完全同型。</span></li>
       </ol>
       <p class="evidence">本地核对快照：MindIE-SD 9a42efa · SGLang ba9074035a · vLLM-Omni 596c16a55。代码块是面向这些接口的建议补丁骨架，辅助函数名需在实际 PR 中按项目现有参数类落地。</p>
     </div></section>
