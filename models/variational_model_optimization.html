@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="变分推理优化与加速手册：算法选择、ELBO、CAVI/SVI、梯度方差缩减、摊销与局部精修、后验表达力及推理运行时优化。">
-  <title>变分推理优化与加速｜工程手册</title>
+  <meta name="description" content="摊销变分推理部署优化手册：前向关键路径、批处理、编译、量化、缓存、采样预算与后验质量验收。">
+  <title>摊销变分推理部署优化｜工程手册</title>
   <style>
     :root{--paper:#f2efe6;--ink:#111514;--muted:#606865;--line:#bdc1b7;--panel:#e7e4da;--dark:#131917;--lime:#d9ff45;--red:#ff553d;--cyan:#48d8cf;--serif:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;--sans:"Bahnschrift","Microsoft YaHei UI",sans-serif;--mono:"Cascadia Mono","SFMono-Regular",Consolas,monospace}
     *{box-sizing:border-box}html{scroll-behavior:smooth;background:var(--paper)}body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.72 var(--serif)}
@@ -32,127 +32,118 @@
 <body>
   <a class="skip" href="#content">跳到正文</a><div class="progress" aria-hidden="true"></div>
   <header class="hero"><div class="hero-inner">
-    <div class="eyebrow">Variational Inference · Optimization Field Manual · 2026</div>
-    <h1>变分推理<em>优化与加速</em></h1>
-    <p class="deck">重点回答“后验怎么更快、更准地求出来”：从 CAVI / SVI、ELBO 与梯度估计，到摊销推理、局部精修、在线更新和推理运行时，把统计收敛与墙钟延迟放进同一张优化图。</p>
-    <div class="hero-grid"><div class="thesis"><strong>先诊断，再加速</strong><small>ELBO 停滞可能来自梯度方差、近似偏差、后验坍塌或数据管线；更快的 kernel 不会修复错误的统计问题。</small></div><div><strong>2 类速度</strong><small>更少优化步<br>更短单步耗时</small></div><div><strong>3 个尺度</strong><small>样本 / 潜变量<br>数据 / 设备</small></div><div><strong>4 道门</strong><small>正确性 / 收敛<br>质量 / 成本</small></div></div>
+    <div class="eyebrow">Amortized Variational Inference · Deployment Manual · 2026</div>
+    <h1>摊销变分推理<em>部署加速</em></h1>
+    <p class="deck">只分析部署态前向：输入经过 encoder 得到后验参数，再按预算采样并交给下游任务。训练、ELBO 更新、反向传播和梯度估计全部排除在主线之外。</p>
+    <div class="hero-grid"><div class="thesis"><strong>只有前向关键路径</strong><small>preprocess → encoder → posterior parameters → sample/statistics → downstream；没有 backward，也不在线更新模型权重。</small></div><div><strong>P50/P95</strong><small>冷启动 / 热路径<br>尾延迟</small></div><div><strong>QPS</strong><small>批处理 / 编译<br>设备利用率</small></div><div><strong>3 道门</strong><small>质量 / 延迟<br>显存</small></div></div>
   </div></header>
 
   <div class="layout"><nav aria-label="目录"><b>FIELD INDEX</b>
-    <a href="#scope">01 / 推理目标</a><a href="#architecture">02 / 模型结构</a><a href="#anatomy">03 / 单轮成本</a><a href="#matrix">04 / 优化手段</a><a href="#gradients">05 / 梯度估计</a><a href="#paths">06 / 推理路径</a><a href="#systems">07 / 运行时加速</a><a href="#decision">08 / 决策路线</a><a href="#validation">09 / 验收方法</a><a href="#sources">10 / 来源</a>
-    <div class="stamp">VI / SVI / VAE<br>ALGORITHM × SYSTEM<br>STATIC · PRINT READY</div>
+    <a href="#scope">01 / 部署边界</a><a href="#architecture">02 / 前向结构</a><a href="#anatomy">03 / 延迟解剖</a><a href="#matrix">04 / 加速手段</a><a href="#gradients">05 / 采样输出</a><a href="#paths">06 / 服务路径</a><a href="#systems">07 / 运行时加速</a><a href="#decision">08 / 决策路线</a><a href="#validation">09 / 验收方法</a><a href="#sources">10 / 来源</a>
+    <div class="stamp">AMORTIZED VI / VAE<br>FORWARD × RUNTIME<br>NO BACKWARD</div>
   </nav><main id="content">
-    <section id="scope"><span class="kicker">01 · Scope</span><h2>“变分”是推断问题</h2>
-      <p class="lede">目标是用可处理的分布 <i>q</i><sub>φ</sub>(z|x) 逼近难以直接计算的后验 <i>p</i><sub>θ</sub>(z|x)。VAE 是其中的摊销推断实现；本文也覆盖没有神经解码器的贝叶斯模型、离散潜变量与全局—局部层次模型。</p>
-      <div class="formula">log p<sub>θ</sub>(x) = ELBO(θ,φ;x) + KL[q<sub>φ</sub>(z|x) || p<sub>θ</sub>(z|x)] &nbsp; ≥ &nbsp; ELBO = E<sub>q</sub>[log p<sub>θ</sub>(x,z) − log q<sub>φ</sub>(z|x)]</div>
-      <div class="grid4"><div class="metric"><strong>统计效率</strong><b>多少步达到目标</b><small>梯度方差、优化器、参数化与初始化决定收敛速度。</small></div><div class="metric"><strong>计算效率</strong><b>每一步多快</b><small>小批量、粒子向量化、编译、融合、精度与并行决定墙钟时间。</small></div><div class="metric"><strong>近似质量</strong><b>q 是否够表达</b><small>mean-field 便宜但可能低估相关性和不确定性。</small></div><div class="metric"><strong>下游效用</strong><b>结果是否可用</b><small>预测、校准、生成或决策指标不能被 ELBO 单独替代。</small></div></div>
+    <section id="scope"><span class="kicker">01 · Deployment scope</span><h2>这里的“推理”就是模型前向</h2>
+      <p class="lede">报告只覆盖已经训练好的摊销推断器：给定新输入 x，encoder 一次前向输出后验 <i>q</i><sub>φ</sub>(z|x) 的参数，再返回均值、方差、样本或下游预测。经典 CAVI/SVI 的逐样本优化，以及任何参数更新，都不纳入部署主线。</p>
+      <div class="formula">x → preprocess → encoder<sub>φ</sub>(x) → posterior parameters → sample / statistics → downstream output</div>
+      <div class="grid4"><div class="metric"><strong>Latency</strong><b>一次前向多快</b><small>拆分预处理、encoder、采样和后处理的冷/热 P50/P95。</small></div><div class="metric"><strong>Throughput</strong><b>单位时间处理多少</b><small>批处理、shape bucket、编译与异步流水决定 QPS。</small></div><div class="metric"><strong>Memory</strong><b>单请求占多少</b><small>权重、激活、后验参数与样本数量共同决定峰值显存。</small></div><div class="metric"><strong>Quality</strong><b>分布是否可用</b><small>校准、覆盖率、下游精度与样本稳定性约束加速幅度。</small></div></div>
     </section>
 
-    <section id="architecture"><span class="kicker">02 · Model architecture</span><h2>先分清“生成模型”和“推断网络”</h2>
-      <p class="lede">变分模型不是单一网络，而是两个方向相反、共同训练的结构：<span class="tip" tabindex="0" data-tip="Generative model：描述潜变量 z 如何产生观测 x，即 pθ(x,z)。">生成模型 p<sub>θ</sub></span> 负责解释数据如何产生，<span class="tip" tabindex="0" data-tip="Variational posterior / guide：用可计算分布 qφ(z|x) 近似真实后验 pθ(z|x)。">变分后验 q<sub>φ</sub></span> 负责从观测反推潜变量。普通 CAVI 为每个样本单独求 q；VAE 等前沿深度模型用 encoder 一次预测 q 的参数，再按需要做 flow 或局部精修。</p>
+    <section id="architecture"><span class="kicker">02 · Forward architecture</span><h2>部署关键路径是 encoder，不是训练闭环</h2>
+      <p class="lede">摊销变分推理把“求后验”固化进 inference network。上线后 φ 已冻结：encoder 从观测直接预测均值、尺度或更复杂的分布参数；如果下游只需要分类、风险或不确定性，decoder 根本不在关键路径上。</p>
       <div class="compare">
-        <article><span class="tag">CLASSICAL VI</span><h3>每个数据集 / 样本重新优化</h3><ul><li>根据<span class="tip" tabindex="0" data-tip="概率图中每个随机变量及其条件依赖关系；结构决定哪些期望和消息可以分解。">概率图结构</span>把 q 分成若干因子。</li><li><span class="tip" tabindex="0" data-tip="Coordinate Ascent Variational Inference：固定其他因子，轮流更新一个变分因子。">CAVI</span> 或自然梯度迭代至收敛，单次灵活但重复成本高。</li><li>适合共轭、结构清晰、需要可解释局部变量的模型。</li></ul></article>
-        <article class="frontier"><span class="tag">AMORTIZED / STRUCTURED</span><h3>学习一个可复用的推断器</h3><ul><li>encoder 将 x 映射为均值、方差或更复杂后验参数，推断变成一次前向。</li><li><span class="tip" tabindex="0" data-tip="Normalizing Flow：连续可逆变换及其 Jacobian，把简单基础分布变成更灵活的后验。">Normalizing Flow</span>、低秩协方差或离散枚举补足 mean-field 表达力。</li><li>用“摊销热启动 + 少量局部 refinement”平衡吞吐与样本级精度。</li></ul></article>
+        <article><span class="tag">POINT PREDICTOR</span><h3>普通前馈推理</h3><ul><li>一次前向输出单点标签、分数或 embedding。</li><li>后处理通常确定，不需要随机采样。</li><li>质量主要看任务精度和吞吐。</li></ul></article>
+        <article class="frontier"><span class="tag">AMORTIZED POSTERIOR</span><h3>一次前向输出分布</h3><ul><li>encoder 输出 μ、σ、logits 或结构化后验参数。</li><li>下游可直接使用统计量，也可按预算生成 K 个样本。</li><li>除任务精度外，还必须检查校准、覆盖率与随机稳定性。</li></ul></article>
       </div>
-      <div class="model-graph" aria-label="摊销变分推断的离线拟合与部署流程">
-        <div><i>01 / OBSERVE</i><b>输入 x</b><span>图像、序列、计数或任意观测；训练时也作为重建目标。</span></div>
-        <div><i>02 / ENCODE</i><b>推断网络 qφ</b><span>预测后验族参数；经典 VI 则在此保存并优化局部参数。</span></div>
-        <div><i>03 / SAMPLE</i><b>重参数化 z</b><span>z=μ+σε 让梯度穿过采样；离散变量需枚举或 score-function。</span></div>
-        <div><i>04 / TRANSFORM</i><b>结构化后验</b><span>可选 flow、低秩相关或层次依赖；表达力越强，Jacobian/通信越贵。</span></div>
-        <div><i>05 / DECODE</i><b>生成模型 pθ</b><span>从 z 预测 x 或似然参数，并与先验共同给出 log p(x,z)。</span></div>
-        <div><i>06 / LEARN</i><b>ELBO 更新</b><span>重建项推动解释数据，KL 项约束后验接近先验；同时更新 θ 与 φ。</span></div>
+      <div class="model-graph" aria-label="摊销变分推理部署前向流程">
+        <div><i>01 / INPUT</i><b>输入 x</b><span>图像、序列、表格或传感器观测。</span></div>
+        <div><i>02 / PREPROCESS</i><b>固定预处理</b><span>归一化、tokenize、resize；与训练配置严格一致。</span></div>
+        <div><i>03 / ENCODE</i><b>推断网络 qφ</b><span>冻结权重做一次前向，输出后验参数。</span></div>
+        <div><i>04 / PARAMETERIZE</i><b>构造分布</b><span>对角高斯、低秩、categorical 或 flow 参数。</span></div>
+        <div><i>05 / READOUT</i><b>统计量或 K 个样本</b><span>按任务选择均值、方差、分位数或随机样本。</span></div>
+        <div><i>06 / OUTPUT</i><b>下游结果</b><span>预测、风险、不确定性或可选 decoder 输出。</span></div>
       </div>
-      <div class="grid3"><article class="card"><span class="tag">OFFLINE FIT · BRIEF</span><h3>推断器如何得到</h3><p>用 ELBO 等目标专门拟合 encoder / guide，产出可部署的摊销推断器；训练并行、反向传播与数据管线不作为本报告重点。</p></article><article class="card hot"><span class="tag">INFERENCE</span><h3>部署数据流</h3><p>新 x → encoder 一次前向 → 可选局部精修 → 后验样本/统计量 → 预测或决策。部署阶段通常不需要 decoder，除非要重建、生成或算 likelihood。</p></article><article class="card cool"><span class="tag">KEY DIFFERENCE</span><h3>与普通前馈网络不同</h3><p>输出不是单点标签，而是分布；正确性不仅看任务精度，还要看不确定性校准、后验覆盖和 ELBO/重要性采样估计。</p></article></div>
-      <div class="callout"><strong>术语边界：</strong>后文的 ELBO optimization 指“对后验做变分推断/局部精修”，不等同于训练视频生成基础模型；分析仍以部署前向、采样与运行时加速为主。</div>
-      <div class="callout"><strong>结构—优化因果链：</strong>encoder 决定摊销推断延迟；后验族决定 q 的表达力与 Jacobian 成本；粒子数 K 决定 Monte Carlo 方差与向量化宽度。先定位是哪一段不够，再选择 kernel、flow 或局部优化。</div>
+      <div class="grid3"><article class="card hot"><span class="tag">FAST PATH</span><h3>直接返回统计量</h3><p>分类、风险排序和不确定性展示优先使用 μ、σ 或概率向量，完全跳过随机采样。</p></article><article class="card cool"><span class="tag">SAMPLE PATH</span><h3>确实需要时才采样</h3><p>生成、Monte Carlo 决策或置信区间才启用 K 个样本，并把 K 作为服务预算。</p></article><article class="card"><span class="tag">OPTIONAL DECODER</span><h3>decoder 不一定在线</h3><p>只有重建、生成或 likelihood 任务需要 decoder；不要默认把整套 VAE 都放进推理关键路径。</p></article></div>
+      <div class="callout"><strong>报告边界：</strong>无 ELBO 更新、无 backward、无 optimizer、无梯度同步。若业务需要测试时训练或逐样本优化，应另立报告与服务队列，不能混进常规推理延迟。</div>
     </section>
 
-    <section id="anatomy"><span class="kicker">03 · Cost anatomy</span><h2>一轮推理迭代花在哪里</h2>
-      <div class="pipeline"><div class="step"><i>01 / DATA</i><b>抽取小批量</b><span>全局—局部模型还需按 N/B 缩放局部似然。</span></div><div class="step"><i>02 / GUIDE</i><b>生成 q 参数</b><span>摊销网络或每个样本的局部变分参数。</span></div><div class="step"><i>03 / SAMPLE</i><b>K 个粒子</b><span>连续重参数化；离散枚举或 score-function。</span></div><div class="step"><i>04 / LOG DENSITY</i><b>模型与 guide</b><span>计算 log p、log q、Jacobian 和解析 KL。</span></div><div class="step"><i>05 / UPDATE</i><b>梯度与优化</b><span>反向传播、自然梯度/Adam、全局参数同步。</span></div></div>
-      <div class="formula">T<sub>step</sub> ≈ T<sub>input</sub> + T<sub>guide</sub>(B) + K × [T<sub>model</sub>(B) + T<sub>log_prob</sub>] + T<sub>backward</sub> + T<sub>sync</sub></div>
-      <div class="callout"><strong>最常见误判：</strong>增加粒子 K 能降低部分 Monte Carlo 噪声，却近似线性增加计算；更紧的 IWAE bound 也不保证 inference network 的梯度信噪比同步改善。先画 ELBO、梯度方差、active units、吞吐与显存的联合曲线。</div>
+    <section id="anatomy"><span class="kicker">03 · Latency anatomy</span><h2>一次部署前向花在哪里</h2>
+      <div class="pipeline"><div class="step"><i>01 / INPUT</i><b>预处理与搬运</b><span>decode、resize、tokenize、CPU→device。</span></div><div class="step"><i>02 / ENCODER</i><b>推断网络前向</b><span>通常是主要 GEMM / attention 成本。</span></div><div class="step"><i>03 / POSTERIOR</i><b>参数变换</b><span>softplus、归一化、flow 与协方差构造。</span></div><div class="step"><i>04 / READOUT</i><b>统计量 / K 样本</b><span>K 增大时随机数、广播和下游计算增长。</span></div><div class="step"><i>05 / OUTPUT</i><b>后处理与返回</b><span>decoder、聚合、序列化或跨服务传输。</span></div></div>
+      <div class="formula">T<sub>request</sub> = T<sub>preprocess</sub> + T<sub>encoder-forward</sub> + T<sub>posterior</sub> + K × T<sub>readout</sub> + T<sub>postprocess</sub></div>
+      <div class="callout"><strong>最常见误判：</strong>把训练 profile 当推理 profile，或默认 K 越大越好。部署先尝试 K=0 的统计量快路和 K=1 基线，再按实际下游质量决定是否增加样本。</div>
     </section>
 
     <section id="matrix"><span class="kicker">04 · Optimization matrix</span><h2>手段与代价总表</h2>
-      <p class="lede">按作用层筛选。P0 通常先做；P1 由诊断触发；P2 需要更强假设或实现成本。</p>
-      <div class="filters" role="group" aria-label="筛选优化手段"><button class="active" data-filter="all">全部</button><button data-filter="objective">目标与优化</button><button data-filter="gradient">梯度估计</button><button data-filter="posterior">后验结构</button><button data-filter="system">系统执行</button></div>
+      <p class="lede">所有手段都作用于冻结模型的前向路径。P0 通常先做；P1 必须通过后验质量门；没有任何反向传播优化。</p>
+      <div class="filters" role="group" aria-label="筛选优化手段"><button class="active" data-filter="all">全部</button><button data-filter="path">路径裁剪</button><button data-filter="posterior">后验输出</button><button data-filter="system">系统执行</button><button data-filter="serve">服务调度</button></div>
       <div class="table-wrap"><table><thead><tr><th>手段</th><th>解决什么</th><th>收益机制</th><th>代价 / 风险</th><th>优先级</th></tr></thead><tbody>
-        <tr data-cat="objective"><td>解析 KL / 共轭更新</td><td>MC 噪声与计算</td><td>用闭式期望或坐标更新替代采样</td><td>仅适用于匹配分布族 / 共轭结构</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="objective"><td>CAVI / 消息传递</td><td>共轭模型迭代效率</td><td>利用条件闭式解分块更新变分因子</td><td>顺序更新难并行；局部最优依赖初始化</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="gradient"><td>路径重参数化</td><td>连续潜变量高方差</td><td>z=g<sub>φ</sub>(ε,x)，梯度穿过样本路径</td><td>分布需可重参数化</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="gradient"><td>Rao–Blackwell / 枚举</td><td>离散变量高方差</td><td>精确边缘化局部离散状态</td><td>状态空间或 treewidth 可能爆炸</td><td><span class="pill p0">P0/P1</span></td></tr>
-        <tr data-cat="gradient"><td>baseline / control variate</td><td>score-function 噪声</td><td>保持无偏并减小方差</td><td>baseline 本身需拟合与监控</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="objective"><td>自然梯度</td><td>分布参数尺度病态</td><td>按 Fisher 几何预条件更新</td><td>非共轭场景并非无条件更优</td><td><span class="pill p1">P1</span></td></tr>
-        <tr data-cat="objective"><td>IWAE + DReG</td><td>ELBO 松、K 粒子梯度退化</td><td>更紧多样本界 + 低方差梯度</td><td>K 增大耗时；需分别测 θ/φ 梯度</td><td><span class="pill p1">P1</span></td></tr>
+        <tr data-cat="path"><td>统计量直出</td><td>不必要的随机采样</td><td>直接返回 μ / σ / probability</td><td>不适合必须生成样本的任务</td><td><span class="pill p0">P0</span></td></tr>
+        <tr data-cat="path"><td>decoder bypass</td><td>无用的重建/生成路径</td><td>预测任务只运行 encoder</td><td>需确认下游没有使用 decoder 特征</td><td><span class="pill p0">P0</span></td></tr>
+        <tr data-cat="path"><td>条件分支裁剪</td><td>每请求固定冗余</td><td>关闭未使用模态与辅助 head</td><td>必须按任务建立静态执行图</td><td><span class="pill p0">P0</span></td></tr>
         <tr data-cat="posterior"><td>结构化协方差 / 低秩</td><td>mean-field 偏差</td><td>恢复关键相关性</td><td>O(d²) 存储可用低秩+对角化解</td><td><span class="pill p1">P1</span></td></tr>
         <tr data-cat="posterior"><td>Normalizing flow</td><td>偏度、多峰、非高斯后验</td><td>可逆变换提升 q 表达力</td><td>Jacobian 与串行变换增加成本</td><td><span class="pill p1">P1</span></td></tr>
-        <tr data-cat="objective"><td>摊销 + 局部精修</td><td>逐样本优化慢 / amortization gap</td><td>encoder 热启动，少量局部步修正</td><td>训练—推理路径更复杂</td><td><span class="pill p1">P1</span></td></tr>
-        <tr data-cat="posterior"><td>Warm-start / continuation</td><td>流式或相邻样本重复求解</td><td>以上一时刻后验参数初始化当前 q</td><td>分布突变时可能锁进错误模态</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="system"><td>小批量 SVI</td><td>大数据全量扫描</td><td>无偏子样本估计、在线更新</td><td>plate 缩放错误会直接造成偏差</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="system"><td>粒子向量化</td><td>Python 循环 / kernel 碎片</td><td>把 K 合并为批维度</td><td>峰值显存随 K 增长</td><td><span class="pill p0">P0</span></td></tr>
-        <tr data-cat="system"><td>编译 + 静态 shape</td><td>解释器与 launch 开销</td><td>融合重复 log-density 与 guide 图</td><td>动态模型结构会重编译或 graph break</td><td><span class="pill p1">P1</span></td></tr>
+        <tr data-cat="posterior"><td>自适应 K</td><td>固定采样预算浪费</td><td>简单样本 K=0/1，困难样本再增样本</td><td>门控指标需和质量强相关</td><td><span class="pill p0">P0</span></td></tr>
+        <tr data-cat="system"><td>样本向量化</td><td>Python 循环 / kernel 碎片</td><td>把 K 合并为批维度一次执行</td><td>峰值显存随 K 增长</td><td><span class="pill p0">P0</span></td></tr>
+        <tr data-cat="system"><td>编译 + 静态 shape</td><td>解释器与 launch 开销</td><td>融合 encoder 与后验参数变换</td><td>动态分支会重编译或 graph break</td><td><span class="pill p1">P1</span></td></tr>
         <tr data-cat="system"><td>混合精度</td><td>GEMM 带宽与吞吐</td><td>BF16/FP16 计算，关键归约保 FP32</td><td>scale、softplus、log_prob 易下溢</td><td><span class="pill p1">P1</span></td></tr>
+        <tr data-cat="system"><td>权重量化</td><td>显存与带宽</td><td>INT8/FP8/INT4 降低 encoder 读取成本</td><td>无原生 kernel 时未必提速；需校准</td><td><span class="pill p1">P1</span></td></tr>
+        <tr data-cat="serve"><td>batch / shape bucket</td><td>设备利用率与重编译</td><td>相近输入形状合批执行</td><td>等待合批会抬高尾延迟</td><td><span class="pill p0">P0</span></td></tr>
+        <tr data-cat="serve"><td>静态特征缓存</td><td>重复预处理与编码</td><td>复用不变输入、索引或条件 embedding</td><td>缓存键必须包含模型与预处理版本</td><td><span class="pill p0">P0</span></td></tr>
       </tbody></table></div>
     </section>
 
-    <section id="gradients"><span class="kicker">05 · Gradient estimators</span><h2>先把梯度噪声降下来</h2>
-      <div class="grid3"><article class="card cool"><span class="tag">CONTINUOUS</span><h3>可重参数化变量</h3><p>Normal、LogNormal 等优先使用 pathwise gradient。对约束变量在无约束空间参数化，再稳定地变换；scale 用 softplus 并设合理下界。</p></article><article class="card hot"><span class="tag">DISCRETE</span><h3>离散潜变量</h3><p>小状态空间优先精确枚举；否则用 Rao–Blackwell、RELAX/VIMCO 一类控制变量。Gumbel-Softmax 是有偏松弛，温度必须做消融。</p></article><article class="card"><span class="tag">MULTI-SAMPLE</span><h3>多粒子目标</h3><p>K&gt;1 前先向量化；IWAE 的 guide 梯度可考虑 DReG。不要仅看 bound 更紧，还要看梯度 SNR、ESS 和单位时间提升。</p></article></div>
-      <details><summary>可执行的方差诊断</summary><div><div class="code">固定同一 mini-batch 与参数快照
-重复 R 次估计梯度 g₁…gᵣ
-记录：mean(loss), std(loss), ||E[g]||, E[||g−E[g]||²]
-比较：K=1/4/16；解析 KL on/off；vectorized on/off
-离散变量：枚举 vs score-function + baseline
-最终指标：<em>达到同一验证目标的 wall-clock，而非单步 loss</em></div></div></details>
+    <section id="gradients"><span class="kicker">05 · Sampling and readout</span><h2>采样不是默认步骤</h2>
+      <div class="grid3"><article class="card cool"><span class="tag">STATISTICS</span><h3>均值 / 方差快路</h3><p>若下游只消费风险、置信度或 embedding，直接返回后验统计量；这是最低延迟、最易批处理的路径。</p></article><article class="card hot"><span class="tag">K SAMPLES</span><h3>按业务预算采样</h3><p>生成、置信区间或 Monte Carlo 决策才需要样本。K 从 1 开始，向量化执行，并用质量曲线决定上限。</p></article><article class="card"><span class="tag">DETERMINISM</span><h3>随机状态可复现</h3><p>请求显式携带 seed / RNG 状态；批大小变化、并发和设备切换后仍要满足定义好的数值容差。</p></article></div>
+      <details><summary>部署采样基准</summary><div><div class="code">固定 model revision、input、dtype 与 seed
+比较：statistics only / K=1 / K=4 / K=16
+记录：P50/P95 latency、QPS、峰值显存、输出校准、下游质量
+检查：vectorized on/off、batch size、compile、设备切换
+最终选择：<em>满足质量门的最小 K，而不是样本最多的配置</em></div></div></details>
     </section>
 
-    <section id="paths"><span class="kicker">06 · Inference paths</span><h2>四条推理路线怎么选</h2>
+    <section id="paths"><span class="kicker">06 · Serving paths</span><h2>四条部署路径怎么选</h2>
       <div class="grid2">
-        <article class="card cool"><span class="tag">CAVI / MESSAGE PASSING</span><h3>有共轭结构：吃尽解析解</h3><p>对每个变分因子使用闭式最优更新，或把共轭子图交给消息传递；采用残差优先、异步或分块调度。它通常比通用自动微分快，也更稳定，但要求模型结构可推导。</p></article>
-        <article class="card"><span class="tag">STOCHASTIC VI</span><h3>大数据：局部快、全局稳</h3><p>小批量估计全局自然梯度，局部变量并行优化；局部容差无需远高于全局更新精度。对流式数据使用递减步长或遗忘因子，并监控概念漂移。</p></article>
-        <article class="card hot"><span class="tag">AMORTIZED VI</span><h3>高 QPS：一次前向给后验</h3><p>用 inference network 直接预测 q 参数，把逐样本优化摊销到训练阶段。线上延迟最低；若 amortization gap 明显，采用 encoder 热启动 + 1–10 步局部精修，并设置按置信度触发的早停。</p></article>
-        <article class="card cool"><span class="tag">SEQUENTIAL / ONLINE</span><h3>时序数据：复用上一时刻</h3><p>过滤式 q(z<sub>t</sub>|x<sub>≤t</sub>) 追求低延迟，平滑式后验追求更高质量。缓存充分统计量或后验自然参数；分布突变时重置 warm-start，避免误差持续传递。</p></article>
+        <article class="card hot"><span class="tag">FAST / STATISTICS</span><h3>默认路径：一次前向</h3><p>预处理 → encoder → μ/σ/probability → 返回。适合高 QPS 预测、排序和实时不确定性服务。</p></article>
+        <article class="card"><span class="tag">SAMPLED</span><h3>需要随机输出：K 样本</h3><p>同一后验参数下向量化生成 K 个样本；不要重复运行 encoder。按延迟预算限制 K，并对结果聚合。</p></article>
+        <article class="card cool"><span class="tag">SEQUENTIAL</span><h3>时序输入：缓存状态</h3><p>过滤式 encoder 复用上一时刻 hidden state、充分统计量或固定条件特征；检测分布突变后清空缓存。</p></article>
+        <article class="card cool"><span class="tag">FALLBACK</span><h3>困难样本：切高质量模型</h3><p>低置信度请求路由到更大的冻结 encoder、更高精度或更多样本，而不是在在线路径里启动反向传播。</p></article>
       </div>
-      <div class="callout"><strong>VAE 只是摊销推理的一种实现：</strong>若 KL 迅速趋零、active units 过少或 decoder 忽略 z，先诊断 posterior collapse，再考虑 KL warm-up、free bits 或改变 decoder/连接。不要把这种训练病态误判成“推理已经收敛”。</div>
+      <div class="callout"><strong>关键边界：</strong>难样本升级的是冻结推理配置，不是 optimizer。任何 test-time optimization 都应进入独立的慢队列，并从本报告的常规推理 SLO 中剥离。</div>
     </section>
 
     <section id="systems"><span class="kicker">07 · Inference runtime</span><h2>让每次后验求解更便宜</h2>
-      <div class="grid3"><article class="card cool"><span class="tag">VECTORIZE</span><h3>批量化所有独立轴</h3><p>数据 plate、粒子 K、局部变量和必要时多重初始化都应成为张量维度。优先消除 Python for-loop，再做算子融合。</p></article><article class="card"><span class="tag">COMPILE</span><h3>固定结构与 bucket</h3><p>按 batch/序列长度分桶，编译稳定的 model+guide loss。把动态控制流留在图外，并分别计入首次编译和稳态时间。</p></article><article class="card hot"><span class="tag">PRECISION</span><h3>分区低精度</h3><p>神经网络 GEMM 用 BF16；概率密度、Jacobian、方差、logsumexp 和全局充分统计量保 FP32。低精度必须通过 ELBO parity 与后验校准。</p></article></div>
-      <div class="grid2"><article class="card"><h3>在线服务：按难度路由</h3><p>简单样本走 amortized 一次前向；低置信度样本追加局部精修或更多粒子；超时则返回保守后验。按 latent 维度、序列长度与 K 分桶合批，并分开报告编码、优化与后验采样延迟。</p></article><article class="card"><h3>缓存与预计算</h3><p>静态特征、稀疏设计矩阵、索引和不随 φ/θ 变化的项可缓存；流式场景缓存充分统计量与上一时刻 q。缓存键必须包含数据版本、模型 revision、预处理和变分族。</p></article></div>
-      <details><summary>推理服务的延迟预算模板</summary><div><div class="code">T_total = T_preprocess + T_guide + N_local × T_ELBO + K × T_posterior_sample + T_post
-P50 路径：amortized guide → confidence gate → return
-P95 路径：warm-start → local refinement → convergence / timeout
-优化顺序：<em>减少 N_local → 向量化 K → batch/bucket → compile → mixed precision</em></div></div></details>
+      <div class="grid3"><article class="card cool"><span class="tag">VECTORIZE</span><h3>批量化样本轴</h3><p>batch、序列与 K 样本都成为张量维度。优先消除 Python for-loop，再做算子融合。</p></article><article class="card"><span class="tag">COMPILE</span><h3>固定结构与 bucket</h3><p>按 batch/序列长度分桶，编译稳定的 encoder-forward 图；动态路由留在图外。</p></article><article class="card hot"><span class="tag">PRECISION</span><h3>分区低精度</h3><p>encoder GEMM 用 BF16/FP8；scale、softplus、方差、logsumexp 等敏感归约保 FP32，并做校准回归。</p></article></div>
+      <div class="grid2"><article class="card"><h3>在线服务：按成本路由</h3><p>默认统计量快路；只有任务明确需要时才采样。按输入 shape、后验族与 K 分桶，分别报告 encoder、采样和后处理延迟。</p></article><article class="card"><h3>缓存与预计算</h3><p>静态特征、索引、mask 与条件 embedding 可缓存；流式场景复用 encoder state。缓存键包含模型 revision、预处理版本和 dtype。</p></article></div>
+      <details><summary>推理服务的延迟预算模板</summary><div><div class="code">T_total = T_preprocess + T_encoder_forward + T_posterior + K × T_sample + T_post
+P50 路径：encoder → statistics → return
+P95 路径：larger frozen model / higher precision → optional K samples → return
+优化顺序：<em>裁剪无用分支 → batch/bucket → compile → quantize → 向量化 K</em></div></div></details>
     </section>
 
     <section id="decision"><span class="kicker">08 · Decision route</span><h2>按症状选第一步</h2>
-      <div class="road"><div class="num">01</div><div><h3>ELBO 抖动、seed 差异大</h3><p>固定 batch 重复测梯度方差 → 连续变量重参数化 → 解析 KL / Rao–Blackwell → 离散枚举或 baseline → 最后才增加粒子。</p></div></div>
-      <div class="road"><div class="num">02</div><div><h3>ELBO 高但预测或校准差</h3><p>检查 likelihood 与数据标度 → posterior predictive check → mean-field 改低秩/结构化 → flow / mixture → 必要时用 MCMC 对小模型校准。</p></div></div>
-      <div class="road"><div class="num">03</div><div><h3>数据一大就跑不动</h3><p>拆全局/局部变量 → 小批量 SVI 与正确 plate scaling → 摊销局部推断 → 稀疏计算与缓存 → 再做数据并行。</p></div></div>
-      <div class="road"><div class="num">04</div><div><h3>GPU 利用率低、单步很慢</h3><p>profile model / guide / log_prob / input → 向量化粒子和 plate → 静态分桶与编译 → 混合精度 → 仅对实测热点写融合算子。</p></div></div>
-      <div class="road"><div class="num">05</div><div><h3>线上后验延迟超 SLO</h3><p>先设 amortized 快路径 → 置信度门控局部精修 → warm-start 与自适应早停 → 粒子/精度按预算降级 → 后台异步做高质量平滑或校准。</p></div></div>
+      <div class="road"><div class="num">01</div><div><h3>encoder 占绝大多数延迟</h3><p>profile 热点 → 固定 shape bucket → compile → BF16/FP8/INT8 → 检查 kernel 是否真实生效。</p></div></div>
+      <div class="road"><div class="num">02</div><div><h3>采样导致延迟线性增长</h3><p>确认下游是否真的需要样本 → 统计量直出 → K 从 1 起做质量曲线 → 多样本向量化。</p></div></div>
+      <div class="road"><div class="num">03</div><div><h3>显存不足或 batch 上不去</h3><p>decoder bypass → 权重量化 → activation 生命周期检查 → 预分配输出 → 再考虑模型切分。</p></div></div>
+      <div class="road"><div class="num">04</div><div><h3>GPU 利用率低</h3><p>合并小请求 → 输入 shape 分桶 → CPU 预处理并行 → H2D 与 encoder 前向异步流水。</p></div></div>
+      <div class="road"><div class="num">05</div><div><h3>线上尾延迟超 SLO</h3><p>限制合批等待 → 快慢路径分队列 → 设置 K / dtype 降级 → 冷启动预热 → 超时返回保守统计量。</p></div></div>
     </section>
 
     <section id="validation"><span class="kicker">09 · Validation</span><h2>四道验收门</h2>
-      <div class="table-wrap"><table><thead><tr><th>门槛</th><th>必须报告</th><th>常见失败</th></tr></thead><tbody><tr><td>正确性</td><td>解析小模型 / 枚举基准、shape、plate scaling、梯度检查</td><td>小批量似然缩放错、事件维与批维混淆</td></tr><tr><td>收敛</td><td>ELBO gap、局部迭代数、梯度方差、达到容差的 wall-clock</td><td>固定迭代浪费简单样本；只报最终 loss</td></tr><tr><td>后验质量</td><td>posterior predictive、校准、覆盖率、ESS、下游风险</td><td>以 ELBO 单指标替代后验效用</td></tr><tr><td>推理效率</td><td>冷/热 P50/P95 延迟、QPS、K/N_local、峰值显存、超时率</td><td>隐藏编译与排队；把显存下降写成加速</td></tr></tbody></table></div>
-      <div class="note"><b>推荐基准命名：</b>model@revision / variational-family / estimator / K / batch / dtype / device×count / compile / seed×N / quality-gate。所有“×倍加速”只与同数据、同后验族或明确标注的质量等价基线比较。</div>
+      <div class="table-wrap"><table><thead><tr><th>门槛</th><th>必须报告</th><th>常见失败</th></tr></thead><tbody><tr><td>数值一致</td><td>后验参数误差、固定 seed 样本差、dtype/compile parity</td><td>量化后 scale 下溢、随机状态不可复现</td></tr><tr><td>后验质量</td><td>校准、覆盖率、下游精度、K—质量曲线</td><td>只看均值误差，不看不确定性</td></tr><tr><td>推理效率</td><td>冷/热 P50/P95、QPS、K、峰值显存、超时率</td><td>隐藏编译、排队、预处理和 decoder 成本</td></tr></tbody></table></div>
+      <div class="note"><b>推荐基准命名：</b>model@revision / posterior-family / output-mode(statistics|K) / batch / dtype / device×count / compile / seed×N / quality-gate。所有“×倍加速”只与同输入、同输出语义和同质量门的基线比较。</div>
     </section>
 
-    <section id="sources"><span class="kicker">10 · Primary sources</span><h2>来源与边界</h2>
+    <section id="sources"><span class="kicker">10 · Primary sources</span><h2>来源与部署边界</h2>
       <ol class="sources">
-        <li><a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>：重参数化 ELBO 与摊销推断。</li>
-        <li><a href="https://www.jmlr.org/papers/v14/hoffman13a.html">Stochastic Variational Inference</a>：大数据小批量 SVI、全局—局部结构与自然梯度。</li>
-        <li><a href="https://proceedings.mlr.press/v33/ranganath14.html">Black Box Variational Inference</a>：score-function 梯度与方差缩减。</li>
-        <li><a href="https://proceedings.mlr.press/v37/rezende15.html">Variational Inference with Normalizing Flows</a>：以可逆变换增强近似后验。</li>
-        <li><a href="https://proceedings.neurips.cc/paper/2016/hash/ddeebdeefdb7e7e7a697e1c3e3d8ef54-Abstract.html">Improved Variational Inference with Inverse Autoregressive Flow</a>：高维 flow 后验与 free-bits 训练思路。</li>
-        <li><a href="https://arxiv.org/abs/1810.04152">Doubly Reparameterized Gradient Estimators</a>：多样本目标的低方差梯度。</li>
-        <li><a href="https://proceedings.mlr.press/v235/wu24f.html">Understanding Stochastic Natural Gradient VI</a>：自然梯度在共轭与非共轭设置下的收敛边界。</li>
-        <li><a href="https://docs.pyro.ai/en/dev/inference_algos.html">Pyro SVI / ELBO 官方文档</a>：粒子向量化、离散枚举、Rao–Blackwellization 与 JIT 接口。</li>
-        <li><a href="https://pyro.ai/examples/svi_flow_guide.html">Pyro Normalizing Flow Guide</a>：flow guide、向量化粒子与梯度裁剪的实现示例。</li>
+        <li><a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>：摊销 inference network 与 VAE 基础结构；本文只采用其部署前向部分。</li>
+        <li><a href="https://proceedings.mlr.press/v37/rezende15.html">Variational Inference with Normalizing Flows</a>：解释 flow 后验在前向阶段增加的变换与 Jacobian 成本。</li>
+        <li><a href="https://docs.pytorch.org/docs/stable/generated/torch.compile.html">PyTorch torch.compile</a>：冻结 encoder 的图编译接口与动态 shape 边界。</li>
+        <li><a href="https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html">PyTorch Performance Tuning Guide</a>：推理批处理、内存格式与运行时调优原则。</li>
+        <li><a href="https://onnxruntime.ai/docs/performance/">ONNX Runtime Performance</a>：图优化、量化、线程与 I/O binding 的部署参考。</li>
       </ol>
-      <p class="note"><b>边界：</b>本文主线是通用变分推理算法与推理运行时，不包含扩散模型或所谓“变分扩散”。VAE 仅作为摊销推理案例；自然梯度、IWAE、flow、局部精修和低精度都必须在目标后验上做质量—延迟消融。</p>
+      <p class="note"><b>边界：</b>本文只覆盖冻结的摊销推断器，不讨论 CAVI、SVI、ELBO 优化、自然梯度、训练数据管线、反向传播或测试时训练。VAE 仅作为 encoder 输出后验分布的结构案例。</p>
     </section>
   </main></div>
-  <footer>ASCEND PLAYGROUND · VARIATIONAL INFERENCE OPTIMIZATION MANUAL · INFERENCE FIRST · 2026-08-24</footer>
+  <footer>ASCEND PLAYGROUND · AMORTIZED VI DEPLOYMENT MANUAL · FORWARD ONLY · 2026-08-25</footer>
   <script>
     const bar=document.querySelector('.progress');const update=()=>{const m=document.documentElement.scrollHeight-innerHeight;bar.style.width=(m?scrollY/m*100:0)+'%'};addEventListener('scroll',update,{passive:true});update();
     const links=[...document.querySelectorAll('nav a')];if('IntersectionObserver'in window){const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}),{rootMargin:'-20% 0px -68%'});document.querySelectorAll('main section').forEach(s=>o.observe(s))}
