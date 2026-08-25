@@ -3,733 +3,501 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="MindIE 运行时量化 layer 接入分析：以 Ascend 加速库 provider 复用 Linear、MoE、FA 算子，面向 SGLang、vLLM-Omni 及 CUDA、ROCm、NPU、XPU 等平台设计公共 SPI。">
-  <title>MindIE Runtime 量化 Layer 上游接入｜SGLang × vLLM-Omni 架构评审</title>
+  <meta name="description" content="MindIE runtime 量化 layer 接入 SGLang multimodal_gen 与 vLLM-Omni 的直接修改方案。">
+  <title>MindIE Runtime Layer 接入多模态框架｜直接修改方案</title>
   <style>
     :root{
       --ink:#e9f0ee;--muted:#91a29d;--bg:#07100f;--panel:#0c1715;--panel2:#101e1b;
       --line:#243733;--line2:#39534d;--cyan:#64dfc5;--amber:#ffb45e;--red:#ff716c;
-      --blue:#7fb7ff;--paper:#dce6e2;--black:#020606;--max:1240px;
+      --blue:#7fb7ff;--paper:#dce6e2;--max:1240px;
       --sans:"Bahnschrift","Aptos","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
       --serif:"Iowan Old Style","Source Han Serif SC","STZhongsong",Georgia,serif;
       --mono:"Cascadia Code","IBM Plex Mono","SFMono-Regular",Consolas,monospace;
     }
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth;scroll-padding-top:84px}
+    html{scroll-behavior:smooth;scroll-padding-top:78px}
     body{margin:0;color:var(--ink);background:
       radial-gradient(900px 480px at 82% -6%,rgba(100,223,197,.12),transparent 66%),
       linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
       linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),var(--bg);
       background-size:auto,28px 28px,28px 28px,auto;font:16px/1.72 var(--sans)}
     a{color:var(--cyan);text-decoration-color:rgba(100,223,197,.45);text-underline-offset:3px}
-    a:hover{color:#b9ffed}
     code,.mono{font-family:var(--mono);font-size:.91em}
-    code{color:#b9ffed;background:#071210;border:1px solid #203832;border-radius:4px;padding:.12em .38em}
+    p code,li code,td code{color:#b9ffed;background:#071210;border:1px solid #203832;border-radius:4px;padding:.12em .38em}
     .wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
-    .topbar{position:sticky;top:0;z-index:20;background:rgba(5,12,11,.92);backdrop-filter:blur(14px);
-      border-bottom:1px solid var(--line)}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(5,12,11,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
     .topbar .wrap{height:64px;display:flex;align-items:center;gap:22px;overflow:auto;scrollbar-width:none}
-    .brand{font:700 13px/1 var(--mono);letter-spacing:.14em;color:var(--paper);white-space:nowrap;margin-right:auto}
-    .brand b{color:var(--amber)}
-    nav{display:flex;gap:18px;white-space:nowrap}
-    nav a{color:var(--muted);text-decoration:none;font:600 11px/1 var(--mono);letter-spacing:.08em}
-    nav a.active,nav a:hover{color:var(--cyan)}
-    header{min-height:680px;display:grid;align-items:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
-    header:before{content:"Q";position:absolute;right:-.03em;bottom:-.3em;font:900 34rem/1 var(--serif);
-      color:transparent;-webkit-text-stroke:1px rgba(100,223,197,.1);pointer-events:none}
-    .hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr);gap:60px;padding:92px 0 76px;position:relative}
+    .brand{font:700 13px/1 var(--mono);letter-spacing:.12em;color:var(--paper);white-space:nowrap;margin-right:auto}.brand b{color:var(--amber)}
+    nav{display:flex;gap:18px;white-space:nowrap}nav a{color:var(--muted);text-decoration:none;font:600 11px/1 var(--mono);letter-spacing:.06em}nav a.active,nav a:hover{color:var(--cyan)}
+    header{min-height:620px;display:grid;align-items:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+    header:before{content:"RUN";position:absolute;right:-.02em;bottom:-.13em;font:900 18rem/1 var(--serif);color:transparent;-webkit-text-stroke:1px rgba(100,223,197,.09);pointer-events:none}
+    .hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.5fr);gap:60px;padding:82px 0 70px;position:relative}
     .eyebrow,.kicker{font:700 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
-    h1{font:700 clamp(48px,7vw,96px)/.98 var(--serif);letter-spacing:-.045em;margin:24px 0 30px;max-width:960px}
-    h1 em{color:var(--cyan);font-style:normal}
-    .dek{font-size:clamp(18px,2vw,25px);line-height:1.52;color:#bbcac6;max-width:860px}
-    .hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:30px}
-    .hero-meta span,.tag{border:1px solid var(--line2);border-radius:999px;padding:7px 10px;color:#b3c2be;
-      font:700 10px/1 var(--mono);letter-spacing:.06em}
-    .hero-side{align-self:end;border-left:1px solid var(--line2);padding-left:28px}
-    .hero-side .big{font:700 66px/1 var(--serif);color:var(--amber)}
-    .hero-side p{color:var(--muted);margin:8px 0 24px}
-    .snapshot{display:grid;gap:10px}
-    .snapshot div{border-top:1px solid var(--line);padding-top:10px}
-    .snapshot b{display:block;color:var(--paper);font:600 12px/1.3 var(--mono)}
-    .snapshot span{color:var(--muted);font-size:12px}
-    main{padding-bottom:100px}
-    section{padding:82px 0;border-bottom:1px solid var(--line)}
-    .head{display:grid;grid-template-columns:150px 1fr;gap:28px;margin-bottom:34px}
-    .secno{font:700 12px/1 var(--mono);color:var(--cyan);letter-spacing:.08em;padding-top:9px}
-    h2{font:700 clamp(30px,4vw,52px)/1.08 var(--serif);letter-spacing:-.025em;margin:8px 0 16px}
-    h3{font:700 21px/1.28 var(--serif);margin:0 0 10px}
-    h4{font:700 12px/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase;margin:0 0 11px;color:var(--cyan)}
-    .lead{font-size:19px;color:#b7c6c2;max-width:930px;margin:0}
-    .grid2,.grid3,.grid4{display:grid;gap:16px}
-    .grid2>*,.grid3>*,.grid4>*{min-width:0}
-    .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .card{background:linear-gradient(145deg,rgba(16,30,27,.94),rgba(9,20,18,.9));border:1px solid var(--line);
-      border-radius:10px;padding:24px;min-width:0}
-    .card.cyan{border-top:3px solid var(--cyan)} .card.amber{border-top:3px solid var(--amber)}
-    .card.red{border-top:3px solid var(--red)} .card.blue{border-top:3px solid var(--blue)}
-    .card p{color:#aebdb9;margin:0}.card ul{margin-bottom:0}
-    .metric{display:flex;align-items:flex-end;gap:10px;margin:12px 0 8px}
-    .metric strong{font:700 48px/.9 var(--serif);color:var(--cyan)}
-    .metric span{color:var(--muted);font:600 11px/1.4 var(--mono)}
-    .verdict{display:grid;grid-template-columns:1.5fr .5fr;border:1px solid var(--line2);border-radius:12px;overflow:hidden;
-      background:linear-gradient(110deg,rgba(100,223,197,.1),rgba(255,180,94,.04))}
-    .verdict-main{padding:32px}.verdict-main b{font:700 27px/1.25 var(--serif);color:#effbf7}
-    .verdict-main p{color:#b4c5c0;margin:14px 0 0}
-    .verdict-side{display:grid;place-items:center;border-left:1px solid var(--line2);text-align:center;padding:24px}
-    .verdict-side strong{font:700 72px/.9 var(--serif);color:var(--amber)}
-    .verdict-side span{font:700 10px/1.5 var(--mono);color:var(--muted);letter-spacing:.08em}
-    .callout{margin-top:18px;padding:18px 20px;border-left:3px solid var(--amber);background:rgba(255,180,94,.07);color:#c4d1ce}
-    .callout strong{color:#ffd3a0}
-    .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px;background:rgba(6,15,13,.65)}
-    table{width:100%;border-collapse:collapse;min-width:820px}
-    th,td{text-align:left;vertical-align:top;padding:14px 15px;border-bottom:1px solid var(--line)}
-    th{position:sticky;top:0;background:#10201c;color:#dce8e4;font:700 10px/1.25 var(--mono);letter-spacing:.08em;text-transform:uppercase}
-    td{color:#aebdb9;font-size:14px}tr:last-child td{border-bottom:0}
-    td:first-child{color:#edf5f2;font-weight:650}
-    .yes{color:var(--cyan)!important}.mid{color:var(--amber)!important}.no{color:var(--red)!important}
-    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-    .filters button{color:var(--muted);background:#0b1714;border:1px solid var(--line2);border-radius:999px;padding:8px 12px;
-      font:700 10px/1 var(--mono);cursor:pointer}
-    .filters button.on{background:var(--cyan);color:#05201a;border-color:var(--cyan)}
-    .filters button:hover{border-color:var(--cyan)}
-    .stack{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;align-items:stretch;gap:8px}
-    .layer{padding:24px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
-    .layer small,.node small{display:block;font:700 9px/1 var(--mono);letter-spacing:.13em;color:var(--amber);margin-bottom:12px}
-    .arrow{display:grid;place-items:center;color:var(--cyan);font:700 25px/1 var(--mono)}
-    .architecture{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;align-items:stretch}
-    .archcol{display:grid;gap:12px}
-    .node{border:1px solid var(--line2);border-radius:8px;padding:18px;background:#0c1815;position:relative}
-    .node b{display:block;color:#edf7f3;margin-bottom:5px}.node span{color:var(--muted);font-size:13px}
-    .archcol.center .node{border-color:rgba(100,223,197,.55);background:rgba(100,223,197,.07)}
-    .archtitle{text-align:center;color:var(--muted);font:700 10px/1 var(--mono);letter-spacing:.1em;padding:8px}
-    .rail{display:grid;grid-template-columns:180px 1fr;gap:22px;border-top:1px solid var(--line);padding:22px 0}
-    .rail:last-child{border-bottom:1px solid var(--line)}
-    .rail .label{font:700 11px/1.35 var(--mono);color:var(--cyan);letter-spacing:.07em}
-    .rail p{margin:0;color:#b0c0bc}
-    .codebox{background:#030a09;border:1px solid var(--line2);border-radius:9px;padding:20px;overflow:auto;max-width:100%;min-width:0;
-      color:#c5d4d0;font:13px/1.7 var(--mono);white-space:pre}
-    .codebox .c{color:#70847e}.codebox .k{color:var(--amber)}.codebox .t{color:var(--cyan)}
-    .roadmap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-    .roadmap article{min-height:290px;padding:21px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--cyan);border-radius:8px;display:flex;flex-direction:column}
-    .roadmap .step{font:700 10px/1.25 var(--mono);color:var(--amber);letter-spacing:.07em}
-    .roadmap h3{font-size:18px;margin-top:20px}.roadmap p{font-size:13px;color:#9fb0ab}
-    .roadmap .exit{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;color:#c4d4cf;font:700 10px/1.5 var(--mono)}
-    details{border:1px solid var(--line);border-radius:8px;background:var(--panel);margin:10px 0}
-    summary{cursor:pointer;padding:18px 20px;color:#e4efeb;font-weight:700}
-    details>div{padding:0 20px 20px;color:#aebdb9}
-    .adr{display:grid;grid-template-columns:150px 1fr;gap:20px;border-top:1px solid var(--line);padding:24px 0}
-    .adr .id{font:700 12px/1 var(--mono);color:var(--amber)}
-    .adr b{color:#edf5f2}.adr p{margin:6px 0;color:#aebdb9}
-    .sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 34px;padding-left:22px}
-    .sources li{padding:6px 0;color:#9fb0ab}.sources span{display:block;font-size:13px;color:#70827d}
-    .evidence{font:12px/1.6 var(--mono);color:#7f938d;margin-top:12px}
-    .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font:12px/1.4 var(--mono);margin-top:16px}
-    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--cyan)}
-    .dot.amber{background:var(--amber)}.dot.red{background:var(--red)}.dot.blue{background:var(--blue)}
-    footer{padding:34px 0;color:#6f817c;font:11px/1.6 var(--mono)}
-    .reveal{opacity:0;transform:translateY(16px);transition:.55s ease}.reveal.visible,.reveal:target{opacity:1;transform:none}
-    @media(max-width:980px){
-      .hero,.verdict,.architecture{grid-template-columns:minmax(0,1fr)}.hero>*,.verdict>*,.architecture>*{min-width:0}.hero-side,.verdict-side{border-left:0;border-top:1px solid var(--line2);padding:24px 0 0}
-      .grid3,.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.roadmap{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .stack{grid-template-columns:minmax(0,1fr)}.arrow{transform:rotate(90deg);min-height:32px}
-    }
-    @media(max-width:680px){
-      html,body{max-width:100%;overflow-x:hidden}.wrap{width:calc(100% - 24px);max-width:var(--max)}header{min-height:auto}.hero{padding:64px 0 50px}
-      .head,.rail,.adr{grid-template-columns:minmax(0,1fr);gap:10px}.grid2,.grid3,.grid4,.roadmap,.sources{grid-template-columns:minmax(0,1fr)}
-      section{padding:58px 0}.hero-side{display:none}nav{display:none}
-    }
+    h1{font:700 clamp(46px,6.5vw,88px)/1 var(--serif);letter-spacing:-.045em;margin:24px 0 28px;max-width:980px}h1 em{color:var(--cyan);font-style:normal}
+    .dek{font-size:clamp(18px,2vw,24px);line-height:1.55;color:#bbcac6;max-width:900px}.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:28px}
+    .hero-meta span,.tag{border:1px solid var(--line2);border-radius:999px;padding:7px 10px;color:#b3c2be;font:700 10px/1 var(--mono);letter-spacing:.05em}
+    .hero-side{align-self:end;border-left:1px solid var(--line2);padding-left:28px}.hero-side .big{font:700 66px/1 var(--serif);color:var(--amber)}.hero-side p{color:var(--muted);margin:8px 0 24px}
+    .snapshot{display:grid;gap:10px}.snapshot div{border-top:1px solid var(--line);padding-top:10px}.snapshot b{display:block;color:var(--paper);font:600 12px/1.3 var(--mono)}.snapshot span{color:var(--muted);font-size:12px}
+    main{padding-bottom:90px}section{padding:76px 0;border-bottom:1px solid var(--line)}
+    .head{display:grid;grid-template-columns:150px 1fr;gap:28px;margin-bottom:32px}.secno{font:700 12px/1 var(--mono);color:var(--cyan);letter-spacing:.08em;padding-top:9px}
+    h2{font:700 clamp(30px,4vw,50px)/1.08 var(--serif);letter-spacing:-.025em;margin:8px 0 16px}h3{font:700 21px/1.28 var(--serif);margin:0 0 10px}h4{font:700 12px/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase;margin:0 0 11px;color:var(--cyan)}
+    .lead{font-size:19px;color:#b7c6c2;max-width:940px;margin:0}.grid2,.grid3,.grid4{display:grid;gap:16px}.grid2>* ,.grid3>* ,.grid4>*{min-width:0}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(145deg,rgba(16,30,27,.94),rgba(9,20,18,.9));border:1px solid var(--line);border-radius:10px;padding:24px;min-width:0}.card.cyan{border-top:3px solid var(--cyan)}.card.amber{border-top:3px solid var(--amber)}.card.red{border-top:3px solid var(--red)}.card.blue{border-top:3px solid var(--blue)}.card p{color:#aebdb9;margin:0}.card ul{margin:8px 0 0;padding-left:20px;color:#aebdb9}
+    .verdict{display:grid;grid-template-columns:1.55fr .45fr;border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:linear-gradient(110deg,rgba(100,223,197,.1),rgba(255,180,94,.04))}.verdict-main{padding:32px}.verdict-main b{font:700 28px/1.25 var(--serif);color:#effbf7}.verdict-main p{color:#b4c5c0;margin:14px 0 0}.verdict-side{display:grid;place-items:center;border-left:1px solid var(--line2);text-align:center;padding:24px}.verdict-side strong{font:700 72px/.9 var(--serif);color:var(--amber)}.verdict-side span{font:700 10px/1.5 var(--mono);color:var(--muted);letter-spacing:.08em}
+    .callout{margin-top:18px;padding:18px 20px;border-left:3px solid var(--amber);background:rgba(255,180,94,.07);color:#c4d1ce}.callout strong{color:#ffd3a0}
+    .stack{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;align-items:stretch;gap:8px}.layer{padding:24px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.layer small{display:block;font:700 9px/1 var(--mono);letter-spacing:.13em;color:var(--amber);margin-bottom:12px}.arrow{display:grid;place-items:center;color:var(--cyan);font:700 25px/1 var(--mono)}
+    .filetree{font:13px/1.75 var(--mono);white-space:pre;overflow:auto;background:#030a09;border:1px solid var(--line2);border-radius:9px;padding:20px;color:#a9bbb6}.filetree b{color:var(--cyan)}
+    .codeframe{border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#030a09;min-width:0}.filebar{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:#10201c;border-bottom:1px solid var(--line);font:700 10px/1.4 var(--mono);color:#d6e4df}.filebar span:last-child{color:var(--amber)}
+    .codebox{margin:0;padding:18px 20px;overflow:auto;max-width:100%;color:#c5d4d0;font:12.5px/1.68 var(--mono);white-space:pre}.codebox code{font:inherit;color:inherit;background:transparent;border:0;padding:0}.codebox .c{color:#70847e}.codebox .k{color:var(--amber)}.codebox .t{color:var(--cyan)}
+    .steps{counter-reset:item;display:grid;gap:12px}.stepcard{counter-increment:item;display:grid;grid-template-columns:52px 1fr;gap:16px;padding:20px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.stepcard:before{content:counter(item);display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--cyan);color:#032018;font:800 18px/1 var(--mono)}.stepcard p{margin:0;color:#aebdb9}
+    .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px;background:rgba(6,15,13,.65)}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;vertical-align:top;padding:14px 15px;border-bottom:1px solid var(--line)}th{background:#10201c;color:#dce8e4;font:700 10px/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase}td{color:#aebdb9;font-size:14px}tr:last-child td{border-bottom:0}td:first-child{color:#edf5f2;font-weight:650}.yes{color:var(--cyan)!important}.mid{color:var(--amber)!important}.no{color:var(--red)!important}
+    .term{position:relative;color:#dffaf3;text-decoration:underline dotted var(--cyan);text-underline-offset:3px;cursor:help;outline:none}.term:after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);z-index:50;width:max-content;max-width:290px;transform:translate(-50%,6px);padding:10px 12px;border:1px solid var(--line2);border-radius:7px;background:#142521;color:#effaf7;box-shadow:0 12px 30px rgba(0,0,0,.38);font:12px/1.5 var(--sans);white-space:normal;opacity:0;pointer-events:none;transition:.16s ease}.term:before{content:"";position:absolute;left:50%;bottom:calc(100% + 4px);border:5px solid transparent;border-top-color:var(--line2);transform:translateX(-50%);opacity:0}.term:hover:after,.term:focus:after,.term:hover:before,.term:focus:before{opacity:1;transform:translate(-50%,0)}.term:hover:before,.term:focus:before{transform:translateX(-50%)}
+    .glossary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.glossary div{padding:15px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.glossary b{color:var(--cyan);font:700 12px/1 var(--mono)}.glossary span{display:block;margin-top:7px;color:#aabbb6;font-size:13px}
+    .sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 34px;padding-left:22px}.sources li{padding:6px 0;color:#9fb0ab}.sources span{display:block;font-size:13px;color:#70827d}.evidence{font:12px/1.6 var(--mono);color:#7f938d;margin-top:12px}
+    footer{padding:34px 0;color:#6f817c;font:11px/1.6 var(--mono)}.reveal{opacity:0;transform:translateY(16px);transition:.5s ease}.reveal.visible,.reveal:target{opacity:1;transform:none}
+    @media(max-width:980px){.hero,.verdict{grid-template-columns:minmax(0,1fr)}.hero-side,.verdict-side{border-left:0;border-top:1px solid var(--line2);padding:24px 0 0}.grid3,.grid4,.glossary{grid-template-columns:repeat(2,minmax(0,1fr))}.stack{grid-template-columns:minmax(0,1fr)}.arrow{transform:rotate(90deg);min-height:32px}}
+    @media(max-width:680px){html,body{max-width:100%;overflow-x:hidden}.wrap{width:calc(100% - 24px)}header{min-height:auto}.hero{padding:58px 0 48px}.hero,.hero>*{min-width:0;max-width:100%}.head,.grid2,.grid3,.grid4,.glossary,.sources{grid-template-columns:minmax(0,1fr)}.hero-side{display:none}nav{display:none}section{padding:54px 0}.stepcard{grid-template-columns:42px 1fr}.codebox{font-size:11.5px}h1{font-size:34px;line-height:1.05;overflow-wrap:anywhere;word-break:break-word}.dek{font-size:17px;overflow-wrap:anywhere}.hero-meta{width:100%;min-width:0}.hero-meta span{flex:0 0 auto;max-width:100%}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}}
-    @media print{
-      :root{--ink:#17201e;--muted:#52605c;--bg:#fff;--panel:#fff;--panel2:#fff;--line:#cbd4d1;--line2:#aab7b3}
-      body{background:white;color:#17201e;font-size:11px}.topbar{display:none}header{min-height:auto}
-      header:before{display:none}.hero{padding:30px 0}.hero-side{display:block}.card,.node,.layer,.roadmap article,details{background:white;break-inside:avoid}
-      section{padding:28px 0}.reveal{opacity:1;transform:none}.wrap{width:100%}a{color:#0b6658}
-    }
+    @media print{body{background:#fff;color:#17201e;font-size:11px}.topbar{display:none}header{min-height:auto}.hero{padding:30px 0}.card,.layer,.stepcard,.codeframe,.filetree{break-inside:avoid}.reveal{opacity:1;transform:none}.wrap{width:100%}.term:after,.term:before{display:none}}
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="wrap">
-      <div class="brand"><b>ASCEND</b> / PORTABLE QUANT ARCH REVIEW</div>
-      <nav aria-label="报告目录">
-        <a href="#verdict">结论</a><a href="#inventory">MindIE</a><a href="#frameworks">上游</a>
-        <a href="#target">目标架构</a><a href="#portability">跨平台</a><a href="#mapping">复用矩阵</a><a href="#roadmap">路线</a>
-        <a href="#validation">验收</a><a href="#sources">来源</a>
-      </nav>
-    </div>
-  </div>
+  <div class="topbar"><div class="wrap"><div class="brand"><b>ASCEND</b> / MULTIMODAL RUNTIME PATCH</div><nav aria-label="报告目录"><a href="#verdict">修改结论</a><a href="#mindie-code">MindIE 代码</a><a href="#sglang-code">SGLang</a><a href="#vllm-code">vLLM-Omni</a><a href="#fa-step">FA / Step</a><a href="#analysis">分析</a><a href="#delivery">落地</a><a href="#glossary">术语</a></nav></div></div>
 
   <header>
     <div class="wrap hero">
       <div>
-        <div class="eyebrow">ARCHITECTURE REVIEW · 2026.08.25 · SOURCE-LEVEL</div>
-        <h1>把 MindIE Runtime Layer<br><em>做成可接入的加速库</em></h1>
-        <p class="dek">面向 SGLang、SGLang-Diffusion、vLLM、vLLM-Ascend 与 vLLM-Omni：只复用 MindIE 运行时量化 layer 与算子，通过平台无关 SPI 接入；历史改图与重框架逻辑不进入方案。</p>
-        <div class="hero-meta">
-          <span>LINEAR / MOE / FA</span><span>W8A8 / MXFP8 / MXFP4</span><span>ONLINE + OFFLINE</span>
-          <span>TP / FSDP / HSDP</span><span>CUDA / ROCM / NPU / XPU</span><span>COMPONENT / STAGE ROUTING</span>
-        </div>
+        <div class="eyebrow">DIRECT MODIFICATION PLAN · 2026.08.25</div>
+        <h1>MindIE Runtime Layer<br><em>怎么接进多模态框架</em></h1>
+        <p class="dek">先给修改结论，再给代码。范围只包含 SGLang <code>multimodal_gen</code> 和 vLLM-Omni；两个主仓只用于确认它们继承的量化接口，不展开分析。</p>
+        <div class="hero-meta"><span>只改 RUNTIME LAYER</span><span>SGLANG MULTIMODAL_GEN</span><span>VLLM-OMNI</span><span>LINEAR + FA + STEP</span></div>
       </div>
-      <aside class="hero-side">
-        <div class="big">5</div><p>必须解耦的稳定契约：算法语义、checkpoint、框架生命周期、backend provider、运行时上下文</p>
-        <div class="snapshot">
-          <div><b>MindIE SD</b><span>9a42efa · 2026-08-18</span></div>
-          <div><b>SGLang</b><span>ba9074035a · 2026-08-06</span></div>
-          <div><b>vLLM / vLLM-Ascend</b><span>d4004455d2 / 1383e98c4</span></div>
-          <div><b>vLLM-Omni</b><span>596c16a55 · 2026-08-14</span></div>
-        </div>
-      </aside>
+      <aside class="hero-side"><div class="big">3</div><p>真正要提交的代码包：MindIE runtime facade、SGLang 多模态 bridge、vLLM-Omni bridge。</p><div class="snapshot"><div><b>不做</b><span>改图、模型替换、旧重框架迁移</span></div><div><b>不新造</b><span>checkpoint 格式、调度器、通用模型框架</span></div><div><b>复用</b><span>现有量化 layer、<abbr class="term" tabindex="0" data-tip="Neural Processing Unit：神经网络处理器，这里指 Ascend。">NPU</abbr> 算子与上游钩子</span></div></div></aside>
     </div>
   </header>
 
   <main>
-    <section id="verdict" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">01 / VERDICT</div><div>
-          <span class="kicker">Executive decision</span>
-          <h2>只复用 runtime layer：MindIE 作为 Ascend 加速库 provider</h2>
-          <p class="lead">本方案只分析并复用 MindIE 的运行时量化 layer、kernel wrapper、布局处理与能力探测。上层 <code>quantize(model)</code>、遍历/替换模型、配置编排等属于历史兼容路径：可以继续留在 MindIE 中兼容旧用户，但不迁移到 SGLang/vLLM-Omni，也不进入新架构、交付路线或验收门禁。</p>
-        </div></div>
-        <div class="verdict">
-          <div class="verdict-main"><b>推荐：MindIE 交付稳定的 runtime layer/provider API，上游框架只写薄桥接。</b>
-            <p>SGLang/vLLM-Omni 自己拥有模型图、并行 Linear、权重加载、component 路由和 scheduler；其 QuantMethod 在加载后把 tensor/shard 描述交给 MindIE runtime 的 <code>prepare()</code>，forward 再调用 <code>run()</code>。MindIE 内部继续复用现有 Linear/MoE/FA layer 与 ACLNN/CANN/custom op。公共 SPI 保持平台无关，因此 CUDA、ROCm、XPU 或其他加速库也能实现同一接口，但无需依赖 MindIE。</p>
-          </div>
-          <div class="verdict-side"><div><strong>B+</strong><br><span>修订后边界清晰度<br>runtime 资产高，公共 SPI 中</span></div></div>
-        </div>
-        <div class="grid4" style="margin-top:16px">
-          <article class="card cyan"><span class="tag">P0</span><h3>先统一语义 ABI</h3><p>把量化公式、dtype/encoding、scale 轴、rounding、padding 与 serialized/online 模式写进可验证 schema。</p></article>
-          <article class="card cyan"><span class="tag">P0</span><h3>Runtime Facade</h3><p>给现有 MindIE layer 增加 <code>probe / prepare / run</code> 外观接口；计算实现不在两个上游各复制一份。</p></article>
-          <article class="card amber"><span class="tag">P1</span><h3>FA 后端独立</h3><p>量化 Attention 不是 LinearQuantMethod；应通过 attention backend/capability 注册。</p></article>
-          <article class="card red"><span class="tag">P1</span><h3>禁用全局 step</h3><p><code>TimestepManager</code> 的进程级可变状态无法安全承载连续批处理中的异步请求。</p></article>
-        </div>
-        <div class="callout"><strong>范围硬边界：</strong><b>纳入</b> runtime Linear/MoE/FA layer、kernel wrapper、pack/layout、运行时上下文与 capability；<b>排除</b> graph rewrite、模型遍历/替换、模型 registry/fork、CLI/config 编排和旧 loader。兼容旧入口是维护事项，不是这次上游接入的依赖。平台兼容性由公共 SPI 保证：MindIE 是 Ascend provider，其他加速库是并列 provider。</div>
+    <section id="verdict" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">01 / 先说结论</div><div><span class="kicker">What to change</span><h2>把 MindIE layer 改成可被调用的运行时对象</h2><p class="lead">不是让 MindIE 接管模型，也不是设计一套新格式。只增加一个很薄的 Python 接口：上游加载好权重后调用 <code>prepare()</code>，推理时调用 <code>forward()</code>。</p></div></div>
+      <div class="verdict"><div class="verdict-main"><b>最终调用关系只有一条：上游 Linear / Attention → 框架自己的量化方法 → MindIE runtime layer。</b><p>SGLang 和 vLLM-Omni 继续负责模型、权重加载、并行和调度。MindIE 只负责量化权重准备、激活量化和 <abbr class="term" tabindex="0" data-tip="Neural Processing Unit：神经网络处理器，这里指 Ascend。">NPU</abbr> 算子执行。</p></div><div class="verdict-side"><div><strong>3</strong><br><span>个薄层<br>不改模型图</span></div></div></div>
+      <div class="stack" style="margin-top:18px">
+        <article class="layer"><small>多模态框架</small><h3>模型层与权重</h3><p>SGLang <code>LinearBase</code> 或 vLLM <code>LinearBase</code> 持有参数。</p></article><div class="arrow">→</div>
+        <article class="layer"><small>薄适配器</small><h3>Quant Method</h3><p>把 layer 上的 tensor 交给 MindIE，并把 forward context 转成统一参数。</p></article><div class="arrow">→</div>
+        <article class="layer"><small>MindIE 加速库</small><h3>Runtime Layer</h3><p>复用 W8A8、MXFP8、MXFP4、量化 FA 以及 torch_npu/custom op。</p></article>
       </div>
-    </section>
-
-    <section id="method" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">02 / SCOPE</div><div>
-          <span class="kicker">Scope & evidence</span><h2>分析口径：以代码路径为准，不把“接口兼容”当成“后端可用”</h2>
-          <p class="lead">报告以本地源码快照为主、官方文档为交叉证据。所谓“支持”拆成算法语义、checkpoint 表示、framework adapter、hardware platform、kernel provider、模型、并行方式与编译模式八个维度。</p>
-        </div></div>
-        <div class="grid3">
-          <article class="card"><h4>MindIE 研究对象</h4><p><code>quantization/layer.py</code> 及其 Linear/FA runtime、量化 kernel wrapper、自定义算子、pack/layout、step 输入与 capability。<code>quantize.py</code> 仅作历史背景，不是改造对象。</p></article>
-          <article class="card"><h4>功能范围</h4><p>离线/在线权重量化、动态/静态激活、timestep 模式、量化 FA、MoE、runtime tensor 契约、provider 发现、权重准备与执行；上游权重映射只分析接口交界。</p></article>
-          <article class="card"><h4>证据等级</h4><p><span class="yes">代码已存在</span>、<span class="mid">文档声明/待矩阵验证</span>、<span class="no">建议设计/推断</span>分开标注；性能数字不跨模型、shape 与硬件外推。</p></article>
-        </div>
-        <div class="legend"><span><i class="dot"></i>已落地/可复用</span><span><i class="dot amber"></i>部分具备/需补齐</span><span><i class="dot red"></i>阻塞/不可直接复用</span><span><i class="dot blue"></i>建议新增</span></div>
+      <div class="grid4" style="margin-top:16px">
+        <article class="card cyan"><h3>MindIE 改一处</h3><p>给 layer 增加从 tensor 构造的入口，去掉“必须自己读文件”的假设。</p></article>
+        <article class="card cyan"><h3>SGLang 加一类</h3><p>新增 <code>MindIERuntimeLinearMethod</code>，挂到 <code>multimodal_gen</code> 的量化 registry。</p></article>
+        <article class="card cyan"><h3>vLLM-Omni 加一类</h3><p>新增 <code>MindIERuntimeConfig/LinearMethod</code>，挂到 Omni factory。</p></article>
+        <article class="card amber"><h3>FA 单独接</h3><p><abbr class="term" tabindex="0" data-tip="Flash Attention：融合注意力计算，减少显存读写。">FA</abbr> 走两个多模态框架已有的 AttentionBackend，不塞进 LinearMethod。</p></article>
       </div>
-    </section>
+      <div class="callout"><strong>关于 checkpoint：</strong>无需新设计格式。上游现有 loader 继续读它支持的权重文件；adapter 只把加载后的 <code>torch.Tensor</code> 交给 MindIE。报告后文不再讨论 checkpoint 格式。</div>
+    </div></section>
 
-    <section id="inventory" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">03 / MINDIE SD</div><div>
-          <span class="kicker">Runtime assets</span><h2>MindIE runtime layer：保留实现，收窄对外责任</h2>
-          <p class="lead">目标不是重做量化算法或把 layer 拆散复制，而是为现有运行时能力加一层稳定的加速库 API：调用方传入已经完成加载/分片的 tensor 与显式上下文，MindIE 负责校验、设备布局准备和高性能执行。</p>
-        </div></div>
-        <div class="stack">
-          <article class="layer"><span class="tag">CONTRACT</span><h3>Runtime Request</h3><ul><li>scheme 与 tensor 描述</li><li>shape / shard / device</li><li>显式 step 与执行 policy</li></ul></article>
-          <div class="arrow">→</div>
-          <article class="layer"><span class="tag">PREPARE</span><h3>MindIE Runtime Layer</h3><ul><li>校验 capability 与 tensor</li><li>分片后 pack / transpose / NZ</li><li>生成 opaque prepared state</li></ul></article>
-          <div class="arrow">→</div>
-          <article class="layer"><span class="tag">EXECUTE</span><h3>Stateless Run</h3><ul><li>动态量化与 MatMul</li><li>FA rotation / padding / custom op</li><li>stream / workspace / graph 管理</li></ul></article>
-        </div>
-        <div class="tablewrap" style="margin-top:18px">
-          <table>
-            <thead><tr><th>能力族</th><th>MindIE SD 实现</th><th>核心权重/scale</th><th>NPU 执行</th><th>上游化判断</th></tr></thead>
-            <tbody>
-              <tr data-kind="linear"><td>W8A16 / W4A16</td><td><code>WeightQuantLinear</code></td><td>INT8/packed INT4 weight + per-channel scale</td><td><code>npu_weight_quant_batchmatmul</code></td><td class="yes">最适合首批；映射成 weight-only LinearMethod</td></tr>
-              <tr data-kind="linear"><td>W8A8 static</td><td><code>W8A8QuantLinear</code></td><td>weight、input scale/offset、deq scale、quant bias</td><td><code>npu_quantize</code> + <code>npu_quant_matmul</code></td><td class="yes">首批封装 prepare/run facade；保留内部执行</td></tr>
-              <tr data-kind="linear"><td>W8A8 dynamic</td><td><code>W8A8QuantLinear</code></td><td>weight + weight_scale；可选 mul_scale</td><td><code>npu_dynamic_quant</code> + QMM</td><td class="yes">已有上游同类路径，优先去重</td></tr>
-              <tr data-kind="step"><td>W8A8 timestep</td><td><code>W8A8TimeStepQuantLinear</code></td><td>静态逐步 scale/offset + 动态 scale</td><td>按 step 在 static/dynamic 间切换</td><td class="mid">算法可复用；全局 manager 必须重构</td></tr>
-              <tr data-kind="linear"><td>W4A4 INT</td><td><code>W4A4QuantLinear</code></td><td>packed INT4 weight + per-channel/per-token scale</td><td>INT4 dynamic quant + QMM</td><td class="mid">需要 shape、pack 与硬件 capability 明文化</td></tr>
-              <tr data-kind="linear"><td>W8A8 MXFP8</td><td><code>W8A8MXFP8QuantLinear</code></td><td>FP8 weight + E8M0 block scale</td><td><code>npu_dynamic_mx_quant</code> + QMM</td><td class="yes">SGLang/vLLM-Omni 已有实现资产</td></tr>
-              <tr data-kind="linear step"><td>W4A4 MXFP4</td><td>single-scale / DualScale / online</td><td>packed FP4；fine per-32；Dual 再加 coarse per-512 与 mul_scale</td><td>QMM 或 <code>npu_dual_level_quant_matmul</code></td><td class="yes">价值最高；必须区分 online 与 calibrated offline</td></tr>
-              <tr data-kind="fa"><td>FP8 Rotate FA</td><td><code>FP8RotateQuantFA</code></td><td>q_rot/k_rot + 动态 block scales</td><td>rotate → block quant → FIA</td><td class="mid">由 attention backend 委托 MindIE FA runtime</td></tr>
-              <tr data-kind="fa"><td>MXFP8 FA</td><td><code>MXFP8RotateQuantFA</code></td><td>动态 Q/K/V E8M0 scale</td><td><code>npu_fused_infer_attention_score_v2</code></td><td class="mid">需统一 layout/mask/capability 契约</td></tr>
-              <tr data-kind="fa step"><td>MXFP4 FA</td><td><code>MXFP4QuantFA</code></td><td>动态 FP4 Q/K/V scale + metadata</td><td><code>torch.ops.mindiesd.quant_flash_attn*</code></td><td class="mid">自定义 op 可上游；构建/ABI 应独立交付</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="grid3" style="margin-top:16px">
-          <article class="card cyan"><h3>计算资产直接复用</h3><p>Linear、MX、DualScale 与 FA 的算子选择、padding、scale 处理和自定义 op 封装继续留在 MindIE runtime 包内，避免上游各维护一份。</p></article>
-          <article class="card amber"><h3>权重所有权外置</h3><p>新 API 接收 tensor bundle/shard metadata；不要求 runtime layer 自己打开 checkpoint。由上游 loader 管理 Parameter、meta-device 与分片。</p></article>
-          <article class="card amber"><h3>稳定语义入口</h3><p><code>QuantMode</code> 可继续作为 MindIE 内部实现细节；对外用版本化 scheme/capability，避免 GPU 或其他库被 NPU mode id 绑住。</p></article>
-          <article class="card red"><h3>step 必须显式</h3><p>runtime layer 不读取进程级 <code>TimestepManager</code>；step/policy 由上游 scheduler 通过 context 传入，才能支持连续批处理。</p></article>
-          <article class="card amber"><h3>Attention 作为 runtime API</h3><p>暴露 <code>run_attention(q,k,v,metadata,context)</code>，由上游 attention backend 调用；不要求给模型对象注入字段或改 forward。</p></article>
-          <article class="card amber"><h3>能力启动期可见</h3><p><code>probe()</code> 在执行前返回 SoC、CANN、dtype、shape、layout 和 graph 约束；不支持时明确拒绝，禁止 silent fallback。</p></article>
-        </div>
+    <section id="mindie-code" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">02 / 先改 MindIE</div><div><span class="kicker">Patch 1 · accelerator library</span><h2>增加 runtime facade，原 layer 算子代码继续用</h2><p class="lead">Facade 就是“很薄的统一入口”。它不懂 SGLang、vLLM、模型名字和文件路径，只接收 tensor、shape 与当前 step。</p></div></div>
+      <div class="grid2">
+        <div class="filetree"><b>MindIE-SD/mindiesd/runtime_quant/</b>
+├── api.py          # 公共输入/输出类型
+├── linear.py       # 包装现有量化 Linear
+├── attention.py    # 包装现有量化 FA
+└── registry.py     # algorithm → runtime class
+
+<b>继续复用</b>
+mindiesd/quantization/layer.py
+mindiesd/layers/quant/*
+torch_npu / torch.ops.mindiesd.*</div>
+        <article class="card amber"><h3>现有代码真正的问题</h3><p>例如 <code>W8A8QuantLinear.__init__</code> 通过 <code>weights + prefix</code> 自己取 tensor。上游框架已经加载并分片了权重，不能再让 MindIE 从文件取一次。</p><ul><li>保留 <code>quant_matmul()</code>。</li><li>把 <code>_init_*_quant_param()</code> 拆成接收 tensor 的 <code>prepare()</code>。</li><li>旧构造器调用新 <code>prepare()</code>，继续兼容。</li></ul></article>
       </div>
-    </section>
+      <div class="codeframe" style="margin-top:18px"><div class="filebar"><span>mindiesd/runtime_quant/api.py</span><span>建议新增</span></div><pre class="codebox"><code>from dataclasses import dataclass
+from typing import Mapping, Protocol
+import torch
 
-    <section id="frameworks" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">04 / UPSTREAMS</div><div>
-          <span class="kicker">How upstreams design quantization</span><h2>共同点是方法生命周期；差异在注册、作用域和执行器</h2>
-          <p class="lead">SGLang 与 vLLM 都把“量化方法”挂到框架自有 Linear 上，而不是把 Linear 整体替换掉。vLLM-Omni 再把量化作用域提升到 component/stage；SGLang diffusion 当前保留一套与 SRT 平行的实现。</p>
-        </div></div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>维度</th><th>MindIE SD</th><th>SGLang SRT</th><th>SGLang multimodal_gen</th><th>vLLM + Ascend</th><th>vLLM-Omni</th></tr></thead>
-            <tbody>
-              <tr><td>入口</td><td>目标：<code>probe / prepare / run</code> runtime API</td><td><code>--quantization</code> + registry</td><td>loader 解析 checkpoint / CLI</td><td>core registry + OOT plugin</td><td><code>build_quant_config</code> + vLLM registry</td></tr>
-              <tr><td>层绑定</td><td>不拥有上游 layer；接收 op/tensor request</td><td>LinearBase 构造时 <code>get_quant_method</code></td><td>独立 LinearBase，同生命周期</td><td>Parallel Linear/MoE 构造时绑定</td><td>复用 vLLM Linear；模型显式传 prefix/config</td></tr>
-              <tr><td>加载生命周期</td><td>接收上游已加载、已分片 tensor 后 prepare</td><td>create → shard loader → postprocess</td><td>load spec + FSDP-aware postprocess</td><td>create → shard loader → postprocess</td><td>DiffusersLoader 补齐 meta/offload/postprocess</td></tr>
-              <tr><td>混合精度</td><td>按单 op 的 scheme/context 执行</td><td>ignore + packed mapping + scheme</td><td>ignore + name mapper + scheme</td><td>scheme registry + packed mapping</td><td>ignored_layers + component longest-prefix</td></tr>
-              <tr><td>平台扩展</td><td>直接依赖 torch_npu / 自有 SO</td><td><code>SRTPlatform</code> + OOT entry point，可覆盖 quant config</td><td>CUDA/ROCm/NPU/XPU/MUSA/MPS/CPU 平台类</td><td>内置 CUDA/ROCm/XPU/CPU + OOT platform；独立 OOT quant decorator</td><td>CUDA/ROCm/NPU/XPU/MUSA + OOT OmniPlatform</td></tr>
-              <tr><td>算子 provider</td><td>torch_npu 与自有 op 固定绑定</td><td>scheme 内选择平台实现，尚无统一 provider SPI</td><td>平台方法与 quant config 混合选择</td><td>不同 quant method 内部选择 Marlin/CUTLASS 等</td><td>CUDA/NPU 方法仍有显式平台分支</td></tr>
-              <tr><td>Attention 量化</td><td>目标：独立 FA runtime callable</td><td>AR KV/attention 路径另管</td><td>尚未与 Linear 量化统一</td><td>KV cache/attention 独立抽象</td><td>diffusion attention backend 与 KV dtype 独立</td></tr>
-              <tr><td>主要风险</td><td>runtime API 与内部 layer 绑定过紧</td><td class="mid">AR 与 diffusion 重复</td><td class="mid">模型需逐个 thread config</td><td class="mid">core 与 Ascend 版本耦合</td><td class="mid">设计 draft、组合矩阵快速变化</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="callout"><strong>MindIE 列的口径：</strong>这里描述的是面向未来的加速库接口，不是要求删除现有兼容代码。旧 <code>quantize(model)</code> 路径可以继续维护，但上游 adapter 不导入、不调用，也不等待其重构完成。</div>
+@dataclass(frozen=True)
+class RuntimeContext:
+    step_index: int | None = None
 
-        <div class="grid2" style="margin-top:18px">
-          <article class="card cyan">
-            <h3>SGLang：两套相似的控制面</h3>
-            <p>SRT 的 <code>QuantizationConfig</code>、<code>LinearMethodBase</code> 与 ModelSlim schemes 已覆盖 AR/LLM；multimodal_gen 又复制了一套 base config、parallel linear、registry 和 loader。短期应分别适配，避免强行跨大子系统重构；中期抽取平台无关 scheme contract 与可选 provider SPI，而不是共同 NPU layer。</p>
-            <div class="evidence">本地：<code>srt/layers/quantization/*</code>；<code>multimodal_gen/runtime/layers/quantization/*</code></div>
-          </article>
-          <article class="card cyan">
-            <h3>vLLM-Omni：统一 factory，component 再路由</h3>
-            <p><code>build_quant_config</code> 优先 Omni override，否则使用 vLLM registry；<code>ComponentQuantizationConfig</code> 按最长 prefix 把 transformer、text encoder、VAE 或多 stage 交给不同配置。该方向最适合 any-to-any，但 prefix 仍是事实 ABI。</p>
-            <div class="evidence">本地：<code>vllm_omni/quantization/{factory,component_config}.py</code></div>
-          </article>
-        </div>
-        <div class="callout"><strong>重要现状：</strong>多平台框架已经存在，并不代表同一量化算法自动跨平台。vLLM-Omni 的 Int8 已有 CUDA/NPU 分支，MXFP4 文档也已出现 ROCm 与 NPU 的不同实现，但当前方法仍会直接判断平台并导入具体库。这证明“语义可共用、执行需分 provider”，也说明 provider SPI 是增量收敛，不应先重写全部现有后端。</div>
-      </div>
-    </section>
+@dataclass(frozen=True)
+class LinearMeta:
+    algorithm: str          # "w8a8", "mxfp8", "mxfp4" ...
+    input_size: int
+    output_size: int
+    dtype: torch.dtype
+    use_nz: bool = False
 
-    <section id="target" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">05 / TARGET</div><div>
-          <span class="kicker">Recommended architecture</span><h2>目标架构：共享语义面，隔离框架控制面与平台执行面</h2>
-          <p class="lead">MindIE 不提供第三套模型框架，而是把现有 runtime layer 封装成 Ascend provider。公共包只定义可验证的量化语义、tensor/计划请求与上下文；SGLang/vLLM 适配器管理模型生命周期，MindIE runtime provider 复用原 layer 计算核心完成准备与执行。</p>
-        </div></div>
-        <div class="architecture">
-          <div class="archcol">
-            <div class="archtitle">UPSTREAM CONTROL PLANE</div>
-            <div class="node"><small>SGLANG SRT</small><b>ModelSlimConfig / LinearMethod</b><span>AR scheduler、TP layer、MoE runner、SGLang loader</span></div>
-            <div class="node"><small>SGLANG DIFFUSION</small><b>TransformerQuantLoadSpec</b><span>Diffusers 组件、FSDP/HSDP、component loader</span></div>
-            <div class="node"><small>VLLM / OMNI</small><b>QuantConfig / ComponentConfig</b><span>vLLM parallel layer、stage/component routing、meta loader</span></div>
-          </div>
-          <div class="archcol center">
-            <div class="archtitle">PORTABLE QUANT CONTRACT</div>
-            <div class="node"><small>01 · SEMANTICS</small><b>QuantSchemeSpec</b><span>公式、logical dtype、scale/zero-point 轴、group、rounding、accumulator、online/offline</span></div>
-            <div class="node"><small>02 · CHECKPOINT</small><b>QuantTensorSpec</b><span>canonical encoding、bit/byte order、shape、shard axis、校准张量与可选平台 cache variant</span></div>
-            <div class="node"><small>03 · NEGOTIATION</small><b>QuantPlanRequest</b><span>op family、M/N/K、dtype、sharding、graph mode、workspace/精度策略</span></div>
-            <div class="node"><small>04 · DISCOVERY</small><b>BackendRegistry</b><span>platform × provider × version × capability 匹配；返回冻结 ExecutionPlan</span></div>
-            <div class="node"><small>05 · CONTEXT</small><b>QuantRuntimeContext</b><span>请求/批次 step、policy、fallback budget；不可用进程级可变单例</span></div>
-          </div>
-          <div class="archcol">
-            <div class="archtitle">BACKEND PROVIDERS</div>
-            <div class="node"><small>ASCEND NPU</small><b>ascend.mindie_runtime</b><span>复用 MindIE Linear/MoE/FA runtime layer；封装 ACLNN、torch_npu、NZ、动态 MX、dual-level QMM 与 custom op</span></div>
-            <div class="node"><small>CUDA / ROCM</small><b>CUTLASS · Marlin · FlashInfer · Triton · AITER</b><span>同一 scheme 可有多个 provider；按架构、shape、图模式和基准优先级选择</span></div>
-            <div class="node"><small>XPU / CPU / OOT</small><b>oneDNN · torch reference · vendor plugin</b><span>reference provider 保证语义；厂商 provider 提供性能，不污染公共 schema</span></div>
-          </div>
-        </div>
-        <div class="rail"><div class="label">边界 01<br>谁拥有模型图</div><p>永远由上游框架拥有。SGLang/vLLM adapter 创建各自的方法对象，再委托 MindIE runtime provider；MindIE 不返回模型、不替换并行 Linear、不接管模型构造和 loader。</p></div>
-        <div class="rail"><div class="label">边界 02<br>谁拥有 checkpoint 语义</div><p>公共 manifest 描述数学语义和 canonical storage，不在根配置硬编码 SoC/CANN/CUDA。msModelSlim 原始输出可保留；若只含 NZ 或其他厂商 layout，则必须标记为不可移植 variant，不能宣称“一份权重跨平台”。</p></div>
-        <div class="rail"><div class="label">边界 03<br>谁选择执行实现</div><p>平台插件回答“在哪种设备上运行”，provider registry 回答“用哪个算子库执行”。resolver 按 capability、用户 policy 与稳定优先级生成 <code>ExecutionPlan</code>；普通模型文件不出现 <code>is_npu()</code>/<code>is_cuda()</code> 分支。</p></div>
-        <div class="rail"><div class="label">边界 04<br>谁拥有物理 layout</div><p>provider 在权重完成 TP/FSDP shard 后执行 pack/transpose/reorder。Ascend 路径由 MindIE runtime layer 生成 NZ 等 opaque <code>PreparedWeight</code>；GPU provider 则生成 Marlin/CUTLASS 私有布局。二者互不解释内部状态。</p></div>
-        <div class="rail"><div class="label">边界 05<br>谁拥有 step</div><p>diffusion scheduler/engine 拥有 step；量化方法只消费上下文。若一个 batch 含不同 step，策略必须支持逐样本或在 scheduler 层按 quant policy 分桶。</p></div>
-        <div class="rail"><div class="label">边界 06<br>谁决定 fallback</div><p>配置与 capability resolver 共同决定，并在启动时冻结执行计划。运行中仅允许预声明的 FLOAT/FP8/W4A8 或 reference provider 回退；任何未声明回退都计入错误与指标。</p></div>
-      </div>
-    </section>
+class QuantLinearRuntime(Protocol):
+    def prepare(
+        self, tensors: Mapping[str, torch.Tensor], meta: LinearMeta
+    ) -> object: ...
 
-    <section id="portability" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">06 / PORTABILITY</div><div>
-          <span class="kicker">Cross-platform design audit</span><h2>兼容性结论：接口能跨平台，packed 权重与 fused kernel 通常不能</h2>
-          <p class="lead">“算法同名”不等于二进制兼容。真正可复用的是数学定义、tensor 语义、计划协商协议、运行时上下文与黄金向量；设备 dtype、packing、workspace、图捕获和 fused op schema 必须由 provider 拥有。</p>
-        </div></div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>能力</th><th>语义可移植性</th><th>checkpoint 可移植性</th><th>执行实现复用</th><th>跨平台前置条件</th></tr></thead>
-            <tbody>
-              <tr><td>W8A16 / W4A16</td><td class="yes">高</td><td class="mid">中：INT4 bit order/pack 需声明</td><td class="no">低：GEMM 与 reorder 分 provider</td><td>scale axis、zero-point、padding、accumulator 与 canonical pack 明确</td></tr>
-              <tr><td>W8A8 static / dynamic</td><td class="yes">高</td><td class="yes">高：若 scale/offset 公式完整</td><td class="no">低：ACLNN、CUTLASS、hipBLASLt 等不同</td><td>区分 per-tensor/per-token/per-channel、rounding、saturation、bias 域</td></tr>
-              <tr><td>MXFP8</td><td class="yes">高</td><td class="mid">中高</td><td class="no">低</td><td>固定 element format、E8M0 scale、K-axis group、tail padding 与 scale encoding</td></tr>
-              <tr><td>MXFP4 single</td><td class="mid">中高</td><td class="mid">中：packed nibble 顺序敏感</td><td class="no">低</td><td>OCP 语义之外还需声明 bit order、group=32、shape 对齐和输出累加</td></tr>
-              <tr><td>MXFP4 DualScale</td><td class="mid">中</td><td class="mid">中低</td><td class="no">极低</td><td>先公开 fine/coarse/mul_scale 的参考公式与反量化 golden；不能仅复制 NPU 参数名</td></tr>
-              <tr><td>Rotate Quant FA</td><td class="mid">旋转/量化数学可移植</td><td class="mid">rotation tensor 可移植</td><td class="no">fused FA 不可复用</td><td>Q/K/V layout、head mapping、mask、varlen、rotation 顺序与可分解 reference path</td></tr>
-              <tr><td>StepQuantPolicy</td><td class="yes">高</td><td>不依赖 packed 权重</td><td class="yes">调度策略可复用</td><td>上下文显式、mode 枚举稳定；provider 分别声明支持的 mode 集合</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="grid2" style="margin-top:18px">
-          <div class="codebox"><span class="c"># 平台无关：描述“要什么”，不导入设备库</span>
-<span class="k">class</span> <span class="t">QuantBackendProvider</span>(Protocol):
-    id: ProviderId          <span class="c"># e.g. ascend.aclnn / cuda.cutlass</span>
-    op_families: set[str]   <span class="c"># linear / moe / attention</span>
+    def forward(
+        self, x: torch.Tensor, state: object,
+        bias: torch.Tensor | None = None,
+        context: RuntimeContext | None = None,
+    ) -> torch.Tensor: ...</code></pre></div>
 
-    <span class="k">def</span> probe(request: QuantPlanRequest,
-              device: DeviceDescriptor) -> CapabilityReport: ...
+      <div class="codeframe" style="margin-top:16px"><div class="filebar"><span>mindiesd/runtime_quant/linear.py</span><span>W8A8 示例</span></div><pre class="codebox"><code>@dataclass(frozen=True)
+class W8A8State:
+    weight: torch.Tensor
+    weight_scale: torch.Tensor
 
-    <span class="k">def</span> compile_plan(request, tensors) -> ExecutionPlan: ...
+class W8A8Runtime:
+    def prepare(self, tensors, meta):
+        # 从原 W8A8QuantLinear._init_dynamic_quant_param() 提取
+        weight = tensors["weight"]
+        weight_scale = tensors["weight_scale"].squeeze().to(meta.dtype)
+        if meta.use_nz:
+            weight = torch_npu.npu_format_cast(weight.npu(), 29).T
+        else:
+            weight = weight.T
+        return W8A8State(weight=weight, weight_scale=weight_scale)
 
-plan = registry.resolve(request, device, policy)
-plan.prepare_after_shard(layer)
-out = plan.run(x, runtime_context)</div>
-          <article class="card blue">
-            <span class="tag">TWO-AXIS DISCOVERY</span><h3>Platform ≠ Provider</h3>
-            <p><code>CUDAPlatform</code> 只提供设备、stream、通信与 graph 能力；<code>cuda.cutlass</code>、<code>cuda.marlin</code>、<code>cuda.flashinfer</code> 是并列 provider。Ascend 主入口为 <code>ascend.mindie_runtime</code>，其内部可按能力使用 ACLNN 或 MindIE custom op。用户可显式 pin，默认选择必须稳定且写入执行计划日志。</p>
-            <div class="evidence">禁止：在 <code>QuantSchemeSpec</code> 中 import torch_npu/cutlass；禁止用平台名冒充算法名；禁止 provider 互相解释 opaque prepared weight。</div>
-          </article>
-        </div>
-        <div class="grid4" style="margin-top:16px">
-          <article class="card cyan"><h4>共享</h4><p>公式、logical dtype、scale/zero-point 语义、storage encoding、plan request、golden vectors。</p></article>
-          <article class="card amber"><h4>Provider 私有</h4><p>设备 dtype、pack/reorder、workspace、kernel symbol、stream/event、graph capture 与 autotune cache。</p></article>
-          <article class="card red"><h4>不可伪装可移植</h4><p>FRACTAL_NZ、Marlin/CUTLASS 专用布局、NPU mode id、只对单一 kernel 校准的隐含 mul_scale。</p></article>
-          <article class="card blue"><h4>证明方式</h4><p>至少一个 torch reference provider + NPU 与 GPU 两个真实 provider，共用一组语义/反量化 golden。</p></article>
-        </div>
-        <div class="callout"><strong>刻意不做的“统一”：</strong>Linear、MoE 与 Attention 只共享 plan/capability 外壳，不共享一个带几十个 optional 参数的 execute 函数。各 op family 保留独立协议；否则抽象会退化成最小公分母，既不能表达 fused expert，也不能表达 varlen attention。</div>
-      </div>
-    </section>
+    def forward(self, x, state, bias=None, context=None):
+        # 直接复用原 W8A8QuantLinear.quant_matmul() 主体
+        original_shape = x.shape
+        x = x.reshape(-1, x.shape[-1])
+        qx, x_scale = torch_npu.npu_dynamic_quant(x)
+        out = torch_npu.npu_quant_matmul(
+            qx, state.weight, state.weight_scale,
+            pertoken_scale=x_scale,
+            bias=bias,
+            output_dtype=x.dtype,
+        )
+        return out.reshape(*original_shape[:-1], -1)
 
-    <section id="lifecycle" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">07 / CONTRACT</div><div>
-          <span class="kicker">Runtime delegation lifecycle</span><h2>上游管理生命周期，MindIE runtime layer 管准备与执行</h2>
-          <p class="lead">不把 MindIE layer 拆散后复制到上游，而是增加窄外观接口。上游 Linear 仍注册参数、加载与分片；加载完成后把 tensor bundle 交给 MindIE <code>prepare()</code>，forward 通过 <code>run()</code> 委托现有 runtime 实现。</p>
-        </div></div>
-        <div class="stack">
-          <article class="layer"><small>UPSTREAM</small><h3>select + load</h3><p>框架根据 layer、prefix 与 checkpoint 选择方法，注册参数并完成 TP/FSDP shard。</p></article>
-          <div class="arrow">→</div>
-          <article class="layer"><small>MINDIE RUNTIME</small><h3>probe + prepare</h3><p>校验设备/shape/dtype，把已分片 tensor 转成 NPU 专用布局与 opaque prepared state。</p></article>
-          <div class="arrow">→</div>
-          <article class="layer"><small>DELEGATE</small><h3>run</h3><p>上游传 activation、bias、stream 与 request context；MindIE runtime layer 调用现有 kernel 路径。</p></article>
-        </div>
-        <div class="grid2" style="margin-top:18px">
-          <div class="codebox"><span class="c"># 加速库外观：不持有模型或 checkpoint 文件</span>
-request = QuantPlanRequest(
-    scheme=QuantSchemeSpec(<span class="t">"mxfp4.single.v1"</span>),
-    op_family=<span class="t">"linear"</span>,
-    shape=LinearShape(m, n, k),
-    sharding=shard_spec,
-    graph_mode=graph_mode,
+def create_linear_runtime(algorithm: str) -> QuantLinearRuntime:
+    return {
+        "w8a8": W8A8Runtime,
+        "mxfp8": MXFP8Runtime,
+        "mxfp4": MXFP4Runtime,
+        "mxfp4_dualscale": MXFP4DualScaleRuntime,
+    }[algorithm]()</code></pre></div>
+
+      <div class="codeframe" style="margin-top:16px"><div class="filebar"><span>mindiesd/quantization/layer.py</span><span>旧入口继续兼容</span></div><pre class="codebox"><code>class W8A8QuantLinear(nn.Module):
+    def __init__(
+        self, in_features, out_features,
+        bias=True, weights=None, prefix=None, **kwargs
+    ):
+        super().__init__()
+        tensors = {
+            "weight": get_quant_weight(weights, f"{prefix}.weight"),
+            "weight_scale": get_quant_weight(weights, f"{prefix}.weight_scale"),
+        }
+        loaded_bias = (
+            get_quant_weight(weights, f"{prefix}.bias") if bias else None
+        )
+        self.register_buffer("bias", loaded_bias, persistent=False)
+        self.runtime = W8A8Runtime()
+        self.state = self.runtime.prepare(
+            tensors,
+            LinearMeta(
+                algorithm="w8a8",
+                input_size=in_features,
+                output_size=out_features,
+                dtype=kwargs.get("dtype", torch.bfloat16),
+                use_nz=kwargs.get("use_nz", False),
+            ),
+        )
+
+    def forward(self, x):
+        return self.runtime.forward(x, self.state, self.bias)
+
+# 结果：旧 MindIE 用法不变；新框架可绕过文件读取，直接调用 runtime。</code></pre></div>
+    </div></section>
+
+    <section id="sglang-code" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">03 / SGLang 多模态</div><div><span class="kicker">Patch 2 · multimodal_gen only</span><h2>新增一个 LinearMethod，替换当前重复的 NPU 算子代码</h2><p class="lead">只改 <code>python/sglang/multimodal_gen</code>。主仓 SRT 只提供设计参考，不是交付范围。现有 <code>NPUMXFP8DiffusionLinearMethod</code> 已经证明挂载点可用，但它把 MindIE 同类算子逻辑复制了一遍。</p></div></div>
+      <div class="codeframe"><div class="filebar"><span>python/sglang/multimodal_gen/runtime/layers/quantization/mindie_runtime.py</span><span>建议新增</span></div><pre class="codebox"><code>import torch
+
+from mindiesd.runtime_quant import (
+    LinearMeta, RuntimeContext, create_linear_runtime
 )
-report = mindie_runtime.probe(request, device)
-runtime_layer = mindie_runtime.create(request, device)
-<span class="c"># 内部复用现有 MXFP4/W8A8 runtime layer 与 NPU op</span></div>
-          <div class="codebox"><span class="c"># 上游适配器：只负责框架生命周期与 tensor 交接</span>
-<span class="k">class</span> <span class="t">MindIERuntimeLinearMethod</span>(LinearMethodBase):
-    <span class="k">def</span> create_weights(self, layer, ..., weight_loader):
-        register_from_tensor_spec(layer, canonical_spec, weight_loader)
+from sglang.multimodal_gen.runtime.layers.linear import LinearBase, LinearMethodBase
+from sglang.multimodal_gen.runtime.layers.quantization import register_quantization_config
+from sglang.multimodal_gen.runtime.layers.quantization.configs.base_config import QuantizationConfig
+from sglang.multimodal_gen.runtime.managers.forward_context import get_forward_context
 
-    <span class="k">def</span> process_weights_after_loading(self, layer):
-        <span class="c"># loader/shard 先完成，再交给 MindIE runtime layer</span>
-        tensors = export_tensor_bundle(layer, shard_spec)
-        layer.prepared = self.runtime_layer.prepare(tensors)
+@register_quantization_config("mindie_runtime")
+class MindIERuntimeConfig(QuantizationConfig):
+    def __init__(self, algorithm="mxfp8", use_nz=False):
+        super().__init__()
+        self.algorithm = algorithm
+        self.use_nz = use_nz
 
-    <span class="k">def</span> apply(self, layer, x, bias=None, context=None):
-        <span class="k">return</span> self.runtime_layer.run(x, layer.prepared, bias, context)</div>
-        </div>
-        <div class="callout"><strong>这是 facade，不是重写：</strong>现有 runtime layer 的算法与算子调用继续复用；只把“从文件/模型对象取数据”改为“接收 tensor bundle”，把进程全局状态改为显式 context。旧层若仍需自加载，可留兼容构造器；新 provider API 不调用它。上层改图逻辑完全不在此契约内。</div>
+    @classmethod
+    def get_name(cls): return "mindie_runtime"
+
+    @classmethod
+    def get_supported_act_dtypes(cls):
+        return [torch.bfloat16, torch.float16]
+
+    @classmethod
+    def get_min_capability(cls): return 0  # 不是 CUDA capability
+
+    @staticmethod
+    def get_config_filenames(): return []
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(
+            algorithm=config.get("algorithm", "mxfp8"),
+            use_nz=config.get("use_nz", False),
+        )
+
+    def get_quant_method(self, layer, prefix):
+        if isinstance(layer, LinearBase):
+            return MindIERuntimeLinearMethod(self)
+        return None
+
+class MindIERuntimeLinearMethod(LinearMethodBase):
+    def __init__(self, config):
+        self.config = config
+        self.runtime = create_linear_runtime(config.algorithm)
+
+    def create_weights(self, layer, *args, **kwargs):
+        # 沿用 SGLang 现有 ModelWeightParameter + weight_loader 写法。
+        # 这里注册 weight / weight_scale / bias 等参数，不让 MindIE 读文件。
+        register_sglang_quant_parameters(layer, self.config, *args, **kwargs)
+
+    def process_weights_after_loading(self, layer):
+        tensors = collect_quant_tensors(layer, self.config.algorithm)
+        layer._mindie_state = self.runtime.prepare(
+            tensors,
+            LinearMeta(
+                algorithm=self.config.algorithm,
+                input_size=layer.input_size_per_partition,
+                output_size=layer.output_size_per_partition,
+                dtype=layer.orig_dtype,
+                use_nz=self.config.use_nz,
+            ),
+        )
+
+    def apply(self, layer, x, bias=None):
+        ctx = get_forward_context()
+        return self.runtime.forward(
+            x, layer._mindie_state, bias,
+            RuntimeContext(step_index=ctx.current_timestep),
+        )
+
+# 上面两个 helper 的实现不是新框架：
+# 1. register_sglang_quant_parameters：直接保留现有
+#    mxfp8_npu.py::create_weights() 的 ModelWeightParameter 注册代码。
+# 2. collect_quant_tensors：只做下面这种属性收集。
+def collect_quant_tensors(layer, algorithm):
+    names = REQUIRED_TENSORS[algorithm]
+    return {name: getattr(layer, name).data for name in names}</code></pre></div>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card cyan"><h3>保留</h3><p><code>LinearBase</code>、<code>ModelWeightParameter</code>、<code>weight_loader</code>、<abbr class="term" tabindex="0" data-tip="Tensor Parallel：把同一层权重切到多张卡。">TP</abbr>/<abbr class="term" tabindex="0" data-tip="Fully Sharded Data Parallel：参数、梯度和优化器状态分片。">FSDP</abbr> 流程全部保留。</p></article>
+        <article class="card red"><h3>删除重复</h3><p><code>mxfp8_npu.py</code>、<code>mxfp4_npu.py</code> 中重复的动态量化与 <code>npu_quant_matmul</code> 主体，改为委托 MindIE。</p></article>
+        <article class="card amber"><h3>注册</h3><p>在量化包初始化时 import 新模块；启动参数使用 <code>--quantization mindie_runtime</code>，算法作为配置项传入。</p></article>
       </div>
-    </section>
+    </div></section>
 
-    <section id="mapping" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">08 / MAPPING</div><div>
-          <span class="kicker">Runtime reuse matrix</span><h2>逐算法、逐算子的 runtime 复用与接入点</h2>
-          <p class="lead">每项动作都以“保留 MindIE 运行时实现、通过 provider facade 被上游调用”为前提；不是把 layer 代码分别搬进 SGLang 和 vLLM。</p>
-        </div></div>
-        <div class="filters" aria-label="迁移矩阵筛选">
-          <button class="on" data-filter="all">全部</button><button data-filter="linear">Linear / MoE</button>
-          <button data-filter="fa">Attention</button><button data-filter="step">Timestep</button>
-        </div>
-        <div class="tablewrap">
-          <table id="migration-table">
-            <thead><tr><th>MindIE runtime 资产</th><th>公共契约</th><th>SGLang 接入点</th><th>vLLM / Omni 接入点</th><th>MindIE provider 动作</th><th>优先级</th></tr></thead>
-            <tbody>
-              <tr data-kind="linear"><td>WeightQuantLinear</td><td>weight-only 语义 + canonical INT4 encoding</td><td>SRT/Diffusion LinearMethod</td><td>vLLM LinearMethod；平台 scheme</td><td>保留计算路径；增加外部 tensor prepare/run facade，NPU pack 留在 MindIE</td><td class="yes">P0</td></tr>
-              <tr data-kind="linear"><td>W8A8 static/dynamic</td><td>INT8 QuantSchemeSpec + golden</td><td>复用 ModelSlim W8A8 schemes</td><td>复用 vLLM-Ascend / Omni CUDA+NPU Int8</td><td>作为首个 NPU+GPU 双平台 vertical slice</td><td class="yes">P0</td></tr>
-              <tr data-kind="linear"><td>W8A8 MXFP8</td><td>MX 语义、canonical scale 与 tensor spec</td><td>SRT ModelSlim + diffusion MXFP8</td><td>Omni MXFP8；XPU/NPU provider</td><td>抽共享 golden；layout transform 留在 provider</td><td class="yes">P0</td></tr>
-              <tr data-kind="linear"><td>W4A4 MXFP4 single</td><td>OCP FP4/E8M0 语义 + bit order</td><td>mxfp4 provider / ModelSlim scheme</td><td>Omni NPU/ROCm 等平台方法</td><td>统一语义，不强求共享 QMM wrapper</td><td class="yes">P0</td></tr>
-              <tr data-kind="linear step"><td>MXFP4 DualScale</td><td>fine/coarse/mul_scale 参考公式</td><td>新增/收敛 dual scheme</td><td>已有 NPU dual online/offline method</td><td>先做 reference dequant；其他平台按 capability 接入</td><td class="yes">P0</td></tr>
-              <tr data-kind="linear"><td>OnlineQuantLinear 系列</td><td>在线 weight quantizer</td><td>loader postprocess / device plan</td><td>meta-device/layerwise processing</td><td>复用 runtime quantizer；暴露 prepare_online，不接管 loader</td><td class="mid">P1</td></tr>
-              <tr data-kind="linear"><td>Fused MoE quant</td><td>expert weight spec + runner quant info</td><td>MoeRunner / AscendQuantInfo</td><td>FusedMoEMethodBase / vLLM-Ascend</td><td>先复用已有 runner，再补 diffusion MoE</td><td class="mid">P1</td></tr>
-              <tr data-kind="step"><td>W8A8 timestep policy</td><td>StepQuantPolicy（纯函数）</td><td>diffusion scheduler/context</td><td>diffusion request batch/context</td><td>删除全局单例；按 policy 分桶</td><td class="mid">P1</td></tr>
-              <tr data-kind="fa"><td>FP8 Rotate FA</td><td>rotation provider + FA kernel contract</td><td>attention backend registry</td><td>diffusion attention backend</td><td>把 q_rot/k_rot 纳入 checkpoint schema</td><td class="mid">P1</td></tr>
-              <tr data-kind="fa"><td>MXFP8 FA</td><td>Q/K/V quant semantic + attention request</td><td>platform attention backend</td><td>diffusion attention backend</td><td>统一 mask/layout/seq 语义；FIA/FlashInfer/AITER 各自实现</td><td class="mid">P1</td></tr>
-              <tr data-kind="fa step"><td>MXFP4QuantFA + custom op</td><td>reference decomposition + provider ABI</td><td>backend provider 插件依赖</td><td>platform/provider 插件依赖</td><td>NPU op 独立 wheel；其他平台可显式 FP8/FLOAT fallback</td><td class="mid">P2</td></tr>
-              <tr data-kind="step"><td>TimestepManager</td><td>不进入新 runtime API</td><td>由 ForwardBatch/engine 注入</td><td>由 DiffusionRequestBatch 注入</td><td>runtime 接受显式 context；旧 manager 仅留历史兼容</td><td class="no">排除</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+    <section id="vllm-code" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">04 / vLLM-Omni</div><div><span class="kicker">Patch 3 · Omni only</span><h2>沿用 component 路由，只替换 NPU LinearMethod 的执行主体</h2><p class="lead">vLLM 主仓和 vLLM-Ascend 只提供 <code>QuantizationConfig</code>/<code>LinearMethodBase</code> 基类。真正修改放在 vLLM-Omni；其 <code>ComponentQuantizationConfig</code> 已能决定 transformer、text encoder、VAE 哪些组件启用量化。</p></div></div>
+      <div class="codeframe"><div class="filebar"><span>vllm_omni/quantization/mindie_runtime_config.py</span><span>建议新增</span></div><pre class="codebox"><code>import torch
 
-    <section id="framework-specific" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">09 / ADAPTERS</div><div>
-          <span class="kicker">Framework-specific plan</span><h2>框架适配器保持薄，硬件与加速库通过 provider 扩展</h2>
-          <p class="lead">上游的 parallel layer、loader 与 runtime context 不同，适配层不能强行共用；Ascend 执行核心只维护在 MindIE runtime provider 一处。公共语义/SPI 允许 GPU 或其他加速库实现并列 provider，物理 weight transform 和 op wrapper 各自私有。</p>
-        </div></div>
-        <div class="grid3">
-          <article class="card cyan">
-            <span class="tag">SGLANG</span><h3>短期：分别落 SRT 与 multimodal_gen</h3>
-            <ul>
-              <li>SRT 继续使用 <code>ModelSlimConfig → ModelSlimLinearMethod → scheme</code>；<code>SRTPlatform.get_quantization_config()</code> 只做平台级覆盖，scheme 内再解析 provider。</li>
-              <li>diffusion 继续由 <code>TransformerQuantLoadSpec</code> 解析 config/safetensors，再把 quant_config 传入 DiT 的 parallel Linear。</li>
-              <li>把 multimodal_gen 内引用 SRT scheme 的边界收敛为稳定 contract 包，避免反向跨子系统导入完整 SRT runtime 或设备库。</li>
-              <li>每个 DiT 模型必须声明 <code>packed_modules_mapping</code> 和 checkpoint→runtime <code>WeightsMapper</code>。</li>
-              <li>Attention 走 multimodal_gen backend registry；不要塞进 Linear registry。</li>
-            </ul>
-          </article>
-          <article class="card cyan">
-            <span class="tag">VLLM / OMNI</span><h3>优先利用官方 OOT 注册与 component 路由</h3>
-            <ul>
-              <li>vLLM 的 OOT platform plugin 与 <code>@register_quantization_config</code> 是两个独立扩展点；NPU adapter 驻留 vLLM-Ascend，公共 scheme 不驻留其中。</li>
-              <li>vLLM-Omni 的 factory 只提供 diffusion 特有 override，CUDA/ROCm/NPU/XPU/MUSA 继续使用各自 Platform；能复用 core/provider 的就不要 fork。</li>
-              <li><code>ComponentQuantizationConfig</code> 负责 transformer / text_encoder / VAE / stage 作用域，不把 BF16 组件错误套上预量化 method。</li>
-              <li>DiffusersLoader 必须保留 layerwise meta materialization、postprocess 幂等标志与 CPU offload 规则。</li>
-              <li>每个 stage 自己解析磁盘 quantization_config；cascade 的 transformer 与 transformer_2 可有不同 fallback。</li>
-            </ul>
-          </article>
-          <article class="card blue">
-            <span class="tag">PROVIDER SPI</span><h3>MindIE 是 Ascend provider，不是公共框架</h3>
-            <ul>
-              <li><code>ascend.mindie_runtime</code> 以 entry point 或框架 registry 注册，声明 <code>id/version/op_families</code>；上游不依赖 MindIE 的模型/改图包。</li>
-              <li><code>probe()</code> 返回精确 constraint 与 reason，不只返回布尔值；包含 arch、shape、dtype、layout、compile、TP 与 workspace。</li>
-              <li><code>resolve()</code> 先满足语义和正确性，再按用户 pin、稳定优先级/benchmark profile 选择；结果可复现。</li>
-              <li>第三方库只需实现某个 op family：例如 Marlin 只接 Linear，FlashInfer 只接 Attention，不必伪装完整平台。</li>
-              <li>MindIE provider wheel 只依赖公共 contract、torch_npu/CANN 与所需 custom-op wheel；SGLang/vLLM bridge 不反向导入旧框架层。</li>
-            </ul>
-          </article>
-        </div>
-        <div class="grid3" style="margin-top:16px">
-          <article class="card amber"><h3>不可只看类名</h3><p>QKV、gate/up 与 expert 可能在 runtime 融合。checkpoint 的三个 scale 是否允许合并，必须由 scheme 显式验证；“部分 shard BF16”应启动失败。</p></article>
-          <article class="card amber"><h3>不可只看 prefix</h3><p>prefix 要经过 model-owned mapper。字符串 replace 只能作为模型适配器，不应散落在通用量化配置里。</p></article>
-          <article class="card red"><h3>不可在 scheme 里堆平台分支</h3><p>请求指定量化但 provider 不存在或 shape 不兼容时应 fail fast；只有 manifest/policy 声明的 fallback 才可执行。平台差异进入 registry/provider，不进入模型和语义对象。</p></article>
-        </div>
-      </div>
-    </section>
+from mindiesd.runtime_quant import (
+    LinearMeta, RuntimeContext, create_linear_runtime
+)
+from vllm.model_executor.layers.linear import LinearBase, LinearMethodBase
+from vllm.model_executor.layers.quantization.base_config import QuantizationConfig
+from vllm_omni.diffusion.forward_context import (
+    get_forward_context, is_forward_context_available
+)
 
-    <section id="abi" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">10 / ABI</div><div>
-          <span class="kicker">Runtime tensor contract</span><h2>Runtime 接受规范化 tensor spec，不负责配置迁移</h2>
-          <p class="lead">SGLang/vLLM adapter 从各自 checkpoint/config 得到规范化的 scheme 与 tensor 描述，再传给 MindIE runtime。下方 manifest 是跨平台接口示例，不要求 MindIE 新运行时读取旧 <code>quant_model_description.json</code>，也不把 legacy JSON 转换器列为加速库交付物。</p>
-        </div></div>
-        <div class="codebox">{
-  <span class="t">"format"</span>: <span class="t">"quant.contract.v1"</span>,
-  <span class="t">"producer"</span>: {<span class="t">"name"</span>: <span class="t">"msmodelslim"</span>, <span class="t">"version"</span>: <span class="t">"x.y"</span>},
-  <span class="t">"component"</span>: {<span class="t">"name"</span>: <span class="t">"transformer"</span>, <span class="t">"namespace"</span>: <span class="t">"diffusers"</span>, <span class="t">"mapper"</span>: <span class="t">"wan22.v1"</span>},
-  <span class="t">"layer"</span>: <span class="t">"blocks.0.ffn.proj"</span>,
-  <span class="t">"scheme"</span>: {
-    <span class="t">"id"</span>: <span class="t">"mxfp4.dualscale.v1"</span>,
-    <span class="t">"semantics"</span>: {<span class="t">"weight"</span>: <span class="t">"fp4_e2m1"</span>, <span class="t">"activation"</span>: <span class="t">"fp4_e2m1"</span>,
-      <span class="t">"fine_group"</span>: <span class="k">32</span>, <span class="t">"coarse_group"</span>: <span class="k">512</span>, <span class="t">"axis"</span>: <span class="t">"K"</span>,
-      <span class="t">"rounding"</span>: <span class="t">"nearest_even"</span>, <span class="t">"accumulator"</span>: <span class="t">"fp32"</span>}
-  },
-  <span class="t">"tensors"</span>: {
-    <span class="t">"weight"</span>: {<span class="t">"encoding"</span>: <span class="t">"packed_u8"</span>, <span class="t">"bit_order"</span>: <span class="t">"low_nibble_first"</span>, <span class="t">"layout"</span>: <span class="t">"K_MAJOR_CANONICAL"</span>, <span class="t">"shard_axis"</span>: <span class="t">"N"</span>},
-    <span class="t">"fine_scale"</span>: {<span class="t">"dtype"</span>: <span class="t">"e8m0"</span>, <span class="t">"granularity"</span>: <span class="t">"K:32"</span>},
-    <span class="t">"coarse_scale"</span>: {<span class="t">"dtype"</span>: <span class="t">"fp32"</span>, <span class="t">"granularity"</span>: <span class="t">"K:512"</span>},
-    <span class="t">"mul_scale"</span>: {<span class="t">"dtype"</span>: <span class="t">"fp32"</span>, <span class="t">"granularity"</span>: <span class="t">"input_channel"</span>}
-  },
-  <span class="t">"requires"</span>: {<span class="t">"features"</span>: [<span class="t">"mx.fp4.e2m1"</span>, <span class="t">"scale.e8m0"</span>, <span class="t">"dualscale.v1"</span>]},
-  <span class="t">"variants"</span>: [
-    {<span class="t">"id"</span>: <span class="t">"canonical"</span>, <span class="t">"portable"</span>: <span class="k">true</span>},
-    {<span class="t">"id"</span>: <span class="t">"ascend-nz-cache"</span>, <span class="t">"portable"</span>: <span class="k">false</span>, <span class="t">"provider"</span>: <span class="t">"ascend.aclnn"</span>, <span class="t">"cache_only"</span>: <span class="k">true</span>}
-  ],
-  <span class="t">"extensions"</span>: {<span class="t">"org.ascend.msmodelslim"</span>: {<span class="t">"calibration_recipe"</span>: <span class="t">"wan22.v1"</span>}}
-}</div>
-        <div class="grid4" style="margin-top:16px">
-          <article class="card"><h4>名称</h4><p>声明 checkpoint namespace 与 mapper id；映射器由模型所有并可版本化。</p></article>
-          <article class="card"><h4>布局</h4><p>canonical storage 与 provider cache 分开；NZ/Marlin reorder 是加载后布局，不应伪装成算法 dtype。</p></article>
-          <article class="card"><h4>分片</h4><p>每个 tensor 声明 sharding axis；scale 的分片轴可能不同于 weight。</p></article>
-          <article class="card"><h4>兼容</h4><p>未知 format major、缺 tensor、部分 fused shard、online/offline 或 provider cache 版本错配均在执行前失败。</p></article>
-        </div>
-        <div class="callout"><strong>可移植性的硬边界：</strong>若 checkpoint 只有 NPU NZ、Marlin 或其他 provider 专用 packed variant，runtime 可以加载，但它是“受限 checkpoint”，不是跨平台 checkpoint。要承诺跨平台，必须同时提供 canonical variant，或提供经过黄金向量验证的离线转换器；不能在 loader 中猜测 bit order 和 scale 公式。</div>
-      </div>
-    </section>
+class MindIERuntimeConfig(QuantizationConfig):
+    def __init__(self, algorithm="mxfp8", use_nz=False, **_):
+        super().__init__()
+        self.algorithm = algorithm
+        self.use_nz = use_nz
 
-    <section id="attention-step" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">11 / FA + STEP</div><div>
-          <span class="kicker">Diffusion-specific design</span><h2>FA 量化与 timestep 是接入难点，不是 Linear 的附属参数</h2>
-          <p class="lead">Linear 量化可以按 layer prefix 静态选 method；FA 的 Q/K/V 是运行时 tensor，timestep 又随请求推进。二者需要 attention backend 与 scheduler 共同参与。</p>
-        </div></div>
-        <div class="grid2">
-          <article class="card amber">
-            <h3>量化 AttentionBackend 契约</h3>
-            <ul>
-              <li><b>输入：</b>Q/K/V、layout、mask、scale、sequence metadata、可选 rotation。</li>
-              <li><b>能力：</b>FP8/MXFP8/MXFP4、BNSD/BSND、varlen、SP/ring、torch.compile。</li>
-              <li><b>选择：</b>启动期按 platform/provider/arch/op/shape 决定候选；每次调用只做轻量 dispatch。</li>
-              <li><b>交付：</b>Ascend ACLNN/custom op、CUDA/ROCm attention 库分别作为 provider；缺失时只允许显式策略 fallback。</li>
-              <li><b>观测：</b>记录 chosen platform/provider/version、quant mode、fallback count 与 padding overhead。</li>
-            </ul>
-          </article>
-          <article class="card amber">
-            <h3>请求级 StepQuantPolicy</h3>
-            <ul>
-              <li>由 scheduler 把 <code>step_index</code>、sigma/timestep 与 policy id 放入 forward context。</li>
-              <li>策略是纯函数：<code>(layer, step, shape) → W4A4 | W4A8 | FP8 | FLOAT</code>。</li>
-              <li>同一 batch 策略不同时：优先按 mode 分桶；不支持逐样本 kernel 时禁止混跑。</li>
-              <li>torch.compile 图按有限 mode/shape 建缓存，避免把任意 Python 字典捕获进图。</li>
-              <li>取消、重试和 stage 解耦必须携带 step/policy，不能读取 worker 全局变量。</li>
-            </ul>
-          </article>
-        </div>
-        <div class="callout"><strong>关于 rotation：</strong>离线校准的 <code>q_rot/k_rot</code> 与在线生成 Hadamard rotation 不是等价 checkpoint。manifest 必须标注 rotation 来源、seed、head_dim 与应用顺序；模型 fusion 若改变 Q/K head 排布，rotation 也必须跟随重排。</div>
-      </div>
-    </section>
+    @classmethod
+    def get_name(cls): return "mindie_runtime"
 
-    <section id="adr" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">12 / ADR</div><div>
-          <span class="kicker">Decision ledger</span><h2>六项关键架构决策</h2>
-          <p class="lead">以下 ADR 建议作为实施前的评审基线；状态均为 Proposed，需由 MindIE、SGLang、vLLM-Ascend/Omni 及至少一个非 Ascend provider 维护者共同确认。</p>
-        </div></div>
-        <div class="adr"><div class="id">ADR-001<br>PROPOSED</div><div><b>MindIE 的新交付单元是 runtime layer/provider，不是模型框架。</b><p>现有 Linear/MoE/FA 执行实现通过 <code>probe/prepare/run</code> facade 复用；SGLang/vLLM 自己拥有模型图、参数和 loader。历史 graph rewrite 继续兼容但明确不进入依赖图、路线图和新 API。</p></div></div>
-        <div class="adr"><div class="id">ADR-002<br>PROPOSED</div><div><b>runtime tensor ABI 表达数学语义与 canonical storage，不绑定某设备布局。</b><p>adapter 负责把所在生态的 config/checkpoint 解析成 normalized spec；MindIE runtime 只消费该输入。这样 NPU provider 可生成 NZ，GPU provider 可生成 Marlin/CUTLASS 布局，而不要求 MindIE 维护旧配置转换链。</p></div></div>
-        <div class="adr"><div class="id">ADR-003<br>PROPOSED</div><div><b>平台发现与 kernel provider 发现采用两个正交注册表。</b><p>vLLM/SGLang platform 回答设备/runtime；provider 回答 Linear/MoE/Attention 实现。同一 CUDA/NPU 可有多个 provider。拒绝“每平台复制全部 scheme”和“一个万能 kernel API”：前者重复，后者退化为最小公分母。</p></div></div>
-        <div class="adr"><div class="id">ADR-004<br>PROPOSED</div><div><b>物理 weight transform 在分片后由 provider 拥有，PreparedWeight 不透明。</b><p>正向：容纳 NZ、Marlin、CUTLASS、AITER 等专用 reorder 与 workspace；负向：跨 provider cache 不能复用。cache key 必须包含 scheme、provider/version、arch、shape、sharding 与 layout id。</p></div></div>
-        <div class="adr"><div class="id">ADR-005<br>PROPOSED</div><div><b>FA 量化从 LinearQuantizationConfig 分离。</b><p>可在顶层 QuantPlan 中组合 linear 与 attention 子计划，但执行时分别走 LinearMethod 与 AttentionBackend provider；避免让 checkpoint weight scheme 决定所有运行时 attention 行为。</p></div></div>
-        <div class="adr"><div class="id">ADR-006<br>PROPOSED</div><div><b>禁止未声明的 provider 或精度回退。</b><p>op、shape 或 runtime 不满足时启动失败；仅 policy 中明确的 provider 次序及 BF16/FP8/W4A8/reference fallback 可执行并暴露指标。代价是首次接入更严格，收益是可复现且不会“看似量化、实际浮点”。</p></div></div>
-      </div>
-    </section>
+    @classmethod
+    def get_supported_act_dtypes(cls):
+        return [torch.bfloat16, torch.float16]
 
-    <section id="roadmap" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">13 / ROADMAP</div><div>
-          <span class="kicker">Runtime-first delivery plan</span><h2>五阶段交付：先稳定 MindIE runtime，再由上游接入并跨平台验约</h2>
-          <p class="lead">MindIE 团队的责任止于 Ascend runtime provider、数值参考和能力声明；SGLang/vLLM adapter 由对应集成侧完成。GPU provider 用来证明公共 SPI 没有泄漏 NPU 语义，不要求 MindIE 团队实现或维护 GPU kernel。</p>
-        </div></div>
-        <div class="roadmap">
-          <article><span class="step">PHASE 0 · 1–2 周</span><h3>冻结 runtime 边界</h3><p>盘点可复用 Linear/MoE/FA layer 与 op；冻结 <code>probe/prepare/run</code>、tensor bundle、prepared state、context 和错误模型。旧 graph/config/loader 不进入包依赖。</p><span class="exit">EXIT → runtime wheel 可独立 import；依赖图中没有模型改写模块</span></article>
-          <article><span class="step">PHASE 1 · 2–3 周</span><h3>Ascend W8A8 切片</h3><p>用 facade 包住现有 W8A8 static/dynamic runtime layer；外部 tensor 在分片后 prepare，forward 委托原 NPU kernel；补纯 torch reference 与 golden。</p><span class="exit">EXIT → 算子实现未复制；runtime API 独立通过数值、shape 与 capability 测试</span></article>
-          <article><span class="step">PHASE 2 · 3–4 周</span><h3>两个上游桥接</h3><p>分别实现 SGLang 与 vLLM-Omni QuantMethod/AttentionBackend bridge，沿用各自 loader、TP/FSDP、component config 与 mapper，只把 tensor 和 context 交给 MindIE provider。</p><span class="exit">EXIT → 两框架不改图、不绕 loader；严格权重覆盖 100%</span></article>
-          <article><span class="step">PHASE 3 · 3–5 周</span><h3>扩 runtime 能力</h3><p>按同一 facade 纳入 MXFP8/MXFP4/DualScale、FA、MoE；把 step 改为显式 context 输入，custom op 独立版本握手。</p><span class="exit">EXIT → 所有 Ascend 路径可 probe；FA 不依赖模型字段注入；并发 step 无污染</span></article>
-          <article><span class="step">PHASE 4 · 2–4 周</span><h3>跨平台验约</h3><p>由 CUDA/ROCm 现有加速库实现同一 SPI 的一个真实切片，共用 scheme/golden，验证公共接口没有 NZ、CANN mode 或 MindIE class 泄漏。</p><span class="exit">EXIT → 新 provider 不改模型代码与公共 scheme；MindIE 仍只维护 Ascend runtime</span></article>
-        </div>
-        <div class="callout"><strong>PR 拆分建议：</strong>runtime facade、W8A8 provider、reference/golden、SGLang bridge、vLLM/Omni bridge、MX/FA/MoE provider、custom-op wheel、显式 context、跨平台 conformance 分开提交。不要把旧 graph rewrite 或配置框架清理混入这些 PR；它们既不阻塞新接口，也不是本方案范围。</div>
-      </div>
-    </section>
+    @classmethod
+    def get_min_capability(cls): return 0
 
-    <section id="validation" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">14 / VALIDATION</div><div>
-          <span class="kicker">NFR & release gates</span><h2>验收对象是“部署组合”，不是一个算法名字</h2>
-          <p class="lead">最低矩阵为：framework/adapter commit × platform × provider/version × device arch/runtime × model/component × quant scheme × TP/FSDP × compile/offload。所有门禁保留 torch/BF16 reference、provider 解析报告与冻结执行计划。</p>
-        </div></div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>层级</th><th>测试内容</th><th>最低门槛</th><th>失败必须输出</th><th>优先级</th></tr></thead>
-            <tbody>
-              <tr><td>Schema</td><td>版本、公式、必需 tensor、encoding/bit order、dtype/shape、online/offline、variant</td><td>错误/受限 checkpoint 100% 在分配设备大内存前识别</td><td>component、layer、semantic id、expected/actual、portable flag</td><td class="yes">P0</td></tr>
-              <tr><td>Provider resolve</td><td>零/一/多候选、用户 pin、版本冲突、可选依赖缺失、确定性优先级</td><td>相同输入产生相同 plan；未选中 provider 不被强制导入</td><td>全部 candidate、reject reason、chosen id/version</td><td class="yes">P0</td></tr>
-              <tr><td>Semantic conformance</td><td>reference quant/dequant 与 NPU/GPU provider 共用 golden；rounding/saturation/tail</td><td>至少两个真实平台通过同一 scheme contract</td><td>首个不一致元素、scale、公式版本、provider</td><td class="yes">P0</td></tr>
-              <tr><td>Kernel UT</td><td>golden tensor；M/N/K 边界；bias；2D/3D flatten；provider layout</td><td>按算法定义 atol/rtol；无 NaN/Inf</td><td>op、platform/provider、arch、shape、dtype、max error</td><td class="yes">P0</td></tr>
-              <tr><td>Weight load</td><td>Replicated/Column/Row/QKV/Merged；TP=1/2/4</td><td>expected names 全覆盖；无重复/漏载</td><td>未消费和缺失参数清单</td><td class="yes">P0</td></tr>
-              <tr><td>Graph/compile</td><td>eager、torch.compile、CUDA/ACL graph 等平台 capture；fake/meta</td><td>无 graph break 或明确 provider 白名单</td><td>provider、fallback/graph-break reason</td><td class="yes">P0</td></tr>
-              <tr><td>Diffusion 数值</td><td>同 seed/prompt/shape/steps 的 latent trajectory 与最终媒体</td><td>逐模型阈值；像素指标 + 语义/人工门</td><td>首个偏离 step 与敏感 layer</td><td class="yes">P0</td></tr>
-              <tr><td>并发正确性</td><td>不同 step/policy 请求交错；取消/重试/连续批处理</td><td>结果与单请求串行一致</td><td>request id、step、mode、batch bucket</td><td class="yes">P0</td></tr>
-              <tr><td>性能</td><td>冷启动/plan compile、峰值显存、denoise step、E2E、吞吐、通信</td><td>每 platform/provider/模型独立预算；无 silent reference/float</td><td>provider/version、plan、layout、workspace、fallback count</td><td class="mid">P1</td></tr>
-              <tr><td>长稳</td><td>24h、混合尺寸、provider cache、OOM 恢复、worker 重启</td><td>无内存单调增长；错误可归因</td><td>内存、队列、step、provider/cache 指标</td><td class="mid">P1</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="grid4" style="margin-top:16px">
-          <article class="card"><div class="metric"><strong>0</strong><span>SILENT<br>FALLBACK</span></div><p>请求量化时，浮点执行只能来自显式 fallback plan。</p></article>
-          <article class="card"><div class="metric"><strong>100%</strong><span>WEIGHT<br>COVERAGE</span></div><p>严格加载覆盖所有目标 component 参数和 scale。</p></article>
-          <article class="card"><div class="metric"><strong>2+</strong><span>REAL<br>PROVIDERS</span></div><p>公共 SPI 稳定前，至少通过 NPU 与 GPU 两个真实 provider；另保留 reference。</p></article>
-          <article class="card"><div class="metric"><strong>1st</strong><span>DIVERGENT<br>STEP</span></div><p>diffusion 回归必须能定位首次偏离的 step。</p></article>
-        </div>
-      </div>
-    </section>
+    @classmethod
+    def get_config_filenames(cls): return []
 
-    <section id="risks" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">15 / RISKS</div><div>
-          <span class="kicker">Failure modes</span><h2>最可能让“能跑”变成“不能交付”的风险</h2>
-        </div></div>
-        <div class="grid3">
-          <article class="card red"><span class="tag">R1 · HIGH</span><h3>权重名即隐形 ABI</h3><p>Diffusers、msModelSlim 与 runtime fusion 名称不同。缓解：model-owned mapper + manifest mapper version + strict coverage。</p></article>
-          <article class="card red"><span class="tag">R2 · HIGH</span><h3>scale 分片错轴</h3><p>weight、fine scale、coarse scale、mul_scale 的 TP 轴不同。缓解：tensor spec 声明 shard axis，单独测试 Row/Column。</p></article>
-          <article class="card red"><span class="tag">R3 · HIGH</span><h3>step 状态串请求</h3><p>全局 manager 在异步/连续批处理下污染结果。缓解：context 显式传递，策略分桶与并发回归。</p></article>
-          <article class="card amber"><span class="tag">R4 · MED</span><h3>在线/离线语义混淆</h3><p>DualScale offline 有 calibrated mul_scale，online 没有。缓解：serialized flag + tensor presence + mode mismatch fail-fast。</p></article>
-          <article class="card amber"><span class="tag">R5 · MED</span><h3>provider ABI 漂移</h3><p>PyTorch、CANN/torch_npu、CUDA/ROCm 与第三方 op schema 组合变化。缓解：独立 wheel、版本握手、fake/meta、兼容矩阵和 lazy probe。</p></article>
-          <article class="card amber"><span class="tag">R6 · MED</span><h3>优化组合非交换</h3><p>量化与 QKV fusion、LoRA、offload、SP/ring、compile 组合可能改变布局或误差。缓解：按组合验收，不从单项通过推导组合通过。</p></article>
-          <article class="card"><span class="tag">R7 · OPS</span><h3>两上游版本漂移</h3><p>vLLM/SGLang method 与 loader 接口频繁演进。缓解：薄 adapter、受控版本窗口、每月 rebase CI。</p></article>
-          <article class="card"><span class="tag">R8 · QUALITY</span><h3>只看最终图片</h3><p>最终像素可能掩盖中途爆炸或偶然收敛。缓解：latent trajectory、敏感层输出与语义指标联合门禁。</p></article>
-          <article class="card"><span class="tag">R9 · LICENSE</span><h3>代码搬运边界</h3><p>MindIE SD 为 Mulan PSL v2，上游多为 Apache-2.0。缓解：法务确认；优先重写适配器、保留来源与许可证头。</p></article>
-          <article class="card red"><span class="tag">R10 · HIGH</span><h3>厂商语义泄漏</h3><p>把 NZ、CANN mode id 或某个 CUTLASS layout 写进公共 scheme，会让“跨平台”只剩改名。缓解：schema review 要求 reference 公式；厂商字段必须 namespaced extension。</p></article>
-          <article class="card amber"><span class="tag">R11 · MED</span><h3>provider 选择漂移</h3><p>安装一个新库后默认实现变化，可能改变数值或性能。缓解：稳定优先级、plan 日志、production pin、升级时重新跑 golden/benchmark。</p></article>
-          <article class="card amber"><span class="tag">R12 · MED</span><h3>过度抽象成最小公分母</h3><p>万能 execute 接口无法表达 fused MoE/varlen FA，又给每条路径增加间接层。缓解：只共享 plan 外壳，Linear/MoE/Attention 保留独立协议；无第二实现不抽 SPI。</p></article>
-          <article class="card red"><span class="tag">R13 · HIGH</span><h3>历史框架反向渗透</h3><p>若 runtime wheel 为复用一个 layer 又导入 graph rewrite、模型 registry 或旧 loader，上游仍会被重框架绑住。缓解：依赖图门禁 + 独立 import test；只允许 runtime/common-op 方向依赖。</p></article>
-        </div>
-      </div>
-    </section>
+    @classmethod
+    def from_config(cls, config): return cls(**config)
 
-    <section id="sources" class="reveal">
-      <div class="wrap">
-        <div class="head"><div class="secno">16 / SOURCES</div><div>
-          <span class="kicker">Primary evidence</span><h2>源码、官方文档与证据边界</h2>
-          <p class="lead">在线信息核验于 2026-08-25。报告中的目标架构、优先级与工期是工程判断，不是各项目官方承诺；本地仓库可能包含尚未完全同步到公开 main 的提交。</p>
-        </div></div>
-        <ol class="sources">
-          <li><a href="https://gitcode.com/Ascend/MindIE-SD/tree/master/mindiesd/quantization">MindIE SD quantization 源码</a><span>本报告复用证据聚焦 Linear/FA runtime 类与 NPU op；QuantConfig/图替换只用于识别历史边界，不纳入目标设计。</span></li>
-          <li><a href="https://gitcode.com/Ascend/MindIE-SD/blob/master/docs/zh/features/quantization.md">MindIE SD 量化文档</a><span>算法范围、Linear/FA 量化流程、硬件说明。</span></li>
-          <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/srt/layers/quantization">SGLang SRT quantization</a><span>QuantizationConfig、LinearMethod、ModelSlim 与平台方法。</span></li>
-          <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/layers/quantization">SGLang multimodal_gen quantization</a><span>Diffusion 独立 registry、ModelSlim/MXFP 与 Linear 生命周期。</span></li>
-          <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/srt/platforms">SGLang SRT platforms</a><span>SRTPlatform、OOT entry point、quant config override 与设备能力边界。</span></li>
-          <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/platforms">SGLang multimodal_gen platforms</a><span>CUDA、ROCm、NPU、XPU、MUSA、MPS、CPU 平台及 quant/backend 能力。</span></li>
-          <li><a href="https://github.com/sgl-project/sglang/blob/main/docs/advanced_features/quantization.md">SGLang 官方量化文档</a><span>AR 量化方法与 Ascend diffusion MXFP/ModelSlim 路径。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm/tree/main/vllm/model_executor/layers/quantization">vLLM quantization 源码</a><span>core registry、QuantizationConfig、create/process/apply 生命周期。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm/tree/main/vllm/platforms">vLLM platforms</a><span>CUDA/ROCm/TPU/XPU/CPU 与 OOT platform plugin，和 quant registry 相互独立。</span></li>
-          <li><a href="https://docs.vllm.ai/en/stable/features/quantization/">vLLM 官方 Quantization 文档</a><span>硬件矩阵与 out-of-tree 量化注册接口。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-ascend/tree/main/vllm_ascend/quantization">vLLM-Ascend quantization</a><span>ModelSlim parser、scheme registry、Linear/MoE/Embedding 方法。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/developer_guide/Design_Documents/quantization.md">vLLM-Ascend 量化适配指南</a><span>注册、权重后处理、packed mapping 和算法接入流程。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/quantization">vLLM-Omni unified quantization</a><span>factory override、component routing、Int8/MXFP8/MXFP4 diffusion 方法。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/platforms">vLLM-Omni platforms</a><span>CUDA、ROCm、NPU、XPU、MUSA 与 OOT OmniPlatform 的设备/attention/worker 能力。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/docs/user_guide/quantization/overview.md">vLLM-Omni 量化总览</a><span>不同硬件、算法和模型的已验证矩阵，证明接口存在不等于组合已验证。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/docs/user_guide/quantization/mxfp4.md">vLLM-Omni MXFP4 指南</a><span>single/dual、online/offline、scale layout、fallback 与 Wan2.2 边界。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/blob/main/docs/design/module/quantization.md">vLLM-Omni 量化设计草案</a><span>checkpoint/runtime 一致、显式失败和数值验证 invariants。</span></li>
-          <li><a href="https://gitcode.com/Ascend/msmodelslim">msModelSlim</a><span>Ascend 离线量化 checkpoint 生产工具与模型 recipes。</span></li>
-          <li><a href="https://github.com/vllm-project/vllm-omni/issues/1763">vLLM-Omni Unified Quantization RFC</a><span>多模型、多平台、多 component 的统一量化动机。</span></li>
-        </ol>
-        <details open><summary>本地源码快照</summary><div>
-          <p><code>MindIE-SD 9a42efa646da</code>；<code>SGLang ba9074035a98</code>；<code>vLLM d4004455d235</code>；<code>vLLM-Ascend 1383e98c4ca4</code>；<code>vLLM-Omni 596c16a550aa</code>。</p>
-          <p>MindIE SD 本地分支为 <code>minimax-h3-0817</code>，remote 指向个人 GitCode fork；因此对“官方已发布”的判断以公开官方仓库/文档交叉确认，本地新增代码仅作为实现证据。</p>
-        </div></details>
+    def get_quant_method(self, layer, prefix):
+        if isinstance(layer, LinearBase):
+            return MindIERuntimeLinearMethod(self)
+        return None
+
+class MindIERuntimeLinearMethod(LinearMethodBase):
+    def __init__(self, config):
+        self.config = config
+        self.runtime = create_linear_runtime(config.algorithm)
+
+    def create_weights(self, layer, *args, **kwargs):
+        # 复用 vLLM 的参数类和 weight_loader；只注册所需 tensor。
+        register_vllm_quant_parameters(layer, self.config, *args, **kwargs)
+
+    def process_weights_after_loading(self, layer):
+        layer._mindie_state = self.runtime.prepare(
+            collect_quant_tensors(layer, self.config.algorithm),
+            build_linear_meta_from_vllm(layer, self.config),
+        )
+
+    def apply(self, layer, x, bias=None):
+        step = None
+        if is_forward_context_available():
+            step = get_forward_context().denoise_step_idx
+        return self.runtime.forward(
+            x, layer._mindie_state, bias,
+            RuntimeContext(step_index=step),
+        )
+
+# register_vllm_quant_parameters：保留现有 NPU method 的
+# create_weights() 参数注册代码；collect_quant_tensors 与 SGLang 相同，
+# 只从 layer 读取 REQUIRED_TENSORS[algorithm]，不读取文件。</code></pre></div>
+
+      <div class="codeframe" style="margin-top:16px"><div class="filebar"><span>vllm_omni/quantization/factory.py</span><span>增加 builder</span></div><pre class="codebox"><code>def _build_mindie_runtime(**kwargs):
+    from .mindie_runtime_config import MindIERuntimeConfig
+    return MindIERuntimeConfig(**kwargs)
+
+_OVERRIDES = {
+    # 保留现有 int8 / mxfp8 / mxfp4 ...
+    "mindie_runtime": _build_mindie_runtime,
+}
+
+# 多组件模型直接使用现有路由，不加新机制：
+quantization = {
+    "transformer": {
+        "method": "mindie_runtime",
+        "algorithm": "mxfp4_dualscale",
+        "use_nz": True,
+    },
+    "text_encoder": None,
+    "vae": None,
+}</code></pre></div>
+      <div class="callout"><strong>能删什么：</strong>现有 <code>NPUInt8LinearMethod</code>、<code>NPUMxfp8LinearMethod</code>、<code>NPUMxfp4LinearMethod</code> 不必一次删除。第一阶段保留旧类做 A/B 对比；稳定后让这些类内部委托 MindIE runtime，最后再合并重复实现。</div>
+    </div></section>
+
+    <section id="fa-step" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">05 / FA 与 STEP</div><div><span class="kicker">Multimodal-specific</span><h2>Attention 单独包；step 直接读两个框架已有上下文</h2><p class="lead">这两点才是多模态生成特有的接入工作。无需修改模型 forward，也无需继续使用 MindIE 的进程级 <code>TimestepManager</code>。</p></div></div>
+      <div class="grid2">
+        <div class="codeframe"><div class="filebar"><span>SGLang multimodal_gen</span><span>AttentionBackend</span></div><pre class="codebox"><code>class MindIEQuantFABackend(AttentionBackend):
+    def __init__(self, algorithm="mxfp8", **kwargs):
+        self.runtime = create_attention_runtime(algorithm)
+
+    def forward(self, query, key, value, attn_metadata=None):
+        ctx = get_forward_context()
+        return self.runtime.forward(
+            query, key, value,
+            metadata=to_mindie_metadata(attn_metadata),
+            context=RuntimeContext(
+                step_index=ctx.current_timestep
+            ),
+        )
+
+# 在 NPU platform resolver 中把新枚举映射到该类。</code></pre></div>
+        <div class="codeframe"><div class="filebar"><span>vLLM-Omni</span><span>Diffusion AttentionBackend</span></div><pre class="codebox"><code>class MindIEQuantFAImpl(AttentionImpl):
+    def __init__(
+        self, num_heads, head_size, softmax_scale,
+        backend_kwargs=None, **kwargs
+    ):
+        algorithm = backend_kwargs["algorithm"]
+        self.runtime = create_attention_runtime(algorithm)
+
+    def forward(self, query, key, value, attn_metadata=None):
+        ctx = get_forward_context()
+        return self.runtime.forward(
+            query, key, value,
+            metadata=to_mindie_metadata(attn_metadata),
+            context=RuntimeContext(
+                step_index=ctx.denoise_step_idx
+            ),
+        )
+
+# registry.py 新增 MINDIE_QUANT_FA 的 class path。</code></pre></div>
       </div>
-    </section>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card cyan"><h3>Linear step</h3><p>W4A4/W4A8 切换直接使用 <code>RuntimeContext.step_index</code>，不再读取全局单例。</p></article>
+        <article class="card cyan"><h3>FA metadata</h3><p>只转换 layout、mask、sequence length、head 数等运行时信息；不传模型对象。</p></article>
+        <article class="card red"><h3>禁止</h3><p>不再通过 <code>layer.fa_quant = ...</code> 注入并要求每个 DiT 模型手工修改 forward。</p></article>
+      </div>
+    </div></section>
+
+    <section id="analysis" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">06 / 为什么这样改</div><div><span class="kicker">Relevant analysis only</span><h2>两个多模态框架的接入点其实高度一致</h2><p class="lead">只保留与改代码直接相关的差异。主仓量化设计不再单列长篇分析。</p></div></div>
+      <div class="tablewrap"><table><thead><tr><th>问题</th><th>SGLang multimodal_gen</th><th>vLLM-Omni</th><th>MindIE 应对</th></tr></thead><tbody>
+        <tr><td>Linear 挂载点</td><td><code>LinearMethodBase</code></td><td>vLLM <code>LinearMethodBase</code></td><td>同一 runtime 被两个薄 method 调用</td></tr>
+        <tr><td>加载后处理</td><td><code>process_weights_after_loading</code></td><td><code>process_weights_after_loading</code></td><td>都在这里调用 <code>prepare()</code></td></tr>
+        <tr><td>多模态作用域</td><td>transformer loader/config 传递</td><td><code>ComponentQuantizationConfig</code> 最长前缀路由</td><td>MindIE 不参与组件选择</td></tr>
+        <tr><td>当前 step</td><td><code>forward_context.current_timestep</code></td><td><code>ForwardContext.denoise_step_idx</code></td><td>转换成 <code>RuntimeContext.step_index</code></td></tr>
+        <tr><td>Attention</td><td>独立 <code>AttentionBackend</code> + NPU resolver</td><td>独立 Diffusion backend registry</td><td>分别写薄 backend，复用同一 FA runtime</td></tr>
+        <tr><td>多平台</td><td>已有 CUDA/ROCm/NPU/XPU platform</td><td>已有 CUDA/ROCm/NPU/XPU/MUSA platform</td><td>MindIE 只注册 NPU；其他平台保持原实现</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>为什么还提公共接口：</strong>这里只是为了不把 <code>torch_npu</code> 写进 SGLang/vLLM 的公共量化基类。它不是一套大型 <abbr class="term" tabindex="0" data-tip="Application Binary Interface：二进制组件之间必须遵守的调用与数据约定。本文不要求新建 checkpoint ABI。">ABI</abbr> 工程。Python 层只需要稳定的 <code>prepare/forward</code>；GPU 等其他加速库可以提供同名接口，也可以继续使用框架现有实现。</div>
+    </div></section>
+
+    <section id="delivery" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">07 / 怎么落地</div><div><span class="kicker">PR order & tests</span><h2>按四个小 PR 提交，不做大重构</h2><p class="lead">先跑通 W8A8 或 MXFP8 Linear，再接 MXFP4 和 FA。每一步都能和当前上游 NPU 实现做结果对比。</p></div></div>
+      <div class="steps">
+        <article class="stepcard"><div><h3>MindIE runtime facade</h3><p>新增 tensor 输入接口；旧 layer 改为内部调用 facade。单测确认改造前后同输入完全一致。</p></div></article>
+        <article class="stepcard"><div><h3>SGLang multimodal_gen bridge</h3><p>只接一个算法、一个 DiT 模型；验证加载、<abbr class="term" tabindex="0" data-tip="Tensor Parallel：同一层跨设备分片。">TP</abbr>=1/2、CPU offload 与多 step。</p></div></article>
+        <article class="stepcard"><div><h3>vLLM-Omni bridge</h3><p>复用 component config，仅量化 transformer；与现有 NPU method 做逐层输出和整段 latent trajectory 对比。</p></div></article>
+        <article class="stepcard"><div><h3>FA + 其他算法</h3><p>接量化 AttentionBackend，再迁移 MXFP4、DualScale、MoE。旧重复实现稳定两个版本后再删除。</p></div></article>
+      </div>
+      <div class="grid4" style="margin-top:16px">
+        <article class="card"><h4>Import</h4><p>安装 MindIE runtime wheel 后，两个 bridge 可独立 import；不拉入 graph rewrite 模块。</p></article>
+        <article class="card"><h4>Numerics</h4><p>同一 tensor 对比旧 MindIE layer、runtime facade 和两个上游 bridge。</p></article>
+        <article class="card"><h4>Parallel</h4><p>Row/Column/QKV Linear 在分片后 prepare，不能再次切分或转置错误。</p></article>
+        <article class="card"><h4>Concurrency</h4><p>交错执行不同 step，请求结果必须等于逐请求串行结果。</p></article>
+      </div>
+      <div class="callout"><strong>首个可合入版本：</strong>建议选择 W8A8 dynamic 或 MXFP8 online Linear。它们没有复杂逐层静态 scale/offset，最容易证明“上游加载权重，MindIE 只负责运行”的边界。</div>
+    </div></section>
+
+    <section id="glossary" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">08 / 术语</div><div><span class="kicker">Hover glossary</span><h2>英文缩写速查</h2><p class="lead">正文中带虚线下划线的词可以悬停或键盘聚焦查看解释。</p></div></div>
+      <div class="glossary">
+        <div><b>API</b><span>应用编程接口；这里指 Python 的 <code>prepare/forward</code> 调用。</span></div>
+        <div><b>ABI</b><span>二进制接口约定；本方案不新建 checkpoint ABI。</span></div>
+        <div><b>SPI</b><span>服务提供者接口；不同加速库可以实现同一小接口。</span></div>
+        <div><b>NPU / GPU</b><span>神经网络处理器 / 图形处理器，两类硬件后端。</span></div>
+        <div><b>FA</b><span>Flash Attention，融合注意力计算以减少显存读写。</span></div>
+        <div><b>DiT</b><span>Diffusion Transformer，扩散生成模型中的 Transformer 主干。</span></div>
+        <div><b>TP</b><span>Tensor Parallel，按维度把一层权重切到多张卡。</span></div>
+        <div><b>FSDP / HSDP</b><span>全分片 / 混合分片数据并行，影响参数加载和驻留方式。</span></div>
+        <div><b>MoE</b><span>Mixture of Experts，混合专家层。</span></div>
+        <div><b>QKV</b><span>注意力中的 Query、Key、Value 三组投影。</span></div>
+        <div><b>W8A8 / W4A4</b><span>权重与激活分别使用 8 位或 4 位表示。</span></div>
+        <div><b>MXFP8 / MXFP4</b><span>带块级共享 scale 的微缩放浮点 8 位 / 4 位格式。</span></div>
+        <div><b>BF16 / FP8</b><span>16 位脑浮点 / 8 位浮点数值格式。</span></div>
+        <div><b>CANN / ACLNN</b><span>Ascend 软件栈 / 其神经网络算子接口。</span></div>
+        <div><b>Facade</b><span>外观层：用一个小接口包装已有复杂实现。</span></div>
+      </div>
+      <h3 style="margin-top:34px">源码依据</h3>
+      <ol class="sources">
+        <li><a href="https://gitcode.com/Ascend/MindIE-SD/tree/master/mindiesd/quantization">MindIE SD quantization</a><span><code>layer.py</code> 的 Linear/FA runtime 与 NPU op。</span></li>
+        <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/layers/quantization">SGLang multimodal_gen quantization</a><span>LinearMethod 生命周期与 NPU MX 实现。</span></li>
+        <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen/runtime/layers/attention">SGLang multimodal_gen attention</a><span>AttentionBackend 与 NPU backend resolver。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/quantization">vLLM-Omni quantization</a><span>factory、component routing、NPU LinearMethod。</span></li>
+        <li><a href="https://github.com/vllm-project/vllm-omni/tree/main/vllm_omni/diffusion/attention/backends">vLLM-Omni diffusion attention</a><span>backend registry、AttentionImpl 与 metadata。</span></li>
+      </ol>
+      <p class="evidence">本地核对快照：MindIE-SD 9a42efa · SGLang ba9074035a · vLLM-Omni 596c16a55。代码块是面向这些接口的建议补丁骨架，辅助函数名需在实际 PR 中按项目现有参数类落地。</p>
+    </div></section>
   </main>
 
-  <footer><div class="wrap">AscendPlayground · MindIE SD quantization upstream integration analysis · 2026-08-25 · Static single-file report</div></footer>
+  <footer><div class="wrap">MINDIE RUNTIME → MULTIMODAL FRAMEWORKS · DIRECT PATCH PLAN · 2026.08.25</div></footer>
   <script>
     const links=[...document.querySelectorAll('nav a')];
     const sections=[...document.querySelectorAll('main section[id]')];
     const reveal=[...document.querySelectorAll('.reveal')];
-    const io=new IntersectionObserver(entries=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting){
-          e.target.classList.add('visible');
-          const id=e.target.id;
-          links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));
-        }
-      });
-    },{rootMargin:'-18% 0px -68% 0px',threshold:0});
+    const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');const id=e.target.id;links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));}})},{rootMargin:'-18% 0px -68% 0px',threshold:0});
     sections.forEach(s=>io.observe(s));
-    const hashTarget=location.hash&&document.querySelector(location.hash);
-    if(hashTarget?.classList.contains('reveal'))hashTarget.classList.add('visible');
     reveal.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*1.1)el.classList.add('visible')});
-
-    const buttons=[...document.querySelectorAll('.filters button')];
-    const rows=[...document.querySelectorAll('#migration-table tbody tr')];
-    buttons.forEach(btn=>btn.addEventListener('click',()=>{
-      buttons.forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-      const filter=btn.dataset.filter;
-      rows.forEach(row=>{row.hidden=filter!=='all'&&!row.dataset.kind.split(' ').includes(filter)});
-    }));
+    const hashTarget=location.hash&&document.querySelector(location.hash);if(hashTarget?.classList.contains('reveal'))hashTarget.classList.add('visible');
   </script>
 </body>
 </html>
