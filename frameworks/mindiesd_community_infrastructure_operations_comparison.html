@@ -127,6 +127,7 @@
     .bar.issue { background:var(--signal); }.bar.pr{background:var(--blue)}
     .bar-value { text-align:right; font:800 .68rem/1 var(--mono); }
     .pipeline { display:grid; grid-template-columns:repeat(5,minmax(125px,1fr)); gap:9px; margin:26px 0; }
+    .pipeline.gates { grid-template-columns:repeat(4,minmax(125px,1fr)); }
     .stage { min-height:160px; padding:18px 15px; color:var(--white); background:var(--deep); position:relative; }
     .stage:nth-child(even){background:var(--deep-2)}
     .stage::after { content:"→"; position:absolute; z-index:2; right:-13px; top:46%; color:var(--signal); font-size:1.3rem; font-weight:900; }
@@ -175,14 +176,14 @@
     footer { padding:32px 0 60px; color:#77807b; font:700 .68rem/1.7 var(--mono); }
     .reveal { opacity:0; transform:translateY(12px); transition:.5s ease; }
     .reveal.on { opacity:1; transform:none; }
-    @media(max-width:1050px){.grid4,.metrics,.roadmap,.classic-summary{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.scoreboard{grid-template-columns:1fr}.pipeline{grid-template-columns:1fr}.stage::after{content:"↓";right:50%;top:auto;bottom:-20px}.section-head{grid-template-columns:110px 1fr}}
+    @media(max-width:1050px){.grid4,.metrics,.roadmap,.classic-summary{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.scoreboard{grid-template-columns:1fr}.pipeline,.pipeline.gates{grid-template-columns:1fr}.stage::after{content:"↓";right:50%;top:auto;bottom:-20px}.section-head{grid-template-columns:110px 1fr}}
     @media(max-width:720px){.topbar-inner{width:calc(100% - 24px);display:block;padding-top:13px}.brand{margin-bottom:7px}.print{display:none}nav a{padding:10px 0 13px}.hero-inner,.shell{width:calc(100% - 28px)}.hero-inner{padding-top:65px}.eyebrow{align-items:flex-start;font-size:.62rem;line-height:1.45;letter-spacing:.1em}.eyebrow::before{flex:none;margin-top:.42em}h1{font-size:clamp(2.65rem,13vw,3.25rem);line-height:.96;letter-spacing:-.045em}.hero-lead{font-size:1.05rem;line-height:1.65}.hero-meta{margin-top:30px}.hero-score{grid-template-columns:1fr}.section-head{grid-template-columns:1fr;gap:5px}.section-head h2{font-size:clamp(2rem,10vw,2.75rem);line-height:1.04}.grid2,.grid4,.metrics,.roadmap,.source-grid,.classic-summary{grid-template-columns:1fr}.bar-row{grid-template-columns:105px 1fr 70px}.book{grid-template-columns:1fr;gap:2px}.gap{grid-template-columns:1fr}.hero{min-height:780px}}
     @media print{.topbar,.progress,.filterbar,.print{display:none!important}.hero{min-height:0;break-after:page}.reveal{opacity:1;transform:none}.shell,.hero-inner{width:100%}section{padding:35px 0}.card,.metric,.phase,.source,.table-wrap{break-inside:avoid}body{background:#fff}.source-grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
   <div class="progress" id="progress"></div>
-  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#verdict">结论</a><a href="#method">口径</a><a href="#landscape">全景</a><a href="#matrix">矩阵</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#governance">治理</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#verdict">结论</a><a href="#method">口径</a><a href="#landscape">全景</a><a href="#matrix">矩阵</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#governance">治理</a><a href="#contribution-gates">贡献门禁</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
 
   <header class="hero">
     <div class="hero-inner">
@@ -319,8 +320,47 @@
       </tbody></table></div>
     </section>
 
+    <section id="contribution-gates" class="reveal">
+      <div class="section-head"><div class="secno">09 / CONTRIBUTION GATES</div><div><span class="kicker">Small PR · closed review · green CI</span><h2>把外部贡献要求写成可验证的合入契约</h2><p class="lead">MindIE-SD 当前最直接的流程问题不是缺少行为准则，而是贡献指南、PR 模板、CI 触发方式和真实分支策略没有形成同一套门禁。规则应进入贡献指南和 PR 模板，由平台与 CI 强制；<code>CODE_OF_CONDUCT.md</code> 继续只负责社区行为边界。</p></div></div>
+
+      <div class="grid4">
+        <article class="card risk"><span class="tag fact">分支错配</span><h3><code>main</code> 与仓库事实冲突</h3><p>中英文贡献指南要求从 <code>main</code> 创建分支，但当前远端长期分支是 <code>dev/master</code>，PR workflow 也监听 <code>dev/master</code>。文档会直接引导外部开发者选错基线或目标分支。</p></article>
+        <article class="card warn"><span class="tag fact">规模缺口</span><h3>1000 行只约束 commit，不约束 PR</h3><p>现有本地治理规则提到历史整理时单个 commit diff 控制在 1000 行以内，但多个小 commit 仍可组成超大 PR，无法降低一次评审的认知负担。</p></article>
+        <article class="card warn"><span class="tag fact">闭环缺口</span><h3>角色链不等于意见已闭环</h3><p>治理文档定义了 reviewer→approver→branch keeper，却没有要求所有评论得到答复、所有 conversation 已解决，以及新提交后重新确认批准。</p></article>
+        <article class="card risk"><span class="tag fact">门禁缺口</span><h3>评论触发不等于 CI 必须通过</h3><p>当前公开 PR 流水线依赖评论 <code>compile</code> 触发。仓库文件能证明存在 CodeCheck、构建和 UT，不能证明这些状态已被配置为服务端合入必需项。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">vLLM 与 SGLang：共同点是把“可评审、可验证、有人负责”串成链</h3>
+      <div class="table-wrap"><table><thead><tr><th>维度</th><th>vLLM</th><th>SGLang</th><th>MindIE-SD 应吸收什么</th></tr></thead><tbody>
+        <tr><td><b>目标分支</b></td><td>围绕默认开发主线提交 PR。</td><td>禁止直接向 <code>main</code> 提交，要求创建独立主题分支后发 PR。</td><td>外部贡献必须基于最新 <code>upstream/dev</code> 创建 topic branch，PR base 只能是 <code>dev</code>；<code>master</code> 仅接收维护者发布/热修复或 <code>dev→master</code>。</td></tr>
+        <tr><td><b>变更规模</b></td><td>重大架构变更超过 500 LOC（排除 kernel/data/config/test）应先有 RFC，否则可标记 <code>rfc-required</code> 并拒绝进入常规评审。</td><td>没有统一 LOC 硬上限，但要求避免大幅改造；跨 kernel 发布链拆成多个 PR，超时测试和 CI job 也按边界拆分。</td><td>采用更容易执行的单 PR 有效变更量 ≤1000 行，并保留“批准的 RFC + maintainer 例外标签”处理不可拆分变更。</td></tr>
+        <tr><td><b>评审闭环</b></td><td>需要修改时加 <code>action-required</code>；作者处理意见并请求复审，合理时间内响应所有评论。</td><td>Merge Oncall 协调评审，Codeowners 和其他 reviewer 完成批准。</td><td>要求所有意见明确回复、需要修改的意见完成复审、不采纳意见说明理由并获 reviewer 确认，未解决会话数必须为 0。</td></tr>
+        <tr><td><b>CI 与合入</b></td><td>lint、测试、文档是质量要求；受限硬件 CI 由授权命令触发，最新提交必须获得所需信号。</td><td><code>run-ci</code> 标签启动 CI；理想合入条件是每个修改文件获得 Codeowner 批准且 required CI 全绿。</td><td>自动运行基础检查，昂贵 NPU 测试可授权触发，但所有适用 required checks 必须针对最新 head/预合并结果通过后才能合入。</td></tr>
+        <tr><td><b>PR 模板</b></td><td>强制填写 Purpose、Test Plan、Test Result 和文档影响。</td><td>显式列出 Motivation、Modifications、准确性、性能以及格式/测试/文档 checklist。</td><td>在现有四段模板上增加目标分支、有效行数、评审闭环、CI 状态和文档影响的勾选项。</td></tr>
+      </tbody></table></div>
+
+      <div class="callout"><strong>推荐规范原文：</strong>外部贡献者必须基于最新 <code>upstream/dev</code> 创建独立主题分支，并将 PR 的目标分支设置为 <code>dev</code>。单个 PR 的有效变更量原则上不得超过 1000 行；所有评审意见必须形成“已修改并复审”或“说明理由并获确认”的闭环；所有适用的必需 CI 必须在最新提交上通过。任何一项不满足，PR 不得合入。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">四道门必须机器可判，不能只靠贡献者自觉</h3>
+      <div class="pipeline gates">
+        <article class="stage"><i>GATE 01 / BASE</i><b>只进 dev</b><span>CI 校验 PR base；外部 PR 指向 <code>master</code> 时直接失败并给出重开指引。发布与紧急热修复使用受控例外路径。</span></article>
+        <article class="stage"><i>GATE 02 / SIZE</i><b>≤1000 有效行</b><span>按整个 PR 的 additions + deletions 计算，而不是逐 commit；生成物、锁文件、vendored code 和测试数据通过白名单排除。</span></article>
+        <article class="stage"><i>GATE 03 / REVIEW</i><b>未解决会话为 0</b><span>所有评论有结论；最后一次代码更新后仍保有有效 Approver 批准。新 push 应使旧批准失效或触发重新确认。</span></article>
+        <article class="stage"><i>GATE 04 / CI</i><b>必需检查全绿</b><span>CodeCheck、适用构建和 UT 针对最新 head/merge ref 成功；失败、取消、未运行均不可合入，文档 PR 由路径规则自动选择专用检查。</span></article>
+      </div>
+
+      <div class="grid3">
+        <article class="card good"><h3>第一层：贡献指南</h3><p>解释为什么以 <code>dev</code> 为集成分支、怎样同步 <code>upstream/dev</code>、如何拆分 PR、怎样处理 review，以及本地最小验证命令。中英文必须同步。</p></article>
+        <article class="card good"><h3>第二层：PR 模板与 policy job</h3><p>模板收集 Issue、目的、测试证据和 checklist；轻量 policy job 自动检查 base、有效行数与必要字段，并提供明确修复信息。</p></article>
+        <article class="card good"><h3>第三层：服务端分支保护</h3><p><code>dev/master</code> 禁止直接 push，配置 required approvals、最新代码批准、全部会话解决和 required status checks。仓库内 workflow 不能替代这层配置。</p></article>
+      </div>
+
+      <details><summary>建议加入 PR 模板的最小 checklist</summary><div><ul><li>本 PR 以 <code>dev</code> 为目标分支，并基于最新 <code>upstream/dev</code>。</li><li>本 PR 只解决一个主题，有效变更量不超过 1000 行；若超限，已关联批准的 RFC 和例外标签。</li><li>已执行适用的 pre-commit、构建、单元测试、准确性或性能测试，并在 Test Report 提供结果。</li><li>所有评审意见均已回复；需要修改的意见已完成修改并请求复审，未解决会话为 0。</li><li>用户可见变更已同步中英文文档；不适用时已说明原因。</li></ul></div></details>
+      <div class="matrix-note"><b>统计口径建议：</b>“有效变更量”定义为整个 PR 相对目标分支的新增行与删除行之和；不要按 commit 分别计算，以免用多个小 commit 绕过门禁。二进制文件、自动生成文件、依赖锁文件、第三方镜像代码和大体量测试数据应维护显式排除清单。若团队坚持绝对硬上限，可删除 RFC 例外，但要接受大型重命名、生成物更新和迁移类变更无法正常提交的代价。</div>
+    </section>
+
     <section id="books" class="reveal">
-      <div class="section-head"><div class="secno">09 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。下面先回答“要做什么、达到什么、MindIE-SD 现在是什么”，再解释每套经典框架为什么这样要求。</p></div></div>
+      <div class="section-head"><div class="secno">10 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。下面先回答“要做什么、达到什么、MindIE-SD 现在是什么”，再解释每套经典框架为什么这样要求。</p></div></div>
       <div class="classic-summary">
         <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>根 OWNERS：5 branch keepers、5 approvers、18 reviewers；有治理文档、贡献指南、PR 模板和 CPU UT 路径。</small></div>
         <div class="classic-stat"><b>近期样本 / SAMPLE</b><strong>闭环速度快</strong><small>截至 2026-08-24，最近 10 个关闭 Issue 的创建→关闭中位数 0.91 天；最近 10 个合入 PR 的创建→合入中位数 1.74 天。</small></div>
@@ -367,7 +407,7 @@
     </section>
 
     <section id="roadmap" class="reveal">
-      <div class="section-head"><div class="secno">10 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
+      <div class="section-head"><div class="secno">11 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
       <div class="roadmap">
         <article class="phase"><span class="week">WEEK 0–2 / INVENTORY</span><h3>把存量变成资产</h3><ul><li>所有测试标 L0–L4、硬件、模型、框架、预计耗时</li><li>输出 build/UT 分阶段 duration</li><li>建立 skipped/flaky/compatibility 债务表</li><li>为 ops/compile/quant/cache/docs 划 owner</li></ul><span class="exit">EXIT → 可回答“跑什么、在哪跑、多久、谁负责”</span></article>
         <article class="phase"><span class="week">WEEK 3–5 / CLOSE THE LOOP</span><h3>接通 merge 与 nightly</h3><ul><li>merge smoke：单 NPU + 减层模型</li><li>nightly：功能、精度、性能三条流</li><li>artifact 复用与 diff-aware 路由</li><li>失败自动建/关联 Issue，禁止裸 skip</li></ul><span class="exit">EXIT → 每个支持矩阵 ✅ 有 last-green</span></article>
@@ -386,7 +426,7 @@
     </section>
 
     <section id="sources" class="reveal">
-      <div class="section-head"><div class="secno">11 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">在线信息核验于 2026-08-24。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
+      <div class="section-head"><div class="secno">12 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">在线信息核验于 2026-08-29。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
       <h3>MindIE-SD 一手证据</h3>
       <div class="source-grid">
         <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD">MindIE-SD 官方 GitCode 仓库</a><span>仓库规模、默认分支、Issue/PR、release 与当前代码。</span></div>
@@ -395,6 +435,8 @@
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/build_guide.md">构建指南</a><span>源码 wheel 构建与安装。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/community/governance.md">治理文档</a><span>branch keeper、approver、reviewer 与决策链。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/OWNERS">OWNERS</a><span>当前角色名单。</span></div>
+        <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/contribution_guide.md">贡献指南</a><span>分支、提交前检查、测试与 PR 流程；当前公开文本中的 <code>main</code> 与实际分支体系存在错配。</span></div>
+        <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/.gitcode/PULL_REQUEST_TEMPLATE.md">PR 模板</a><span>当前 Issue、Purpose、Test Plan、Test Report 四段入口。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/.readthedocs.yaml">ReadTheDocs 配置</a><span>中英文构建与 Python 3.11。</span></div>
         <div class="source"><a href="https://mindie-sd-docs.readthedocs.io/zh-cn/latest/zh/index.html">MindIE-SD 文档站</a><span>公开中文站点。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/features/supported_matrix.md">支持矩阵</a><span>框架、模型、硬件与特性组合。</span></div>
@@ -404,10 +446,15 @@
       <div class="source-grid">
         <div class="source"><a href="https://github.com/vllm-project/vllm/tree/main/.buildkite">vLLM Buildkite CI</a><span>test areas、硬件测试、release pipeline 与变更感知。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm/tree/main/docs/governance">vLLM Governance</a><span>治理与协作机制。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm/blob/main/docs/contributing/README.md">vLLM Contribution Guide</a><span>代码质量、&gt;500 LOC 架构变更 RFC、action-required、评论响应与 CI 触发规则。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm/blob/main/.github/PULL_REQUEST_TEMPLATE.md">vLLM PR Template</a><span>Purpose、Test Plan、Test Result 与文档影响 checklist。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/developer_guide/contribution/testing.md">vllm-ascend Testing</a><span>CPU UT、PR E2E、nightly、多卡与减层模型。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/tree/main/.github/workflows">vllm-ascend workflows</a><span>A2/A3/A5/310P nightly/weekly、发布、机器人、覆盖率与估时。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/test/registered/README.md">SGLang Registered Tests</a><span>注册发现、unit/kernel/E2E/benchmark 分类。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/tree/main/.github/workflows">SGLang workflows</a><span>多后端 nightly、发布、失败监控、rerun 和 runner utilization。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/docs/developer_guide/contribution_guide.md">SGLang Contribution Guide</a><span>主题分支、pre-commit、单元测试、CI 授权触发和大变更拆分。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/.github/pull_request_template.md">SGLang PR Template</a><span>准确性、性能、测试、文档、Codeowners 与全绿 CI checklist。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/.github/MAINTAINER.md#pull-request-merge-process">SGLang Merge Process</a><span>Merge Oncall、Codeowners、run-ci 与 required CI 合入链。</span></div>
         <div class="source"><a href="https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/developer-guide/ci-overview.md">TensorRT-LLM CI Overview</a><span>pre/post merge、test-db、waives、资源审批与精确触发。</span></div>
         <div class="source"><a href="https://github.com/NVIDIA/TensorRT-LLM/tree/main/tests/integration/test_lists/test-db">TensorRT-LLM test-db</a><span>按硬件与 stage 的显式集成测试数据库。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-omni/blob/main/docs/contributing/ci/test_system_overview.md">vLLM-Omni Test System</a><span>L1–L5、时间预算、硬件、频率与目录语义。</span></div>
@@ -433,7 +480,7 @@
       <div class="callout light"><strong>限制：</strong>公开仓库看不到内部 runner、未公开流水线、队列容量、真实 GPU/NPU 成本和私域沟通内容；“workflow 文件数”和“test-like 文件数”只用于基础设施指纹，不等同于实际覆盖率。评分应随仓库演进更新，并由项目维护者对事实错误进行校正。</div>
     </section>
   </main>
-  <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure & Operations Audit · Snapshot 2026-08-24 · Single-file offline report</div></footer>
+  <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure & Operations Audit · Updated 2026-08-29 · Single-file offline report</div></footer>
   <script>
     const progress=document.getElementById('progress');
     const updateProgress=()=>{const d=document.documentElement,max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%'};
