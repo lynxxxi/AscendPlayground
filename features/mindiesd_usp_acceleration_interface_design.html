@@ -51,136 +51,136 @@
   </style>
 </head>
 <body>
-  <div class="topbar"><div class="wrap"><div class="brand"><b>MINDIE-SD</b> / USP ACCELERATION CONTRACT</div><nav aria-label="报告目录"><a href="#verdict">结论</a><a href="#evidence">仓库证据</a><a href="#architecture">架构</a><a href="#api">接口</a><a href="#execution">执行路径</a><a href="#upstream">上游接入</a><a href="#performance">性能门</a><a href="#delivery">落地</a></nav></div></div>
+  <div class="topbar"><div class="wrap"><div class="brand"><b>MINDIE-SD</b> / USP ACCELERATION CONTRACT</div><nav aria-label="报告目录"><a href="#verdict">结论</a><a href="#flashinfer">FlashInfer</a><a href="#evidence">仓库证据</a><a href="#architecture">架构</a><a href="#api">接口</a><a href="#execution">执行路径</a><a href="#upstream">上游接入</a><a href="#performance">性能门</a><a href="#delivery">落地</a></nav></div></div>
 
   <header>
     <div class="wrap hero">
       <div>
-        <div class="eyebrow">UNIFIED SEQUENCE PARALLEL · DESIGN REVIEW · 2026.08.29</div>
-        <h1>把模型私有优化<br>收成一个 <em>USP 加速接口</em></h1>
-        <p class="dek">统一 Ulysses / Ring 混合并行、通信量化、通算重叠与 Flash Attention 执行；vLLM-Omni 和 SGLang MM 继续保留各自上游 backend，只把 NPU 热路径委托给 MindIE-SD。</p>
-        <div class="chips"><span class="chip">CAPABILITY DRIVEN</span><span class="chip">Ulysses × Ring</span><span class="chip">FP8 COMM</span><span class="chip">ASYNC OVERLAP</span><span class="chip">FA BACKEND COMPATIBLE</span></div>
+        <div class="eyebrow">UNIFIED SEQUENCE PARALLEL · DESIGN REVIEW · 2026.08.31</div>
+        <h1>把模型私有优化<br>收成一个<br><em>USP 加速接口</em></h1>
+        <p class="dek">统一 Ulysses / Ring 混合并行、通信量化、通算重叠与 Flash Attention 执行；并行方案由 vLLM-Omni 和 SGLang MM 决定，MindIE-SD 接收完整元数据并在一次调用里跑完 NPU 热路径。</p>
+        <div class="chips"><span class="chip">SINGLE CALL</span><span class="chip">UPSTREAM-OWNED SCHEDULE</span><span class="chip">Ulysses × Ring</span><span class="chip">FP8 COMM</span><span class="chip">FA BACKEND COMPATIBLE</span></div>
       </div>
-      <aside class="hero-side"><div class="big">1 : 2</div><p>一个 MindIE-SD USP Runtime，接入两个现有上游 NPU backend。</p><div class="snapshot"><div><b>框架侧</b><span>配置、权重与 backend registry 保持不变</span></div><div><b>MindIE-SD 侧</b><span>拓扑、通信、量化、FA 统一规划</span></div><div><b>性能原则</b><span>没有实测收益就自动退回上游原路径</span></div></div></aside>
+      <aside class="hero-side"><div class="big">1 CALL</div><p>一个 <code>usp_attention(...)</code>，接入两个现有上游 NPU backend。</p><div class="snapshot"><div><b>框架侧</b><span>生成并行方案，持有 process group 与序列元数据</span></div><div><b>MindIE-SD 侧</b><span>按明确契约执行通信、量化、重叠与 FA</span></div><div><b>失败原则</b><span>明确抛出 NotSupported，由上游决定 fallback</span></div></div></aside>
     </div>
   </header>
 
   <main>
     <section id="verdict" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">00 / DESIGN VERDICT</div><div><span class="kicker">推荐结论</span><h2>做一个薄 Facade，下面是一套重 Runtime</h2><p class="lead">公开接口只描述张量语义、并行拓扑和质量约束；所有切分、collective、量化格式、stream/event、FA kernel 选择都由运行时生成不可变执行计划。上游不感知 HCCL 细节，也不复制模型仓里的 rank 表和环境变量分支。</p></div></div>
-      <div class="verdict"><div class="verdict-main"><b><code>prepare(spec, groups) → USPPlan</code>，<code>forward(plan, q, k, v) → output</code>。先规划、后执行；一次校验，跨 DiT block 与 diffusion step 复用。</b><p>这个边界同时覆盖普通 FA、量化 FA、Ulysses、Ring、Hybrid USP、非等长序列、通信量化与通算重叠，并允许按能力降级。</p></div><div class="verdict-side"><div><strong>2</strong><br><span>个稳定核心调用<br>零个新增上游 backend</span></div></div></div>
+      <div class="head"><div class="secno">00 / DESIGN VERDICT</div><div><span class="kicker">推荐结论</span><h2>像 FlashInfer 的单算子接口，不做 plan 服务</h2><p class="lead">公开接口接收 Q/K/V、并行元数据、通信量化选项和可选 workspace，在一个调用中完成布局变换、collective、量化 FA 与输出恢复。上游负责生成并行方案；MindIE-SD 不提供 planner、cost model 或 <code>prepare()</code>。</p></div></div>
+      <div class="verdict"><div class="verdict-main"><b><code>usp_attention(q, k, v, *, meta, options, workspace=None, out=None) → output</code>。一个入口、一次执行、没有公开 plan 生命周期。</b><p>与 FlashInfer 的单请求 attention 一样，数据、布局、scale、backend 和可选输出缓冲都显式；复杂的 Ulysses/Ring 信息收进上游构造的 <code>USPMetadata</code>。</p></div><div class="verdict-side"><div><strong>1</strong><br><span>个稳定核心调用<br>零个 plan API</span></div></div></div>
       <div class="grid3" style="margin-top:16px">
-        <article class="card acid"><h3>推荐：能力驱动 Runtime</h3><p>统一 plan、buffer、collective 与 kernel；上游只传 tensor 和 process group。演进成本最低，最适合做出超越上游的组合优化。</p></article>
-        <article class="card amber"><h3>备选：环境变量 Facade</h3><p>快速兼容现有模型，但参数无类型、无法预检、难做逐层策略和可观测降级；仅作为一版迁移桥。</p></article>
-        <article class="card coral"><h3>不选：两框架各自复制</h3><p>短期改动小，长期产生两套通信/量化/FA 分支，性能补丁难同步，也无法稳定复用模型仓成果。</p></article>
+        <article class="card acid"><h3>推荐：函数 + 显式元数据</h3><p>最接近 FlashInfer 单请求 API。上游拥有决策权，MindIE-SD 拥有执行优化；接口没有隐藏的跨调用状态。</p></article>
+        <article class="card amber"><h3>可选：调用方 workspace</h3><p>需要固定地址、图捕获或零分配时显式传入 <code>uint8</code> workspace；普通调用可使用 MindIE-SD 内部缓存池。</p></article>
+        <article class="card coral"><h3>删除：prepare / USPPlan</h3><p>不在加速库里重复实现上游调度器，也不要求 attention layer 维护第二套 plan 生命周期。</p></article>
+      </div>
+    </div></section>
+
+    <section id="flashinfer" class="reveal"><div class="wrap">
+      <div class="head"><div class="secno">01 / FLASHINFER REFERENCE</div><div><span class="kicker">参考，但不照抄</span><h2>FlashInfer 有两类接口，USP 应选函数式这一类</h2><p class="lead">FlashInfer 的 API 边界取决于调用是否需要跨 kernel 复用调度结构：单请求 prefill 是一个直接函数；批量 paged KV 才用持久 wrapper 和 plan/run。USP 的调度结构已经由上游框架产生，因此更接近前者。</p></div></div>
+      <div class="compare"><table><thead><tr><th>FlashInfer 形态</th><th>典型接口</th><th>为什么这样设计</th><th>对 MindIE-SD USP 的结论</th></tr></thead><tbody>
+        <tr><td>单请求函数</td><td><code>single_prefill_with_kv_cache(q, k, v, ..., backend="auto")</code></td><td>输入语义完整；函数内部做 backend dispatch，直接返回 output / LSE</td><td class="best">采用：一个 <code>usp_attention</code> 调用</td></tr>
+        <tr><td>批量 wrapper</td><td><code>BatchPrefillWithPagedKVCacheWrapper(workspace)</code></td><td>需要复用 paged metadata、split-k 辅助结构和稳定 workspace</td><td>只借鉴 workspace 所有权，不照搬公开 plan</td></tr>
+        <tr><td>量化参数</td><td><code>scale_q / scale_k / scale_v / kv_cache_sf</code></td><td>量化数据与 scale 显式配对，输出 dtype 显式</td><td class="yes">采用：scale 与 comm codec 都是明确参数</td></tr>
+        <tr><td>backend 选择</td><td><code>backend="auto" | "fa2" | "fa3"</code></td><td>调用者可固定实现，也可按设备和 kernel 能力自动分发</td><td class="yes">采用：<code>backend="auto" | "npu_fa" | "quant_fa"</code></td></tr>
+        <tr><td>输出与 workspace</td><td><code>out=None</code>；wrapper 绑定 caller-owned workspace</td><td>兼顾易用路径与零分配/图捕获路径</td><td class="yes">采用：<code>out</code>、<code>workspace</code> 都可选</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card mint"><h3>学它的显式性</h3><p>tensor、layout、mask、scale、output dtype、backend 都从函数签名可见；不靠全局环境变量改变语义。</p></article>
+        <article class="card acid"><h3>学它的资源所有权</h3><p>高性能调用允许调用方提供 output 和 workspace，避免热路径分配并支持稳定地址。</p></article>
+        <article class="card amber"><h3>不学它的 plan/run</h3><p>FlashInfer 的 plan 服务于 batch paged KV 内部调度；USP 的并行调度归上游，复制这层会职责重叠。</p></article>
       </div>
     </div></section>
 
     <section id="evidence" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">01 / REPOSITORY EVIDENCE</div><div><span class="kicker">从 HunyuanVideo Magic 提炼</span><h2>已有实现证明“能跑”，接口要解决“可复用”</h2><p class="lead">模型仓已经覆盖 1/2/3/4/6/8/12/16 卡入口、Ulysses × Ring、非等长序列、FA 量化和通算重叠。它的价值是热路径证据；它的问题是策略、通信与模型代码绑定过紧。</p></div></div>
+      <div class="head"><div class="secno">02 / REPOSITORY EVIDENCE</div><div><span class="kicker">从 HunyuanVideo Magic 提炼</span><h2>已有实现证明“能跑”，接口要解决“可复用”</h2><p class="lead">模型仓已经覆盖 1/2/3/4/6/8/12/16 卡入口、Ulysses × Ring、非等长序列、FA 量化和通算重叠。它的价值是热路径证据；它的问题是策略、通信与模型代码绑定过紧。</p></div></div>
       <div class="compare"><table><thead><tr><th>仓库证据</th><th>当前实现</th><th>可复用能力</th><th>USP 接口中的收口</th></tr></thead><tbody>
-        <tr><td>Hybrid SP</td><td><code>ulysses_degree × ring_degree = world_size</code></td><td>Ulysses 切 head/聚 seq；Ring 聚合 K/V</td><td><code>ParallelTopology</code> + planner，不写死 rank 表</td></tr>
+        <tr><td>Hybrid SP</td><td><code>ulysses_degree × ring_degree = world_size</code></td><td>Ulysses 切 head/聚 seq；Ring 聚合 K/V</td><td>上游构造 <code>USPMetadata</code>，MindIE-SD 不写死 rank 表</td></tr>
         <tr><td>通信热路径</td><td>Q/K/V 三次 <code>all_to_all</code>；Ring 两次 <code>all_gather</code></td><td>collective 前后布局转换</td><td>QKV 合包、buffer pool、异步 handle、拓扑感知调度</td></tr>
-        <tr><td>通信量化</td><td>K/V block=256 量化后 all-gather；Q block=128 后进入量化 FA</td><td>FP8 数据 + scale 分离传输</td><td><code>CommQuantPolicy</code> 描述对象、粒度、scale 与误差门</td></tr>
-        <tr><td>非等长序列</td><td><code>SPLIT_SEQ_UNEQUAL_LEN</code> + padding / slice</td><td>按真实长度构造 FA 输入</td><td><code>SequenceMeta</code> 显式携带 lengths / cu_seqlens</td></tr>
-        <tr><td>通算重叠</td><td><code>FA_ALLTOALL_OVERLAP</code>、切 head、event 数组</td><td>chunk 级通信与 FA pipeline</td><td>plan 内置双缓冲 schedule；自动以 profile 结果启停</td></tr>
-        <tr><td>FA 选择</td><td><code>ALGO=0/1/2</code> 映射 native / MindIE / quant FA</td><td>多 kernel 路径</td><td>能力枚举 + cost model；不把数字开关暴露给用户</td></tr>
+        <tr><td>通信量化</td><td>K/V block=256 量化后 all-gather；Q block=128 后进入量化 FA</td><td>FP8 数据 + scale 分离传输</td><td><code>CommSpec</code> 描述 codec、对象、block size 与 scale dtype</td></tr>
+        <tr><td>非等长序列</td><td><code>SPLIT_SEQ_UNEQUAL_LEN</code> + padding / slice</td><td>按真实长度构造 FA 输入</td><td><code>USPMetadata.seq_lens</code> 显式携带真实长度</td></tr>
+        <tr><td>通算重叠</td><td><code>FA_ALLTOALL_OVERLAP</code>、切 head、event 数组</td><td>chunk 级通信与 FA pipeline</td><td>上游传 <code>overlap/chunk_size</code>，执行器实现双缓冲</td></tr>
+        <tr><td>FA 选择</td><td><code>ALGO=0/1/2</code> 映射 native / MindIE / quant FA</td><td>多 kernel 路径</td><td>显式 backend 字符串；<code>auto</code> 只做 kernel dispatch</td></tr>
       </tbody></table></div>
-      <div class="callout"><strong>关键改造：</strong>把 <code>new_parallel.py</code> 中“量化 → collective → 拼接 → FA → reverse collective”的整段热路径迁到 Runtime；模型层只保留 Q/K/V 投影、RoPE 与输出投影。</div>
+      <div class="callout"><strong>关键改造：</strong>把 <code>new_parallel.py</code> 中“量化 → collective → 拼接 → FA → reverse collective”的整段热路径迁到 executor；模型层只保留 Q/K/V 投影、RoPE 与输出投影。</div>
     </div></section>
 
     <section id="architecture" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">02 / ARCHITECTURE</div><div><span class="kicker">控制面与数据面分离</span><h2>上游交语义，MindIE-SD 交性能</h2><p class="lead">控制面在初始化阶段完成能力探测、拓扑建组、shape/精度校验与 cost-based 选路；数据面只执行 plan，避免每个 diffusion step 重做 Python 判断。</p></div></div>
+      <div class="head"><div class="secno">03 / ARCHITECTURE</div><div><span class="kicker">决策面归上游，执行面归加速库</span><h2>上游交完整执行描述，MindIE-SD 交性能</h2><p class="lead">vLLM-Omni / SGLang MM 负责并行模式、process group、切分维度、chunk 和 fallback；MindIE-SD 只校验调用契约，并按这些明确参数执行 NPU 热路径。没有第二套控制面。</p></div></div>
       <div class="arch">
-        <article class="layer"><small>UPSTREAM FRAMEWORK</small><h3>vLLM-Omni / SGLang MM</h3><p>现有 FlashAttentionImpl / AscendFAImpl 持有框架配置、模型 tensor 与生命周期；NPU 方法内部尝试创建 USP plan。</p></article><div class="arrow">→</div>
-        <article class="layer"><small>STABLE FACADE</small><h3>mindiesd.usp</h3><p><code>capabilities</code>、<code>prepare</code>、<code>forward</code>、<code>explain</code>。类型稳定，不暴露内部 kernel 文件或 HCCL 调用。</p></article><div class="arrow">→</div>
-        <article class="layer"><small>OPTIMIZED RUNTIME</small><h3>Planner · Comm · Quant · FA</h3><p>布局变换、并行组、量化 collective、stream/event、workspace、FA backend 和 native fallback 统一编排。</p></article>
+        <article class="layer"><small>UPSTREAM DECISION OWNER</small><h3>vLLM-Omni / SGLang MM</h3><p>现有 FlashAttentionImpl / AscendFAImpl 生成 <code>USPMetadata</code>，持有 process group、序列切分和 fallback 生命周期。</p></article><div class="arrow">→</div>
+        <article class="layer"><small>SINGLE PUBLIC OP</small><h3>mindiesd.usp_attention</h3><p>显式接收 tensor、metadata、options、scale、workspace 与 out；成功返回 output，不支持则抛结构化异常。</p></article><div class="arrow">→</div>
+        <article class="layer"><small>OPTIMIZED EXECUTOR</small><h3>Comm · Quant · FA</h3><p>只实现合包、collective codec、stream/event、workspace 和 FA kernel dispatch；不生成上游并行方案。</p></article>
       </div>
       <div class="pipeline" style="margin-top:18px">
-        <div class="pipe"><b>SPEC</b><span>shape / dtype / layout / lengths</span></div><div class="pipe"><b>PROBE</b><span>SoC / CANN / operator / topology</span></div><div class="pipe"><b>PLAN</b><span>Ulysses / Ring / hybrid / local</span></div><div class="pipe"><b>ALLOC</b><span>workspace / double buffer / events</span></div><div class="pipe"><b>COMM</b><span>pack / quantize / collective</span></div><div class="pipe"><b>FA</b><span>native / quant / fused overlap</span></div><div class="pipe"><b>RESTORE</b><span>reverse A2A / trim / output</span></div>
+        <div class="pipe"><b>INPUT</b><span>q / k / v / joint kv / mask</span></div><div class="pipe"><b>VALIDATE</b><span>shape / group / layout / codec</span></div><div class="pipe"><b>WORKSPACE</b><span>caller buffer or internal pool</span></div><div class="pipe"><b>PACK</b><span>layout transform / qkv fusion</span></div><div class="pipe"><b>COMM</b><span>quantize / collective / overlap</span></div><div class="pipe"><b>FA</b><span>native / quant backend dispatch</span></div><div class="pipe"><b>OUTPUT</b><span>reverse A2A / trim / out</span></div>
       </div>
       <div class="grid4" style="margin-top:16px">
-        <article class="card mint"><h3>Facade</h3><p>稳定 Python API、dataclass 与错误码；版本协商采用 capability，不采用版本号猜测。</p></article>
-        <article class="card blue"><h3>Planner</h3><p>根据 heads、sequence、world size、链路带宽与可用 kernel 生成执行 DAG。</p></article>
-        <article class="card acid"><h3>Executor</h3><p>持久 buffer、async collective、event 依赖和图捕获；数据面不动态 import。</p></article>
-        <article class="card amber"><h3>Telemetry</h3><p>暴露命中路径、通信字节、暴露通信时间、fallback reason 与 plan hash。</p></article>
+        <article class="card mint"><h3>Functional API</h3><p>一个稳定 Python 函数；语义由参数决定，不由对象隐式状态或环境变量决定。</p></article>
+        <article class="card blue"><h3>Typed Metadata</h3><p>上游把 Ulysses/Ring group、切分维度、真实长度和 chunk 变成强类型数据。</p></article>
+        <article class="card acid"><h3>Executor</h3><p>复用 buffer、async collective、event 依赖和图捕获；数据面不动态 import。</p></article>
+        <article class="card amber"><h3>Strict Failure</h3><p>不支持就抛 <code>USPNotSupported</code>；fallback 由现有上游 backend 统一处理。</p></article>
       </div>
     </div></section>
 
     <section id="api" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">03 / PUBLIC CONTRACT</div><div><span class="kicker">最小稳定接口</span><h2>配置可读，计划不可变，热路径无分支</h2><p class="lead">公开类型不出现 HunyuanVideo、Omni、SGLang、A5 等模型或框架名字；设备差异留在 capability 和 planner 内。框架可以把 plan 缓存到 attention layer 实例。</p></div></div>
+      <div class="head"><div class="secno">04 / PUBLIC CONTRACT</div><div><span class="kicker">最小稳定接口</span><h2>一个函数，元数据由上游构造</h2><p class="lead">公开类型不出现 HunyuanVideo、Omni、SGLang、A5 等模型或框架名字。<code>USPMetadata</code> 只是执行描述，不是 MindIE-SD 生成的 plan；它可由上游 attention backend 直接从已有 parallel state 构造。</p></div></div>
       <div class="grid2">
         <div class="codeframe"><div class="filebar"><span>mindiesd/usp/api.py</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>from dataclasses import dataclass
-from enum import Enum
-from typing import Literal, Mapping
+from typing import Literal
 import torch
 
-class ParallelMode(str, Enum):
-    AUTO = "auto"
-    LOCAL = "local"
-    ULYSSES = "ulysses"
-    RING = "ring"
-    HYBRID = "hybrid"
-
 @dataclass(frozen=True)
-class CommQuantPolicy:
-    dtype: Literal["off", "fp8_e4m3", "mxfp8"] = "off"
+class CommSpec:
+    dtype: Literal["none", "fp8_e4m3", "mxfp8"] = "none"
     tensors: tuple[str, ...] = ("k", "v")
-    block_size: int = 256
+    q_block_size: int = 128
+    kv_block_size: int = 256
     scale_dtype: torch.dtype = torch.float32
-    error_budget: float | None = None
 
 @dataclass(frozen=True)
-class USPConfig:
-    mode: ParallelMode = ParallelMode.AUTO
-    ulysses_degree: int = 1
-    ring_degree: int = 1
-    comm_quant: CommQuantPolicy = CommQuantPolicy()
-    overlap: Literal["auto", "off", "chunked"] = "auto"
-    backend: Literal["auto", "fa", "quant_fa"] = "auto"
-    allow_fallback: bool = True</code></pre></div>
-        <div class="codeframe"><div class="filebar"><span>mindiesd/usp/runtime.py</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>@dataclass(frozen=True)
-class AttentionSpec:
-    layout: Literal["BSND", "BNSD"]
-    batch: int
-    q_heads: int
-    kv_heads: int
-    head_dim: int
-    q_dtype: torch.dtype
-    out_dtype: torch.dtype
-    sequence: SequenceMeta
-    causal: bool = False
+class USPMetadata:
+    mode: Literal["ulysses", "ring", "hybrid"]
+    ulysses_group: object | None
+    ring_group: object | None
+    scatter_dim: int = 2
+    gather_dim: int = 1
+    seq_lens: torch.Tensor | None = None
+    chunk_size: int | None = None</code></pre></div>
+        <div class="codeframe"><div class="filebar"><span>mindiesd/usp/api.py</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>@dataclass(frozen=True)
+class USPOptions:
+    layout: Literal["BSND", "BNSD"] = "BSND"
+    comm: CommSpec = CommSpec()
+    overlap: bool = False
+    backend: Literal["auto", "npu_fa", "quant_fa"] = "auto"
+    out_dtype: torch.dtype | None = None
 
-@dataclass(frozen=True)
-class ProcessGroups:
-    ulysses: object | None = None
-    ring: object | None = None
-
-class USPRuntime:
-    @classmethod
-    def capabilities(cls) -> USPCapabilities: ...
-
-    def prepare(self, spec: AttentionSpec,
-                groups: ProcessGroups) -> USPPlan: ...
-
-    def forward(self, plan: USPPlan, q: torch.Tensor,
-                k: torch.Tensor, v: torch.Tensor,
-                *, joint_k=None, joint_v=None,
-                attn_mask=None) -> torch.Tensor: ...
-
-    def explain(self, plan: USPPlan) -> Mapping[str, object]: ...</code></pre></div>
+def usp_attention(
+    q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, *,
+    meta: USPMetadata,
+    options: USPOptions = USPOptions(),
+    joint_k: torch.Tensor | None = None,
+    joint_v: torch.Tensor | None = None,
+    attn_mask: torch.Tensor | None = None,
+    q_scale: torch.Tensor | None = None,
+    k_scale: torch.Tensor | None = None,
+    v_scale: torch.Tensor | None = None,
+    workspace: torch.Tensor | None = None,
+    out: torch.Tensor | None = None,
+    return_lse: bool = False,
+) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]: ...</code></pre></div>
       </div>
-      <div class="compare" style="margin-top:18px"><table><thead><tr><th>约束</th><th>prepare 阶段</th><th>forward 阶段</th><th>错误行为</th></tr></thead><tbody>
-        <tr><td>并行合法性</td><td>校验 <code>U × R = world_size</code>、head 可分、group rank 完整</td><td>不重复校验</td><td><code>USPTopologyError</code></td></tr>
-        <tr><td>shape / layout</td><td>冻结 layout、head_dim、最大 seq 与 workspace</td><td>只允许 batch/有效长度在声明范围内变化</td><td><code>USPShapeError</code></td></tr>
-        <tr><td>量化能力</td><td>核对 dtype、block、scale、目标 FA kernel</td><td>执行已选 quant/dequant fusion</td><td>允许时回退 BF16，否则 <code>USPNotSupported</code></td></tr>
-        <tr><td>性能选择</td><td>cost model + 可选 warmup profile 产生 plan</td><td>固定执行 plan hash</td><td>性能回归可禁用 plan 并记录 reason</td></tr>
+      <div class="compare" style="margin-top:18px"><table><thead><tr><th>参数组</th><th>谁提供</th><th>MindIE-SD 做什么</th><th>错误行为</th></tr></thead><tbody>
+        <tr><td>并行 metadata</td><td>上游提供 mode、groups、scatter/gather dim、seq_lens、chunk</td><td>只校验 group/world size/head 可分并执行</td><td><code>USPTopologyError</code></td></tr>
+        <tr><td>tensor 语义</td><td>上游提供 Q/K/V、layout、joint KV、mask、out dtype</td><td>布局转换、padding/trim 与输出恢复</td><td><code>USPShapeError</code></td></tr>
+        <tr><td>量化与 scale</td><td>上游选 comm codec；已有量化 tensor 时显式给 scale</td><td>执行 quant collective 与 FA 直读</td><td><code>USPNotSupported</code>，不静默回退</td></tr>
+        <tr><td>workspace / out</td><td>上游可提供稳定 buffer；也可留空走缓存池</td><td>检查容量与对齐，避免热路径临时分配</td><td><code>USPWorkspaceError</code></td></tr>
       </tbody></table></div>
-      <div class="callout mint"><strong>兼容旧环境变量：</strong>首个版本提供 <code>USPConfig.from_env()</code> 映射 <code>ALGO / SPLIT_SEQ / FA_ALLTOALL_OVERLAP / USE_SUB_HEAD</code>；标记 deprecated，但不让这些变量进入新接口语义。</div>
+      <div class="callout mint"><strong>兼容旧环境变量：</strong>映射逻辑放在模型/框架 adapter，不放入 <code>mindiesd.usp</code>。新接口从第一版开始就只有显式参数，避免环境变量成为长期 ABI。</div>
     </div></section>
 
     <section id="execution" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">04 / EXECUTION PLAN</div><div><span class="kicker">三条核心执行路径</span><h2>同一接口，不同拓扑生成不同 DAG</h2><p class="lead">切换下面的路径查看 planner 产物。通信量化不是独立后处理，而是 collective 的 codec；FA 不是上游枚举，而是 plan 中的 compute node。</p></div></div>
+      <div class="head"><div class="secno">05 / EXECUTION PATH</div><div><span class="kicker">三条核心热路径</span><h2>同一调用，按上游 metadata 直接执行</h2><p class="lead">切换下面的路径查看 executor 如何消费 <code>USPMetadata</code>。通信量化是 collective 的 codec；FA backend 仅做 kernel dispatch，不替上游决定并行方案。</p></div></div>
       <div class="flow-tabs" role="tablist"><button class="active" data-flow="hybrid" type="button">HYBRID USP</button><button data-flow="ulysses" type="button">ULYSSES</button><button data-flow="fallback" type="button">SAFE FALLBACK</button></div>
       <div class="flow-panel active" data-panel="hybrid"><div class="flow-grid">
         <article class="flow-step"><b>01 · FUSED PACK</b><p>Q/K/V 一次布局变换并合包，减少三个 Python collective 和临时 tensor。</p></article><article class="flow-step hot"><b>02 · QUANT A2A</b><p>按策略量化通信 payload；scale 同步走伴随 buffer，异步 all-to-all。</p></article><article class="flow-step hot"><b>03 · RING KV GATHER</b><p>K/V 以 FP8/MXFP8 聚合；按真实长度 trim，dequant 延迟到 FA。</p></article><article class="flow-step"><b>04 · QUANT FA</b><p>Q 局部量化，融合消费 K/V quant data + scale，避免 BF16 回写。</p></article><article class="flow-step"><b>05 · REVERSE A2A</b><p>输出按原 sequence shard 归位；可与下一 chunk 的 FA 重叠。</p></article><article class="flow-step hot"><b>06 · DOUBLE BUFFER</b><p>comm stream / compute stream 通过 event DAG 交接，无全局 synchronize。</p></article><article class="flow-step"><b>07 · TRIM</b><p>移除 padding，恢复框架 layout 与 dtype。</p></article><article class="flow-step"><b>08 · TELEMETRY</b><p>记录 bytes、comm exposed time、kernel 与 fallback，归因可见。</p></article>
@@ -189,63 +189,67 @@ class USPRuntime:
         <article class="flow-step"><b>01 · PACK QKV</b><p>Q/K/V 统一 reshape/transpose，优先使用单个连续 workspace。</p></article><article class="flow-step hot"><b>02 · ALL-TO-ALL</b><p>head shard → sequence shard；支持 BF16 与量化 payload。</p></article><article class="flow-step"><b>03 · JOINT KV</b><p>按 rank 只切 joint K/V head，不复制模型私有分支。</p></article><article class="flow-step"><b>04 · FA</b><p>选择 native FA 或 quant FA，保持输入输出语义一致。</p></article><article class="flow-step hot"><b>05 · PIPELINED RETURN</b><p>chunk FA 与上一 chunk reverse A2A 交叠。</p></article><article class="flow-step"><b>06 · RESTORE</b><p>恢复原 head/sequence 布局，返回上游 output projection。</p></article>
       </div></div>
       <div class="flow-panel" data-panel="fallback"><div class="flow-grid">
-        <article class="flow-step"><b>01 · PROBE FAIL</b><p>缺少 operator、shape 不支持、误差门不通过或 profile 无收益。</p></article><article class="flow-step"><b>02 · DOWNGRADE QUANT</b><p>quant collective → BF16 collective，保留并行语义。</p></article><article class="flow-step"><b>03 · DOWNGRADE FA</b><p>quant FA → native FA → upstream SDPA，逐级明确。</p></article><article class="flow-step"><b>04 · REPORT</b><p>一次 warning + 结构化 reason；禁止 silent fallback。</p></article>
+        <article class="flow-step"><b>01 · VALIDATE</b><p>在首个 collective 前检查 shape、layout、group、workspace 与 backend 能力。</p></article><article class="flow-step"><b>02 · RAISE</b><p>不支持时抛出 <code>USPNotSupported</code> 或细分契约异常，不在库内静默改策略。</p></article><article class="flow-step"><b>03 · UPSTREAM FALLBACK</b><p>vLLM-Omni / SGLang MM adapter 捕获异常并调用各自现有 native FA 路径。</p></article><article class="flow-step"><b>04 · REPORT</b><p>一次 warning + 结构化 reason，记录未命中的 dtype、shape 或 operator。</p></article>
       </div></div>
       <div class="grid3" style="margin-top:18px">
         <article class="card acid"><h3>比模型仓更快：少发</h3><p>优先合包 QKV、复用 buffer、减少 launch 与 Python dispatch；K/V 量化后通信，理论 payload 由 BF16 的 2B/elem 降至约 1B/elem + scale。</p></article>
         <article class="card mint"><h3>比上游更快：藏住</h3><p>把量化、collective、FA 和 reverse collective 排成跨 chunk DAG，以 exposed communication time 而非 collective 总时间为优化目标。</p></article>
-        <article class="card blue"><h3>比手工开关更稳：会选</h3><p>使用 shape/topology capability 和微型 profile 选 plan；小序列或单卡不强开复杂路径。</p></article>
+        <article class="card blue"><h3>比手工拼装更稳：契约明确</h3><p>上游负责判断小序列、单卡和 overlap 是否值得启用；MindIE-SD 只验证声明与实际 tensor/group 一致并稳定执行。</p></article>
       </div>
     </div></section>
 
     <section id="upstream" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">05 / UPSTREAM ADAPTERS</div><div><span class="kicker">保留上游 FA backend</span><h2>改现有 NPU 方法，不新增 MindIE backend 名称</h2><p class="lead">vLLM-Omni 继续暴露 <code>FlashAttentionImpl</code>，SGLang MM 继续暴露 <code>AscendFAImpl</code>。MindIE-SD 是 NPU 实现提供者，不是用户需要选择的新 attention 类型。</p></div></div>
+      <div class="head"><div class="secno">06 / UPSTREAM ADAPTERS</div><div><span class="kicker">保留上游 FA backend</span><h2>改现有 NPU 方法，不新增 MindIE backend 名称</h2><p class="lead">vLLM-Omni 继续暴露 <code>FlashAttentionImpl</code>，SGLang MM 继续暴露 <code>AscendFAImpl</code>。adapter 从已有 parallel state 构造 metadata，然后每次 forward 只调用一次 MindIE-SD。</p></div></div>
       <div class="grid2">
-        <div class="codeframe"><div class="filebar"><span>vLLM-Omni · FlashAttentionImpl.forward_npu</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>def _try_prepare_usp(self, spec, groups):
+        <div class="codeframe"><div class="filebar"><span>vLLM-Omni · FlashAttentionImpl.forward_npu</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>def forward_npu(self, q, k, v, **kwargs):
     try:
-        from mindiesd.usp import USPRuntime, USPConfig
-        runtime = USPRuntime(USPConfig.from_framework(self.config))
-        plan = runtime.prepare(spec, groups)
-        return runtime, plan
+        from mindiesd.usp import usp_attention
+
+        return usp_attention(
+            q, k, v,
+            meta=self._usp_meta,       # 来自已有 parallel config
+            options=self._usp_options,
+            joint_k=kwargs.get("joint_k"),
+            joint_v=kwargs.get("joint_v"),
+            workspace=self._usp_workspace,
+            out=kwargs.get("out"),
+        )
     except (ImportError, USPNotSupported) as exc:
         logger.info_once("MindIE USP unavailable: %s", exc)
-        return None, None
-
-def forward_npu(self, q, k, v, **kwargs):
-    if self._usp_plan is not None:
-        return self._usp.forward(self._usp_plan, q, k, v,
-                                 joint_k=kwargs.get("joint_k"),
-                                 joint_v=kwargs.get("joint_v"))
-    return self._native_npu_forward(q, k, v, **kwargs)</code></pre></div>
+        return self._native_npu_forward(q, k, v, **kwargs)</code></pre></div>
         <div class="codeframe"><div class="filebar"><span>SGLang MM · AscendFAImpl.forward</span><button class="copy" type="button">COPY</button></div><pre class="codebox"><code>class AscendFAImpl(AttentionImpl):
     def __init__(self, ..., parallel_state):
-        ...
-        self._usp, self._usp_plan = try_prepare_mindie_usp(
-            attention_spec=self.spec,
-            groups=ProcessGroups(
-                ulysses=parallel_state.sp_group,
-                ring=parallel_state.ring_group,
-            ),
-            framework_config=config,
+        self._usp_meta = USPMetadata(
+            mode=parallel_state.sp_mode,
+            ulysses_group=parallel_state.sp_group,
+            ring_group=parallel_state.ring_group,
         )
+        self._usp_options = options_from_server_args(config)
 
     def forward(self, q, k, v, **kwargs):
-        if self._usp_plan:
-            return self._usp.forward(self._usp_plan, q, k, v,
-                                     attn_mask=kwargs.get("attn_mask"))
-        return self._ascend_fa_native(q, k, v, **kwargs)</code></pre></div>
+        try:
+            return usp_attention(
+                q, k, v,
+                meta=self._usp_meta,
+                options=self._usp_options,
+                attn_mask=kwargs.get("attn_mask"),
+                workspace=self._usp_workspace,
+            )
+        except USPNotSupported as exc:
+            logger.info_once("MindIE USP fallback: %s", exc)
+            return self._ascend_fa_native(q, k, v, **kwargs)</code></pre></div>
       </div>
       <div class="compare" style="margin-top:18px"><table><thead><tr><th>边界</th><th>vLLM-Omni</th><th>SGLang MM</th><th>MindIE-SD</th></tr></thead><tbody>
         <tr><td>公开 backend / registry</td><td>保持现有 Flash Attention</td><td>保持现有 Ascend FA</td><td class="yes">不注册到上游公共枚举</td></tr>
         <tr><td>模型并行配置</td><td>读取现有 parallel config / group</td><td>读取现有 parallel state / group</td><td>只接收 group，不负责框架建组</td></tr>
         <tr><td>tensor 生命周期</td><td>框架加载权重与 QKV</td><td>框架加载权重与 QKV</td><td>不读 checkpoint，不持有模型对象</td></tr>
-        <tr><td>性能实现</td><td>委托或 native fallback</td><td>委托或 native fallback</td><td class="best">统一 plan / comm / quant / FA</td></tr>
-        <tr><td>兼容性</td><td>MindIE 缺失仍可运行</td><td>MindIE 缺失仍可运行</td><td>capability 不满足时给出 reason</td></tr>
+        <tr><td>性能实现</td><td>单次委托或 native fallback</td><td>单次委托或 native fallback</td><td class="best">统一 comm / quant / FA executor</td></tr>
+        <tr><td>兼容性</td><td>MindIE 缺失仍可运行</td><td>MindIE 缺失仍可运行</td><td>不支持时抛结构化异常与 reason</td></tr>
       </tbody></table></div>
     </div></section>
 
     <section id="performance" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">06 / PERFORMANCE CONTRACT</div><div><span class="kicker">不能只说“更快”</span><h2>把超越上游写成合入门槛</h2><p class="lead">所有数字是验收目标，不是当前实测结论。基线必须使用同一 commit、CANN、MindIE、卡型、输入、seed、warmup 与质量门，分别对比上游 native、模型仓最佳手工配置和 USP plan。</p></div></div>
+      <div class="head"><div class="secno">07 / PERFORMANCE CONTRACT</div><div><span class="kicker">不能只说“更快”</span><h2>把超越上游写成合入门槛</h2><p class="lead">所有数字是验收目标，不是当前实测结论。基线必须使用同一 commit、CANN、MindIE、卡型、输入、seed、warmup 与质量门，分别对比上游 native、模型仓最佳手工配置和 <code>usp_attention</code>。</p></div></div>
       <div class="grid4">
         <article class="metric"><strong>≥ 1.15×</strong><b>4 卡 DENOISE 吞吐</b><p>960×960×61、固定 50 steps，对比上游最佳 NPU 路径。</p></article>
         <article class="metric"><strong>≥ 1.20×</strong><b>8 卡 DENOISE 吞吐</b><p>收益必须来自 exposed comm 降低，而非减少 step 或变更输出。</p></article>
@@ -254,51 +258,53 @@ def forward_npu(self, q, k, v, **kwargs):
       </div>
       <div class="compare" style="margin-top:18px"><table><thead><tr><th>层级</th><th>基准对象</th><th>必须采集</th><th>合入条件</th></tr></thead><tbody>
         <tr><td>Micro</td><td>A2A、AllGather、quant/dequant、FA</td><td>GB/s、launch、workspace、kernel time</td><td>量化后有效带宽收益覆盖 codec 开销</td></tr>
-        <tr><td>Block</td><td>单个 double/single stream DiT block</td><td>critical path、event gap、临时显存</td><td>无全局 sync；plan 结果可复现</td></tr>
+        <tr><td>Block</td><td>单个 double/single stream DiT block</td><td>critical path、event gap、临时显存</td><td>无全局 sync；同一 metadata 结果可复现</td></tr>
         <tr><td>Stage</td><td>完整 denoise 50 steps</td><td>P50/P95、NPU 利用率、comm exposed</td><td>4/8 卡达到目标且无 OOM</td></tr>
         <tr><td>E2E</td><td>Text encoder + DiT + VAE</td><td>首帧/总时延、峰值显存、质量</td><td>不以其他 stage 回归换 DiT 指标</td></tr>
         <tr><td>Compatibility</td><td>Omni / SGLang；1/2/4/8 卡</td><td>路径命中、fallback reason、数值</td><td>缺 MindIE 或不支持 shape 时仍正确运行</td></tr>
       </tbody></table></div>
-      <div class="callout"><strong>Benchmark 纪律：</strong>报告同时给出 <code>plan.explain()</code>、环境 fingerprint 与 profiler 证据；禁止只报“开关前后耗时”，否则无法区分 kernel、通信、缓存或测量噪声。</div>
+      <div class="callout"><strong>Benchmark 纪律：</strong>报告同时给出 <code>USPMetadata</code>、<code>USPOptions</code>、实际 backend、workspace bytes、环境 fingerprint 与 profiler 证据；禁止只报“开关前后耗时”。</div>
     </div></section>
 
     <section id="decisions" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">07 / ADR & FAILURE MODES</div><div><span class="kicker">关键决策</span><h2>性能接口也必须可失败、可维护</h2><p class="lead">以下决策作为首版 ADR 固化；它们约束模块边界，不固化具体 operator 名称。</p></div></div>
+      <div class="head"><div class="secno">08 / ADR & FAILURE MODES</div><div><span class="kicker">关键决策</span><h2>性能接口也必须可失败、可维护</h2><p class="lead">以下决策作为首版 ADR 固化；它们约束模块边界，不固化具体 operator 名称。</p></div></div>
       <div class="grid3">
-        <article class="card mint"><h3>ADR-001 · Plan-first</h3><p><b>决定：</b>初始化生成不可变 plan，forward 不做策略判断。<br><b>代价：</b>动态 shape 必须声明范围或重新 prepare。<br><b>原因：</b>可缓存、可图捕获、可解释。</p></article>
+        <article class="card mint"><h3>ADR-001 · Single-call</h3><p><b>决定：</b>不提供 prepare 或 plan API；上游传入执行 metadata，forward 单次完成。<br><b>代价：</b>adapter 必须正确维护 metadata 与 workspace。<br><b>原因：</b>避免重复调度器与第二套生命周期。</p></article>
         <article class="card acid"><h3>ADR-002 · Quant is codec</h3><p><b>决定：</b>通信量化属于 collective codec，而非 attention 单独前处理。<br><b>代价：</b>需要 scale protocol 与 HCCL buffer 管理。<br><b>原因：</b>才能融合和延迟 dequant。</p></article>
         <article class="card blue"><h3>ADR-003 · Keep backend names</h3><p><b>决定：</b>不在上游增加 MindIE USP backend。<br><b>代价：</b>接入点是平台私有方法。<br><b>原因：</b>用户配置稳定，供应商实现可替换。</p></article>
       </div>
       <div class="grid2" style="margin-top:16px">
-        <article class="risk"><span>01</span><div><h3>通信量化误差放大</h3><p>按层/step 质量 gate；支持仅 K/V 量化、敏感 block allowlist、BF16 fallback，并将策略写入 plan hash。</p></div></article>
-        <article class="risk"><span>02</span><div><h3>重叠反而变慢</h3><p>小序列或低并行度关闭 chunk pipeline；warmup profile 比较 overlap on/off，收益未过阈值不启用。</p></div></article>
-        <article class="risk"><span>03</span><div><h3>group / rank 错配导致 hang</h3><p>prepare 阶段 all-rank 交换 topology fingerprint；不一致立即失败，不进入 collective。</p></div></article>
+        <article class="risk"><span>01</span><div><h3>通信量化误差放大</h3><p>按层/step 质量 gate；支持仅 K/V 量化、敏感 block allowlist、BF16 fallback，并记录 metadata/options fingerprint。</p></div></article>
+        <article class="risk"><span>02</span><div><h3>重叠反而变慢</h3><p>上游用 warmup/profile 决定小序列或低并行度是否关闭 pipeline，再通过 <code>options.overlap</code> 与 <code>meta.chunk_size</code> 明确传入。</p></div></article>
+        <article class="risk"><span>03</span><div><h3>group / rank 错配导致 hang</h3><p>adapter 契约测试覆盖 rank 映射；单次调用在首个 collective 前校验 group、world size、head 可分性和本地 metadata。</p></div></article>
         <article class="risk"><span>04</span><div><h3>上游升级导致私有接口漂移</h3><p>adapter 极薄、按框架版本做 contract test；MindIE 核心只依赖 tensor/spec/groups，不 import 上游包。</p></div></article>
-        <article class="risk"><span>05</span><div><h3>非等长序列越界或 silent trim</h3><p><code>SequenceMeta</code> 保存原始/填充长度与 cu_seqlens；debug 模式校验每 rank checksum。</p></div></article>
-        <article class="risk"><span>06</span><div><h3>workspace 峰值抵消收益</h3><p>plan 输出显存预算；buffer pool 复用，超过预算时降 chunk、关重叠或退回 native。</p></div></article>
+        <article class="risk"><span>05</span><div><h3>非等长序列越界或 silent trim</h3><p><code>USPMetadata.seq_lens</code> 保存真实长度；debug 模式校验每 rank checksum，输出严格按原始长度 trim。</p></div></article>
+        <article class="risk"><span>06</span><div><h3>workspace 峰值抵消收益</h3><p>调用方显式传入稳定 buffer 或使用内部有上限的缓存池；容量不足直接抛错，由上游决定降 chunk、关重叠或 native fallback。</p></div></article>
       </div>
     </div></section>
 
     <section id="delivery" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">08 / DELIVERY</div><div><span class="kicker">分阶段落地</span><h2>先统一语义，再吃掉通信热路径</h2><p class="lead">每阶段都有独立退出条件，避免一次把量化、并行、FA、上游接入全部绑在同一个大补丁里。</p></div></div>
+      <div class="head"><div class="secno">09 / DELIVERY</div><div><span class="kicker">分阶段落地</span><h2>先统一语义，再吃掉通信热路径</h2><p class="lead">每阶段都有独立退出条件，避免一次把量化、并行、FA、上游接入全部绑在同一个大补丁里。</p></div></div>
       <div class="roadmap">
-        <article class="phase"><small>PHASE 0 · CONTRACT</small><h3>Facade 与基线</h3><p>定义 dataclass、capability、plan/explain、错误码；复刻模型仓 4/8 卡 BF16 路径，建立三方基线。</p><span class="exit">EXIT → 数值对齐；无性能回归；路径可解释</span></article>
+        <article class="phase"><small>PHASE 0 · CONTRACT</small><h3>Single-call 与基线</h3><p>冻结函数签名、metadata/options、异常与 workspace 契约；复刻模型仓 4/8 卡 BF16 路径，建立三方基线。</p><span class="exit">EXIT → 数值对齐；无性能回归；路径可观测</span></article>
         <article class="phase"><small>PHASE 1 · COMM CORE</small><h3>统一 collective</h3><p>拓扑建组、QKV pack、非等长切分、buffer pool、async handle；消除硬编码 rank 表。</p><span class="exit">EXIT → 2/4/8 卡稳定，无 hang / OOM</span></article>
-        <article class="phase"><small>PHASE 2 · QUANT + OVERLAP</small><h3>性能主战场</h3><p>FP8/MXFP8 codec、scale protocol、quant FA 直读、双缓冲 event DAG 和 cost model。</p><span class="exit">EXIT → 达到 4/8 卡性能与质量门</span></article>
-        <article class="phase"><small>PHASE 3 · UPSTREAM</small><h3>两个薄适配</h3><p>先 vLLM-Omni，再 SGLang MM；增加 feature detection、native fallback、契约测试与文档。</p><span class="exit">EXIT → 两框架同 plan 语义、同 profiler 口径</span></article>
+        <article class="phase"><small>PHASE 2 · QUANT + OVERLAP</small><h3>性能主战场</h3><p>FP8/MXFP8 codec、scale protocol、quant FA 直读和双缓冲 event pipeline；开关与 chunk 由上游 options 给定。</p><span class="exit">EXIT → 达到 4/8 卡性能与质量门</span></article>
+        <article class="phase"><small>PHASE 3 · UPSTREAM</small><h3>两个薄适配</h3><p>先 vLLM-Omni，再 SGLang MM；增加 feature detection、native fallback、契约测试与文档。</p><span class="exit">EXIT → 两框架同单次调用语义、同 profiler 口径</span></article>
       </div>
       <div class="compare" style="margin-top:18px"><table><thead><tr><th>建议目录</th><th>职责</th><th>禁止依赖</th></tr></thead><tbody>
-        <tr><td><code>mindiesd/usp/api.py</code></td><td>公开 dataclass、协议、异常、capability</td><td>框架包、模型代码、operator 内部目录</td></tr>
-        <tr><td><code>mindiesd/usp/planner.py</code></td><td>拓扑/shape/cost → USPPlan</td><td>vLLM/SGLang 配置对象</td></tr>
+        <tr><td><code>mindiesd/usp/api.py</code></td><td><code>usp_attention</code>、公开 dataclass 与异常</td><td>框架包、模型代码、operator 内部目录</td></tr>
+        <tr><td><code>mindiesd/usp/executor.py</code></td><td>契约校验、workspace 获取与单次路径 dispatch</td><td>上游调度策略、模型配置对象</td></tr>
         <tr><td><code>mindiesd/usp/comm/</code></td><td>collective、codec、buffer、event schedule</td><td>DiT block 类</td></tr>
         <tr><td><code>mindiesd/usp/backends/</code></td><td>native FA、quant FA、fused overlap executor</td><td>上游 backend enum</td></tr>
-        <tr><td><code>integrations/{vllm_omni,sglang_mm}.py</code></td><td>框架 config → USPConfig / AttentionSpec</td><td>MindIE 内部 kernel 名称</td></tr>
+        <tr><td><code>integrations/{vllm_omni,sglang_mm}.py</code></td><td>框架 parallel state → USPMetadata / USPOptions</td><td>MindIE 内部 kernel 名称</td></tr>
       </tbody></table></div>
     </div></section>
 
     <section id="sources" class="reveal"><div class="wrap">
-      <div class="head"><div class="secno">09 / EVIDENCE</div><div><span class="kicker">来源与核对范围</span><h2>设计依据</h2><p class="lead">页面区分仓库事实、设计推导与验收目标；性能数字未标注为实测。</p></div></div>
+      <div class="head"><div class="secno">10 / EVIDENCE</div><div><span class="kicker">来源与核对范围</span><h2>设计依据</h2><p class="lead">页面区分仓库事实、设计推导与验收目标；性能数字未标注为实测。</p></div></div>
       <ol class="sources">
+        <li><a href="https://docs.flashinfer.ai/api/attention.html">FlashInfer Attention API</a><span>单请求函数、batch wrapper、显式 backend/layout/scale 与 workspace 所有权。</span></li>
+        <li><a href="https://github.com/flashinfer-ai/flashinfer/blob/main/flashinfer/prefill.py">FlashInfer prefill.py</a><span><code>single_prefill_with_kv_cache</code> 的函数式签名及内部 backend dispatch。</span></li>
         <li><a href="https://modelers.cn/models/gzh/hunyuanvideo_magic">HunyuanVideo Magic 模型仓</a><span>README、并行矩阵、量化/FA/overlap 开关与源码树。</span></li>
         <li><a href="https://github.com/vllm-project/vllm-omni">vLLM-Omni</a><span>多模态 stage runtime 与现有 NPU Flash Attention 接入边界。</span></li>
         <li><a href="https://github.com/sgl-project/sglang/tree/main/python/sglang/multimodal_gen">SGLang multimodal_gen</a><span>多模态生成 runtime、attention backend 与平台特化位置。</span></li>
