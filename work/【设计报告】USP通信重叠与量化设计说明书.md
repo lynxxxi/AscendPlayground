@@ -184,7 +184,50 @@ Head Cut 把 Q/K/V 按 Head 分块。通信 Stream 预处理下一 Chunk，计�
 - 上游私有 Metadata 演进只能影响 Adapter，不应进入核心 API。
 - `chunk_size` 与 Head Cut/Overlap 互斥，避免同时切两个维度导致调度组合爆炸。
 
-## 13. 关键文件
+## 13. UML 用例图
+
+```plantuml
+@startuml
+left to right direction
+actor "模型适配开发者" as Developer
+actor "分布式推理运行时" as Runtime
+actor "性能验证人员" as Tester
+rectangle "USP 通信重叠与量化" {
+  usecase "配置并行拓扑与布局" as UC1
+  usecase "执行 Ulysses All-to-All" as UC2
+  usecase "量化压缩通信张量" as UC3
+  usecase "通信与计算流水重叠" as UC4
+  usecase "验证精度、吞吐和异常契约" as UC5
+}
+Developer --> UC1
+Runtime --> UC2
+Runtime --> UC3
+Runtime --> UC4
+Tester --> UC5
+UC4 ..> UC2 : <<include>>
+@enduml
+```
+
+## 14. UML 类图
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+class USPAttention
+class USPConfig
+class UlyssesCommunicator
+class CommunicationQuantizer
+class ChunkScheduler
+class WorkspaceManager
+USPAttention *-- USPConfig
+USPAttention --> UlyssesCommunicator
+USPAttention --> CommunicationQuantizer
+USPAttention --> ChunkScheduler
+ChunkScheduler --> WorkspaceManager
+@enduml
+```
+
+## 15. 关键文件
 
 - `mindiesd/layers/usp.py`：公共 API、Collective、量化、重叠流水与异常。
 - `tests/layers/test_usp.py`：单 Rank、分片、量化、重叠、复用与异常测试。

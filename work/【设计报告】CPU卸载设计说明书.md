@@ -163,7 +163,48 @@ Hook 将生命周期逻辑与模型计算解耦。Event 明确表达“输入可
 - `resize_(0)` 依赖底层 Storage 行为，升级 PyTorch/TorchNPU 时必须回归。
 - 当前 Post Hook 的 D2H Stream 主要承担事件排序和 Storage 回收，稳态并不重新把权重复制回 CPU。
 
-## 11. 关键文件
+## 11. UML 用例图
+
+```plantuml
+@startuml
+left to right direction
+actor "模型开发者" as Developer
+actor "推理运行时" as Runtime
+actor "测试人员" as Tester
+rectangle "CPU Offload" {
+  usecase "配置卸载范围与预取距离" as UC1
+  usecase "异步预取权重" as UC2
+  usecase "计算后回收 NPU Storage" as UC3
+  usecase "检查显存峰值与输出一致性" as UC4
+}
+Developer --> UC1
+Runtime --> UC2
+Runtime --> UC3
+Tester --> UC4
+UC2 ..> UC1 : <<include>>
+UC3 ..> UC2 : <<extend>>
+@enduml
+```
+
+## 12. UML 类图
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+class OffloadController
+class OffloadConfig
+class BlockHook
+class WeightReplica
+class StreamCoordinator
+OffloadController *-- OffloadConfig
+OffloadController o-- BlockHook
+BlockHook --> WeightReplica
+BlockHook --> StreamCoordinator
+WeightReplica --> StreamCoordinator
+@enduml
+```
+
+## 13. 关键文件
 
 - `mindiesd/offload.py`：入口、校验、Stream/Event、CPU 副本与 Hook。
 - `tests/test_offload.py`：初始化、幂等、前向、切片与参数校验。

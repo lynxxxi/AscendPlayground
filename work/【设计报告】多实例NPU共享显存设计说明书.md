@@ -152,7 +152,50 @@ CLEANUP --> [*] : terminate ZMQ context
 - Master 崩溃、句柄广播中断或实例数配置不一致会导致启动失败。
 - 共享权重必须只读；若需要热更新，应采用版本化重建而非原地修改。
 
-## 12. 关键文件
+## 12. UML 用例图
+
+```plantuml
+@startuml
+left to right direction
+actor "主实例" as Master
+actor "消费实例" as Consumer
+actor "部署运维人员" as Operator
+rectangle "多实例 NPU 共享显存" {
+  usecase "导出设备内存句柄" as UC1
+  usecase "分发共享元数据" as UC2
+  usecase "映射共享 Storage" as UC3
+  usecase "校验实例一致性与生命周期" as UC4
+}
+Master --> UC1
+Master --> UC2
+Consumer --> UC3
+Operator --> UC4
+UC3 ..> UC2 : <<include>>
+@enduml
+```
+
+## 13. UML 类图
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+class ShareMemoryManager
+class MasterExporter
+class ConsumerImporter
+class SharedTensorMetadata
+class ZmqTransport
+class DeviceStorage
+ShareMemoryManager --> MasterExporter
+ShareMemoryManager --> ConsumerImporter
+MasterExporter --> SharedTensorMetadata
+ConsumerImporter --> SharedTensorMetadata
+MasterExporter --> ZmqTransport
+ConsumerImporter --> ZmqTransport
+SharedTensorMetadata --> DeviceStorage
+@enduml
+```
+
+## 14. 关键文件
 
 - `mindiesd/share_memory.py`：管理器、握手、句柄导出/重建和回退逻辑。
 - `mindiesd/utils/safe_pickle.py`：安全序列化边界。

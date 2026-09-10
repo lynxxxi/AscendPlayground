@@ -177,7 +177,48 @@ Cube 路径负责矩阵乘，Vector 路径负责 Descale、Mask、Softmax 状态
 - 特性依赖目标 SoC、CANN 与 TorchNPU 组合；不支持的平台应显式报错或由更上层选择 BF16 FA。
 - 该算子代码量大且模板多，新增 Layout/量化模式时需控制组合爆炸。
 
-## 13. 关键文件
+## 13. UML 用例图
+
+```plantuml
+@startuml
+left to right direction
+actor "模型适配开发者" as Developer
+actor "推理运行时" as Runtime
+actor "算子验证人员" as Tester
+rectangle "MXFP4 Quant Flash Attention" {
+  usecase "配置量化注意力" as UC1
+  usecase "生成 Metadata 与 Tiling" as UC2
+  usecase "执行量化 Flash Attention" as UC3
+  usecase "验证精度、性能与异常分支" as UC4
+}
+Developer --> UC1
+Runtime --> UC2
+Runtime --> UC3
+Tester --> UC4
+UC3 ..> UC2 : <<include>>
+@enduml
+```
+
+## 14. UML 类图
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+class QuantFlashAttention
+class QuantAttentionConfig
+class MetadataBuilder
+class HostTiling
+class KernelLauncher
+class MXFP4Kernel
+QuantFlashAttention *-- QuantAttentionConfig
+QuantFlashAttention --> MetadataBuilder
+QuantFlashAttention --> HostTiling
+HostTiling --> KernelLauncher
+KernelLauncher --> MXFP4Kernel
+@enduml
+```
+
+## 15. 关键文件
 
 - `csrc/plugin/quant_flash_attn*.cpp`：TorchNPU 入口与 Dtype Adapter。
 - `csrc/ops/quant_flash_attn/op_host/`：InferShape、Tiling 与模板选择。
