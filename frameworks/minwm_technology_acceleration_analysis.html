@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>minWM 技术与加速需求分析｜对比 Wan 2.2</title>
+  <style>
+    :root{
+      --bg:#071018;--panel:#0d1924;--panel2:#101f2c;--line:#203446;
+      --text:#e8f0f4;--muted:#93a8b6;--cyan:#49d9d0;--blue:#6aa7ff;
+      --amber:#ffc66d;--red:#ff7b7b;--green:#82e6a8;--purple:#c7a6ff;
+      --max:1220px;--shadow:0 18px 50px rgba(0,0,0,.24)
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth;scroll-padding-top:78px}
+    body{margin:0;background:
+      radial-gradient(900px 500px at 10% -10%,rgba(73,217,208,.14),transparent 62%),
+      radial-gradient(760px 480px at 100% 0,rgba(106,167,255,.12),transparent 56%),var(--bg);
+      color:var(--text);font:15px/1.72 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    a{color:var(--cyan);text-decoration:none} a:hover{text-decoration:underline}
+    .nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);background:rgba(7,16,24,.84);border-bottom:1px solid var(--line)}
+    .navin{max-width:var(--max);margin:auto;padding:12px 22px;display:flex;gap:19px;align-items:center;overflow:auto;white-space:nowrap}
+    .brand{font-weight:800;letter-spacing:.04em;color:#fff;margin-right:auto}.nav a{color:var(--muted);font-size:13px}.nav a:hover{color:#fff;text-decoration:none}
+    main{max-width:var(--max);margin:auto;padding:58px 22px 90px}
+    .hero{padding:34px 0 42px;border-bottom:1px solid var(--line)}
+    .eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+    h1{font-size:clamp(38px,6vw,76px);line-height:1.02;letter-spacing:-.045em;margin:15px 0 20px;max-width:980px}
+    .lead{font-size:19px;line-height:1.7;color:#bfd0da;max-width:900px}.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:25px}
+    .pill,.status{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--muted);font-size:12px;background:rgba(255,255,255,.025)}
+    .status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 10px var(--green)}
+    section{padding-top:62px} h2{font-size:30px;line-height:1.2;margin:0 0 11px;letter-spacing:-.025em} h3{font-size:18px;margin:0 0 10px} h4{margin:0 0 7px}
+    .sub{color:var(--muted);max-width:830px;margin:0 0 25px}.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(145deg,rgba(16,31,44,.96),rgba(11,23,33,.96));border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+    .card p:last-child{margin-bottom:0}.big{font-size:30px;line-height:1.1;font-weight:800;color:#fff;margin:8px 0}.muted{color:var(--muted)} .small{font-size:12px}
+    .verdict{border-left:4px solid var(--cyan);padding:22px 24px;background:rgba(73,217,208,.06);border-radius:0 14px 14px 0;margin-top:26px}
+    .verdict strong{color:var(--cyan)}
+    .flow{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));align-items:stretch;gap:9px;margin-top:26px}
+    .node{position:relative;border:1px solid var(--line);border-radius:13px;padding:15px 13px;background:var(--panel);min-height:110px}
+    .node:not(:last-child):after{content:"→";position:absolute;right:-18px;top:39%;z-index:3;color:var(--cyan);font-weight:900}.node b{display:block;color:#fff}.node span{display:block;color:var(--muted);font-size:12px;margin-top:5px}.node.hot{border-color:rgba(73,217,208,.6);background:rgba(73,217,208,.08)}
+    .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:15px;background:rgba(13,25,36,.75)}
+    table{width:100%;border-collapse:collapse;min-width:790px}th,td{padding:13px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#122331;color:#bcd0dc;font-size:12px;letter-spacing:.05em}tr:last-child td{border-bottom:0}td:first-child{color:#fff;font-weight:650}
+    .tag{font-size:11px;font-weight:800;border-radius:6px;padding:3px 7px;display:inline-block}.p0{background:rgba(255,123,123,.15);color:var(--red)}.p1{background:rgba(255,198,109,.15);color:var(--amber)}.p2{background:rgba(106,167,255,.15);color:var(--blue)}.done{background:rgba(130,230,168,.14);color:var(--green)}.partial{background:rgba(199,166,255,.14);color:var(--purple)}
+    .callout{padding:17px 19px;border:1px solid rgba(255,198,109,.38);background:rgba(255,198,109,.06);border-radius:13px;color:#ead8b9}
+    ul{padding-left:19px;margin:9px 0}li{margin:6px 0}code{font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;color:#b7e8ff;background:#09151f;border:1px solid #1d3447;border-radius:5px;padding:2px 5px}
+    .meter{height:7px;background:#152635;border-radius:99px;overflow:hidden;margin-top:10px}.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:inherit}
+    .rank{counter-reset:item}.rank .card{position:relative;padding-left:62px}.rank .card:before{counter-increment:item;content:counter(item);position:absolute;left:20px;top:20px;width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:var(--cyan);color:#061018;font-weight:900}
+    .split{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px}.legend{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0 21px}
+    .quote{font-size:18px;line-height:1.6;color:#d9e8ee;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:24px 4px;margin:26px 0}
+    .source{display:grid;grid-template-columns:38px 1fr;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)}.source:last-child{border:0}.source .n{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;color:var(--cyan);font-weight:800}.source p{margin:3px 0;color:var(--muted);font-size:13px}
+    .footer{margin-top:70px;padding-top:25px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    @media(max-width:980px){.g4,.g3{grid-template-columns:repeat(2,1fr)}.flow{grid-template-columns:repeat(2,1fr)}.node:not(:last-child):after{display:none}.split{grid-template-columns:1fr}}
+    @media(max-width:620px){main{padding-left:15px;padding-right:15px}.g2,.g3,.g4,.flow{grid-template-columns:1fr}h1{font-size:40px}.lead{font-size:16px}}
+    @media print{.nav{display:none}body{background:#fff;color:#111}.card,.tablewrap{box-shadow:none;background:#fff;border-color:#ccc}.muted,.sub,.source p{color:#555}h1,.big,td:first-child,.node b{color:#111}a{color:#066}.node{background:#fff}main{max-width:none}.hero,section{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <nav class="nav"><div class="navin"><div class="brand">minWM / ASCEND BRIEF</div><a href="#verdict">结论</a><a href="#stack">技术栈</a><a href="#compare">对比</a><a href="#acceleration">加速要求</a><a href="#ascend">昇腾路线</a><a href="#evidence">证据</a></div></nav>
+  <main>
+    <header class="hero">
+      <div class="eyebrow">Technical research · 2026.08.31</div>
+      <h1>minWM 技术与<br>加速需求分析</h1>
+      <p class="lead">以 Wan 2.2 为主流视频生成基线，分析 minWM 如何把双向视频扩散底座转化为低延迟、可交互、可持续滚动的世界模型，以及这一变化为何重新定义了加速优先级。</p>
+      <div class="meta"><span class="status">基于论文 + 官方仓库源码</span><span class="pill">重点：推理时延 / KV cache / 并行 / 量化 / VAE</span><span class="pill">面向：昇腾适配与框架规划</span></div>
+    </header>
+
+    <section id="verdict">
+      <h2>先说结论</h2><p class="sub">minWM 和 Wan 2.2 不是同一层级的竞品。前者是“世界模型改造流水线”，后者是“高质量离线视频生成底座”。</p>
+      <div class="grid g4">
+        <div class="card"><div class="muted small">定位</div><div class="big">框架，不是单模型</div><p>把现有 T2V/TI2V 底座改造成带相机控制的少步自回归世界模型。</p></div>
+        <div class="card"><div class="muted small">算法级主加速</div><div class="big">50 → 4 步</div><p>通过 Causal Forcing / CF++ 与非对称 DMD，把多步扩散蒸馏为 4-step AR；CF++ 通用视频实验已验证 1–2 step，但动作模型尚未开放该路径。</p></div>
+        <div class="card"><div class="muted small">公开实测 · 单 A800</div><div class="big">236.64×</div><p>Wan2.1-1.3B 的首帧延迟从 269.055 s 降至 1.137 s；不含 VAE。</p></div>
+        <div class="card"><div class="muted small">最优先工程目标</div><div class="big">稳定实时，而非吞吐</div><p>首帧、逐块尾延迟和长时显存必须有界；仅提升离线 clips/hour 不够。</p></div>
+      </div>
+      <div class="verdict"><strong>核心判断：</strong>Wan 2.2 的优化中心是“大模型 × 长序列 × 多去噪步”的离线吞吐；minWM 的优化中心则是“短固定块 × 少步 × 有状态缓存”的交互尾延迟。对 minWM，步数蒸馏、因果注意力、滚动 KV、VAE 流水化与消除 CFG 双前向是 P0/P1；通用 DiT step-cache、模型 offload 和复杂 MoE 调度优先级反而下降。</div>
+    </section>
+
+    <section id="stack">
+      <h2>minWM 到底用了什么技术</h2><p class="sub">两阶段、四个训练节点，把“看完整段再生成”的双向模型改成“只看历史、边交互边生成”的因果模型。</p>
+      <div class="flow">
+        <div class="node"><b>视频底座</b><span>Wan2.1 1.3B（Cross-Attn DiT）或 HY1.5 8B（MMDiT）</span></div>
+        <div class="node"><b>相机数据</b><span>重建/重渲染或 WorldPlay 合成，强调准确轨迹</span></div>
+        <div class="node"><b>PRoPE SFT</b><span>将内参 K 与 SE(3) 外参注入自注意力</span></div>
+        <div class="node"><b>Teacher Forcing</b><span>因果 mask；干净历史 + 带噪当前块，获得 AR 能力</span></div>
+        <div class="node"><b>ODE / Causal CD</b><span>把多步 AR 初始化为少步 AR；CD 避免离线轨迹</span></div>
+        <div class="node"><b>Asym. DMD</b><span>学生自滚动；双向教师作 real score，在线 fake score</span></div>
+        <div class="node hot"><b>流式推理</b><span>4 latent-frame/chunk、4 steps、因果 KV cache、相机动作</span></div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card"><h3>PRoPE：几何条件进入注意力</h3><p>不是把动作简单拼到 latent 上。PRoPE 用投影矩阵把相机内外参转化为 token 间的相对射影变换，因此保留原有生成结构，同时让空间 token 感知相机运动。</p><p class="muted small">加速含义：需要支持 Q/K/V 前后的结构化变换与 RoPE 融合，避免大量小算子和 layout 往返。</p></div>
+        <div class="card"><h3>Causal Forcing：训练—推理对齐</h3><p>先用真实历史做 teacher forcing，再让少步学生 self-rollout，并由高质量双向教师做非对称分布匹配，缓解 AR 暴露偏差与误差累积。</p><p class="muted small">加速含义：训练态同时存在 student、real-score、fake-score/EMA，显存和通信压力明显高于普通 SFT。</p></div>
+        <div class="card"><h3>Chunk-wise AR：交互粒度</h3><p>论文实验生成 480×832、77 帧，AR 块大小为 4 个 latent frames。块内并行去噪，块间严格因果，首块可先交付。</p><p class="muted small">加速含义：固定 chunk 有利于静态图；长时上下文则要求 KV 生命周期与窗口策略独立设计。</p></div>
+      </div>
+      <div class="callout" style="margin-top:16px"><b>代码成熟度提示：</b>论文/README 主路径是 4-step chunk-wise。2026-06-15 的仓库 HEAD 已可见 HY 路线文本与视觉 KV cache，但通过 <code>torch.cat</code> 逐块扩展视觉 KV；README 仍将更广义“inference acceleration”标为 TBD。故“有 KV cache”不等于“已有生产级、长时有界的 rolling/paged KV”。</div>
+    </section>
+
+    <section id="compare">
+      <h2>与 Wan 2.2 的本质差异</h2><p class="sub">比较重点不是画质榜单，而是工作负载怎样改变了硬件与框架的优化目标。</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>维度</th><th>minWM（当前公开实例）</th><th>Wan 2.2 主流生成</th><th>对加速的影响</th></tr></thead>
+        <tbody>
+          <tr><td>产品目标</td><td>相机/动作可控、因果、低首帧延迟、持续 rollout</td><td>一次性生成完整高质量短视频</td><td>minWM 必须看 P95/P99 与状态管理；Wan 更关注总生成时间和吞吐。</td></tr>
+          <tr><td>底座关系</td><td>后训练框架；已实例化 Wan2.1-1.3B 与 HY1.5-8B</td><td>完整视频基础模型族</td><td>minWM 的算子形态随底座变化，部署接口应抽象 causal block/KV/condition，而非绑死模型。</td></tr>
+          <tr><td>注意力</td><td>双向 → 因果；块内并行、块间复用历史 KV</td><td>对整段 latent 做双向时空注意力</td><td>minWM 需要 causal FlashAttention + append/read KV；Wan 适合全序列 FlashAttention 与序列并行。</td></tr>
+          <tr><td>去噪步</td><td>公开动作 checkpoint 为 4-step；CF++ 的 1–2 step 帧级结果来自通用视频生成</td><td>官方示例常为约 20–50 step，社区另有 Lightning/蒸馏</td><td>minWM 已从算法层消掉绝大多数重复前向；传统 step-cache 收益空间缩小。</td></tr>
+          <tr><td>参数组织</td><td>1.3B dense / 8B MMDiT 示例，无 timestep MoE</td><td>A14B 为 27B 总参数、每步激活约 14B；高/低噪声双专家</td><td>Wan2.2 要解决双专家常驻/切换；minWM 更应把预算投向 KV、VAE 与低 launch overhead。</td></tr>
+          <tr><td>latent 压缩</td><td>继承底座 VAE；论文延迟明确排除 VAE</td><td>TI2V-5B 的 VAE 为 4×16×16，patch 后总空间压缩到 4×32×32</td><td>Wan2.2 用高压缩直接削减 token；minWM 若不改 VAE，端到端实时仍可能被解码阻塞。</td></tr>
+          <tr><td>条件输入</td><td>文本/图像 + 每块相机 K、SE(3) 或离散动作</td><td>文本、图像，S2V/Animate 另含音频、姿态等</td><td>minWM 控制信号必须低延迟在线注入，不能做整段离线预处理。</td></tr>
+          <tr><td>上下文</td><td>随 rollout 增长；误差与 KV 容量持续累积</td><td>固定 clip，生成结束即释放</td><td>minWM 必须有滚动窗口、锚帧/记忆压缩、缓存回收和会话隔离。</td></tr>
+        </tbody>
+      </table></div>
+      <p class="quote">不要把“minWM 的 few-step”理解成 Wan 2.2 Lightning 的简单替代：前者还承担因果化、动作条件、训练—推理分布对齐和长时状态管理；少步只是实时世界模型成立的必要条件之一。</p>
+    </section>
+
+    <section id="acceleration">
+      <h2>加速手段要求矩阵</h2><p class="sub">按交互体验的实际杠杆排序。状态“已有”仅表示官方仓库存在相关实现，不代表已完成昇腾适配或生产化。</p>
+      <div class="legend"><span class="tag p0">P0 必须</span><span class="tag p1">P1 高价值</span><span class="tag p2">P2 条件性</span><span class="tag done">已有基础</span><span class="tag partial">部分 / 需重构</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>手段</th><th>优先级</th><th>当前基础</th><th>为什么 minWM 需要 / 不需要</th><th>验收指标</th></tr></thead>
+        <tbody>
+          <tr><td>4-step / 研究 1–2 step</td><td><span class="tag p0">P0</span></td><td><span class="tag done">动作模型 4-step 已有</span></td><td>最大单项收益，直接减少 DiT 前向次数；1–2 step 动作条件路线仍需训练与验证，不能直接引用通用视频结果。</td><td>固定质量门槛下首帧、每块延迟；长滚动 VBench/控制遵循度。</td></tr>
+          <tr><td>因果融合注意力</td><td><span class="tag p0">P0</span></td><td><span class="tag partial">CUDA Flash 基础</span></td><td>需要块内 causal/full + 历史 KV 的单算子路径；通用 dense attention 会造成显存与 launch 开销。</td><td>不物化 N² mask；attention kernel 时间与 HBM bytes。</td></tr>
+          <tr><td>预分配 rolling/paged KV</td><td><span class="tag p0">P0</span></td><td><span class="tag partial">逐块 cat</span></td><td>当前扩展式 <code>torch.cat</code> 会反复分配复制，长视频显存不封顶。需 ring buffer、页表或窗口化。</td><td>30 分钟会话显存平台化；无周期性大抖动；cache hit/eviction 可观测。</td></tr>
+          <tr><td>静态 chunk 图编译</td><td><span class="tag p0">P0</span></td><td><span class="tag partial">固定块有利</span></td><td>chunk=4、steps=4 适合固定 shape capture；把 Python 循环、小张量创建和同步移出热路径。</td><td>单块 host gap、图复用率、重编译次数；P99 接近 P50。</td></tr>
+          <tr><td>VAE 异步流水</td><td><span class="tag p0">P0</span></td><td><span class="tag partial">延迟未计 VAE</span></td><td>论文 1.137/3.446 s 首帧均排除 VAE。真实产品要边生成 latent、边解码、边传输。</td><td>端到端首个可显示帧；decode 不阻塞下一 chunk DiT。</td></tr>
+          <tr><td>CFG 消除 / guidance distill</td><td><span class="tag p1">P1</span></td><td><span class="tag partial">代码仍支持双路 KV</span></td><td>guidance&gt;1 会让 cond/uncond 各跑一遍并维护两份 KV，近似翻倍计算与缓存。</td><td>guidance=1 下质量持平；前向次数减半、KV 减半。</td></tr>
+          <tr><td>BF16 → FP8/W8A8</td><td><span class="tag p1">P1</span></td><td><span class="tag partial">BF16 基线</span></td><td>线性层与注意力投影占主导；量化可降 HBM 与 MatMul 时间，但 DMD 少步误差更敏感。</td><td>逐 stage 校准；运动/控制/长时漂移均不过阈值，不能只测单帧画质。</td></tr>
+          <tr><td>序列/上下文并行</td><td><span class="tag p1">P1</span></td><td><span class="tag done">SP 已有</span></td><td>8B/高分辨率必要；1.3B 小 chunk 可能通信大于计算，应按 token 数自适应启用。</td><td>扩展效率、all-to-all 占比；1/2/4/8 卡延迟曲线而非只看吞吐。</td></tr>
+          <tr><td>稀疏/窗口注意力</td><td><span class="tag p1">P1</span></td><td><span class="tag partial">未成主路径</span></td><td>长上下文中，历史 KV 线性增长且注意力成本增加；局部窗口 + 稀疏记忆比无限全量 KV 更可持续。</td><td>上下文长度增长时每块延迟近似恒定；一致性降幅可控。</td></tr>
+          <tr><td>跨步 DiT Cache</td><td><span class="tag p2">P2</span></td><td>未集成</td><td>Wan 2.2 多步生成收益高；minWM 仅 4 步，缓存判定/误差可能抵消收益。可做但不是首选。</td><td>端到端净收益，不以 kernel microbench 代替；4-step 质量回归。</td></tr>
+          <tr><td>模型 offload</td><td><span class="tag p2">P2</span></td><td>可借底座能力</td><td>适合“能跑起来”，不适合低尾延迟：PCIe/主机搬运会制造抖动。实时服务应常驻核心权重。</td><td>只作为低显存模式；实时档禁止热路径 offload。</td></tr>
+          <tr><td>MoE 专家并行</td><td><span class="tag p2">P2</span></td><td>当前 minWM 无</td><td>只有迁移 Wan2.2-A14B 时才成立；需确保 4 个目标 timestep 的专家路由和双专家常驻策略。</td><td>专家切换无 host transfer；EP 通信不破坏首帧 SLA。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2>训练侧：昂贵的不只是模型</h2><p class="sub">minWM 的训练是多阶段系统工程。能否复现，往往由数据质量、有效 batch 和多模型驻留共同决定。</p>
+      <div class="grid g4">
+        <div class="card"><h3>相机数据是第一瓶颈</h3><p>论文中，直接使用估计相机位姿的 SpatialVid 未获得可靠控制；重建后重渲染或 WorldPlay 生成的“近似真值”轨迹才有效。</p><div class="meter"><i style="width:95%"></i></div><p class="small muted">优先级：高于盲目扩大训练 FLOPs</p></div>
+        <div class="card"><h3>有效 batch 不能过小</h3><p>Wan2.1 实验中 batch&lt;4 常失败，batch 8 仍不稳定，batch 16 可完成高控制性训练；这直接要求 DP/梯度累积设计。</p><div class="meter"><i style="width:82%"></i></div><p class="small muted">建议：固定有效 batch，再选择 SP 与 DP</p></div>
+        <div class="card"><h3>Causal CD 优于离线 ODE</h3><p>CF++ 用在线相邻 ODE 单步监督替代完整 PF-ODE 轨迹。其论文报告 Stage 2 训练成本约降 4×，并消除约 1.9 TiB 额外轨迹存储。</p><div class="meter"><i style="width:90%"></i></div><p class="small muted">建议：新平台优先支持 CD 路线</p></div>
+        <div class="card"><h3>DMD 多模型显存峰值</h3><p>student self-rollout + frozen real score + online fake score/EMA，使 DMD 比普通 SFT 更需要 FSDP、BF16、激活重算和通信/计算重叠。</p><div class="meter"><i style="width:88%"></i></div><p class="small muted">仓库已有 FSDP、SP、BF16、gradient checkpoint 基础</p></div>
+      </div>
+    </section>
+
+    <section id="ascend">
+      <h2>面向昇腾的落地路线</h2><p class="sub">建议先打通 Wan2.1-1.3B 的确定性低延迟路径，再扩到 HY1.5-8B；先建立端到端基准，再追求单算子峰值。</p>
+      <div class="split">
+        <div class="card">
+          <h3>目标执行拓扑</h3>
+          <ul>
+            <li><b>CPU 控制线程：</b>接收 WASD/相机轨迹，提前生成下一块 PRoPE 参数。</li>
+            <li><b>NPU Stream A：</b>4-step causal DiT，读只增/滚动 KV。</li>
+            <li><b>NPU Stream B：</b>上一块 VAE decode 与后处理。</li>
+            <li><b>输出线程：</b>按帧显示/编码，向推理端提供背压。</li>
+            <li><b>会话状态：</b>KV 页、RoPE offset、随机状态、动作时间戳显式管理。</li>
+          </ul>
+          <div class="callout"><b>关键约束：</b>把“首帧”定义为用户真正看到的第一帧，必须包含文本/图像预处理、DiT、VAE、设备同步和传输；论文表格排除了 VAE，只能作为 DiT 算法对比。</div>
+        </div>
+        <div class="grid rank">
+          <div class="card"><h3>P0 · 建立正确基线</h3><p>BF16、batch=1、guidance=1、480×832、77 帧、chunk=4、steps=4；拆分 text/PRoPE、DiT、KV append、VAE、H2D/D2H 时间。用 1/10/100 个 chunk 测显存和 P50/P95/P99。</p></div>
+          <div class="card"><h3>P0 · 改造注意力与 KV</h3><p>实现支持历史 KV + 当前 QKV 的 causal fused attention；KV 预分配为页/环形区，append 原地写入，禁止热路径 <code>cat</code>。为 CFG=1 走单缓存快路径。</p></div>
+          <div class="card"><h3>P0 · 固定图与流水</h3><p>固化 chunk、head、hidden、resolution；把 4 个 timestep、调度器更新与 PRoPE 融入图或图外常量。DiT(n+1) 与 VAE(n) 双流重叠。</p></div>
+          <div class="card"><h3>P1 · 精度与多卡</h3><p>先量化 linear/MLP，再 QKV/out projection，最后考虑 KV；敏感层保留 BF16。高分辨率/8B 使用 USP/序列并行，并以交互延迟决定并行度。</p></div>
+          <div class="card"><h3>P1 · 长时稳定</h3><p>加入固定历史窗口、稀疏锚帧或记忆压缩；同时评测场景身份、几何、动作响应与误差累积。加速策略必须跑长时回归，而非只跑 77 帧。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>建议的基准与验收口径</h2><p class="sub">若只报 FPS，会掩盖首帧慢、VAE 阻塞、长时 KV 膨胀和多会话抖动。</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>层级</th><th>必须报告</th><th>测试矩阵</th><th>失败信号</th></tr></thead>
+        <tbody>
+          <tr><td>算法</td><td>VBench、VisionReward、相机动作遵循、长时身份/几何一致性</td><td>4-step BF16 基准 vs 2-step / quant / sparse / cache</td><td>静态画质尚可，但运动坍塌、相机漂移或误差逐块放大。</td></tr>
+          <tr><td>首帧</td><td>输入到首个可显示帧的 P50/P95/P99</td><td>冷启动/热启动；T2V/I2V；单会话/多会话</td><td>平均值好看但冷启动或 P99 超 SLA。</td></tr>
+          <tr><td>稳态</td><td>每块延迟、有效显示 FPS、jitter、队列深度</td><td>1、10、100、1000 chunks</td><td>随着历史增长逐块变慢，或周期性 cache 扩容抖动。</td></tr>
+          <tr><td>资源</td><td>权重/KV/激活/VAE 分项显存，HBM 带宽，通信占比</td><td>1.3B/8B；1/2/4/8 NPU；不同窗口</td><td>多卡加速效率低；1.3B 小块被通信或 host launch 主导。</td></tr>
+          <tr><td>服务</td><td>会话并发、抢占/恢复、cache 隔离、OOM 降级</td><td>短会话混合长会话，动作突发与断流恢复</td><td>一个长会话挤占全局 KV，或动作响应跨块错位。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="evidence">
+      <h2>证据、边界与可复核来源</h2><p class="sub">结论以一手论文和官方仓库为主。仓库快速演进，因此将论文结论、当前代码事实与工程推断分开标注。</p>
+      <div class="grid g2">
+        <div class="card">
+          <h3>已确认事实</h3>
+          <ul>
+            <li>minWM 自称 framework/tutorial，而非特定 checkpoint。</li>
+            <li>公开实例：Wan2.1-T2V-1.3B、HY1.5-TI2V-8B；480×832、77 帧、4 latent-frame chunk、4 steps。</li>
+            <li>单 A800、排除 VAE：few-step AR 首帧为 1.137 s（Wan）与 3.446 s（HY）。</li>
+            <li>代码已有 FSDP、SP、BF16、激活重算、FlashAttention，以及 HY AR rollout 的 text/vision KV。</li>
+            <li>Wan2.2 A14B 为 timestep 专家 MoE；27B 总参数、每步约 14B active。TI2V-5B 使用高压缩 VAE。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>工程推断 / 尚需实测</h3>
+          <ul>
+            <li>昇腾上 fused causal attention、图编译、量化和流水的具体收益尚无官方 minWM 数据。</li>
+            <li>rolling/paged KV、固定窗口、稀疏注意力属于生产化建议，不是论文默认配置。</li>
+            <li>跨步 cache 在 4-step 上是否有净收益必须实测；不能直接套用 Wan2.2 多步结论。</li>
+            <li>把 Wan2.2-A14B 作为 minWM 新底座需要重新训练/蒸馏和验证 timestep-MoE 路由，并非替换权重即可。</li>
+            <li>“实时”依赖分辨率、帧率、硬件和是否包含 VAE；本文不把论文的低首帧等同于端到端 24 FPS。</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:24px">
+        <div class="source"><div class="n">1</div><div><a href="https://arxiv.org/html/2605.30263">minWM: A Full-Stack Open-Source Framework for Real-Time Interactive Video World Models</a><p>方法、实验设置、首帧时延、数据/步数/batch 消融；arXiv v1，2026-05-28。</p></div></div>
+        <div class="source"><div class="n">2</div><div><a href="https://github.com/shengshu-ai/minWM">shengshu-ai/minWM 官方仓库</a><p>训练/推理阶段、checkpoint、FSDP + sequence parallel、4-step 脚本及当前功能边界。源码检查基于提交 df522a2（2026-06-15）。</p></div></div>
+        <div class="source"><div class="n">3</div><div><a href="https://arxiv.org/html/2605.15141">Causal Forcing++</a><p>帧级 1–2 step、causal consistency distillation、训练成本/存储与实时性能证据。</p></div></div>
+        <div class="source"><div class="n">4</div><div><a href="https://github.com/Wan-Video/Wan2.2">Wan 2.2 官方仓库与技术说明</a><p>高/低噪声双专家 MoE、27B/14B active、TI2V-5B 高压缩 VAE、FSDP/Ulysses/FlashAttention3 测试口径。</p></div></div>
+        <div class="source"><div class="n">5</div><div><a href="https://arxiv.org/abs/2412.07772">From Slow Bidirectional to Fast Autoregressive Video Diffusion Models</a><p>双向到因果 AR、4-step DMD、KV cache 的基础路线与实时流式动机。</p></div></div>
+      </div>
+    </section>
+
+    <footer class="footer"><span>生成位置：AscendPlayground/frameworks/minwm_technology_acceleration_analysis.html</span><span>研究截止：2026-08-31 · 自包含 HTML · 可直接打印为 PDF</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="MAGI-2 Preview 技术架构、与 Wan2.2 的差异、推理加速要求及昇腾适配路线分析。">
+  <meta name="theme-color" content="#11100d">
+  <title>MAGI-2 Preview：技术拆解与加速要求</title>
+  <style>
+    :root{--ink:#171611;--paper:#f2efe5;--paper2:#e8e3d5;--night:#11100d;--night2:#1a1914;--rust:#dc4b2f;--acid:#d6ef57;--blue:#438b9e;--muted:#6f6b60;--line:#c9c1ae;--mono:"Cascadia Code","SFMono-Regular",Consolas,monospace;--serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;--sans:"Noto Sans SC","Microsoft YaHei UI","PingFang SC",sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:72px}body{margin:0;color:var(--ink);background:var(--paper);font-family:var(--sans);line-height:1.7}a{color:inherit}.progress{position:fixed;z-index:99;inset:0 auto auto 0;width:0;height:4px;background:var(--rust)}
+    .hero{position:relative;overflow:hidden;min-height:670px;color:#f4f0e5;background:var(--night);border-bottom:10px solid var(--rust)}.hero:before{content:"114B";position:absolute;right:-.04em;bottom:-.18em;color:rgba(214,239,87,.07);font:900 clamp(11rem,28vw,28rem)/1 var(--mono);letter-spacing:-.12em}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 0 58%,rgba(220,75,47,.12) 58% 59%,transparent 59%);pointer-events:none}.topbar{position:relative;z-index:2;display:flex;justify-content:space-between;gap:20px;max-width:1280px;margin:auto;padding:26px}.brand{color:var(--acid);font:800 .72rem/1.4 var(--mono);letter-spacing:.16em}.date{color:#aaa495;font:700 .68rem/1.4 var(--mono)}.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:70px;align-items:end;max-width:1280px;margin:88px auto 0;padding:0 26px 105px}.eyebrow{color:#ee7b62;font:800 .72rem/1 var(--mono);letter-spacing:.18em}.hero h1{max-width:900px;margin:20px 0 28px;font:900 clamp(3.5rem,7vw,6.5rem)/.94 var(--serif);letter-spacing:-.07em}.hero p{max-width:800px;margin:0;color:#c3bdaf;font-size:1.03rem}.verdict{padding:24px;border-top:6px solid var(--acid);background:#1d1c17;box-shadow:18px 18px 0 rgba(220,75,47,.25)}.verdict small{color:#ee7b62;font:800 .65rem/1 var(--mono);letter-spacing:.14em}.verdict strong{display:block;margin:15px 0;font:800 1.35rem/1.35 var(--serif)}.verdict p{font-size:.8rem}.formula{margin-top:18px;padding-top:14px;border-top:1px solid #3d3a31;color:var(--acid);font:700 .68rem/1.65 var(--mono)}
+    .metrics{position:relative;z-index:4;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));max-width:1280px;margin:-45px auto 0;background:var(--night);border:1px solid #302e28}.metric{min-width:0;padding:21px;background:var(--night2);border-right:1px solid #302e28}.metric:last-child{border:0}.metric b{display:block;color:#f4f0e5;font:900 1.65rem/1 var(--serif)}.metric span{display:block;margin-top:8px;color:#918c80;font:700 .6rem/1.45 var(--mono)}.metric.hot{background:var(--rust)}.metric.hot b,.metric.hot span{color:#160f0c}
+    .layout{display:grid;grid-template-columns:220px minmax(0,970px);gap:56px;max-width:1280px;margin:auto;padding:95px 26px 110px}.toc{position:sticky;top:26px;align-self:start}.toc-title{margin-bottom:15px;color:var(--muted);font:800 .63rem/1 var(--mono);letter-spacing:.15em}.toc a{display:block;padding:8px 10px;border-left:2px solid var(--line);color:#827d71;font-size:.72rem;text-decoration:none}.toc a:hover,.toc a.active{color:var(--rust);border-color:var(--rust);background:var(--paper2)}main{min-width:0}.section{margin-bottom:100px}.kicker{color:var(--rust);font:900 .67rem/1 var(--mono);letter-spacing:.17em;text-transform:uppercase}.section h2{margin:14px 0 22px;font:900 clamp(2.2rem,4.6vw,4.7rem)/.98 var(--serif);letter-spacing:-.055em}.lede{max-width:850px;margin:0 0 30px;color:#5d594f;font-size:.98rem}.callout{margin:28px 0;padding:21px 23px;border-left:6px solid var(--rust);background:var(--paper2)}.callout strong{color:#a62b18}.callout.dark{color:#d6d0c1;background:var(--night2);border-color:var(--acid)}.callout.dark strong{color:var(--acid)}
+    .thesis,.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.card{position:relative;padding:23px;background:#ebe6d9;border:1px solid var(--line)}.card.dark{color:#ece7da;background:var(--night2);border-color:#363329}.card:before{content:attr(data-n);position:absolute;right:15px;top:8px;color:rgba(220,75,47,.13);font:900 4rem/1 var(--mono)}.card h3{position:relative;margin:22px 0 10px;font:800 1.18rem/1.28 var(--serif)}.card p{position:relative;margin:0;color:#6e695e;font-size:.79rem}.card.dark p{color:#aaa496}.tag{display:inline-block;padding:5px 8px;border:1px solid currentColor;color:var(--blue);font:800 .58rem/1 var(--mono);letter-spacing:.08em}.tag.red{color:var(--rust)}.tag.green{color:#657e00}.dark .tag.green{color:var(--acid)}
+    .pipeline{display:grid;grid-template-columns:repeat(7,1fr);margin:30px 0;background:var(--night);gap:1px}.stage{min-height:175px;padding:16px 13px;background:var(--night2);color:#eee9db}.stage i{color:#ee7b62;font:900 .6rem/1 var(--mono);font-style:normal}.stage b{display:block;margin:14px 0 8px;font-size:.78rem}.stage span{display:block;color:#9d978a;font-size:.67rem;line-height:1.5}.stage.core{background:#30381a}.stage.core b{color:var(--acid)}
+    .compare{width:100%;border-collapse:collapse;font-size:.75rem}.compare th{padding:13px 11px;color:#f5f0e4;background:var(--night);font:800 .66rem/1.35 var(--mono);text-align:left}.compare td{padding:14px 11px;border-bottom:1px solid var(--line);vertical-align:top}.compare tr:hover{background:#e9e3d4}.compare .key{font-weight:800}.compare .magi{color:#a82f1d;font-weight:700}.compare .wan{color:#236a7b;font-weight:700}.table-wrap{overflow-x:auto;border:1px solid var(--line)}
+    .moe-visual{display:grid;grid-template-columns:1fr 70px 1fr;gap:13px;align-items:center;margin:30px 0}.moe-box{min-height:290px;padding:24px;border:1px solid var(--line);background:#e9e3d5}.moe-box.magi{color:#eee9dd;background:var(--night2);border-top:6px solid var(--acid)}.moe-box.wan{border-top:6px solid var(--blue)}.moe-box h3{margin:15px 0 9px;font:800 1.3rem var(--serif)}.moe-box p{margin:0;color:#6d685c;font-size:.78rem}.moe-box.magi p{color:#aaa496}.moe-box ul{padding-left:18px;font-size:.75rem}.vs{text-align:center;color:var(--rust);font:900 1rem var(--mono)}
+    .bars{margin:24px 0}.bar-row{display:grid;grid-template-columns:170px 1fr 90px;gap:13px;align-items:center;margin:10px 0}.bar-row label{font:800 .72rem var(--mono)}.bar{height:24px;background:#d8d1c1}.bar span{display:block;height:100%;background:var(--rust)}.bar-row:nth-child(even) .bar span{background:var(--blue)}.bar-row b{font:800 .67rem var(--mono)}
+    .priority{display:grid;grid-template-columns:70px 1fr 160px 110px;gap:1px;background:var(--line);border:1px solid var(--line)}.priority>div{padding:15px;background:#eee9dc;font-size:.75rem}.priority .head{color:#f2ede1;background:var(--night);font:800 .64rem var(--mono)}.p0,.p1,.p2{display:inline-block;padding:5px 7px;color:#fff;background:var(--rust);font:900 .6rem var(--mono)}.p1{color:#171611;background:#e6bd48}.p2{color:#171611;background:#9ac3ca}.status{font:800 .65rem var(--mono)}.block{color:#a52f1e}.ready{color:#3a7300}.partial{color:#8b6200}
+    .code-flow{overflow:auto;margin:26px 0;padding:23px;color:#c9c3b5;background:#0b0a08;border-left:6px solid var(--acid);font:700 .7rem/1.85 var(--mono);white-space:pre}.accent{color:#ef765c}.ok{color:var(--acid)}
+    .roadmap{position:relative}.roadmap:before{content:"";position:absolute;left:22px;top:12px;bottom:12px;width:2px;background:var(--line)}.road{position:relative;margin-bottom:10px;padding:19px 21px 19px 68px;border:1px solid var(--line);background:#ece7da}.road:before{content:attr(data-step);position:absolute;z-index:1;left:8px;top:18px;display:grid;place-items:center;width:30px;height:30px;color:#fff;background:var(--rust);border:5px solid var(--paper);font:900 .62rem var(--mono)}.road b{display:block;margin-bottom:6px}.road p{margin:0;color:#6a655a;font-size:.77rem}.gate{display:inline-block;margin-top:8px;color:#267284;font:800 .62rem var(--mono)}
+    .sources{display:grid;grid-template-columns:1fr 1fr;gap:9px}.source{display:block;padding:16px 18px;border:1px solid var(--line);background:#ebe6d9;text-decoration:none;font-size:.75rem;transition:.15s}.source:hover{border-color:var(--rust);transform:translateY(-2px)}.source b{display:block;font-size:.82rem}.source span{color:var(--muted);font:600 .62rem/1.5 var(--mono)}.fine{margin-top:20px;color:#777166;font-size:.68rem}.fine strong{color:var(--rust)}
+    .reveal{opacity:0;transform:translateY(16px);transition:opacity .45s ease,transform .45s ease}.reveal.show{opacity:1;transform:none}footer{padding:34px;color:#8f897c;background:var(--night);text-align:center;font:700 .62rem/1.7 var(--mono)}
+    @media(max-width:1020px){.layout{grid-template-columns:1fr}.toc{display:none}.pipeline{grid-template-columns:repeat(4,1fr)}.metrics{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:760px){.hero{min-height:auto}.hero-grid{grid-template-columns:1fr;margin-top:45px;gap:36px;padding-bottom:76px}.hero h1{font-size:3rem}.metrics{grid-template-columns:1fr 1fr;margin-top:0}.thesis,.cards,.sources{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(2,1fr)}.moe-visual{grid-template-columns:1fr}.vs{padding:5px}.layout{padding:65px 14px}.priority{grid-template-columns:58px 1fr}.priority>div:nth-child(4n+3),.priority>div:nth-child(4n+4){display:none}.bar-row{grid-template-columns:115px 1fr 70px}.topbar{padding:22px 16px}.date{display:none}}
+    @media print{.progress,.toc{display:none}.hero{min-height:auto}.hero-grid{margin-top:25px;padding-bottom:55px}.metrics{margin:0}.layout{display:block;padding-top:55px}.section{break-inside:avoid;margin-bottom:65px}.reveal{opacity:1;transform:none}.source{break-inside:avoid}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.source:hover{transform:none}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <header class="hero">
+    <div class="topbar"><div class="brand">ASCEND PLAYGROUND / MODEL TECHNOLOGY REVIEW</div><div class="date">RESEARCH CUT · 2026-08-31 · MAGI COMMIT f68a0f9</div></div>
+    <div class="hero-grid">
+      <div><div class="eyebrow">MAGI-2 PREVIEW × WAN2.2</div><h1>视频生成的下一道<br>加速难题。</h1><p>MAGI-2 Preview 不是把 Wan2.2 放大，也不是 MAGI-1 自回归路线的直接续作。它将文本、视频、音频放进单流 Transformer，以超细粒度 MagiMoE 把总容量推到 114B，同时把每 token 激活量压到约 6B。代价是：推理加速从“优化一个 DiT”升级为<strong>模型、专家路由、通信、稀疏注意力与阶段调度的联合工程</strong>。</p></div>
+      <aside class="verdict"><small>ONE-LINE VERDICT</small><strong>MAGI-2 的核心门槛不是算力峰值，而是能否高效承载 100 步 × 长序列 × 细粒度 MoE × 8 卡通信。</strong><p>在蒸馏模型发布前，先后顺序应是：跑通融合内核与双并行 → 压低通信和搬运 → 稳定两阶段流水 → 再做量化与缓存。</p><div class="formula">总时延 ≈ 100 × Preview DiT + 5 × Refiner + CFG + 权重换入换出 + VAE/音频解码</div></aside>
+    </div>
+  </header>
+
+  <div class="metrics">
+    <div class="metric hot"><b>114B / 6B</b><span>总参数 / 每 TOKEN 激活参数<br>MAGIMOE</span></div>
+    <div class="metric"><b>8× Hopper</b><span>官方最低运行要求<br>非消费级部署</span></div>
+    <div class="metric"><b>100 + 5</b><span>PREVIEW / REFINER 去噪步数<br>尚未步数蒸馏</span></div>
+    <div class="metric"><b>307 GB</b><span>完整 CHECKPOINT 仓库约占用<br>含 56 GB 文本编码器</span></div>
+    <div class="metric"><b>10 s · 1088×1920</b><span>固定片长 · 生成后可缩放到 1080×1920<br>联合生成音频</span></div>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="目录"><div class="toc-title">CONTENTS / 目录</div><a href="#summary">01 · 结论先行</a><a href="#stack">02 · MAGI-2 技术栈</a><a href="#compare">03 · 对比 Wan2.2</a><a href="#moe">04 · MoE 本质差异</a><a href="#bottleneck">05 · 性能瓶颈</a><a href="#acceleration">06 · 加速优先级</a><a href="#ascend">07 · 昇腾适配</a><a href="#roadmap">08 · 落地路线</a><a href="#benchmark">09 · 验收标准</a><a href="#sources">10 · 来源与边界</a></nav>
+    <main>
+      <section class="section reveal" id="summary"><span class="kicker">01 / Executive summary</span><h2>三个判断，决定优化方向。</h2><p class="lede">MAGI-2 的论文与仓库公开信息非常明确：它首先是一项“如何把视频生成模型扩到 100B 且仍可执行”的架构—系统协同实验，而不是面向单卡低成本推理的产品模型。当前版本没有公开端到端耗时，所有性能判断必须从计算图和系统路径推导，并通过实机 profile 验证。</p>
+        <div class="thesis">
+          <article class="card" data-n="1"><span class="tag red">NOT MAGI-1</span><h3>放弃自回归分块起点</h3><p>MAGI-2 没有沿用 MAGI-1 的时间分块自回归去噪。它采用统一音视频单流 DiT/flow 生成，目的是先降低百亿级联合训练中的系统变量。因此，KV Cache 不是当前主线，去噪步数仍是首要乘数。</p></article>
+          <article class="card" data-n="2"><span class="tag green">FINE-GRAINED MOE</span><h3>MoE 不是“两套模型切换”</h3><p>Wan2.2 在不同噪声阶段切换两位 14B 专家；MAGI-2 则在每个 token、每个 latent head 上执行 Top-6/256 路由。前者重点是模型驻留与 timestep 调度，后者重点是路由、重排、小 GEMM、scatter 与专家并行。</p></article>
+          <article class="card" data-n="3"><span class="tag">SYSTEM FIRST</span><h3>8 卡是架构的一部分</h3><p>默认 CP=8、EP=8，依赖 Ulysses、NCCL、FlashAttention-3、Triton MagiMoE、MagiAttention 与 MagiCompiler。单纯把 PyTorch 算子替换到另一硬件后端，不能复现原始执行效率。</p></article>
+        </div>
+        <div class="callout"><strong>最重要的加速杠杆：</strong>近期是融合细粒度 MoE + 高效上下文/专家并行；中期是减少 100 次 Preview 网络调用的步数蒸馏。官方 README 已把“far fewer steps”的 distilled 权重列为 coming soon——它潜在的收益通常远大于单个内核再快 10%–20%。</div>
+      </section>
+
+      <section class="section reveal" id="stack"><span class="kicker">02 / Technology stack</span><h2>从提示词到 1080p 音视频。</h2><p class="lede">MAGI-2 Preview 是一个强耦合流水：Qwen3.5-27B 提供长结构化文本条件；Preview 在低分辨率联合生成音视频 latent；Refiner 以局部窗口注意力提升空间分辨率；视频和音频分别由 VAE 解码，最终通过 FFmpeg 合流。</p>
+        <div class="pipeline">
+          <div class="stage"><i>01 / PROMPT</i><b>结构化增强</b><span>T2V/I2V 模板把短提示重写为 10 秒事件、镜头与音频时间线。</span></div>
+          <div class="stage"><i>02 / QWEN</i><b>文本编码</b><span>Qwen3.5-27B，权重约 56 GB；text_in_channels=5120。</span></div>
+          <div class="stage core"><i>03 / PREVIEW</i><b>114B MagiMoE</b><span>512×896，40 层；中间 36 层稀疏；100 步联合音视频去噪。</span></div>
+          <div class="stage"><i>04 / TRANSFER</i><b>阶段换入换出</b><span>Preview 与 Refiner 默认 roundtrip，避免同时占据 80GB 卡。</span></div>
+          <div class="stage core"><i>05 / REFINER</i><b>稠密局部注意力</b><span>30 层、hidden 4096、5 步；窗口稀疏注意力提升至 1088×1920。</span></div>
+          <div class="stage"><i>06 / DECODE</i><b>双 VAE</b><span>Wan2.2 视频 VAE / Turbo VAE；Stable Audio Open 音频 VAE。</span></div>
+          <div class="stage"><i>07 / OUTPUT</i><b>封装与缩放</b><span>默认 25 fps；生成宽度 1088，可缩放成 1080×1920 并 mux 音频。</span></div>
+        </div>
+        <div class="cards">
+          <article class="card dark" data-n="A"><span class="tag green">SINGLE STREAM</span><h3>文本、视频、音频全自注意力</h3><p>三种模态进入同一个 token 序列，避免多塔与固定 cross-attention 接口；跨模态关系可以在整个骨干中持续交换，但序列更长、Attention 与并行通信压力更大。</p></article>
+          <article class="card dark" data-n="B"><span class="tag green">ATTENTION</span><h3>Gating + Sink + mHC</h3><p>Preview 配置启用 attention gating、1 个 sink token 与 4-stream mHC；实现调用 FlashAttention-3。Refiner 使用 3D block window，所有 30 层均为 local attention。</p></article>
+          <article class="card dark" data-n="C"><span class="tag green">FLOW</span><h3>Flow UniPC 多步采样</h3><p>仓库 sampler 明确包含 Flow UniPC 调度器；基础版使用 100+5 步。它仍是并行生成整段 latent 的迭代去噪，不是 MAGI-1 式逐 chunk 自回归。</p></article>
+        </div>
+      </section>
+
+      <section class="section reveal" id="compare"><span class="kicker">03 / MAGI-2 vs Wan2.2</span><h2>相似的是 DiT，差异在扩展方式。</h2><p class="lede">Wan2.2 是当前成熟、易部署的主流开源参照：A14B 以噪声区间专家提高容量，TI2V-5B 以高压缩 VAE 降低 token 数。MAGI-2 更激进：同时追求百亿级容量与原生音视频统一生成，系统复杂度显著上升。</p>
+        <div class="table-wrap"><table class="compare"><thead><tr><th>维度</th><th>MAGI-2 Preview</th><th>Wan2.2</th><th>对加速的含义</th></tr></thead><tbody>
+          <tr><td class="key">生成范式</td><td class="magi">单流联合音视频 Flow/DiT，两阶段整段生成</td><td class="wan">视频 diffusion/flow；T2V/I2V/S2V 等任务线</td><td>MAGI-2 序列包含音频 token，且有 Preview→Refiner 阶段边界。</td></tr>
+          <tr><td class="key">模型容量</td><td class="magi">114B 总量，约 6B/token 激活</td><td class="wan">A14B：27B 总量、14B/step 激活；另有 5B dense</td><td>MAGI-2 算术稀疏，但参数存储、路由和通信远重于 Wan。</td></tr>
+          <tr><td class="key">MoE 粒度</td><td class="magi">36 层 × 12 head；每 head 256 专家、Top-6/token</td><td class="wan">按 SNR/timestep 在高噪与低噪两个 14B 模型间切换</td><td>MAGI 需要 fused routing + tiny grouped GEMM；Wan 更适合模型切换/offload。</td></tr>
+          <tr><td class="key">Transformer</td><td class="magi">Preview 40 层/3072；Refiner 30 层/4096</td><td class="wan">A14B 40 层/5120；5B 30 层/3072</td><td>MAGI 每 token 的 FFN 较稀，但总权重与调度复杂度更高。</td></tr>
+          <tr><td class="key">默认步数</td><td class="magi">100 Preview + 5 Refiner，未蒸馏</td><td class="wan">A14B 40；TI2V-5B 50</td><td>MAGI 网络调用次数约为 Wan A14B 的 2.5 倍，再叠加 Refiner。</td></tr>
+          <tr><td class="key">VAE/token 压缩</td><td class="magi">Preview stride 8×16×16；Refiner 4×16×16；复用 Wan2.2 VAE</td><td class="wan">A14B 4×8×8；TI2V-5B 4×16×16，patch 后 4×32×32</td><td>高压缩是两者共同的第一性降本手段；MAGI Refiner 为质量补偿。</td></tr>
+          <tr><td class="key">输出能力</td><td class="magi">固定 10 秒，T2V/I2V，原生同步音频，1088×1920</td><td class="wan">模型依任务不同；5B 为 5 秒 720p@24fps；A14B 支持 480p/720p</td><td>不能直接以“单视频耗时”比较，片长、分辨率、音频与步数必须归一。</td></tr>
+          <tr><td class="key">官方硬件门槛</td><td class="magi">8× NVIDIA Hopper，约 307GB checkpoint</td><td class="wan">A14B 单卡 ≥80GB 或 4/8 卡；5B 可在 24GB 4090</td><td>MAGI 目前属于集群级研究模型；Wan 覆盖消费级到多卡。</td></tr>
+          <tr><td class="key">公开性能</td><td class="magi">未给出统一端到端耗时/显存表</td><td class="wan">官方给出 1/4/8 卡、4090/A100/H100/H20 的时间和峰值显存</td><td>MAGI 的所有迁移收益必须建立自己的 baseline，不应外推官方速度。</td></tr>
+        </tbody></table></div>
+        <div class="callout"><strong>Wan2.2 参考点：</strong>官方表中，H100/H800 上 A14B 720p T2V 从单卡 1041.5s/59.8GB 降到 8 卡 155.1s/37.1GB；TI2V-5B 在 4090 单卡为 534.7s/22.9GB。该表使用 FSDP + Ulysses，Hopper 启用 FlashAttention-3。它说明：即使是更简单的 Wan2.2，多卡长序列通信也已是标准配置。</div>
+      </section>
+
+      <section class="section reveal" id="moe"><span class="kicker">04 / MoE anatomy</span><h2>“MoE”不是同一种优化问题。</h2>
+        <div class="moe-visual">
+          <article class="moe-box wan"><span class="tag">WAN2.2 · COARSE</span><h3>按去噪阶段选模型</h3><p>高噪阶段使用负责布局的专家，低噪阶段切到细节专家。每步只执行一个完整 14B DiT。</p><ul><li>路由由 timestep/SNR 决定，不随 token 波动</li><li>每步 GEMM 仍是规则的大矩阵</li><li>优化重点：两套权重驻留、切换、offload、FSDP</li><li>通信形状稳定，通用 DiT 内核可复用度高</li></ul></article>
+          <div class="vs">VS</div>
+          <article class="moe-box magi"><span class="tag green">MAGI-2 · ULTRA-FINE</span><h3>每 token × 每 head 选专家</h3><p>3072 维 routed representation 拆成 12×256 维 head；每个 head 从 256 个窄专家里激活 Top-6。</p><ul><li>每层共有 12×256=3072 个 head-local expert unit</li><li>每 token 激活 12×6=72 个窄专家单元</li><li>需要路由、排序、gather、tiny FFN、加权 scatter 全链融合</li><li>Head Parallel 让跨设备通信形状固定，不随 Top-k 放大</li></ul></article>
+        </div>
+        <div class="code-flow"><span class="accent">hidden [N, 3072]</span>
+  → split projection → [N, 12 heads, 256]
+  → <span class="ok">fixed-shape Head Parallel all-to-all</span>
+  → independent sigmoid router × 12 → Top-6 / 256
+  → expert-wise compact layout
+  → fused (gate + up + SwiGLU7) → down projection
+  → routing-weighted deterministic / fast scatter
+  → combine heads → hidden [N, 3072]</div>
+        <p class="lede">官方技术博客给出的标准 MoE 通信量近似为 N·k·H，而 Head Parallel 近似为 N·H：跨设备只交换固定 head slice，Top-k 的动态性留在 head owner 本地。这能消除动态 all-to-all 的形状波动，却把性能压力转移到大量极窄专家的本地执行效率上。</p>
+      </section>
+
+      <section class="section reveal" id="bottleneck"><span class="kicker">05 / Performance model</span><h2>瓶颈会随阶段切换。</h2><p class="lede">以下不是官方实测占比，而是基于公开计算图的工程优先级假设。真正优化前，应分别 profile Preview 单步、Refiner 单步、阶段换入换出和双 VAE，不能只看端到端平均利用率。</p>
+        <div class="bars">
+          <div class="bar-row"><label>去噪步数乘数</label><div class="bar"><span style="width:100%"></span></div><b>极高</b></div>
+          <div class="bar-row"><label>MagiMoE 小 GEMM</label><div class="bar"><span style="width:91%"></span></div><b>极高</b></div>
+          <div class="bar-row"><label>CP / EP 通信</label><div class="bar"><span style="width:86%"></span></div><b>极高</b></div>
+          <div class="bar-row"><label>长序列 Attention</label><div class="bar"><span style="width:80%"></span></div><b>高</b></div>
+          <div class="bar-row"><label>权重 roundtrip</label><div class="bar"><span style="width:68%"></span></div><b>阶段性高</b></div>
+          <div class="bar-row"><label>Refiner 局部窗口</label><div class="bar"><span style="width:60%"></span></div><b>高分辨率高</b></div>
+          <div class="bar-row"><label>VAE / 音频解码</label><div class="bar"><span style="width:38%"></span></div><b>尾延迟</b></div>
+        </div>
+        <div class="cards">
+          <article class="card" data-n="1"><span class="tag red">COMPUTE</span><h3>算力不等于高利用率</h3><p>专家矩阵仅 256→1280→256，单 expert token 数又受路由分散。若逐 expert 发 kernel，launch 和中间读写会吞掉稀疏收益；必须做 grouped/fused execution。</p></article>
+          <article class="card" data-n="2"><span class="tag red">NETWORK</span><h3>同一 8 卡承载 CP 与 EP</h3><p>Ulysses attention 需要 all-to-all；Head/Expert Parallel 也需要集体通信。若通信组、流与拓扑设计不当，两个并行维度会竞争链路，形成 device idle。</p></article>
+          <article class="card" data-n="3"><span class="tag red">MEMORY</span><h3>参数省算不省存储</h3><p>114B 总权重仍需保存和分片。Preview 权重约 228GB，Refiner 14GB，文本编码器 56GB；默认 roundtrip 表明 CPU 内存与 H2D/D2H 带宽进入关键路径。</p></article>
+        </div>
+      </section>
+
+      <section class="section reveal" id="acceleration"><span class="kicker">06 / Acceleration priorities</span><h2>先保住稀疏收益，再减少调用次数。</h2><p class="lede">优先级按“当前基础权重可做”排序。P0 是能否高效运行的必要条件；P1 是进入可服务状态的系统优化；P2 涉及精度或训练产物，必须通过质量门槛。</p>
+        <div class="priority">
+          <div class="head">级别</div><div class="head">手段与原因</div><div class="head">预期作用</div><div class="head">性质</div>
+          <div><span class="p0">P0</span></div><div><b>融合 MagiMoE 全链</b><br>router/Top-k → compact layout → gate+up+SwiGLU7 → down → weighted scatter。避免数千窄专家变成小算子风暴。</div><div>恢复稀疏计算的真实吞吐</div><div><span class="status block">硬门槛</span></div>
+          <div><span class="p0">P0</span></div><div><b>CP=8 Ulysses + EP=8 Head/Expert Parallel</b><br>固定形状 all-to-all、拓扑感知 rank 映射、通信/计算重叠、预分配 buffer。</div><div>降低长序列与专家通信</div><div><span class="status block">硬门槛</span></div>
+          <div><span class="p0">P0</span></div><div><b>融合 Attention</b><br>Preview 变长单流 attention；Refiner 3D block-window local attention；同时适配 gating、sink、RoPE 与 mHC。</div><div>降显存、降 HBM 读写</div><div><span class="status partial">需定制</span></div>
+          <div><span class="p1">P1</span></div><div><b>两阶段权重与流水调度</b><br>Preview/Refiner/Text/VAE 分阶段驻留；采用 pinned host buffer、异步换入、复用 CPU backup；避免重复 allocator 清理。</div><div>减少阶段气泡与 OOM</div><div><span class="status ready">仓库已有骨架</span></div>
+          <div><span class="p1">P1</span></div><div><b>图编译与 shape bucket</b><br>固定 10 秒和少量分辨率是优势；为 T2V/I2V、Preview/Refiner 建立有限 bucket，缓存已编译图。</div><div>减少 Host 下发与 launch</div><div><span class="status partial">依赖后端</span></div>
+          <div><span class="p1">P1</span></div><div><b>CFG 合批/条件复用</b><br>复用文本与图像条件；确认 conditional/unconditional 是否可合批并保持通信形状，减少重复编码和调度。</div><div>降非 DiT 与控制开销</div><div><span class="status partial">需数值验证</span></div>
+          <div><span class="p1">P1</span></div><div><b>Turbo VAE + temporal sliding window</b><br>官方默认已使用蒸馏 VAE；继续并行视频/音频解码与封装，隔离到单 rank 或独立 worker。</div><div>缩短尾延迟</div><div><span class="status ready">已有实现</span></div>
+          <div><span class="p2">P2</span></div><div><b>步数蒸馏</b><br>把 100 Preview steps 大幅压缩。基础版不可凭参数“硬减步”而期待质量不变，应等待/训练对应 distilled checkpoint。</div><div>最大端到端杠杆</div><div><span class="status block">需要新权重</span></div>
+          <div><span class="p2">P2</span></div><div><b>混合精度/权重量化</b><br>从 BF16→FP8/W8A8 或 weight-only；router 保持 FP32，Attention/Norm 和敏感层保守处理。窄 expert 需确认原生低精度 kernel。</div><div>省权重带宽与显存</div><div><span class="status partial">高风险高价值</span></div>
+          <div><span class="p2">P2</span></div><div><b>跨步缓存</b><br>复用相邻 flow step 的 block/特征，但统一音视频与 MoE 路由可能放大误差；应以可感知质量为门槛。</div><div>减少重复 DiT 计算</div><div><span class="status partial">研究项</span></div>
+        </div>
+        <div class="callout dark"><strong>不应把 KV Cache 当作当前主线：</strong>MAGI-2 Preview 不是 token-by-token 或 chunk-by-chunk 自回归模型，100 个 flow step 的 latent 会持续变化，标准生成式 KV Cache 不能直接消除历史重算。可研究的是跨去噪步特征缓存，但它属于近似算法，会改变误差传播与 MoE 路由。</div>
+      </section>
+
+      <section class="section reveal" id="ascend"><span class="kicker">07 / Ascend readiness</span><h2>昇腾迁移：可行，但不是换设备名。</h2><p class="lede">昇腾生态已有 Ulysses、专家并行、FSDP2、Flash Attention、MoE GroupedMatMul、permute/unpermute 融合等基础能力；MindSpeed-MM 也已支持 Wan2.2 的 Ulysses 路线。这些为 MAGI-2 提供“能力积木”，但 MAGI-2 的 Multi-Head LatentMoE、Flash-MH-MoE、mHC 与 3D window attention 仍需专项适配。</p>
+        <div class="table-wrap"><table class="compare"><thead><tr><th>MAGI-2 依赖</th><th>昇腾已有基础</th><th>缺口 / 适配动作</th><th>判断</th></tr></thead><tbody>
+          <tr><td class="key">BF16 PyTorch / distributed</td><td>torch_npu、HCCL、MindSpeed FSDP/CP/EP</td><td>替换 CUDA/NCCL 设备路径；建立 8 卡 BF16 eager 数值基线。</td><td><span class="status ready">可复用</span></td></tr>
+          <tr><td class="key">Ulysses CP=8</td><td>MindSpeed-LLM/MM 支持 Ulysses 与混合长序列并行</td><td>对齐 MAGI 的 varlen layout、head divisibility、all-to-all primitive 与 modality mapping。</td><td><span class="status partial">中等适配</span></td></tr>
+          <tr><td class="key">Head/Expert Parallel EP=8</td><td>MoE EP、all-to-all dispatcher、fused/MC2 后端</td><td>标准 token-choice EP 与固定 head-owner 通信不同；实现 [N,M,Dhead] 固定分片和专家权重分片。</td><td><span class="status block">核心缺口</span></td></tr>
+          <tr><td class="key">Triton Flash-MH-MoE</td><td>GroupedMatMul、Fused MoE、permute/unpermute 融合</td><td>为 12 head × 256 窄专家定制 route/sort/grouped FFN/scatter；验证 Top-6、sigmoid、route norm/scale。</td><td><span class="status block">最大算子工作量</span></td></tr>
+          <tr><td class="key">FlashAttention-3 / MagiAttention</td><td>NPU Flash Attention、变长与稀疏 Attention 能力</td><td>适配单流 varlen、attention sink/gating/mHC；Refiner 需 block-grid 3D window mask，避免 fallback。</td><td><span class="status block">核心缺口</span></td></tr>
+          <tr><td class="key">MagiCompiler / torch.compile</td><td>torch_npu 图编译与融合工具链</td><td>重建 compile cache、固定 bucket 与自定义算子图注册；检查动态 metadata 导致的 graph break。</td><td><span class="status partial">后期优化</span></td></tr>
+          <tr><td class="key">CPU↔GPU roundtrip</td><td>NPU tensor 搬运、pinned host memory</td><td>改写 module state backup 的设备语义；测量 228GB Preview 分片的换入时间与 NUMA 影响。</td><td><span class="status partial">系统瓶颈</span></td></tr>
+          <tr><td class="key">Turbo VAE / Stable Audio VAE</td><td>标准 Conv/3D Conv/上采样算子与 MindIE-SD 后端</td><td>先用 eager 跑通，再独立编译；逐个消除 unfoldNd、temporal window 与音频算子 fallback。</td><td><span class="status partial">可分阶段</span></td></tr>
+        </tbody></table></div>
+        <div class="cards" style="margin-top:22px">
+          <article class="card" data-n="A"><span class="tag red">CAPACITY</span><h3>建议起点：8×64GB 或更高</h3><p>这是容量估算而非官方认证。Preview 权重 228GB/8≈28.5GB 每 rank，仍需激活、通信 buffer、Refiner/Text/VAE 与框架开销。建议宿主机内存至少 512GB，并为 roundtrip 留出余量。</p></article>
+          <article class="card" data-n="B"><span class="tag red">TOPOLOGY</span><h3>先做单机 8 卡</h3><p>默认 CP=EP=8；单机高带宽互联能最大限度压低两个 all-to-all 维度的风险。跨机扩展前，先量化 HCCS/HCCL 通信占比与每层 device idle。</p></article>
+          <article class="card" data-n="C"><span class="tag red">KERNEL</span><h3>算子适配优先于量化</h3><p>如果 expert FFN 或 3D window attention fallback 为小算子/通用实现，低精度只会“省显存但不加速”。先达到 BF16 高利用率，再投入 FP8/W8A8。</p></article>
+        </div>
+        <div class="callout"><strong>与 Wan2.2 移植的关键差别：</strong>MindSpeed-MM 已列出 Wan2.2 + CP(Ulysses) 支持，说明标准视频 DiT 主干、FSDP/CP 和 VAE 路径有可复用资产；但 MAGI-2 的超细粒度 MoE 不是 Wan2.2 的双模型切换，不能据此推断“已经支持 MAGI-2”。</div>
+      </section>
+
+      <section class="section reveal" id="roadmap"><span class="kicker">08 / Delivery roadmap</span><h2>四阶段落地，不跨级优化。</h2>
+        <div class="roadmap">
+          <div class="road" data-step="0"><b>NVIDIA 参考基线与算子账本</b><p>锁定 commit f68a0f9、权重 revision、10 秒 512×896→1088×1920、100+5 步、seed 与 deterministic 模式。记录 Preview/Refiner 单步、MoE、Attention、collective、offload、VAE、mux 的 P50/P95。</p><span class="gate">GATE · 总分段耗时与端到端误差 &lt;5%；输出可复现；记录每 rank 峰值显存</span></div>
+          <div class="road" data-step="1"><b>昇腾 BF16 功能闭环</b><p>替换设备、分布式与基础算子；暂用易读实现跑通 Qwen→Preview→Refiner→双 VAE；建立逐层/逐阶段误差，保存 post-refiner latent 做定位。</p><span class="gate">GATE · T2V/I2V 均能输出；无 CPU fallback 隐患；latent/视频/音频误差门槛明确</span></div>
+          <div class="road" data-step="2"><b>P0 性能内核与通信</b><p>依次替换 varlen Flash Attention、3D window attention、Flash-MH-MoE；完成 CP/EP 固定形状 collective、buffer 预分配和流重叠。每替换一项都做数值回归与火焰图对比。</p><span class="gate">GATE · 专家 GEMM 不碎片化；通信未掩盖占比持续下降；无频繁 Host 同步</span></div>
+          <div class="road" data-step="3"><b>系统与算法加速</b><p>优化 stage roundtrip、编译 bucket、异步 VAE/audio；再评估 FP8/W8A8、低步蒸馏权重和跨步缓存。以质量—延迟 Pareto 而非单一耗时做发布判断。</p><span class="gate">GATE · 端到端收益可归因；长 prompt、复杂音画同步与极端运动场景不退化</span></div>
+        </div>
+      </section>
+
+      <section class="section reveal" id="benchmark"><span class="kicker">09 / Measurement contract</span><h2>必须同时测速度、通信与质量。</h2>
+        <div class="table-wrap"><table class="compare"><thead><tr><th>维度</th><th>必须报告</th><th>MAGI-2 特有检查</th></tr></thead><tbody>
+          <tr><td class="key">端到端</td><td>cold/warm latency、samples/hour、功耗、8 卡总 NPU·s</td><td>Prompt、Preview、roundtrip、Refiner、双 VAE、mux 分段占比。</td></tr>
+          <tr><td class="key">单步</td><td>Preview step P50/P95、Refiner step P50/P95、CFG 放大系数</td><td>100 步中路由负载与单步耗时是否随 sigma 漂移。</td></tr>
+          <tr><td class="key">MoE</td><td>router/permute/GEMM/scatter 各耗时，专家 token 分布，HBM 带宽</td><td>12 个 head 各自的负载；Top-6 命中；deterministic scatter 的额外成本。</td></tr>
+          <tr><td class="key">通信</td><td>CP/EP collective 时间、有效带宽、未掩盖时间、rank 方差</td><td>Ulysses 与 Head Parallel 是否竞争同一链路；固定 buffer 是否真正消除动态分配。</td></tr>
+          <tr><td class="key">内存</td><td>每 rank 参数/激活/workspace/通信 buffer 峰值，host RAM 与搬运量</td><td>Preview/Refiner roundtrip 的 H2D/D2H 时间；是否发生 allocator cache 清理。</td></tr>
+          <tr><td class="key">质量</td><td>固定 50–200 个 prompt 的盲评、VBench 类指标、失败率</td><td>口型—语音同步、环境音事件、字幕、跨镜头身份、复杂动作与音画时间线。</td></tr>
+          <tr><td class="key">稳定性</td><td>连续运行 100 样本、OOM/NaN/超时、结果复现</td><td>fast 与 deterministic 两模式分别验收；路由与 scatter 的非确定性单独记录。</td></tr>
+        </tbody></table></div>
+        <div class="callout dark"><strong>公平比较规则：</strong>MAGI-2 与 Wan2.2 必须对齐生成时长、输出分辨率、fps、是否含音频、去噪步数、CFG、设备数量和精度。MAGI-2 的 10 秒原生音频 + Refiner 与 Wan2.2 的 5 秒 720p 视频不是同一任务。</div>
+      </section>
+
+      <section class="section reveal" id="sources"><span class="kicker">10 / Sources & evidence boundary</span><h2>来源与证据等级。</h2><p class="lede">结论优先使用官方仓库、官方技术博客与官方模型卡。页面截点为 2026-08-31；MAGI-2 Preview 仍是快速演进中的研究版本。</p>
+        <div class="sources">
+          <a class="source" href="https://github.com/SandAI-org/MAGI-2-preview" target="_blank" rel="noreferrer"><b>MAGI-2 Preview 官方 GitHub</b><span>README · CONFIGS · INFERENCE CODE · COMMIT f68a0f9</span></a>
+          <a class="source" href="https://sand.ai/blog/magi-2-preview" target="_blank" rel="noreferrer"><b>MAGI-2 Preview 官方技术博客</b><span>SINGLE STREAM · MAGIMOE · HEAD PARALLEL · MAGIMUON · DATA</span></a>
+          <a class="source" href="https://huggingface.co/sand-ai/MAGI-2-preview" target="_blank" rel="noreferrer"><b>MAGI-2 Preview 官方模型仓库</b><span>WEIGHT SHARDS · MODEL CARD · CHECKPOINT SIZES</span></a>
+          <a class="source" href="https://github.com/Wan-Video/Wan2.2" target="_blank" rel="noreferrer"><b>Wan2.2 官方 GitHub</b><span>A14B MOE · TI2V-5B · FSDP · ULYSSES · PERFORMANCE TABLE</span></a>
+          <a class="source" href="https://arxiv.org/abs/2503.20314" target="_blank" rel="noreferrer"><b>Wan 官方技术报告</b><span>VIDEO DIFFUSION TRANSFORMER · VAE · TRAINING & EVALUATION</span></a>
+          <a class="source" href="https://github.com/SandAI-org/MAGI-1" target="_blank" rel="noreferrer"><b>MAGI-1 官方仓库 / 报告</b><span>AUTOREGRESSIVE DENOISING · TEMPORAL CHUNKS · CONTINUATION</span></a>
+          <a class="source" href="https://github.com/Ascend/MindSpeed-MM" target="_blank" rel="noreferrer"><b>Ascend MindSpeed-MM</b><span>WAN2.2 · CP ULYSSES · MULTIMODAL TRAINING CAPABILITIES</span></a>
+          <a class="source" href="https://github.com/Ascend/MindSpeed-LLM/blob/master/docs/en/pytorch/features/README.md" target="_blank" rel="noreferrer"><b>Ascend MindSpeed-LLM 特性表</b><span>FSDP2 · MOE EP · FLASH ATTENTION · ULYSSES · FUSED OPERATORS</span></a>
+          <a class="source" href="https://github.com/Ascend/MindSpeed-LLM/blob/master/docs/zh/pytorch/tuning/fsdp2_backend_performance_optimization.md" target="_blank" rel="noreferrer"><b>MindSpeed FSDP2 性能优化指南</b><span>COMPUTE · MEMORY · COMMUNICATION · HOST DISPATCH</span></a>
+          <a class="source" href="https://github.com/Ascend/MindIE-SD" target="_blank" rel="noreferrer"><b>Ascend MindIE-SD</b><span>VISUAL GENERATION INFERENCE · SPARSE ATTENTION · NPU BACKEND</span></a>
+        </div>
+        <p class="fine"><strong>事实：</strong>带明确数字、配置或“官方要求”的内容来自上述官方材料与仓库代码。<br><strong>工程推断：</strong>瓶颈占比、8×64GB/512GB host RAM 建议、优先级和预期收益属于基于计算图的迁移判断，不是 Sand.ai 或华为官方性能承诺。<br><strong>尚未公开：</strong>MAGI-2 Preview 官方端到端生成耗时、昇腾适配结果、量化精度曲线、蒸馏权重的实际步数与质量边界。</p>
+      </section>
+    </main>
+  </div>
+  <footer>ASCEND PLAYGROUND · MAGI-2 PREVIEW TECHNOLOGY & ACCELERATION REVIEW · 2026-08-31</footer>
+  <script>
+    const progress=document.getElementById('progress');
+    const links=[...document.querySelectorAll('.toc a')];
+    const sections=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    addEventListener('scroll',()=>{const d=document.documentElement;const max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%';let active=sections[0];for(const s of sections){if(s.getBoundingClientRect().top<=120)active=s}links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id))},{passive:true});
+    const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target)}}),{threshold:.05});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  </script>
+</body>
+</html>

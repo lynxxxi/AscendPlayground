@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="HiDream-O1-Image 技术架构、主流多模态生成模型对比与昇腾加速需求分析">
+  <title>HiDream-O1：从像素统一模型到昇腾加速路线</title>
+  <style>
+    :root{--paper:#f3efe5;--ink:#14213d;--muted:#5e6674;--blue:#2356d7;--orange:#ff5b35;--green:#16876b;--line:#c9c5b9;--white:#fffdf8;--shadow:0 18px 50px rgba(20,33,61,.11);--mono:"Cascadia Code","SFMono-Regular",Consolas,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;overflow-x:hidden;color:var(--ink);background:var(--paper);font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;line-height:1.72}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;background-image:linear-gradient(rgba(35,86,215,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(35,86,215,.055) 1px,transparent 1px);background-size:28px 28px;z-index:-1}a{color:var(--blue)}code,.mono{font-family:var(--mono)}.progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--blue));z-index:99}.wrap{width:min(1180px,calc(100% - 40px));margin:auto}.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase}.stamp{padding:5px 9px;border:1px solid var(--ink);box-shadow:3px 3px 0 var(--orange)}.hero{min-height:740px;display:grid;grid-template-columns:1.2fr .8fr;gap:56px;align-items:center;padding:72px 0 86px}.eyebrow{font:700 13px var(--mono);color:var(--orange);letter-spacing:.12em;text-transform:uppercase;overflow-wrap:anywhere}.hero h1{font-size:clamp(58px,9vw,126px);line-height:.82;letter-spacing:-.075em;margin:20px 0 30px;max-width:780px}.hero h1 span{display:block;color:transparent;-webkit-text-stroke:2px var(--blue)}.lede{font-size:20px;max-width:720px;border-left:5px solid var(--orange);padding-left:22px}.hero-card{background:var(--ink);color:white;padding:32px;transform:rotate(1.2deg);box-shadow:12px 12px 0 var(--blue)}.hero-card .big{font:800 78px/1 var(--mono);color:#ffcf52}.hero-card small{display:block;color:#cbd3e4}.hero-card hr{border:0;border-top:1px solid #49536b;margin:24px 0}.hero-card ul{padding-left:18px}.hero-card li{margin:8px 0}.nav{position:sticky;top:0;z-index:20;background:rgba(243,239,229,.94);backdrop-filter:blur(12px);border-block:1px solid var(--line)}.nav .wrap{display:flex;gap:8px;overflow:auto;padding:10px 0}.nav a{white-space:nowrap;text-decoration:none;color:var(--ink);font:700 12px var(--mono);padding:6px 10px;border:1px solid transparent}.nav a:hover{border-color:var(--blue);color:var(--blue)}main{padding:64px 0 100px}.section{scroll-margin-top:70px;margin:0 0 105px}.kicker{font:700 12px var(--mono);color:var(--orange);letter-spacing:.13em}.section h2{font-size:clamp(34px,5vw,64px);line-height:1.05;letter-spacing:-.045em;margin:12px 0 30px}.section h3{font-size:23px;line-height:1.3;margin:0 0 14px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{background:rgba(255,253,248,.8);border:1px solid var(--line);padding:25px;box-shadow:5px 5px 0 rgba(20,33,61,.05)}.card .n{font:800 42px var(--mono);color:var(--blue)}.card p:last-child{margin-bottom:0}.callout{background:var(--blue);color:white;padding:28px 34px;font-size:20px;margin:28px 0;box-shadow:8px 8px 0 var(--orange)}.callout strong{color:#ffdc78}.architecture{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;align-items:stretch;gap:10px}.node{border:2px solid var(--ink);background:var(--white);padding:24px;min-height:190px}.node .tag{font:700 11px var(--mono);color:var(--orange)}.arrow{display:grid;place-items:center;font-size:33px;color:var(--blue)}.tokens{display:flex;height:58px;margin:18px 0 7px;border:2px solid var(--ink);overflow:hidden}.tokens span{display:grid;place-items:center;font:700 11px var(--mono);border-right:1px solid var(--ink)}.tokens .text{width:18%;background:#ffdc78}.tokens .cond{width:20%;background:#9addca}.tokens .gen{width:62%;background:#8eaeff}.legend{font-size:12px;color:var(--muted)}.split{display:grid;grid-template-columns:1fr 1fr;gap:22px}.formula{background:var(--ink);color:white;padding:26px;font:16px/1.7 var(--mono);overflow:auto}.formula b{color:#ffcf52}.scale{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:end;margin-top:28px}.scale .bar{border:2px solid var(--ink);background:var(--white);padding:18px}.scale .bar:nth-child(1){height:150px}.scale .bar:nth-child(2){height:210px}.scale .bar:nth-child(3){height:310px;background:var(--blue);color:white}.scale strong{font:800 34px var(--mono)}.scale small{display:block}.meter{height:13px;background:#dad6ca;margin:9px 0;overflow:hidden}.meter i{display:block;height:100%;background:var(--orange)}table{width:100%;border-collapse:collapse;background:rgba(255,253,248,.76);font-size:14px}th,td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:14px}th{background:var(--ink);color:white;font:700 12px var(--mono)}td strong{color:var(--blue)}.badge{display:inline-block;padding:2px 7px;border:1px solid currentColor;font:700 11px var(--mono)}.good{color:var(--green)}.warn{color:#b14a23}.neutral{color:var(--blue)}.priority{display:grid;grid-template-columns:110px 1fr;gap:0;border-top:2px solid var(--ink)}.priority>div{padding:20px;border-bottom:1px solid var(--line)}.pnum{font:800 30px var(--mono);color:var(--orange)}.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:0}.phase{border-left:2px solid var(--blue);padding:0 20px 25px;position:relative}.phase:before{content:"";position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:var(--orange)}.phase .week{font:700 12px var(--mono);color:var(--blue)}.quote{font-size:30px;line-height:1.35;letter-spacing:-.025em;padding:38px;border-block:2px solid var(--ink);margin:36px 0}.note{font-size:13px;color:var(--muted)}.sources{columns:2;column-gap:38px}.sources li{break-inside:avoid;margin-bottom:13px}.sources a{word-break:break-all}.footer{border-top:1px solid var(--line);padding:34px 0 60px;font:12px var(--mono);color:var(--muted)}.reveal{opacity:0;transform:translateY(18px);transition:.65s ease}.reveal.on{opacity:1;transform:none}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;min-height:auto}.hero-card{transform:none}.grid-3,.split,.roadmap{grid-template-columns:1fr}.architecture{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.scale{grid-template-columns:1fr;align-items:stretch}.scale .bar:nth-child(n){height:auto}.priority{grid-template-columns:75px 1fr}.sources{columns:1}}
+    @media(max-width:560px){.wrap{width:min(100% - 24px,1180px)}.topbar .stamp{display:none}.hero{padding:44px 0 58px}.hero h1{font-size:57px}.hero-card .big{font-size:58px}.section{margin-bottom:75px}th,td{padding:9px;font-size:12px}.table-scroll{overflow:auto}.table-scroll table{min-width:790px}}
+    @media print{.nav,.progress{display:none}body:before{display:none}.hero{min-height:auto}.section{break-inside:avoid}.reveal{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <header class="wrap">
+    <div class="topbar"><span>MODEL SYSTEMS / TECHNICAL BRIEF</span><span class="stamp">2026 · 08 · 31</span></div>
+    <div class="hero">
+      <div>
+        <div class="eyebrow">HiDream-O1-Image · pixel-level unified transformer</div>
+        <h1>像素，即<span>推理现场</span></h1>
+        <p class="lede">HiDream-O1 的关键不是再做一套“更大的 latent DiT”，而是用一个从 Qwen3-VL 初始化的 8B 统一骨干，把文本、条件图与待生成像素放进同一 token 空间。代价也很直接：VAE 消失了，2048² 下的 4096 个图像 token 却要在每个去噪步参与全注意力。</p>
+      </div>
+      <aside class="hero-card">
+        <small>OPEN IMAGE BACKBONE</small><div class="big">8B</div>
+        <small>公开模型规模；不含可选的 31B 提示词代理</small><hr>
+        <ul>
+          <li>最高 2048 × 2048 直接像素生成</li>
+          <li>Full：50 步 + CFG 双前向</li>
+          <li>Dev：28 步 + CFG-free</li>
+          <li>无外置 VAE、无割裂的预训练文本编码器</li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <nav class="nav"><div class="wrap">
+    <a href="#summary">01 结论</a><a href="#meaning">02 O1 是什么</a><a href="#architecture">03 架构</a><a href="#economics">04 算力账</a><a href="#compare">05 对比</a><a href="#acceleration">06 加速</a><a href="#ascend">07 昇腾</a><a href="#roadmap">08 路线</a><a href="#sources">09 资料</a>
+  </div></nav>
+
+  <main class="wrap">
+    <section class="section reveal" id="summary">
+      <div class="kicker">01 / EXECUTIVE READOUT</div><h2>先给决策结论</h2>
+      <div class="grid-3">
+        <article class="card"><div class="n">01</div><h3>创新点在“统一”</h3><p>文本理解、条件图理解和像素生成共享 Transformer，而不是“LLM / 文本编码器 → latent DiT → VAE”三段拼接。它天然适合把复杂指令、编辑与生成收敛到同一套上下文建模。</p></article>
+        <article class="card"><div class="n">02</div><h3>瓶颈转移到长序列</h3><p>32×32 像素一个 patch。2048² 形成 4096 个生成 token，外加文本、时间步与参考图 token。核心压力从 VAE 与多组件调度，转移到每层 attention、MLP、激活显存和 28/50 次循环。</p></article>
+        <article class="card"><div class="n">03</div><h3>Dev 是部署首选</h3><p>按公开默认配置估算，Full 为 50×2≈100 次骨干调用，Dev 为 28×1≈28 次；骨干调用数减少约 72%。这是结构性收益，但不是官方实测的 3.57×端到端加速。</p></article>
+      </div>
+      <div class="callout"><strong>昇腾适配的主矛盾：</strong>不是移植 VAE，而是把“AR 前缀因果注意力 + 生成区全注意力”的 Hybrid Unified Attention 做成高效 NPU 路径，并让 4096+ token 下的序列并行、算子融合与静态 shape 桶真正工作。</div>
+    </section>
+
+    <section class="section reveal" id="meaning">
+      <div class="kicker">02 / WHAT “O1” ACTUALLY MEANS</div><h2>三种“推理”，不要混成一种</h2>
+      <div class="grid-3">
+        <article class="card"><span class="badge neutral">推理时 · 可选</span><h3>Reasoning-Driven Prompt Agent</h3><p>官方脚本可调用 Gemma-4-31B-it 或 OpenAI-compatible API，将原始需求重写为布局、属性、物理关系、文字渲染更明确的英文提示。默认最多生成 4096 token；若本地部署，它可能比 8B 图像骨干更占显存、也更影响首帧延迟。</p></article>
+        <article class="card"><span class="badge good">模型内 · 核心</span><h3>统一上下文推理</h3><p>文本 token、参考图 condition token、噪声像素 patch token 共处同一序列。生成 token 可以全局读取所有上下文，因此编辑、主体保持、布局控制与 T2I 不必由不同网络拼装。</p></article>
+        <article class="card"><span class="badge warn">训练期 · 非在线</span><h3>GRPO / RLHF 后训练</h3><p>论文使用 OCR、美学、指令遵循与 reasoning quality 等复合奖励做 GRPO。奖励模型位于后训练环节，并非每个去噪步都在线打分。把它算入推理链路，会严重高估部署成本。</p></article>
+      </div>
+      <p class="note">实现细节提示：公开 prompt agent 代码对本地模型设置 <code>enable_thinking=False</code>。因此“Reasoning-Driven”更准确地理解为经过推理数据/流程训练的结构化提示重写器，而不是必须暴露长思维链的在线 agent。</p>
+    </section>
+
+    <section class="section reveal" id="architecture">
+      <div class="kicker">03 / SYSTEM ANATOMY</div><h2>从请求到像素，只保留一条主干</h2>
+      <div class="architecture">
+        <div class="node"><div class="tag">OPTIONAL / SYSTEM LAYER</div><h3>31B Prompt Agent</h3><p>规范布局、数量、空间关系、材质和文字；建议独立服务化与结果缓存，不与图像引擎抢同一张卡。</p></div><div class="arrow">→</div>
+        <div class="node"><div class="tag">SHARED TOKEN SPACE</div><h3>Tokenizer + 条件视觉编码</h3><p>文本使用骨干内生词表/embedding；参考图由 Qwen3-VL/SigLIP-2 风格视觉塔转 condition tokens。注意：“无外置文本编码器”不等于“没有任何辅助视觉编码器”。</p></div><div class="arrow">→</div>
+        <div class="node"><div class="tag">8B PIXEL UiT</div><h3>36 层统一 Transformer</h3><p>hidden 4096、32 个 Q heads / 8 个 KV heads，直接预测 32×32 RGB patch；无需 VAE 解码回像素。</p></div>
+      </div>
+      <div class="tokens" aria-label="统一 token 序列"><span class="text">TEXT · causal</span><span class="cond">CONDITION · causal</span><span class="gen">TIMESTEP + PIXEL PATCHES · full attention</span></div>
+      <div class="legend">Hybrid Unified Attention：AR 前缀按因果掩码计算；生成区域采用全注意力并读取完整上下文。公开实现每层执行一次 AR-only causal FlashAttention，再执行一次全序列 non-causal FlashAttention，并覆盖前缀位置。</div>
+      <div class="split" style="margin-top:28px">
+        <div class="formula"><b>输入 patch</b><br>pixel tensor [B, 3, H, W]<br>→ patchify, patch = 32<br>→ 2048²: [B, 4096, 3072]<br>→ linear projection: hidden = 4096</div>
+        <div class="formula"><b>输出 patch</b><br>hidden states<br>→ final linear: 3 × 32 × 32<br>→ rearrange patches to RGB<br>→ clamp / PIL<br><b>没有 VAE decode 阶段</b></div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="economics">
+      <div class="kicker">04 / PIXEL ECONOMICS</div><h2>分辨率每翻倍，全注意力账单约放大 16 倍</h2>
+      <p>固定 32 像素 patch 时，边长翻倍会让 token 数变为 4 倍；全注意力的 QK 交互规模近似按 token² 增长，因此理论 attention-pair 量约变为 16 倍。下面只计算生成图 token，不含文本、时间步和条件图。</p>
+      <div class="scale">
+        <div class="bar"><small>512 × 512</small><strong>256</strong><small>tokens · QK 相对量 1×</small></div>
+        <div class="bar"><small>1024 × 1024</small><strong>1,024</strong><small>tokens · QK 相对量 16×</small></div>
+        <div class="bar"><small>2048 × 2048</small><strong>4,096</strong><small>tokens · QK 相对量 256×</small></div>
+      </div>
+      <div class="quote">“去掉 VAE”消除了编解码延迟与 latent 信息瓶颈，但并没有让计算消失——它把高分辨率建模的成本搬进了每一个 Transformer 层、每一个采样步。</div>
+      <div class="split">
+        <article class="card"><h3>Full · 质量基线</h3><p><span class="badge warn">默认配置</span></p><p><b>50 steps × 2 CFG branches ≈ 100</b> 次 8B 骨干 forward。</p><div class="meter"><i style="width:100%"></i></div><p class="note">guidance_scale 5，条件/无条件分别前向；FlowUniPC 调度器。</p></article>
+        <article class="card"><h3>Dev · 蒸馏部署版</h3><p><span class="badge good">优先落地</span></p><p><b>28 steps × 1 branch ≈ 28</b> 次 8B 骨干 forward。</p><div class="meter"><i style="width:28%"></i></div><p class="note">guidance_scale 0；采用 DMD + diffusion + adversarial 目标蒸馏。调用数较 Full 少约 72%。</p></article>
+      </div>
+      <p class="note">上述为根据官方默认代码路径得到的“网络调用量”估算。实际端到端加速比还受 prompt agent、分词、视觉条件编码、调度器、数据搬运和算子利用率影响，不能直接等同于 3.57×实测性能。</p>
+    </section>
+
+    <section class="section reveal" id="compare">
+      <div class="kicker">05 / MODEL GENERATION SHIFT</div><h2>相对主流 latent 模型，取舍发生在哪里</h2>
+      <div class="table-scroll"><table>
+        <thead><tr><th>维度</th><th>HiDream-O1 8B</th><th>主流 latent DiT（Qwen-Image / FLUX / SD3 类）</th><th>对加速的含义</th></tr></thead>
+        <tbody>
+          <tr><td>图像表征</td><td><strong>原始像素 patch</strong>，32×32；无 VAE</td><td>先压缩为 latent，再由 VAE 解码</td><td>O1 少一段编解码，但生成序列通常更长，attention 压力更集中。</td></tr>
+          <tr><td>文本理解</td><td>统一骨干的原生词表与 embedding；无割裂文本 encoder</td><td>常见 CLIP / T5 / LLM encoder 与 DiT 分离</td><td>少组件、少跨模型边界；但 8B 主干在每个采样步都承担语义与像素计算。</td></tr>
+          <tr><td>多任务</td><td>T2I、编辑、主体、布局、故事板共用 in-context 接口</td><td>常依赖 ControlNet、IP-Adapter 或不同 pipeline</td><td>部署面更统一，shape/token 类型更多；需按任务建立编译桶与缓存策略。</td></tr>
+          <tr><td>注意力</td><td>AR 前缀 causal + 生成区 full 的混合统一注意力</td><td>DiT self-attn + 文本 cross-attn 或 MM-DiT joint attention</td><td>不能直接套标准 causal LLM 或纯 DiT kernel；混合掩码是适配重点。</td></tr>
+          <tr><td>采样</td><td>Full 50 步 CFG；Dev 28 步 CFG-free</td><td>依模型而异，常见 CFG、蒸馏或 guidance-free 版本</td><td>步数和 CFG 分支仍是第一阶性能变量，优先级高于微小 Python 优化。</td></tr>
+          <tr><td>“推理增强”</td><td>可外挂 31B prompt agent；训练期 GRPO</td><td>通常直接用 prompt enhancer 或 LLM 改写</td><td>需把 agent 首 token/生成时延单独记账；合理拓扑是异步独立服务。</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">论文表格给出的模型规模口径并不完全一致，部分竞品还包含独立文本模型；因此本报告不使用“8B 一定比 X 更省显存”的简单结论。公开仓库也未给出统一硬件上的 O1 延迟/显存对照表。</p>
+    </section>
+
+    <section class="section reveal" id="acceleration">
+      <div class="kicker">06 / ACCELERATION REQUIREMENTS</div><h2>从精确收益开始，再碰近似加速</h2>
+      <div class="priority">
+        <div class="pnum">P0</div><div><h3>Dev + CFG-free：先减少完整骨干调用</h3><p>部署默认走 28-step Dev，将约 100 次前向压到 28 次。保留 Full 作为高质量/回归基线，并建立 OCR、小字、主体一致性和编辑保真质量闸门。</p></div>
+        <div class="pnum">P0</div><div><h3>专用 Hybrid Attention</h3><p>当前“双 attention 再覆盖”路径会为 full pass 计算最终会被丢弃的 AR query 输出。理想 kernel/图改写应复用 QKV，只为 AR query 做 causal、只为生成 query 做 full，同时保持数值等价；FlashAttention/FlashAttention-like NPU 实现是核心。</p></div>
+        <div class="pnum">P0</div><div><h3>长序列 GEMM 与融合算子</h3><p>围绕 4096 hidden、36 层、GQA 32Q/8KV，打通 BF16 matmul、RMSNorm、RoPE、SwiGLU、残差融合与 patch projection。2048 档关注激活和带宽，不能只看参数是否装得下。</p></div>
+        <div class="pnum">P0</div><div><h3>分辨率 / 长宽比 shape 桶</h3><p>为官方支持的高频尺寸预编译执行图，固定 patch 数与 position id 生成路径；避免每次请求触发重编译。把 1024 作为吞吐主档，2048 作为高质量档单独限流。</p></div>
+        <div class="pnum">P1</div><div><h3>精确缓存：先用已有，再探索前缀 KV</h3><p>公开 pipeline 已在去噪首步后缓存参考图 embedding 与 deep-stack 特征。进一步可研究 AR 前缀逐层 KV 缓存：因文本/条件前缀为 causal、不能看到后续变化的生成 token，理论上存在精确拆分机会；但当前仓库未实现，需重构层级接口并验证 timestep/token 边界。</p></div>
+        <div class="pnum">P1</div><div><h3>USP / Ulysses 序列并行</h3><p>多 NPU 时沿 token 维切分 4096+ 序列，比盲目张量并行更贴近高分辨率瓶颈。单卡能放下时不应默认 TP：36 层 8B 的通信可能抵消收益；应以 2048 峰值内存和批吞吐决定 SP/TP 组合。</p></div>
+        <div class="pnum">P1</div><div><h3>Prompt Agent 解耦</h3><p>31B agent 独立池化部署、异步调用、按规范化 prompt + 任务类型缓存改写结果。图像引擎只接收精炼文本；关闭 agent 时，系统才接近“单 8B 模型”的资源口径。</p></div>
+        <div class="pnum">P2</div><div><h3>量化与跨步缓存</h3><p>FP8/W8A8、step feature cache、稀疏/局部 attention 可能继续提速，但会触碰像素细节、文字拼写与编辑一致性。最后输出头、patch embed、norm 和 attention softmax 建议保留更高精度，逐层做敏感度扫描。</p></div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="ascend">
+      <div class="kicker">07 / ASCEND READINESS</div><h2>昇腾迁移：可复用什么，还缺什么</h2>
+      <div class="table-scroll"><table>
+        <thead><tr><th>模块</th><th>可复用基础</th><th>HiDream-O1 新工作</th><th>判断</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen3-VL 8B 骨干</td><td>MindSpeed-MM 已有 Qwen3-VL 训练支持；生态具备 RMSNorm、RoPE、GQA、SwiGLU 等基础</td><td>接入像素 patch embed/final head、flow timestep token、统一生成循环</td><td><span class="badge good">基础较好</span></td></tr>
+          <tr><td>Hybrid Unified Attention</td><td>MindIE-SD 已有 Flash/Laser attention 与 USP 经验</td><td>支持同层 causal AR 前缀 + full generation query，避免两次完整 attention 的冗余</td><td><span class="badge warn">首要缺口</span></td></tr>
+          <tr><td>2048 长序列并行</td><td>MindIE-SD 的 USP/Ulysses、通信编排可参考</td><td>适配不同长宽比 position id、生成/条件 token 拼接及静态图 shape 桶</td><td><span class="badge neutral">可工程化</span></td></tr>
+          <tr><td>调度器与 CFG</td><td>Flow Matching、并行 CFG 在扩散框架中已有通用模式</td><td>实现 FlowUniPC / flash scheduler；Dev guidance=0 单分支快路径</td><td><span class="badge good">风险较低</span></td></tr>
+          <tr><td>条件视觉编码</td><td>Qwen3-VL vision encoder 适配经验</td><td>保留首步后 embedding/deep-stack cache，覆盖编辑与主体参考路径</td><td><span class="badge good">缓存明确</span></td></tr>
+          <tr><td>量化</td><td>MindIE-SD 已在其他模型探索 MXFP8 等低精度</td><td>建立 O1 像素输出/OCR 专项校准集，避免直接套用 latent DiT 阈值</td><td><span class="badge warn">需重新标定</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><strong>支持状态：</strong>截至本报告日期，MindSpeed-MM 公布支持列表中可见 HiDream-I1、Qwen-Image 等相关模型，但未发现 HiDream-O1 的官方昇腾适配声明。因此以上是基于公开代码的迁移设计，不是“已支持”结论。</div>
+      <div class="split">
+        <article class="card"><h3>推荐单机拓扑</h3><p><b>服务 A：</b>Prompt Agent（独立 NPU/外部 API）<br><b>服务 B：</b>HiDream-O1 Dev 8B 图像引擎<br><b>缓存：</b>prompt 改写、tokenization、参考图 embedding<br><b>队列：</b>1024 吞吐池 / 2048 高质量池分离</p></article>
+        <article class="card"><h3>性能观测必须拆开</h3><p><code>T_total = T_agent + T_prefill + N_step × T_backbone + T_scheduler + T_output</code></p><p>同时记录 attention、MLP、通信、编译与 H2D 占比；Full 另拆 cond/uncond。只看整段耗时无法判断应优化 agent、步数还是内核。</p></article>
+      </div>
+    </section>
+
+    <section class="section reveal" id="roadmap">
+      <div class="kicker">08 / IMPLEMENTATION ROADMAP</div><h2>一条可验收的适配路线</h2>
+      <div class="roadmap">
+        <div class="phase"><div class="week">PHASE 0 · BASELINE</div><h3>跑通 BF16</h3><p>对齐 tokenizer、position id、patchify、调度器；固定 seed 与 PyTorch 参考逐层比对。先覆盖 512/1024 T2I。</p></div>
+        <div class="phase"><div class="week">PHASE 1 · EXACT SPEED</div><h3>消除精确冗余</h3><p>Dev 单分支、融合 norm/RoPE/SwiGLU、Hybrid Attention 快路径、条件视觉缓存；扩展 2048 和编辑。</p></div>
+        <div class="phase"><div class="week">PHASE 2 · SCALE OUT</div><h3>序列并行</h3><p>USP/Ulysses + 必要 TP；建立长宽比 shape 桶、批调度、通信重叠。输出单卡与多卡 break-even。</p></div>
+        <div class="phase"><div class="week">PHASE 3 · APPROX</div><h3>低精度 / 跨步缓存</h3><p>分层量化与缓存消融；用 OCR、数量、空间关系、主体一致性、编辑保真和人工偏好共同验收。</p></div>
+      </div>
+      <h3 style="margin-top:36px">建议基准矩阵</h3>
+      <div class="table-scroll"><table>
+        <thead><tr><th>轴</th><th>必须覆盖</th><th>关键指标</th></tr></thead>
+        <tbody>
+          <tr><td>模式</td><td>T2I / instruction editing / subject reference / layout</td><td>端到端 P50/P95、峰值显存、成功率</td></tr>
+          <tr><td>分辨率</td><td>512 / 1024 / 2048；方图 + 横竖图</td><td>每步时延、attention/MLP 占比、编译命中率</td></tr>
+          <tr><td>版本</td><td>Full 50 CFG / Dev 28 CFG-free</td><td>骨干 calls/s、真实加速比、质量差</td></tr>
+          <tr><td>并行</td><td>1 / 2 / 4 / 8 NPU；SP、TP、混合</td><td>扩展效率、通信占比、吞吐/卡</td></tr>
+          <tr><td>质量</td><td>中文/英文长文本、计数、复杂空间、局部编辑</td><td>OCR、CLIP/DINO、LPIPS、人工盲评</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="section reveal" id="sources">
+      <div class="kicker">09 / SOURCES & EVIDENCE BOUNDARY</div><h2>资料来源与可信度说明</h2>
+      <ol class="sources">
+        <li><a href="https://arxiv.org/abs/2605.11061">HiDream-O1: Open-World Image Generation with Reasoning</a>：架构、训练阶段、目标函数、GRPO、官方评测。</li>
+        <li><a href="https://arxiv.org/html/2605.11061">arXiv HTML 全文</a>：便于核对 Hybrid Unified Attention、直接像素生成与实验表。</li>
+        <li><a href="https://github.com/HiDream-ai/HiDream-O1-Image">HiDream-O1-Image 官方 GitHub</a>：公开推理代码、Full/Dev 配置、prompt agent 与 scheduler。</li>
+        <li><a href="https://huggingface.co/HiDream-ai/HiDream-O1-Image">官方 Hugging Face 模型卡</a>：8B 公开检查点及配置入口。</li>
+        <li><a href="https://github.com/Ascend/MindSpeed-MM">Ascend MindSpeed-MM</a>：昇腾多模态训练支持矩阵与 Qwen3-VL / HiDream-I1 等可复用基础。</li>
+        <li><a href="https://github.com/Ascend/MindIE-SD">Ascend MindIE-SD</a>：视觉生成推理、USP、attention 与融合算子能力参考。</li>
+      </ol>
+      <p class="note">研究快照：2026-08-31。架构、默认步数、模型配置来自官方论文/仓库/模型卡；“100 vs 28 次调用”、token 数与 attention 相对量为基于公开实现的推导；昇腾路线、前缀 KV 缓存和性能优先级为工程分析。官方未提供统一硬件上的 HiDream-O1 显存/延迟表，本报告不虚构绝对性能数字。</p>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="wrap">HIDREAM-O1 TECHNICAL & ACCELERATION ANALYSIS · SELF-CONTAINED HTML · ASCENDPLAYGROUND / MODELS</div></footer>
+  <script>
+    const bar=document.getElementById('progress');
+    const update=()=>{const d=document.documentElement;bar.style.width=((d.scrollTop/(d.scrollHeight-d.clientHeight))*100||0)+'%'};
+    addEventListener('scroll',update,{passive:true});update();
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.08});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  </script>
+</body>
+</html>
