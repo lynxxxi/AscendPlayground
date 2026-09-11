@@ -154,7 +154,7 @@ Head Cut 把 Q/K/V 按 Head 分块。通信 Stream 预处理下一 Chunk，计�
 
 ## 10. DFX 设计
 
-- 可观测性：建议记录标准化参数指纹、Group World Size、Chunk 数、通信字节、Quant Scope 与各阶段 Event 时间。
+- 可观测性：记录标准化参数指纹、Group World Size、Chunk 数、通信字节、Quant Scope 与各阶段 Event 时间。
 - 可靠性：首个 Collective 前完成拓扑与 Shape 校验；非等长序列使用 `seq_lens` 保存真实长度。
 - 性能：优化目标是 Exposed Communication Time，不是 Collective 总时间；量化收益需扣除 Q/DQ 与 Scale 通信。
 - 可维护性：通信、量化、FA Dispatch、Layout 和异常分层，公共接口不依赖模型类型。

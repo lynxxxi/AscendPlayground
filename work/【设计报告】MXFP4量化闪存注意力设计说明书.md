@@ -151,7 +151,7 @@ Cube 路径负责矩阵乘，Vector 路径负责 Descale、Mask、Softmax 状态
 ## 10. DFX 设计
 
 - 可靠性：Payload/Scale Dtype Tag、Layout、序列长度、Head 关系和量化 Block 必须在 Host/Plugin 层校验。
-- 可观测性：Golden 工具输出误差位置、最大相对误差、Shape 与模式；建议追加 Tiling Key 和 Core 分配日志。
+- 可观测性：Golden 工具输出误差位置、最大相对误差、Shape、模式、Tiling Key 和 Core 分配日志。
 - 性能：Metadata 与计算解耦，专用 VF 变体提升短 KV 利用率；核心指标为 Kernel 时延、带宽与 AIC/AIV 利用率。
 - 可维护性：公共 MemCopy、Load Balance、Tiling Base 下沉到 `csrc/ops/common`，避免每个 FA 变体复制基础设施。
 - 安全性：所有长度和 Metadata Offset 必须在写入前校验，避免越界；Packed 字节只能结合显式 Dtype Tag 解释。

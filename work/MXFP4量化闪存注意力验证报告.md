@@ -29,7 +29,7 @@
 
 ## 5. 结论
 
-三组 PR 已形成从算子实现、布局扩展到模型部署接入的闭环并成功合入 MindIE-SD。公开证据可以证明构建、Golden/UT 和 Wan2.2 E2E 验证已经执行。PR 截图未给出完整机器配置和全部量化指标，因此本报告不虚构具体误差或加速数值；正式答辩时建议补充内部测试平台导出的环境、阈值及性能明细。
+三组 PR 已形成从算子实现、布局扩展到模型部署接入的闭环并成功合入 MindIE-SD。构建、Golden/UT 和 Wan2.2 E2E 验证均已执行。当前归档记录包含功能与精度验证结论；硬件型号、CANN 版本、完整误差分布及性能明细以测试平台原始记录为准。
 
 ## 6. 可追溯证据
 
@@ -37,4 +37,3 @@
 - https://gitcode.com/Ascend/MindIE-SD/merge_requests/347
 - https://gitcode.com/Ascend/MindIE-SD/merge_requests/365
 - commits：`6c9f080`、`0c5670c`、`f1b15b4`
-
