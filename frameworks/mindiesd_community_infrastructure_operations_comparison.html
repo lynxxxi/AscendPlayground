@@ -183,7 +183,7 @@
 </head>
 <body>
   <div class="progress" id="progress"></div>
-  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#method">口径与指标</a><a href="#landscape">规模节奏</a><a href="#matrix">评分矩阵</a><a href="#verdict">结论</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#governance">治理</a><a href="#contribution-gates">贡献门禁</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#method">口径与指标</a><a href="#landscape">规模节奏</a><a href="#matrix">评分矩阵</a><a href="#verdict">结论</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#bots">机器人</a><a href="#governance">治理</a><a href="#contribution-gates">贡献门禁</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
 
   <header class="hero">
     <div class="hero-inner">
@@ -212,6 +212,7 @@
         <tr><td><span class="metric-name">PR review 与合入</span><span class="metric-formula">首次有效 review；创建→merge p50/p90；内外部与规模拆分</span></td><td><span class="sample">合入 1.79 / 10.52 天，n=50</span><span class="now">首次 review 与内外部差异未知。</span></td><td>首 review p50≤1、p90≤2 工作日；合入 p50≤7、p90≤21 天</td><td>运营、治理</td><td>Contributor Experience；连续两周 p90 超标报警</td></tr>
         <tr><td><span class="metric-name">开放积压</span><span class="metric-formula">open age p50/p90；&gt;30/&gt;90 天；owner/next-action 覆盖率</span></td><td><span class="fact">111 open issues + 21 open PR</span><span class="now">年龄、owner 与 next action 未汇总。</span></td><td>&gt;30 天未归属=0；&gt;90 天项目每月 100% 复审</td><td>运营、治理</td><td>Triage Owner；每周检查</td></tr>
         <tr><td><span class="metric-name">CI 可靠性与时长</span><span class="metric-formula">infra failure、flaky rerun、队列、required-check p50/p95</span></td><td><span class="no">未知</span><span class="now">3 条 PR workflow 可见，无公开历史看板/nightly。</span></td><td>infra failure&lt;2%；flaky&lt;2%；critical path p95≤30m，回退&gt;15% 报警</td><td>测试、构建、CI/CD、质量</td><td>CI Infra / Test Owner</td></tr>
+        <tr><td><span class="metric-name">自动化与分诊机器人</span><span class="metric-formula">命令响应 p50/p95；分诊覆盖率（24h 内标签+owner）；失败自动建 Issue 率；stale 误伤率；机器人噪音比</span></td><td><span class="partial">1 条命令、无分诊资产</span><span class="now">命令成功率、标签覆盖与误伤率均无法导出。</span></td><td>命令 p95 ≤5 分钟；分诊覆盖 ≥90%；误伤 ≤1%；噪音 ≤20%</td><td>机器人、运营、治理</td><td>Community Lead + CI Infra；每周机器人周报</td></tr>
         <tr><td><span class="metric-name">兼容与发布</span><span class="metric-formula">支持矩阵 last-green；准点率；同一 artifact；回滚恢复时间</span></td><td><span class="partial">支持矩阵可见</span><span class="now">last-green、发布日历、签名与回滚 SLO 未知。</span></td><td>核心组合 last-green≤24h；准点率≥90%；&gt;48h 或连续 2 红报警</td><td>兼容性、发布、性能</td><td>Framework Owner / Release Team</td></tr>
         <tr><td><span class="metric-name">贡献者可持续性</span><span class="metric-formula">首次贡献成功率、90 天留存、Top3 review 份额、模块 bus factor</span></td><td><span class="fact">角色名单 5/5/18</span><span class="now">真实负载、内外部身份、留存与晋升未知。</span></td><td>首次成功≥50%；留存≥25%；Top3&lt;60%；关键模块 owner≥2</td><td>机器人、治理、运营</td><td>Maintainer Council；月度复盘</td></tr>
         <tr><td><span class="metric-name">公共决策与上游影响</span><span class="metric-formula">重大变更留痕率；上游合入率；同步时延；downstream patch 债</span></td><td><span class="no">未知</span><span class="now">生态入口可见，贡献流向和维护成本未公开量化。</span></td><td>重大决定留痕 100%；先建季度基线；同步 p50≤14 天</td><td>文档/DX、治理、运营</td><td>OSPO / Architecture Owner</td></tr>
@@ -260,7 +261,7 @@
         <tr><td><b>性能</b></td><td class="heat h4">3.5</td><td>有性能指南、算子/模型优化资产与多框架加速路径。</td><td>无公开性能回归曲线、统计阈值、基线版本与退化门禁。</td></tr>
         <tr><td><b>质量</b></td><td class="heat h4">4.0</td><td>ruff、mypy、clang 工具链、gitleaks、pre-commit 和新增文件覆盖率门槛。</td><td>缺全仓覆盖趋势、复杂度/重复代码看板和失败分类。</td></tr>
         <tr><td><b>发布</b></td><td class="heat h3">2.5</td><td>已有 tags、releases、PyPI 包与 release notes。</td><td>未见公开 release workflow、日历、RC 清单、SBOM/签名/provenance 与回滚。</td></tr>
-        <tr><td><b>机器人</b></td><td class="heat h2">1.5</td><td><code>ascend-robot</code> 参与合入。</td><td>未见 labeler、welcome、review routing、retest、stale、backport、failure monitor。</td></tr>
+        <tr><td><b>机器人</b></td><td class="heat h2">1.5</td><td><code>ascend-robot</code> 参与合入；PR 评论 <code>compile</code> 可触发全量流水线；已消费 SCA 与恶意代码扫描 action。</td><td>未见 labeler、welcome、review routing、分层 retest、cancel、stale、backport、failure monitor；详见第 08 章。</td></tr>
         <tr><td><b>兼容性</b></td><td class="heat h4">3.5</td><td>公开框架、模型、硬件与特性支持矩阵。</td><td>矩阵没有自动验证时间、last-green、失效责任人与弃用窗口。</td></tr>
         <tr><td><b>治理</b></td><td class="heat h3">3.0</td><td>OWNERS 列出 branch keeper / approver / reviewer，PR 责任链清楚。</td><td>缺分目录 ownership、晋升/退出规则、公开提名投票与厂商多样性机制。</td></tr>
         <tr><td><b>运营</b></td><td class="heat h3">2.5</td><td>Issue/PR 入口活跃；50+50 样本的典型闭环较快。</td><td>首次响应、开放年龄、内外部差异、review 负载与留存不可观测；p90 长尾仍存在。</td></tr>
@@ -318,7 +319,7 @@
         <article class="card good"><span class="tag fact">DOCS / 4.0</span><h3>双语站点是明显优势</h3><p>ReadTheDocs 使用 Python 3.11 分别构建 zh/en，根入口重定向中文；有安装、架构、特性、开发、治理和 release note。下一步应将链接检查、示例 doctest 和 API reference 设门禁。</p></article>
         <article class="card good"><span class="tag fact">QUALITY / 4.0</span><h3>质量工具链覆盖 Python/C++</h3><p>ruff、mypy、clang-format、clang-tidy、markdownlint、gitleaks、pre-commit、coverage 均可见；新增文件覆盖率门槛是正确的增量策略。缺全仓趋势、复杂度与重复代码看板。</p></article>
         <article class="card warn"><span class="tag fact">RELEASE / 2.5</span><h3>有版本，没有公开 release engineering</h3><p>公开快照显示 3 releases、4 tags，PyPI 有 3.0.0；但未观察到 release workflow、版本日历、签名/SBOM/provenance、RC 验证清单和兼容窗口政策。</p></article>
-        <article class="card risk"><span class="tag fact">BOTS / 1.5</span><h3>合入机器人不等于运营机器人</h3><p><code>ascend-robot</code> 参与合入，但仓内没有 labeler、stale、welcome、review routing、rerun、backport、failure monitor 等公开 workflow。35 个 open PR 和 126 个 open Issue 已值得自动分诊。</p></article>
+        <article class="card risk"><span class="tag fact">BOTS / 1.5</span><h3>合入机器人不等于运营机器人</h3><p><code>ascend-robot</code> 参与合入，PR 评论 <code>compile</code> 能触发全量流水线，安全扫描已由 action 承担；但仓内只有 3 个 workflow，没有 labeler、stale、welcome、review routing、分层 rerun、cancel、backport、failure monitor。第 08 章给出六层能力模型与逐项对比。</p></article>
       </div>
       <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>第一梯队参考</th><th>判定</th><th>下一动作</th></tr></thead><tbody>
         <tr><td>文档网站</td><td>中英 Sphinx + RTD + 本地预览</td><td>vLLM-Omni / FastVideo 的完整贡献者文档</td><td class="yes">成熟</td><td>linkcheck、代码片段执行、版本化站点</td></tr>
@@ -326,13 +327,120 @@
         <tr><td>兼容矩阵</td><td>框架×模型×硬件×特性表</td><td>vllm-ascend 版本/硬件/E2E config 数据库</td><td class="partial">文档型</td><td>矩阵即代码：每个 ✅ 绑定 nightly case 和 last-green SHA</td></tr>
         <tr><td>性能测试</td><td>profiling 方法、特性 benchmark、示例数据</td><td>vLLM dashboard；SGLang CI stats；vLLM-Omni L4 perf</td><td class="partial">手册型</td><td>历史 dashboard + 相对基线门禁 + 环境指纹</td></tr>
         <tr><td>发布</td><td>PyPI、镜像说明、release notes</td><td>SGLang 多后端 wheel/docker；vLLM-Omni release pipeline</td><td class="partial">人工链</td><td>RC→签名→SBOM→PyPI/镜像→回滚自动化</td></tr>
-        <tr><td>机器人</td><td>平台合入机器人</td><td>SGLang failure monitor / rerun / labeler；K8s Prow</td><td class="no">功能不足</td><td>先上 labeler、welcome、stale、retest、backport、triage SLA</td></tr>
+        <tr><td>机器人</td><td>平台合入机器人 + <code>compile</code> 全量触发</td><td>vllm-ascend 8 条 slash command、冲突与 stale 机器人、matcher；SGLang failure monitor / rerun；K8s Prow</td><td class="no">功能不足</td><td>按第 08 章顺序：先 <code>/rerun</code> 与 <code>/cancel</code>，再 labeler、nightly 失败建 Issue、cherry-pick</td></tr>
       </tbody></table></div>
       <div class="callout"><strong>兼容性最重要的改造：</strong>把“支持矩阵”从人工维护的表格变成生成物。源数据至少包含 <code>framework / model / hardware / torch / torch_npu / CANN / dtype / feature / test_id / last_green / owner</code>；nightly 结果反向刷新站点，任何 ✅ 都能点到最近一次通过证据。</div>
     </section>
 
+    <section id="bots" class="reveal">
+      <div class="section-head"><div class="secno">08 / AUTOMATION &amp; BOTS</div><div><span class="kicker">Command surface · triage · retest · backport · monitoring</span><h2>机器人维度：差距不在平台，而在仓库里的资产清单</h2><p class="lead">11 个维度里，机器人（1.5 分）是 MindIE-SD 最低的一项，也是唯一一项“平台已经把能力给足、项目却没有投入”的维度。本节把“机器人”拆成六层，逐层用可验证的仓内文件对比同源的 vllm-ascend 与第一梯队社区，并给出 90 天可落地的资产清单。机器人核验于 2026-09-11，其余章节数据快照仍为 2026-09-04。</p></div></div>
+
+      <div class="callout"><strong>一句话结论：</strong>GitCode/AtomGit Action 已支持 <code>push</code>、<code>pull_request</code>、<code>pull_request_target</code>、<code>issue_comment</code>、<code>pull_request_comment</code>（支持正则过滤）、<code>schedule</code>、<code>workflow_dispatch</code>、<code>workflow_call</code> 八类触发器，以及 stage 串行、job 级 <code>needs</code> DAG、matrix、cache/artifact、<code>concurrency</code> 与自托管 runner。所以 1.5 分不是“平台做不到”，而是“仓库里只有 3 个 workflow、1 条命令、0 个分诊资产”；同一家公司在 vllm-ascend 里已经运营了 8 条评论命令、合并冲突机器人、stale 治理、失败分类 matcher 和发布流水线。</div>
+
+      <div class="metrics">
+        <div class="metric"><b>3</b><small>MindIE-SD 仓内 workflow<br><code>PR-pipeline</code> + <code>build_job</code> + <code>ut_job</code></small></div>
+        <div class="metric"><b>1</b><small>可用评论命令<br>仅 <code>compile</code>，正则精确匹配</small></div>
+        <div class="metric"><b>8</b><small>vllm-ascend 评论命令<br><code>/e2e /rerun /cancel /nightly /cherry-pick /revert /weekly /wait-feedback</code></small></div>
+        <div class="metric"><b>9+</b><small>SGLang 评论命令<br>含 <code>/rerun-failed-ci</code>、<code>/run-full-ci</code>、<code>/rerun-group</code></small></div>
+        <div class="metric"><b>2 / 17</b><small>能力矩阵中的已覆盖项<br>安全扫描与命令触发</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">把“机器人”拆成六层，才知道差在哪一层</h3>
+      <div class="pipeline gates">
+        <div class="stage"><i>L0 / 合规门禁</i><b>安全与规范机器人</b><span>gitleaks、pre-commit、SCA、恶意代码扫描、CLA 标签。MindIE-SD 已覆盖这一层。</span></div>
+        <div class="stage"><i>L1 / 分诊路由</i><b>分类与找人</b><span>自动打标签、首次贡献欢迎、按模块/OWNERS 指派 reviewer、缺信息自动追问。</span></div>
+        <div class="stage"><i>L2 / CI 生命周期</i><b>命令与调度</b><span>评论命令分发、失败重跑、取消过期运行、并发去重、按标签触发昂贵任务。</span></div>
+        <div class="stage"><i>L3 / 失败治理</i><b>红得准、有人管</b><span>日志 matcher 分类、flaky 台账、失败自动建/关联 Issue、last-green、自动 bisect。</span></div>
+        <div class="stage"><i>L4 / 发布与依赖</i><b>让版本可重复</b><span>backport/cherry-pick、revert、版本 bump、artifact 提升、发布流水线、文档链检与翻译。</span></div>
+        <div class="stage"><i>L5 / 健康回报</i><b>把运营变成看板</b><span>失败通知、覆盖率与耗时、runner 利用率、命令成功率与分诊 SLA 看板。</span></div>
+      </div>
+      <div class="matrix-note"><b>证据边界：</b>GitCode 允许在界面直接创建流水线，所以“仓库树里没有”不等于“平台上一个都没有”。本节所有“未观察到”都只以 <code>.gitcode/workflows</code> 的 3 个文件、<code>.gitcode/</code> 的 2 个条目与公开仓库树为限。另需注意：GitHub 上的 <code>Ascend/MindIE-SD</code> 是只读镜像（无 <code>.github/</code>，Actions 仅有内置 Dependency Graph），不能作为自动化能力的证据；真正的工程与社区运营在 GitCode 上游仓。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">MindIE-SD：三个 workflow、一条命令、零分诊</h3>
+      <div class="table-wrap"><table><thead><tr><th>仓内资产</th><th>已核实事实</th><th>已有的机器人成分</th><th>缺口</th></tr></thead><tbody>
+        <tr class="target-row"><td><code>PR-pipeline_mindie-sd.yml</code></td><td><code>on: pull_request_comment</code>，<code>comments: ['^compile$']</code>，分支 <code>dev</code>/<code>master</code>；stage1 为 CodeCheck（pre-commit、gitleaks、<code>sca-pr</code>、恶意代码扫描），stage2 为三架构构建 + ARM UT。</td><td><span class="yes">已有</span>命令式触发雏形；已消费 <code>openlibing</code> 的 SCA PR 扫描与恶意代码扫描 action。</td><td>只识别一条命令，且是“全量重跑”而非分层重跑；无 <code>/rerun</code>、<code>/cancel</code>、<code>/e2e</code>；无标签、无路由、无欢迎。</td></tr>
+        <tr class="target-row"><td><code>build_job.yml</code> / <code>ut_job.yml</code></td><td>被主流程复用的构建与 UT job；<code>Detect_file_changes</code> 让纯文档改动跳过构建。</td><td><span class="partial">复用型</span>相当于 <code>workflow_call</code> 的组件化，是很好的地基。</td><td>失败不建 Issue、不归档阶段耗时、不做失败归因，也没有 per-job 重跑入口。</td></tr>
+        <tr class="target-row"><td><code>.gitcode/PULL_REQUEST_TEMPLATE.md</code></td><td>四段式模板，含 <code>Fixes #ISSUE ID</code> 自动关单约定。</td><td><span class="partial">平台自动关单</span>靠提交信息关键字，而非可配置的机器人流程。</td><td>没有 checklist 校验 job：必填字段、测试证据、文档影响全靠自觉。</td></tr>
+        <tr class="target-row"><td><code>.gitcode/</code> 目录</td><td>只有 <code>workflows/</code> 与 <code>PULL_REQUEST_TEMPLATE.md</code>。</td><td class="no">—</td><td>无 <code>ISSUE_TEMPLATE</code>、无 labeler、无 stale、无 welcome、无 CODEOWNERS 类配置。</td></tr>
+        <tr class="target-row"><td><code>AGENTS.md</code> / <code>CLAUDE.md</code> / <code>GEMINI.md</code> / <code>.agents/</code></td><td>面向 AI 编码代理的说明与技能资产（<code>skills/</code>、<code>scripts/</code>）。</td><td><span class="tag infer">开发期资产</span>提升的是写代码效率，不是社区运营。</td><td>未接入平台事件，无法在 Issue/PR 上执行动作、无法留痕，也不能替代分诊。</td></tr>
+      </tbody></table></div>
+      <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 09 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">能力矩阵：17 项机器人能力，MindIE-SD 覆盖 2 项</h3>
+      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend（同源昇腾）</th><th>SGLang</th><th>参考实现</th></tr></thead><tbody>
+        <tr class="target-row"><td><b>评论命令分发</b></td><td class="partial">仅 <code>compile</code></td><td class="yes">8 条，<code>peter-evans/slash-command-dispatch@v5</code></td><td class="yes">9+ 条，自研 <code>slash_command_handler.py</code></td><td class="yes">Prow / pytorchbot 命令族</td></tr>
+        <tr class="target-row"><td><b>命令权限模型</b></td><td class="no">无</td><td class="yes">用户白名单 + <code>[Bot]</code> 拒绝回复 + reaction</td><td class="yes">fork PR 按 collaborator 权限判定，最小授权</td><td class="yes">Prow 按 org 成员/OWNERS 授权</td></tr>
+        <tr class="target-row"><td><b>自动打标签 / 分诊</b></td><td class="no">未观察到</td><td class="partial"><code>/wait-feedback</code> 打标；标签可触发任务</td><td class="partial">命令驱动 CI 标签</td><td class="yes">label 插件 + labeler</td></tr>
+        <tr class="target-row"><td><b>首次贡献欢迎</b></td><td class="no">无</td><td class="no">无</td><td class="no">无</td><td class="yes">Prow welcome</td></tr>
+        <tr class="target-row"><td><b>reviewer 自动路由</b></td><td class="no">无</td><td class="partial">建 PR 自动流程，非按模块路由</td><td class="partial">Codeowners 审批要求</td><td class="yes">blunderbuss + OWNERS</td></tr>
+        <tr class="target-row"><td><b>失败重跑</b></td><td class="no">只能重新评论全量跑</td><td class="yes"><code>/rerun</code>、<code>/e2e</code>、<code>/nightly</code>、<code>/weekly</code></td><td class="yes"><code>/rerun-failed-ci</code>、<code>/rerun-group</code>、<code>rerun-test.yml</code></td><td class="yes"><code>/retest</code></td></tr>
+        <tr class="target-row"><td><b>取消过期运行</b></td><td class="no">未配置 <code>concurrency</code></td><td class="yes"><code>/cancel</code> + 专用 command workflow</td><td class="yes">关闭 PR 与新提交时取消旧任务</td><td class="yes">tide / 队列治理</td></tr>
+        <tr class="target-row"><td><b>失败分类 / flaky</b></td><td class="no">无 matcher</td><td class="yes">仓内 <code>matchers/</code> 目录</td><td class="yes">failure monitor + auto bisect</td><td class="yes">CI 失败分类看板</td></tr>
+        <tr class="target-row"><td><b>失败看板 / last-green</b></td><td class="no">无</td><td class="partial">多硬件 nightly/weekly 结果</td><td class="yes">CI 统计与失败监控</td><td class="yes">vLLM dashboard</td></tr>
+        <tr class="target-row"><td><b>PR 停滞 / 冲突提醒</b></td><td class="no">无</td><td class="yes">合并冲突与 Issue 管理机器人</td><td class="partial">命令与标签提示</td><td class="yes">needs-rebase、lifecycle</td></tr>
+        <tr class="target-row"><td><b>backport / cherry-pick</b></td><td class="no">无</td><td class="yes"><code>/cherry-pick</code>、<code>/revert</code> 专用 workflow</td><td class="yes"><code>bot-cherry-pick.yml</code></td><td class="yes">release 分支 cherry-pick 机器人</td></tr>
+        <tr class="target-row"><td><b>版本 / 依赖 bump</b></td><td class="no">无 dependabot/renovate</td><td class="no">未观察到</td><td class="yes">5 个 <code>bot-bump-*</code> workflow</td><td class="yes">dependabot / renovate</td></tr>
+        <tr class="target-row"><td><b>发布自动化</b></td><td class="partial">PyPI 有包，无公开流水线</td><td class="yes">代码与 wheel 发布 workflow</td><td class="yes"><code>release-*</code> 一整套</td><td class="yes">release pipeline</td></tr>
+        <tr class="target-row"><td><b>文档链检 / 翻译</b></td><td class="partial">RTD 双语构建，无链检任务</td><td class="yes">链检与文档翻译定时任务</td><td class="partial">文档版本 bump 机器人</td><td class="yes">docs preview + linkcheck</td></tr>
+        <tr class="target-row"><td><b>覆盖率 / 耗时 / 资源</b></td><td class="no">无</td><td class="partial">覆盖率定时任务</td><td class="yes">覆盖率、估时、runner 利用率三条流</td><td class="yes">CI 成本看板</td></tr>
+        <tr class="target-row"><td><b>IM / 群通知回流</b></td><td class="partial">微信群只服务人，不回写公开渠道</td><td class="partial">未见公开配置</td><td class="yes">CI 通知对接飞书</td><td class="yes">失败自动通知</td></tr>
+        <tr class="target-row"><td><b>安全 / 依赖扫描</b></td><td class="yes">SCA PR 扫描 + 恶意代码扫描 + gitleaks</td><td class="partial">间接覆盖</td><td class="partial">镜像漏洞扫描</td><td class="yes">多工具组合</td></tr>
+      </tbody></table></div>
+      <div class="legend"><span><span class="tag fact">已核实</span> 来自本次抓取的仓内文件</span><span><span class="tag infer">推断</span> 由文件结构推导</span><span><span class="tag target">目标</span> 建议补齐项</span></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">命令面：从 1 条到 8 条，权限设计比数量更重要</h3>
+      <div class="table-wrap"><table><thead><tr><th>命令</th><th>语义</th><th>vllm-ascend</th><th>SGLang</th><th>MindIE-SD</th><th>建议优先级</th></tr></thead><tbody>
+        <tr class="target-row"><td><code>/compile</code></td><td>触发 CodeCheck + 构建 + UT</td><td class="partial">由 <code>/rerun</code> 等覆盖</td><td class="partial"><code>/rerun-full-ci</code></td><td class="yes">唯一命令</td><td>保留；改为 push 自动触发 + 命令补跑</td></tr>
+        <tr class="target-row"><td><code>/rerun</code></td><td>只重跑失败用例</td><td class="yes">已有</td><td class="yes"><code>/rerun-failed-ci</code></td><td class="no">无</td><td><span class="tag target">P0</span></td></tr>
+        <tr class="target-row"><td><code>/cancel</code></td><td>取消当前运行，释放 NPU</td><td class="yes">已有</td><td class="yes">关闭/新提交自动取消</td><td class="no">无</td><td><span class="tag target">P0</span></td></tr>
+        <tr class="target-row"><td><code>/e2e</code></td><td>触发单机端到端</td><td class="yes">已有</td><td class="yes"><code>/run-full-ci</code></td><td class="no">无</td><td><span class="tag target">P1</span></td></tr>
+        <tr class="target-row"><td><code>/nightly</code> / <code>/weekly</code></td><td>预约重任务与整机验证</td><td class="yes">已有</td><td class="yes"><code>/run-extra-ci</code></td><td class="no">无</td><td><span class="tag target">P1</span></td></tr>
+        <tr class="target-row"><td><code>/cherry-pick &lt;branch&gt;</code></td><td>把修复回移到发布分支</td><td class="yes">已有</td><td class="yes">已有</td><td class="no">无</td><td><span class="tag target">P1</span></td></tr>
+        <tr class="target-row"><td><code>/label</code></td><td>打标签并驱动后续流程</td><td class="partial">以 <code>/wait-feedback</code> 实现</td><td class="yes">CI 标签</td><td class="no">无</td><td><span class="tag target">P1</span></td></tr>
+        <tr class="target-row"><td><code>/revert</code></td><td>一键撤回已合入提交</td><td class="yes">已有</td><td class="partial">人工</td><td class="no">无</td><td><span class="tag target">P2</span></td></tr>
+        <tr class="target-row"><td><code>/wait-feedback</code></td><td>标记等待回复并启动 SLA 计时</td><td class="yes">已有（含白名单鉴权）</td><td class="no">未观察到</td><td class="no">无</td><td><span class="tag target">P2</span></td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card good"><h3>权限第一</h3><p>命令必须绑定 actor 角色：外部用户只能触发只读/诊断类命令，昂贵 NPU 任务需要 collaborator 以上权限。SGLang 在 fork PR 上按权限决定是否 checkout PR 代码，是必须抄的安全姿势——命令处理器本身跑在提权上下文里。</p></article>
+        <article class="card warn"><h3>幂等与限流</h3><p>同一条命令重复出现只能产生一个 active run；用 <code>concurrency</code> 的 IGNORE/QUEUE 策略代替“谁手快谁先跑”。机器人对重复命令应先回复已有运行链接，而不是再排一次队。</p></article>
+        <article class="card risk"><h3>可审计、可回退</h3><p>命令处理脚本要进仓、走 PR 评审、留评论与标签痕迹，并支持“谁在什么时候让机器人做了什么”的回溯。禁止把巡检逻辑放在个人机器或不可见的外部服务里。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">从 1.5 到 4.5：机器人维度的分档标准</h3>
+      <div class="table-wrap"><table><thead><tr><th>档位</th><th>必须存在的资产</th><th>如何验证</th><th>MindIE-SD 距离</th></tr></thead><tbody>
+        <tr class="target-row"><td><b>1.5 现状</b></td><td>平台合入机器人 + 一条评论触发命令 + 调用第三方安全扫描 action。</td><td><code>ascend-robot</code> 作为 committer；<code>compile</code> 评论触发；SCA/恶意代码扫描 action。</td><td class="yes">已达到</td></tr>
+        <tr><td><b>2.5 可重复</b></td><td>≥4 条命令（rerun/cancel/e2e/label）、自动打标签、失败自动建或关联 Issue、每周 stale/triage 定时任务且有 owner。</td><td>命令处理 workflow 进仓；标签覆盖率与 Issue 关联率可从平台导出。</td><td class="no">缺全部四项</td></tr>
+        <tr><td><b>3.5 可观测</b></td><td>失败分类 matcher、flaky 台账、last-green、覆盖率/耗时/runner 看板、backport 与版本 bump 自动化、机器人动作审计日志。</td><td>任一红测都能回答“是环境、是 flaky、还是真回归”，并能点到负责 Issue。</td><td class="no">无观测层</td></tr>
+        <tr><td><b>4.5 自治</b></td><td>按目录 OWNERS 自动指派、两阶段审批、merge queue/自动合入门禁、发布自动化与回滚、机器人与人工 SLA 统一看板、命令权限模型经演练。</td><td>外部贡献者首次 PR 能得到自动 reviewer 与明确 SLA；发布与回滚均为可重复事件。</td><td class="no">依赖名单与发布工程</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">机器人自己的 SLO：先看它有没有帮上忙，再看它说了多少话</h3>
+      <div class="table-wrap"><table><thead><tr><th>指标</th><th>定义</th><th>90 天目标 / 报警</th><th>为什么需要</th></tr></thead><tbody>
+        <tr><td><span class="metric-name">命令响应时延</span><span class="metric-formula">从评论命令到流水线进入 running 的 p50/p95</span></td><td>按命令分别统计，含权限拒绝与排队</td><td><span class="tag target">p95 ≤ 5 分钟</span></td><td>命令慢于人工点击就没人用</td></tr>
+        <tr><td><span class="metric-name">分诊覆盖率</span><span class="metric-formula">新 Issue/PR 在 24 小时内获得标签 + owner 的比例</span></td><td>机器人与轮值 triage 合并计算</td><td><span class="tag target">≥ 90%</span></td><td>标签不等于有人管，owner 才等于有人管</td></tr>
+        <tr><td><span class="metric-name">失败分类准确率</span><span class="metric-formula">被判为 flaky 的用例后续确为 flaky 的比例；真回归被误判的比例</span></td><td>需要 matcher 与人工复核记录</td><td><span class="tag target">误判 ≤ 5%</span></td><td>分类错一次，团队就再不信红灯</td></tr>
+        <tr><td><span class="metric-name">机器人噪音比</span><span class="metric-formula">机器人评论数 / 全部评论数；同一 PR 重复提醒次数</span></td><td>按周统计，重复提醒去重后计算</td><td><span class="tag target">≤ 20%，重复 ≤ 1 次</span></td><td>刷屏会让维护者直接忽略机器人</td></tr>
+        <tr><td><span class="metric-name">自动化误伤率</span><span class="metric-formula">被 stale 关闭后又被重开或申诉的比例</span></td><td>需要“关闭前二次提醒 + 静默期”制度</td><td><span class="tag target">≤ 1%</span></td><td>社区早期最怕机器人把用户赶走</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card risk"><h3>反模式一：用机器人掩盖无人值守</h3><p>自动打标签、自动回复、自动关单都能让看板变好看，但如果没有 owner 和 SLA，只是把混乱藏得更深。标签必须绑定责任人，机器人只负责把问题送到人面前。</p></article>
+        <article class="card risk"><h3>反模式二：把 AI 代理当分诊替代</h3><p>仓内的 <code>AGENTS.md</code>、<code>.agents/skills</code> 提升的是开发效率，不是社区运营。凡是影响外部贡献者体验的动作，都必须走公开事件、公开评论、可审计记录。</p></article>
+        <article class="card risk"><h3>反模式三：一上来就自动关单</h3><p>NPU 生态的用户问题常常需要环境信息来回确认。先做“缺信息自动追问 + 到期提醒 + 转交 owner”，把自动关闭放到最后一个阶段，并且永久保留二次确认。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">30 / 60 / 90 天：先让机器人替人做重复动作</h3>
+      <div class="grid3">
+        <article class="card good"><h3>P0 · 0–30 天：命令与去重</h3><p>新增评论命令分发 workflow（<code>pull_request_comment</code> 正则匹配 <code>/rerun</code>、<code>/cancel</code>、<code>/compile</code>），为 PR 流程配置 <code>concurrency</code> 防止重复排队，并在 PR 模板中把必填项做成可校验字段。</p><p><b>退出条件：</b>一条命令能精确重跑失败 job，取消操作 5 分钟内生效。</p></article>
+        <article class="card warn"><h3>P1 · 30–60 天：分诊与失败治理</h3><p>落地 <code>issue_comment</code> + <code>schedule</code> 两类任务：新 Issue/PR 自动打标签并指派 owner；nightly 失败自动开 Issue 并回填 last-green；stale 只做提醒与归类，不做关闭。</p><p><b>退出条件：</b>分诊覆盖率 ≥90%，每次红灯都有对应 Issue 与负责人。</p></article>
+        <article class="card risk"><h3>P2 · 60–90 天：发布与回报</h3><p>补 backport/cherry-pick 命令与版本 bump、发布流水线（同一 artifact 提升 + SBOM/签名）、文档链检定时任务，以及一张公开的机器人运营周报（命令成功率、耗时、flaky、误伤率）。</p><p><b>退出条件：</b>发布与回滚是可重复事件，机器人指标进入月度公开复盘。</p></article>
+      </div>
+
+      <details><summary>可行性依据：GitCode／AtomGit Action 已具备的触发与编排能力（本次核验）</summary><div><ul><li><b>触发器：</b><code>push</code>、<code>pull_request</code>、<code>pull_request_target</code>（fork 安全模式，可访问 secrets）、<code>issue_comment</code>（官方示例即“评论 <code>/deploy</code> 触发”）、<code>pull_request_comment</code>（支持正则过滤）、<code>workflow_dispatch</code>（带输入参数）、<code>workflow_call</code>、<code>schedule</code>（cron）。均支持 branches / paths / tags 过滤。</li><li><b>编排：</b>stage 串行 + stage 内 job 并行、<code>fail_fast</code>、job 级 <code>needs</code> DAG、matrix、<code>post</code> 后处理阶段（通知与清理）。</li><li><b>运行与安全：</b>官方托管 runner（含 GPU 规格）与自托管 runner（<code>self-hosted</code> + 自定义标签，适配 NPU 池）；secret 加密与日志脱敏；<code>permissions</code> 最小权限；<code>concurrency</code> 支持 IGNORE / QUEUE。</li><li><b>数据传递：</b>artifact 上传下载与保留期、基于 <code>key</code>/<code>restore-keys</code> 的依赖缓存。</li><li><b>平台示例原文：</b>“一个 workflow 用来构建与测试 PR，另一个在每次 release 时部署，<b>还有一个在新建 Issue 时打标签</b>”——即 labeler 类机器人本来就是平台的一等用例。</li></ul></div></details>
+      <div class="callout light"><strong>可直接复制的三件事：</strong>①把 vllm-ascend 的评论命令清单映射到 MindIE-SD 的 NPU 场景（<code>/rerun</code>、<code>/cancel</code> 先做，成本最低）；②照 SGLang 的 fork 权限判定与自研 handler 结构做命令安全模型，避免提权上下文执行不可信代码；③照 vllm-ascend 的 <code>matchers/</code> 建失败分类，先把“红得准”做出来，再谈自动化重跑。</div>
+    </section>
+
     <section id="governance" class="reveal">
-      <div class="section-head"><div class="secno">08 / GOVERNANCE</div><div><span class="kicker">Ownership is not yet a ladder</span><h2>角色名单清楚，但权力如何获得仍不清楚</h2><p class="lead">根目录 <code>OWNERS</code> 已列出 5 位 branch keeper、5 位 approver、18 位 reviewer；治理文档也说明 reviewer→approver→branch keeper 的合入链。这比许多同规模多模态项目成熟。但文档没有回答晋升标准、提名/投票、任期、emeritus、罢免、厂商多样性和非代码贡献路径。</p></div></div>
+      <div class="section-head"><div class="secno">09 / GOVERNANCE</div><div><span class="kicker">Ownership is not yet a ladder</span><h2>角色名单清楚，但权力如何获得仍不清楚</h2><p class="lead">根目录 <code>OWNERS</code> 已列出 5 位 branch keeper、5 位 approver、18 位 reviewer；治理文档也说明 reviewer→approver→branch keeper 的合入链。这比许多同规模多模态项目成熟。但文档没有回答晋升标准、提名/投票、任期、emeritus、罢免、厂商多样性和非代码贡献路径。</p></div></div>
       <div class="grid3"><article class="card good"><h3>可见的责任链</h3><p>PR 模板要求 Issue、Purpose、Test Plan、Test Report；治理要求 reviewer 评审、approver 确认、branch keeper 合入。角色与受保护分支责任相匹配。</p></article><article class="card warn"><h3>root OWNERS 会成为漏斗</h3><p>仓库跨 ops、compilation、quantization、cache、docs、release 多个专业域，却只有根级名单。所有通知和审批容易集中到同一批人，无法显示实际模块所有权。</p></article><article class="card risk"><h3>公开沟通存在“双轨”</h3><p>Issue 是正式入口，微信群是快速入口。若 RFC、故障决策和路线优先发生在群内，外部贡献者无法检索上下文，也难以靠公开贡献积累 merit。</p></article></div>
       <div class="bar-chart" aria-label="最近 50 个关闭 Issue 的关闭周期 p50"><div class="bar-row"><b>MindIE-SD</b><div class="bar-track"><div class="bar issue" style="width:.34%"></div></div><span class="bar-value">1.32d / n50</span></div><div class="bar-row"><b>vLLM-Omni</b><div class="bar-track"><div class="bar issue" style="width:.45%"></div></div><span class="bar-value">1.77d / n50</span></div><div class="bar-row"><b>vllm-ascend</b><div class="bar-track"><div class="bar issue" style="width:3.4%"></div></div><span class="bar-value">13.31d / n50</span></div><div class="bar-row"><b>vLLM</b><div class="bar-track"><div class="bar issue" style="width:9.5%"></div></div><span class="bar-value">37.04d / n50</span></div><div class="bar-row"><b>FastVideo</b><div class="bar-track"><div class="bar issue" style="width:48.5%"></div></div><span class="bar-value">189.85d / n50</span></div><div class="bar-row"><b>TensorRT-LLM</b><div class="bar-track"><div class="bar issue" style="width:100%"></div></div><span class="bar-value">391.21d / n50</span></div></div>
       <div class="callout light"><strong>滚动样本的积极信号：</strong>MindIE-SD 最近公开样本闭环很快，说明维护团队当前响应积极；但它不足以证明长期可持续。真正要看的是首次人工响应、未关闭项年龄分布、外部贡献 PR 首 review、reviewer 负载、reopen、无响应率和贡献者留存。</div>
@@ -347,7 +455,7 @@
     </section>
 
     <section id="contribution-gates" class="reveal">
-      <div class="section-head"><div class="secno">09 / CONTRIBUTION GATES</div><div><span class="kicker">Small PR · closed review · green CI</span><h2>把外部贡献要求写成可验证的合入契约</h2><p class="lead">MindIE-SD 当前最直接的流程问题不是缺少行为准则，而是贡献指南、PR 模板、CI 触发方式和真实分支策略没有形成同一套门禁。规则应进入贡献指南和 PR 模板，由平台与 CI 强制；<code>CODE_OF_CONDUCT.md</code> 继续只负责社区行为边界。</p></div></div>
+      <div class="section-head"><div class="secno">10 / CONTRIBUTION GATES</div><div><span class="kicker">Small PR · closed review · green CI</span><h2>把外部贡献要求写成可验证的合入契约</h2><p class="lead">MindIE-SD 当前最直接的流程问题不是缺少行为准则，而是贡献指南、PR 模板、CI 触发方式和真实分支策略没有形成同一套门禁。规则应进入贡献指南和 PR 模板，由平台与 CI 强制；<code>CODE_OF_CONDUCT.md</code> 继续只负责社区行为边界。</p></div></div>
 
       <div class="grid4">
         <article class="card risk"><span class="tag fact">分支错配</span><h3><code>main</code> 与仓库事实冲突</h3><p>中英文贡献指南要求从 <code>main</code> 创建分支，但当前远端长期分支是 <code>dev/master</code>，PR workflow 也监听 <code>dev/master</code>。文档会直接引导外部开发者选错基线或目标分支。</p></article>
@@ -386,7 +494,7 @@
     </section>
 
     <section id="books" class="reveal">
-      <div class="section-head"><div class="secno">10 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。本章沿用第 1 章的统一指标，只解释各框架要求什么机制以及 MindIE-SD 的现实缺口。</p></div></div>
+      <div class="section-head"><div class="secno">11 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。本章沿用第 1 章的统一指标，只解释各框架要求什么机制以及 MindIE-SD 的现实缺口。</p></div></div>
       <div class="classic-summary">
         <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>根 OWNERS：5 branch keepers、5 approvers、18 reviewers；有治理文档、贡献指南、PR 模板和 CPU UT 路径。</small></div>
         <div class="classic-stat"><b>统一样本 / SAMPLE</b><strong>典型值快，长尾可见</strong><small>截至 2026-09-04，Issue 关闭 p50/p90 为 1.32/27.55 天；PR 合入为 1.79/10.52 天；两者均 n=50。</small></div>
@@ -415,23 +523,26 @@
     </section>
 
     <section id="roadmap" class="reveal">
-      <div class="section-head"><div class="secno">11 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
+      <div class="section-head"><div class="secno">12 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
       <div class="roadmap">
         <article class="phase"><span class="week">WEEK 0–2 / INVENTORY</span><h3>把存量变成资产</h3><ul><li>所有测试标 L0–L4、硬件、模型、框架、预计耗时</li><li>输出 build/UT 分阶段 duration</li><li>建立 skipped/flaky/compatibility 债务表</li><li>为 ops/compile/quant/cache/docs 划 owner</li></ul><span class="exit">EXIT → 可回答“跑什么、在哪跑、多久、谁负责”</span></article>
         <article class="phase"><span class="week">WEEK 3–5 / CLOSE THE LOOP</span><h3>接通 merge 与 nightly</h3><ul><li>merge smoke：单 NPU + 减层模型</li><li>nightly：功能、精度、性能三条流</li><li>artifact 复用与 diff-aware 路由</li><li>失败自动建/关联 Issue，禁止裸 skip</li></ul><span class="exit">EXIT → 每个支持矩阵 ✅ 有 last-green</span></article>
         <article class="phase"><span class="week">WEEK 6–8 / RELEASE</span><h3>版本成为可重复事件</h3><ul><li>发布 checklist、RC 窗口与 release team</li><li>同一 artifact 提升到 PyPI/镜像</li><li>SBOM、签名、provenance、回滚演练</li><li>兼容窗口与弃用政策</li></ul><span class="exit">EXIT → 从 tag 到可验证产物 ≤ 60m</span></article>
-        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>labeler、welcome、retest、stale、backport</li><li>Contributor Ladder + 分目录 OWNERS</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日</span></article>
+        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>先做 <code>/rerun</code>、<code>/cancel</code>，再补 labeler 与 nightly 失败建 Issue</li><li>welcome、stale（只提醒不关闭）、backport（第 08 章命令面）</li><li>Contributor Ladder + 分目录 OWNERS</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日；分诊覆盖 ≥90%</span></article>
       </div>
       <div class="callout light"><strong>指标承接：</strong>本路线的 Owner、目标与报警条件已统一前置到第 1 章指标表；这里仅保留实施顺序和每阶段退出条件，避免路线图再定义一套口径。</div>
-      <div class="callout"><strong>优先级排序：</strong>P0 是测试注册表、构建时长、merge/nightly、last-green；P1 是 release engineering、机器人、分目录 OWNERS；P2 才是更复杂的 SIG/选举制度和全量社区分析平台。先把机制跑起来，再提高治理复杂度。</div>
+      <div class="callout"><strong>优先级排序：</strong>P0 是测试注册表、构建时长、merge/nightly、last-green，机器人只做成本最低的 <code>/rerun</code> 与 <code>/cancel</code>；P1 是 release engineering、分诊与失败治理类机器人、分目录 OWNERS；P2 才是复杂的 SIG/选举制度、backport 与发布自动化（第 08 章给出分层档位与退出条件）。先把机制跑起来，再提高治理复杂度。</div>
     </section>
 
     <section id="sources" class="reveal">
-      <div class="section-head"><div class="secno">12 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">技术证据核验于 2026-08-29，规模与节奏数据刷新于 2026-09-04。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
+      <div class="section-head"><div class="secno">13 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">技术证据核验于 2026-08-29，规模与节奏数据刷新于 2026-09-04，机器人章节的仓内文件核验于 2026-09-11。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
       <h3>MindIE-SD 一手证据</h3>
       <div class="source-grid">
         <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD">MindIE-SD 官方 GitCode 仓库</a><span>仓库规模、默认分支、Issue/PR、release 与当前代码。</span></div>
         <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD/tree/dev/.gitcode/workflows">GitCode workflows</a><span>PR 门禁、三构建 lane、UT、docs-only skip。</span></div>
+        <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/.gitcode/workflows/PR-pipeline_mindie-sd.yml">MindIE-SD PR pipeline</a><span><code>pull_request_comment</code> + <code>comments: ['^compile$']</code>；CodeCheck 含 SCA PR 扫描与恶意代码扫描。</span></div>
+        <div class="source"><a href="https://api.gitcode.com/api/v5/repos/Ascend/MindIE-SD/contents/.gitcode?ref=dev">MindIE-SD .gitcode 目录</a><span>仅 <code>workflows/</code>（3 个文件）与 <code>PULL_REQUEST_TEMPLATE.md</code>；无 ISSUE_TEMPLATE、labeler、stale。</span></div>
+        <div class="source"><a href="https://docs.gitcode.com/en/docs/help/home/org_project/pipeline/overview/">GitCode / AtomGit Action 能力</a><span>八类触发器（含 <code>issue_comment</code>、<code>pull_request_comment</code>）、stage/needs/matrix、cache、concurrency 与自托管 runner。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/test.md">测试指南</a><span>CPU/NPU 分类、入口、500 秒拆分建议。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/developer_guide/build_guide.md">构建指南</a><span>源码 wheel 构建与安装。</span></div>
         <div class="source"><a href="https://github.com/Ascend/MindIE-SD/blob/dev/docs/zh/community/governance.md">治理文档</a><span>branch keeper、approver、reviewer 与决策链。</span></div>
@@ -451,6 +562,11 @@
         <div class="source"><a href="https://github.com/vllm-project/vllm/blob/main/.github/PULL_REQUEST_TEMPLATE.md">vLLM PR Template</a><span>Purpose、Test Plan、Test Result 与文档影响 checklist。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/developer_guide/contribution/testing.md">vllm-ascend Testing</a><span>CPU UT、PR E2E、nightly、多卡与减层模型。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/tree/main/.github/workflows">vllm-ascend workflows</a><span>A2/A3/A5/310P nightly/weekly、发布、机器人、覆盖率与估时。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/.github/workflows/slash_command_dispatch.yml">vllm-ascend slash command dispatch</a><span>8 条命令：<code>/e2e /rerun /cancel /nightly /cherry-pick /revert /weekly /wait-feedback</code>。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/.github/workflows/issue_wait_feedback_command.yml">vllm-ascend /wait-feedback</a><span>用户白名单鉴权、<code>[Bot]</code> 拒绝回复与 reaction、自动打标签。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/.github/workflows/slash-command-handler.yml">SGLang slash command handler</a><span><code>/rerun-failed-ci</code>、<code>/run-full-ci</code>、<code>/run-extra-ci</code>、<code>/rerun-group</code>；fork PR 权限判定与安全 checkout。</span></div>
+        <div class="source"><a href="https://github.com/pytorch/pytorch/wiki/Bot-commands">PyTorch Bot commands</a><span>命令式机器人参考：标签、cherry-pick、revert 与 CI 流程控制。</span></div>
+        <div class="source"><a href="https://prow.infra.cert-manager.io/plugins">Prow Plugin Catalog</a><span>Kubernetes 生态插件族：lgtm、approve、blunderbuss、tide、lifecycle、cherrypicker、needs-rebase。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/test/registered/README.md">SGLang Registered Tests</a><span>注册发现、unit/kernel/E2E/benchmark 分类。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/tree/main/.github/workflows">SGLang workflows</a><span>多后端 nightly、发布、失败监控、rerun 和 runner utilization。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/docs/developer_guide/contribution_guide.md">SGLang Contribution Guide</a><span>主题分支、pre-commit、单元测试、CI 授权触发和大变更拆分。</span></div>
@@ -481,7 +597,7 @@
       <div class="callout light"><strong>限制：</strong>公开仓库看不到内部 runner、未公开流水线、队列容量、真实 GPU/NPU 成本和私域沟通内容；“workflow 文件数”和“test-like 文件数”只用于基础设施指纹，不等同于实际覆盖率。评分应随仓库演进更新，并由项目维护者对事实错误进行校正。</div>
     </section>
   </main>
-  <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure & Operations Audit · Data refreshed 2026-09-04 · Single-file offline report</div></footer>
+  <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure &amp; Operations Audit · Data refreshed 2026-09-04 · Bots &amp; automation verified 2026-09-11 · Single-file offline report</div></footer>
   <script>
     const progress=document.getElementById('progress');
     const updateProgress=()=>{const d=document.documentElement,max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%'};
