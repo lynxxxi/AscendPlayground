@@ -183,7 +183,7 @@
 </head>
 <body>
   <div class="progress" id="progress"></div>
-  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#method">口径与指标</a><a href="#landscape">规模节奏</a><a href="#matrix">评分矩阵</a><a href="#verdict">结论</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#operations">运营</a><a href="#bots">机器人</a><a href="#governance">治理</a><a href="#contribution-gates">贡献门禁</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#method">口径与指标</a><a href="#matrix">评分矩阵</a><a href="#verdict">结论</a><a href="#landscape">规模节奏</a><a href="#testing">测试</a><a href="#build">构建</a><a href="#docs">文档DX</a><a href="#cicd">CI/CD</a><a href="#performance">性能</a><a href="#quality">质量</a><a href="#release">发布</a><a href="#bots">机器人</a><a href="#compatibility">兼容性</a><a href="#governance">治理</a><a href="#operations">运营</a><a href="#books">经典框架</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
 
   <header class="hero">
     <div class="hero-inner">
@@ -220,25 +220,8 @@
       <div class="callout"><strong>计分边界：</strong>可见值决定现状分，建议起步线只用于差距分析，不给未来承诺加分；未知指标按“不可观测”扣在相应维度，不能用 Stars、关闭量或单个快速样本代替。</div>
     </section>
 
-    <section id="landscape" class="reveal">
-      <div class="section-head"><div class="secno">02 / SCALE & CADENCE</div><div><span class="kicker">Scale is context, not health</span><h2>先看规模与节奏，再看机制</h2><p class="lead">Star、fork 和关闭速度只描述社区负载，不直接进入成熟度总分。下表统一使用 n=50，并同时给出 p50/p90；大项目的长尾和小项目的分钟级合入都需要结合开放积压、作者类型与自动化程度解释。</p></div></div>
-      <div class="table-wrap"><table><thead><tr><th>项目</th><th>类型</th><th>Stars</th><th>Forks</th><th>Open issue+PR</th><th>Issue 关闭 p50 / p90</th><th>PR 合入 p50 / p90</th><th>样本</th></tr></thead><tbody>
-        <tr class="target-row" data-group="target"><td>MindIE-SD</td><td>NPU 多模态后端</td><td>87</td><td>136</td><td>132（111+21）</td><td>1.32 / 27.55 天</td><td>1.79 / 10.52 天</td><td>GitCode 50 / 50</td></tr>
-        <tr data-group="engine"><td>vLLM</td><td>通用引擎</td><td>90,931</td><td>21,676</td><td>7,500</td><td>37.04 / 186.47 天</td><td>1.80 / 23.54 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="engine"><td>vllm-ascend</td><td>NPU 插件</td><td>2,753</td><td>2,191</td><td>2,941</td><td>13.31 / 37.60 天</td><td>0.50 / 7.45 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="engine"><td>SGLang</td><td>通用引擎</td><td>34,131</td><td>8,526</td><td>5,124</td><td>60.66 / 121.19 天</td><td>0.38 / 9.20 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="engine"><td>TensorRT-LLM</td><td>通用引擎</td><td>14,543</td><td>2,720</td><td>1,425</td><td>391.21 / 516.22 天</td><td>2.54 / 22.90 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="mm"><td>vLLM-Omni</td><td>多模态服务</td><td>6,637</td><td>1,618</td><td>1,800</td><td>1.77 / 31.04 天</td><td>5.85 / 26.58 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="mm"><td>Cache-DiT</td><td>扩散缓存</td><td>1,270</td><td>81</td><td>85</td><td>0.83 / 32.92 天</td><td>0.01 / 0.74 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="mm"><td>LightX2V</td><td>视频推理</td><td>2,777</td><td>264</td><td>190</td><td>5.20 / 34.40 天</td><td>0.01 / 3.27 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="mm"><td>FastVideo</td><td>视频训练/推理</td><td>4,319</td><td>439</td><td>170</td><td>189.85 / 353.62 天</td><td>0.33 / 5.67 天</td><td>GitHub 50 / 50</td></tr>
-        <tr data-group="mm"><td>DiffSynth-Studio</td><td>模型生态</td><td>13,048</td><td>1,292</td><td>566</td><td>7.15 / 46.29 天</td><td>0.01 / 0.94 天</td><td>GitHub 50 / 50</td></tr>
-      </tbody></table></div>
-      <div class="callout light"><strong>不要误读：</strong>TensorRT-LLM 与 FastVideo 的高 Issue 年龄中位数说明“最近关闭的一批 Issue 很老”，它也可能是健康的 backlog 清理；Cache-DiT 与 DiffSynth 的分钟级 PR 中位数说明快速合入，但不能证明外部贡献者获得了同等速度。下一步应采集 CHAOSS 的 <em>Time to First Response</em>、首次 review、外部/内部作者拆分和 reopen 率。</div>
-    </section>
-
-    <section id="matrix" class="reveal">
-      <div class="section-head"><div class="secno">03 / SCORE MATRIX</div><div><span class="kicker">Eleven-dimensional maturity</span><h2>按同一组维度证据逐项打分</h2><p class="lead">评分先看资产是否存在，再看是否形成 PR/merge/nightly/release 闭环，最后看可观测、自动恢复和公开治理。规模不加分；节奏指标只校验运营结果，不能覆盖机制缺口。MindIE-SD 的 3.0 分因此代表“结构化起步”，而不是由单一 CI/CD 结论倒推。</p></div></div>
+<section id="matrix" class="reveal">
+      <div class="section-head"><div class="secno">02 / SCORE MATRIX</div><div><span class="kicker">Eleven-dimensional maturity</span><h2>按同一组维度证据逐项打分</h2><p class="lead">评分先看资产是否存在，再看是否形成 PR/merge/nightly/release 闭环，最后看可观测、自动恢复和公开治理。规模不加分；节奏指标只校验运营结果，不能覆盖机制缺口。MindIE-SD 的 3.0 分因此代表“结构化起步”，而不是由单一 CI/CD 结论倒推。</p></div></div>
       <div class="filterbar" aria-label="矩阵筛选"><button class="active" data-filter="all">全部</button><button data-filter="target">MindIE-SD</button><button data-filter="engine">通用引擎 / 后端</button><button data-filter="mm">多模态社区</button></div>
       <div class="table-wrap"><table id="score-table"><thead><tr><th>项目</th><th>测试</th><th>构建</th><th>文档/DX</th><th>CI/CD</th><th>性能</th><th>质量</th><th>发布</th><th>机器人</th><th>兼容性</th><th>治理</th><th>运营</th><th>均分</th></tr></thead><tbody>
         <tr class="target-row" data-group="target"><td>MindIE-SD</td><td class="heat h3">2.5</td><td class="heat h3">3.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h2">1.5</td><td class="heat h4">3.5</td><td class="heat h3">3.0</td><td class="heat h3">2.5</td><td class="avg">3.0</td></tr>
@@ -261,17 +244,18 @@
         <tr><td><b>性能</b></td><td class="heat h4">3.5</td><td>有性能指南、算子/模型优化资产与多框架加速路径。</td><td>无公开性能回归曲线、统计阈值、基线版本与退化门禁。</td></tr>
         <tr><td><b>质量</b></td><td class="heat h4">4.0</td><td>ruff、mypy、clang 工具链、gitleaks、pre-commit 和新增文件覆盖率门槛。</td><td>缺全仓覆盖趋势、复杂度/重复代码看板和失败分类。</td></tr>
         <tr><td><b>发布</b></td><td class="heat h3">2.5</td><td>已有 tags、releases、PyPI 包与 release notes。</td><td>未见公开 release workflow、日历、RC 清单、SBOM/签名/provenance 与回滚。</td></tr>
-        <tr><td><b>机器人</b></td><td class="heat h2">1.5</td><td><code>ascend-robot</code> 参与合入；PR 评论 <code>compile</code> 可触发全量流水线；已消费 SCA 与恶意代码扫描 action。</td><td>未见 labeler、welcome、review routing、分层 retest、cancel、stale、backport、failure monitor；详见第 08 章。</td></tr>
+        <tr><td><b>机器人</b></td><td class="heat h2">1.5</td><td><code>ascend-robot</code> 参与合入；PR 评论 <code>compile</code> 可触发全量流水线；已消费 SCA 与恶意代码扫描 action。</td><td>未见 labeler、welcome、review routing、分层 retest、cancel、stale、backport、failure monitor；详见第 12 章。</td></tr>
         <tr><td><b>兼容性</b></td><td class="heat h4">3.5</td><td>公开框架、模型、硬件与特性支持矩阵。</td><td>矩阵没有自动验证时间、last-green、失效责任人与弃用窗口。</td></tr>
         <tr><td><b>治理</b></td><td class="heat h3">3.0</td><td>OWNERS 列出 branch keeper / approver / reviewer，PR 责任链清楚。</td><td>缺分目录 ownership、晋升/退出规则、公开提名投票与厂商多样性机制。</td></tr>
         <tr><td><b>运营</b></td><td class="heat h3">2.5</td><td>Issue/PR 入口活跃；50+50 样本的典型闭环较快。</td><td>首次响应、开放年龄、内外部差异、review 负载与留存不可观测；p90 长尾仍存在。</td></tr>
       </tbody></table></div>
+      <div class="matrix-note"><b>维度与章节对应：</b>测试 → 第 05 章 · 构建 → 第 06 章 · 文档/DX → 第 07 章 · CI/CD → 第 08 章 · 性能 → 第 09 章 · 质量 → 第 10 章 · 发布 → 第 11 章 · 机器人 → 第 12 章 · 兼容性 → 第 13 章 · 治理与合入契约 → 第 14 章 · 运营 → 第 15 章。第 05–15 章按同一套口径逐项展开，并逐条给出与主流社区的对比证据；第 04 章的规模与节奏只用于解释负载，不参与打分。</div>
       <div class="legend"><span class="h5">4.5–5 领先</span><span class="h4">3.5–4.4 成熟</span><span class="h3">2.5–3.4 成型</span><span class="h2">1.5–2.4 初级</span><span class="h1">0.5–1.4 零散</span></div>
       <div class="callout light"><strong>对标选择：</strong>测试与硬件治理优先学 SGLang / vllm-ascend / TensorRT-LLM；多模态分层和性能/质量分离优先学 vLLM-Omni；轻量发布与文档体验可参考 Cache-DiT；FastVideo 说明专业多模态社区也能建立较完整 CI，而不是只有通用引擎才做得到。</div>
     </section>
 
-    <section id="verdict" class="reveal">
-      <div class="section-head"><div class="secno">04 / VERDICT</div><div><span class="kicker">Evidence-backed readout</span><h2>不是“缺 CI”，而是 PR 门禁之后出现断层</h2><p class="lead">在统一口径、50+50 节奏样本和 11 维评分之后，MindIE-SD 的优势与缺口更清楚：它已有企业主导型开源项目的基本骨架；真正拉开它与第一梯队差距的，是 merge 后、nightly、release 三段没有形成公开且可量化的持续看护。</p></div></div>
+<section id="verdict" class="reveal">
+      <div class="section-head"><div class="secno">03 / VERDICT</div><div><span class="kicker">Evidence-backed readout</span><h2>不是“缺 CI”，而是 PR 门禁之后出现断层</h2><p class="lead">在统一口径与 11 维评分之后（规模与节奏样本见第 04 章），MindIE-SD 的优势与缺口更清楚：它已有企业主导型开源项目的基本骨架；真正拉开它与第一梯队差距的，是 merge 后、nightly、release 三段没有形成公开且可量化的持续看护。</p></div></div>
       <div class="grid3">
         <article class="card good"><span class="tag fact">已观察事实</span><h3>PR 基础门禁有真实工程深度</h3><p>文档变更可跳过构建；非文档变更并行执行 x86 ABI1、ARM ABI1、ARM ABI0 构建和 ARM UT；新增 Python 文件设 60% 行覆盖、30% 分支覆盖门槛。</p></article>
         <article class="card warn"><span class="tag fact">公开缺口</span><h3>没有 E2E / nightly / release workflow</h3><p>当前树中未观察到公开的 E2E 目录、定时 workflow、性能回归门禁或发布流水线。NPU 精度与模型兼容性更多体现为文档/示例能力，而不是持续回归资产。</p></article>
@@ -281,8 +265,25 @@
       <div class="metrics"><div class="metric"><b>3.0</b><small>11 维等权均分<br>32.5 ÷ 11 = 2.95</small></div><div class="metric"><b>50+50</b><small>Issue / PR 滚动样本<br>同时报告 p50 与 p90</small></div><div class="metric"><b>3</b><small>公开 GitCode workflow<br>PR 主流程 + 构建复用 + UT 复用</small></div><div class="metric"><b>84</b><small>test-like Python 文件<br>文件数，不是 test case 数</small></div><div class="metric"><b>132</b><small>open issues + PRs<br>2026-09-04 公开快照</small></div></div>
     </section>
 
-    <section id="testing" class="reveal">
-      <div class="section-head"><div class="secno">05 / TESTING</div><div><span class="kicker">UT → E2E → nightly → release</span><h2>MindIE-SD 的 UT 已经像一层，E2E/nightly 还不像系统</h2><p class="lead">当前测试文档明确区分 CPU 兼容与 NPU 依赖测试，提供 <code>--cpu_only</code> / <code>--npu_only</code> / <code>--all</code>，还具备增量 test finder。但公开 PR workflow 实际只调用 CPU 友好的 <code>run_UT_test.sh</code>；NPU 用例、模型 E2E、精度、性能和长稳没有公开触发时机与硬件归属。</p></div></div>
+<section id="landscape" class="reveal">
+      <div class="section-head"><div class="secno">04 / SCALE & CADENCE</div><div><span class="kicker">Scale is context, not health</span><h2>评分之后再回看规模与节奏</h2><p class="lead">先打分，再回看规模与节奏：Star、fork 和关闭速度只描述社区负载，不解释机制好坏，因此放在评分之后作为背景。下表统一使用 n=50，并同时给出 p50/p90；大项目的长尾和小项目的分钟级合入都需要结合开放积压、作者类型与自动化程度解释。</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>类型</th><th>Stars</th><th>Forks</th><th>Open issue+PR</th><th>Issue 关闭 p50 / p90</th><th>PR 合入 p50 / p90</th><th>样本</th></tr></thead><tbody>
+        <tr class="target-row" data-group="target"><td>MindIE-SD</td><td>NPU 多模态后端</td><td>87</td><td>136</td><td>132（111+21）</td><td>1.32 / 27.55 天</td><td>1.79 / 10.52 天</td><td>GitCode 50 / 50</td></tr>
+        <tr data-group="engine"><td>vLLM</td><td>通用引擎</td><td>90,931</td><td>21,676</td><td>7,500</td><td>37.04 / 186.47 天</td><td>1.80 / 23.54 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="engine"><td>vllm-ascend</td><td>NPU 插件</td><td>2,753</td><td>2,191</td><td>2,941</td><td>13.31 / 37.60 天</td><td>0.50 / 7.45 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="engine"><td>SGLang</td><td>通用引擎</td><td>34,131</td><td>8,526</td><td>5,124</td><td>60.66 / 121.19 天</td><td>0.38 / 9.20 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="engine"><td>TensorRT-LLM</td><td>通用引擎</td><td>14,543</td><td>2,720</td><td>1,425</td><td>391.21 / 516.22 天</td><td>2.54 / 22.90 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="mm"><td>vLLM-Omni</td><td>多模态服务</td><td>6,637</td><td>1,618</td><td>1,800</td><td>1.77 / 31.04 天</td><td>5.85 / 26.58 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="mm"><td>Cache-DiT</td><td>扩散缓存</td><td>1,270</td><td>81</td><td>85</td><td>0.83 / 32.92 天</td><td>0.01 / 0.74 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="mm"><td>LightX2V</td><td>视频推理</td><td>2,777</td><td>264</td><td>190</td><td>5.20 / 34.40 天</td><td>0.01 / 3.27 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="mm"><td>FastVideo</td><td>视频训练/推理</td><td>4,319</td><td>439</td><td>170</td><td>189.85 / 353.62 天</td><td>0.33 / 5.67 天</td><td>GitHub 50 / 50</td></tr>
+        <tr data-group="mm"><td>DiffSynth-Studio</td><td>模型生态</td><td>13,048</td><td>1,292</td><td>566</td><td>7.15 / 46.29 天</td><td>0.01 / 0.94 天</td><td>GitHub 50 / 50</td></tr>
+      </tbody></table></div>
+      <div class="callout light"><strong>不要误读：</strong>TensorRT-LLM 与 FastVideo 的高 Issue 年龄中位数说明“最近关闭的一批 Issue 很老”，它也可能是健康的 backlog 清理；Cache-DiT 与 DiffSynth 的分钟级 PR 中位数说明快速合入，但不能证明外部贡献者获得了同等速度。下一步应采集 CHAOSS 的 <em>Time to First Response</em>、首次 review、外部/内部作者拆分和 reopen 率。</div>
+    </section>
+
+<section id="testing" class="reveal">
+      <div class="section-head"><div class="secno">05 / TESTING</div><div><span class="kicker">Dimension 01 · UT → E2E → nightly → release</span><h2>MindIE-SD 的 UT 已经像一层，E2E/nightly 还不像系统</h2><p class="lead">当前测试文档明确区分 CPU 兼容与 NPU 依赖测试，提供 <code>--cpu_only</code> / <code>--npu_only</code> / <code>--all</code>，还具备增量 test finder。但公开 PR workflow 实际只调用 CPU 友好的 <code>run_UT_test.sh</code>；NPU 用例、模型 E2E、精度、性能和长稳没有公开触发时机与硬件归属。</p></div></div>
       <div class="pipeline"><div class="stage"><i>L0 / CPU</i><b>逻辑 UT</b><span>配置、工具、编译逻辑；硬件 mock；每 PR 必跑。</span></div><div class="stage"><i>L1 / 1 NPU</i><b>算子/组件</b><span>真实 NPU 算子，小输入，不起完整模型服务。</span></div><div class="stage"><i>L2 / 1 NPU</i><b>模型 E2E</b><span>减层/随机权重；单模型基本推理、API、输出结构。</span></div><div class="stage"><i>L3 / 2–8 NPU</i><b>集成/兼容</b><span>并行、量化、缓存、编译、框架组合，merge 后运行。</span></div><div class="stage"><i>L4 / POOL</i><b>精度/性能/长稳</b><span>真实权重，nightly/weekly/release；基线与方差带。</span></div></div>
       <div class="table-wrap"><table><thead><tr><th>社区</th><th>UT</th><th>E2E / 集成</th><th>Nightly / Weekly</th><th>资源治理亮点</th><th>MindIE-SD 可复制项</th></tr></thead><tbody>
         <tr class="target-row"><td>MindIE-SD</td><td class="yes">CPU 模式 + coverage</td><td class="partial">仓内 NPU tests，但无公开 E2E 层</td><td class="no">未观察到公开定时流</td><td>文档变更跳过；增量 test finder</td><td>把既有 tests 注册成时机×硬件矩阵</td></tr>
@@ -300,8 +301,17 @@
     </section>
 
     <section id="build" class="reveal">
-      <div class="section-head"><div class="secno">06 / BUILD & CI</div><div><span class="kicker">Build time is a product metric</span><h2>三条构建 lane 已有，构建时间却仍是黑箱</h2><p class="lead">MindIE-SD 的构建并非普通 Python wheel：<code>setup.py::CustomBuildPy</code> 会串联 AscendC/TIK custom OPP、PyTorch plugin、compile_commands 合并与 wheel 打包。PR 流水线并行构建 x86 ABI1、ARM ABI1、ARM ABI0，是正确方向；但公开 workflow 没有 step duration 归档、timeout、缓存命中率或历史趋势，因此无法回答“冷构建多久、哪段最慢、改动后退化多少”。</p></div></div>
+      <div class="section-head"><div class="secno">06 / BUILD</div><div><span class="kicker">Dimension 02 · Build time is a product metric</span><h2>三条构建 lane 已有，构建时间却仍是黑箱</h2><p class="lead">MindIE-SD 的构建不是普通 Python wheel：<code>setup.py::CustomBuildPy</code> 串联 AscendC/TIK custom OPP、PyTorch plugin、compile_commands 合并与 wheel 打包。PR 流水线并行构建 x86 ABI1、ARM ABI1、ARM ABI0，方向正确；但公开 workflow 没有 step duration 归档、timeout、缓存命中率或历史趋势，因此无法回答“冷构建多久、哪段最慢、改动后退化多少”。</p></div></div>
       <div class="scoreboard"><div class="score-panel"><div class="n">N/A</div><h3 style="color:#fff">公开可验证的完整构建时长</h3><p>仓库与公开页面没有给出可复用的 p50/p95 构建时长；本地非 CANN/NPU Windows 环境也不能等价复现。这里明确标记未知，不用一次非同构机器的测速冒充 CI 基线。</p><span class="tag target">必须补观测</span></div><div class="gaps"><div class="gap"><b>已具备</b><span>3 架构/ABI lane 并行、固定 Python 3.11 镜像、docs-only skip、<code>SOURCE_DATE_EPOCH</code>、wheel 模式。</span></div><div class="gap"><b>缺观测</b><span>阶段耗时、队列时间、冷/热构建、缓存命中、产物大小、失败归因、NPU·小时/runner·分钟。</span></div><div class="gap"><b>缺加速</b><span>未观察到 compiler cache、依赖层缓存、OPP/plugin 变更感知、预构建产物复用或 remote cache。</span></div><div class="gap"><b>缺发布链</b><span>PR 只验证 wheel 存在；未观察到公开签名、SBOM、provenance、PyPI/镜像发布和回滚自动化。</span></div></div></div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：构建缓存与镜像被谁做成了资产</h3>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>缓存 / 镜像资产</th><th>耗时与规模观测</th><th>产物复用方式</th></tr></thead><tbody>
+        <tr class="target-row"><td>MindIE-SD</td><td>固定 SWR 镜像（Ubuntu24 + CANN 9.0.1 + Torch 2.9 + Py3.11），三 lane 并行，docs-only 跳过构建</td><td class="no">无阶段耗时、缓存命中率与成本数据</td><td class="partial">PR 只验证 wheel 生成，未复用给后续阶段</td></tr>
+        <tr><td>vllm-ascend</td><td><code>_build_csrc_cache.yaml</code> 与 <code>push_build_csrc_cache.yaml</code> 预编译 csrc 缓存，另有 precommit 缓存与 nightly/lint 镜像流水线</td><td class="partial">每次修订带估时信息，镜像与缓存复用是主优化手段</td><td class="yes">csrc 命中时 PR 直接跳过 native 重编</td></tr>
+        <tr><td>SGLang</td><td><code>seed-rust-ext-cache.yml</code>、<code>_docker-build-and-publish.yml</code>、<code>_docker-cleanup-nightly.yml</code>、<code>retag-docker.yml</code></td><td class="yes">镜像构建、清理、重打标签各自独立流水线，避免互相拖累</td><td class="yes">kernel / rust-ext wheel 单独构建后被测试任务复用</td></tr>
+        <tr><td>vLLM</td><td>预编译 wheel 与变更感知的 test areas</td><td class="yes">nightly 构建与性能看板长期归档</td><td class="yes">按改动文件决定重建范围</td></tr>
+        <tr><td>diffusers</td><td><code>build_docker_images.yml</code> 每日构建 cpu / cuda / xformers-cuda / minimum-cuda / doc-builder 五个镜像</td><td class="partial">镜像版本固定了环境，但没有构建耗时看板</td><td class="yes">CI 全部跑在固定镜像里，环境即指纹</td></tr>
+        <tr><td>PyTorch</td><td>RC tag 触发 <code>binary_build</code>；<code>viable/strict</code> 绿线分支作为可构建基线</td><td class="yes">HUD 聚合跨 workflow 状态并猜失败原因</td><td class="yes">发布从绿线分支切出，避免在红线上打包</td></tr>
+      </tbody></table></div>
       <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>阶段</th><th>当前事实</th><th>建议采集</th><th>90 天目标 SLO</th><th>优化杠杆</th></tr></thead><tbody>
         <tr><td>CodeCheck</td><td>pre-commit + gitleaks；每 PR</td><td>排队/执行/失败原因</td><td><span class="tag target">p95 ≤ 5m</span></td><td>镜像内置工具；只检查 diff</td></tr>
         <tr><td>CPU UT</td><td>ARM runner；先完整 build 再运行</td><td>收集/执行/coverage 分段</td><td><span class="tag target">p95 ≤ 12m</span></td><td>纯 Python UT 不依赖 native full build</td></tr>
@@ -310,30 +320,109 @@
         <tr><td>Nightly</td><td class="no">未观察到</td><td>NPU·小时、模型缓存、flaky、性能漂移</td><td><span class="tag target">≤ 3h / 95% 准点</span></td><td>模型分片、历史基线、失败隔离</td></tr>
         <tr><td>Release</td><td>3 releases / 4 tags；无公开 workflow</td><td>重现性、签名、SBOM、发布耗时</td><td><span class="tag target">≤ 60m + 可回滚</span></td><td>从已验证 commit 提升产物，禁止重编</td></tr>
       </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>先做缓存，再谈并行</h3><p>三条 lane 并行解决的是墙钟时间，缓存解决的是绝对算力。vllm-ascend 的 csrc cache 与 SGLang 的 rust-ext cache 都证明：把“不变的 native 层”预编译成 artifact，比再加一条 lane 更省 NPU·小时。</p></article><article class="card warn"><h3>镜像就是环境指纹</h3><p>MindIE-SD 的镜像把 Ubuntu、CANN、Torch、Python 版本全部写死，这是可复现性的地基；下一步是把镜像 digest 记入每次构建报告，让“同一次提交在本周和上周构建结果不同”成为可诊断事件。</p></article><article class="card risk"><h3>构建时长必须进看板</h3><p>没有 p50/p95 就无法判断优化是否有效，也无法回答“这次改动是不是把构建拖慢了一倍”。先落 stage duration 采集，再谈 ccache、分层 artifact 与 remote cache。</p></article></div>
       <div class="callout light"><strong>关键设计：</strong>PR 构建产物应成为后续测试和发布的输入，而不是每个阶段重新编译。以 commit SHA + 架构 + ABI + Torch/CANN 组合为 artifact key；只有 <code>csrc/</code>、build scripts 或依赖变化才重建 native 层。发布则“提升”已在 release candidate 流程验证过的同一 artifact。</div>
     </section>
 
-    <section id="operations" class="reveal">
-      <div class="section-head"><div class="secno">07 / OPERATIONS</div><div><span class="kicker">Docs · quality · release · bots · compatibility</span><h2>文档与质量领先于发布和机器人</h2><p class="lead">MindIE-SD 的用户入口已经比很多同规模多模态项目完整：中英文 Sphinx、ReadTheDocs、开发镜像、测试/构建/性能指南、支持矩阵、PyPI 包和 vLLM-Omni 镜像说明。薄弱点在于这些资产尚未被 release 与机器人持续验证。</p></div></div>
+    <section id="docs" class="reveal">
+      <div class="section-head"><div class="secno">07 / DOCS &amp; DX</div><div><span class="kicker">Dimension 03 · Documentation as a verified product</span><h2>双语文档是同规模项目里的领先项，但它还没有被自动验证</h2><p class="lead">MindIE-SD 的用户入口比多数同规模多模态项目完整：中英文 Sphinx 站点、ReadTheDocs、安装/架构/特性/开发/测试/性能/治理入口、开发镜像与支持矩阵。问题不在“有没有文档”，而在“文档是否被机器持续验证”：没有链接检查、示例执行、API 参考与版本化站点的门禁。</p></div></div>
       <div class="grid4">
-        <article class="card good"><span class="tag fact">DOCS / 4.0</span><h3>双语站点是明显优势</h3><p>ReadTheDocs 使用 Python 3.11 分别构建 zh/en，根入口重定向中文；有安装、架构、特性、开发、治理和 release note。下一步应将链接检查、示例 doctest 和 API reference 设门禁。</p></article>
-        <article class="card good"><span class="tag fact">QUALITY / 4.0</span><h3>质量工具链覆盖 Python/C++</h3><p>ruff、mypy、clang-format、clang-tidy、markdownlint、gitleaks、pre-commit、coverage 均可见；新增文件覆盖率门槛是正确的增量策略。缺全仓趋势、复杂度与重复代码看板。</p></article>
-        <article class="card warn"><span class="tag fact">RELEASE / 2.5</span><h3>有版本，没有公开 release engineering</h3><p>公开快照显示 3 releases、4 tags，PyPI 有 3.0.0；但未观察到 release workflow、版本日历、签名/SBOM/provenance、RC 验证清单和兼容窗口政策。</p></article>
-        <article class="card risk"><span class="tag fact">BOTS / 1.5</span><h3>合入机器人不等于运营机器人</h3><p><code>ascend-robot</code> 参与合入，PR 评论 <code>compile</code> 能触发全量流水线，安全扫描已由 action 承担；但仓内只有 3 个 workflow，没有 labeler、stale、welcome、review routing、分层 rerun、cancel、backport、failure monitor。第 08 章给出六层能力模型与逐项对比。</p></article>
+        <article class="card good"><span class="tag fact">DOCS / 4.0</span><h3>双语站点是明显优势</h3><p>ReadTheDocs 用 Python 3.11 分别构建 zh/en，根入口重定向中文；安装、开发、测试、性能与治理入口齐全，还提供本地预览方式。</p></article>
+        <article class="card good"><span class="tag fact">DEV ENV / 3.5</span><h3>开发环境开箱可用</h3><p><code>.devcontainer/</code>、固定 CANN/Torch 版本镜像、A2/A3 说明与支持矩阵，让外部开发者能在无 NPU 环境先跑通 CPU 路径。</p></article>
+        <article class="card warn"><span class="tag fact">GATE / 缺失</span><h3>文档没有被 CI 验证</h3><p>没有 linkcheck、没有示例 doctest、没有 API reference 生成门禁；RTD 构建失败也不会阻断 PR。文档正确性目前靠人工评审。</p></article>
+        <article class="card risk"><span class="tag fact">ACCURACY / 错配</span><h3>贡献指南与实际分支不一致</h3><p>中英文贡献指南要求从 <code>main</code> 建分支，而实际长期分支是 <code>dev</code>/<code>master</code>。文档错误会直接制造无效 PR，属于最高优先级的 DX 缺陷。</p></article>
       </div>
-      <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>第一梯队参考</th><th>判定</th><th>下一动作</th></tr></thead><tbody>
-        <tr><td>文档网站</td><td>中英 Sphinx + RTD + 本地预览</td><td>vLLM-Omni / FastVideo 的完整贡献者文档</td><td class="yes">成熟</td><td>linkcheck、代码片段执行、版本化站点</td></tr>
-        <tr><td>开发环境</td><td>Linux、Py≥3.10；Torch/TorchNPU 2.6–2.10；CANN 9.0.1；A2/A3 镜像；devcontainer</td><td>TensorRT-LLM devcontainer；vllm-ascend CPU/单卡/多卡说明</td><td class="yes">较完整</td><td>x86 CPU dev image + 一键 smoke</td></tr>
-        <tr><td>兼容矩阵</td><td>框架×模型×硬件×特性表</td><td>vllm-ascend 版本/硬件/E2E config 数据库</td><td class="partial">文档型</td><td>矩阵即代码：每个 ✅ 绑定 nightly case 和 last-green SHA</td></tr>
-        <tr><td>性能测试</td><td>profiling 方法、特性 benchmark、示例数据</td><td>vLLM dashboard；SGLang CI stats；vLLM-Omni L4 perf</td><td class="partial">手册型</td><td>历史 dashboard + 相对基线门禁 + 环境指纹</td></tr>
-        <tr><td>发布</td><td>PyPI、镜像说明、release notes</td><td>SGLang 多后端 wheel/docker；vLLM-Omni release pipeline</td><td class="partial">人工链</td><td>RC→签名→SBOM→PyPI/镜像→回滚自动化</td></tr>
-        <tr><td>机器人</td><td>平台合入机器人 + <code>compile</code> 全量触发</td><td>vllm-ascend 8 条 slash command、冲突与 stale 机器人、matcher；SGLang failure monitor / rerun；K8s Prow</td><td class="no">功能不足</td><td>按第 08 章顺序：先 <code>/rerun</code> 与 <code>/cancel</code>，再 labeler、nightly 失败建 Issue、cherry-pick</td></tr>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：文档的“可验证程度”</h3>
+      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend</th><th>SGLang / 其他参考</th></tr></thead><tbody>
+        <tr class="target-row"><td>文档站</td><td class="yes">中英 Sphinx + RTD，Python 3.11</td><td class="yes">MkDocs 站点 + 多版本文档</td><td class="yes">vLLM docs 在 CI 中构建；FastVideo 连 CI 架构都写进文档</td></tr>
+        <tr class="target-row"><td>链接检查</td><td class="no">无</td><td class="yes"><code>schedule_doc_linkcheck.yaml</code> 定时链检</td><td class="partial">依赖文档构建告警</td></tr>
+        <tr class="target-row"><td>示例可执行</td><td class="no">无 doctest 门禁</td><td class="yes"><code>schedule_doc_getting_started_test.yaml</code> 在 CI 里跑 getting-started 文档</td><td class="partial">vLLM 要求 PR 声明文档影响</td></tr>
+        <tr class="target-row"><td>翻译维护</td><td class="partial">人工中英双份</td><td class="yes"><code>schedule_doc_translate.yaml</code> 定时翻译流水线</td><td class="partial">SGLang <code>bot-bump-docs-version.yml</code> 只管版本号</td></tr>
+        <tr class="target-row"><td>文档构建环境</td><td class="partial">RTD 平台自动构建</td><td class="yes">独立文档镜像与依赖层</td><td class="yes">diffusers 每日构建 <code>doc-builder</code> 镜像</td></tr>
+        <tr class="target-row"><td>版本化站点</td><td class="no">未观察到版本切换策略</td><td class="yes">多版本并存</td><td class="yes">vLLM / diffusers 都按版本发布文档</td></tr>
       </tbody></table></div>
-      <div class="callout"><strong>兼容性最重要的改造：</strong>把“支持矩阵”从人工维护的表格变成生成物。源数据至少包含 <code>framework / model / hardware / torch / torch_npu / CANN / dtype / feature / test_id / last_green / owner</code>；nightly 结果反向刷新站点，任何 ✅ 都能点到最近一次通过证据。</div>
+      <div class="callout"><strong>本维度的改造顺序：</strong>先修贡献指南与实际分支的错配（一周内、零成本、直接减少无效 PR），再加链接检查与 getting-started 示例执行（照 vllm-ascend 的两个定时任务抄），最后才是 API reference 与版本化站点。文档不是写给人看的一次性产物，而是需要 CI 持续证明的接口契约。</div>
     </section>
 
-    <section id="bots" class="reveal">
-      <div class="section-head"><div class="secno">08 / AUTOMATION &amp; BOTS</div><div><span class="kicker">Command surface · triage · retest · backport · monitoring</span><h2>机器人维度：差距不在平台，而在仓库里的资产清单</h2><p class="lead">11 个维度里，机器人（1.5 分）是 MindIE-SD 最低的一项，也是唯一一项“平台已经把能力给足、项目却没有投入”的维度。本节把“机器人”拆成六层，逐层用可验证的仓内文件对比同源的 vllm-ascend 与第一梯队社区，并给出 90 天可落地的资产清单。机器人核验于 2026-09-11，其余章节数据快照仍为 2026-09-04。</p></div></div>
+    <section id="cicd" class="reveal">
+      <div class="section-head"><div class="secno">08 / CI/CD</div><div><span class="kicker">Dimension 04 · From gate to closed loop</span><h2>评论触发不是流水线，PR 之后的三段仍然是断的</h2><p class="lead">MindIE-SD 的 PR 流水线本身质量不低：CodeCheck、三架构构建、ARM UT 都可重复。但触发方式是“人工评论 <code>compile</code>”，没有 push/PR 自动触发；merge、nightly、release 三段没有公开流水线；<code>concurrency</code> 未配置；也无法从仓库证明这些状态被配置为服务端必需检查。CI 的门禁能力存在，CD 的闭环不存在。</p></div></div>
+      <div class="pipeline gates">
+        <div class="stage"><i>段 1 / PR</i><b>已具备</b><span>CodeCheck、构建、UT 可重复执行；docs-only 自动跳过。</span></div>
+        <div class="stage"><i>段 2 / MERGE</i><b>缺失</b><span>无 merge 后冒烟、无 merge queue、无自动合入门禁。</span></div>
+        <div class="stage"><i>段 3 / NIGHTLY</i><b>缺失</b><span>无定时流水线、无 last-green、无失败自动建 Issue。</span></div>
+        <div class="stage"><i>段 4 / RELEASE</i><b>缺失</b><span>无公开发布流水线、无 RC 验证、无 artifact 提升。</span></div>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：触发、门禁与合入机制</h3>
+      <div class="table-wrap"><table><thead><tr><th>机制</th><th>MindIE-SD</th><th>vllm-ascend</th><th>SGLang</th><th>PyTorch / Kubernetes</th></tr></thead><tbody>
+        <tr class="target-row"><td>触发方式</td><td class="no">人工评论 <code>compile</code> 才跑</td><td class="yes">PR 事件自动跑基础检查，命令补跑重活</td><td class="yes">PR 事件 + <code>/run-full-ci</code> 等命令分层</td><td class="yes">PyTorch <code>ciflow</code> 标签同步成 git tag 触发下游；K8s <code>/ok-to-test</code> 后自动跑</td></tr>
+        <tr class="target-row"><td>门禁可证性</td><td class="partial">无法从仓库证明是必需检查</td><td class="yes">分支保护 + e2e/nightly 分离授权</td><td class="yes">Codeowner 批准 + required CI 全绿</td><td class="yes">PyTorch <code>merge_rules.yaml</code>（<code>approved_by</code> + <code>mandatory_checks_name</code>）；K8s Tide 的 labels / missingLabels</td></tr>
+        <tr class="target-row"><td>取消与并发</td><td class="no">未配置 <code>concurrency</code></td><td class="yes"><code>/cancel</code> 专用命令</td><td class="yes">关闭 PR 与新提交自动取消旧任务</td><td class="yes">PyTorch 关闭 PR 即取消工作流；K8s Tide 批量重测</td></tr>
+        <tr class="target-row"><td>合入机制</td><td class="no">人工合入，无门禁链</td><td class="partial">命令触发 + 人工合入</td><td class="partial">Merge Oncall 协调</td><td class="yes">PyTorch <code>@pytorchbot merge</code>；K8s Tide 合并池</td></tr>
+        <tr class="target-row"><td>夜间与发布衔接</td><td class="no">无</td><td class="yes">A2/A3/A5/310P nightly + weekly + 发布 workflow</td><td class="yes">多后端 nightly + <code>release-*</code> 系列</td><td class="yes">PyTorch 绿线分支 <code>viable/strict</code>；K8s 冻结阶段 + fast-forward job</td></tr>
+        <tr class="target-row"><td>失败可见性</td><td class="no">无看板、无自动归因</td><td class="partial"><code>matchers/</code> 日志分类</td><td class="yes">failure monitor + auto bisect</td><td class="yes">PyTorch Dr. CI 评论 + HUD；K8s TestGrid + 失败聚类</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>P0：默认自动跑，命令只做补跑</h3><p>把“评论 <code>compile</code> 触发”改成 PR 事件自动触发基础检查，命令只用于触发昂贵 NPU 任务与失败重跑。命令式入口的价值是省钱与控制并发，不是替代自动门禁。</p></article><article class="card warn"><h3>P0：required checks 必须在服务端配置</h3><p>仓库里的 workflow 只能证明“存在”，不能证明“必需”。分支保护要显式要求 CodeCheck、构建与适用 UT 在最新提交上通过，并禁止绕过；否则门禁只是建议。</p></article><article class="card risk"><h3>P1：接通 merge → nightly → release</h3><p>merge 后跑减层模型冒烟，nightly 跑功能/精度/性能三条流，release 只提升已验证 artifact。三段的责任人与触发条件必须在同一张图里，而不是各自为政。</p></article></div>
+      <div class="callout light"><strong>与治理章的衔接：</strong>CI/CD 提供能力，<strong>分支保护与合入契约</strong>才决定这些能力是否真的拦得住代码——具体门禁规则（目标分支、有效变更量、评审闭环、必需检查）见第 14 章“外部贡献要求：把它写成可验证的合入契约”。</div>
+    </section>
+
+    <section id="performance" class="reveal">
+      <div class="section-head"><div class="secno">09 / PERFORMANCE</div><div><span class="kicker">Dimension 05 · Regression needs a curve, not a manual</span><h2>有性能手册和优化资产，没有性能回归</h2><p class="lead">MindIE-SD 在性能侧并不空：有 profiling 方法、特性 benchmark、<code>benchmarks/</code> 与 <code>evals/</code> 资产，还有向 vLLM-Omni、Cache-DiT、LightX2V 输出的多框架加速路径。缺的是“可持续证明没有退化”的机制——没有历史曲线、没有基线版本、没有方差带、没有环境指纹，也没有任何一次性能门禁。</p></div></div>
+      <div class="grid4">
+        <article class="card good"><span class="tag fact">PERF / 3.5</span><h3>优化能力是强项</h3><p>算子与模型级加速资产、量化与缓存路径、profiling 指南齐备，说明团队具备把性能做上去的能力。</p></article>
+        <article class="card warn"><span class="tag fact">观测 / 缺失</span><h3>没有历史曲线</h3><p>公开信息里看不到任何随提交演进的吞吐/时延曲线，因此“这次改动是不是变慢了”只能靠人重新测一次。</p></article>
+        <article class="card warn"><span class="tag fact">基线 / 缺失</span><h3>没有基线版本与方差带</h3><p>性能阈值必须相对某个已冻结的基线版本，并带方差带；单次测量在不同机器上相差几十个百分点，不能作为门禁。</p></article>
+        <article class="card risk"><span class="tag fact">门禁 / 缺失</span><h3>性能不进 PR 门禁</h3><p>当前 PR 只证明“能构建、UT 能过”。性能退化可以无声合入，直到下游用户或上层框架发现。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：性能如何被持续证明</h3>
+      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>SGLang</th><th>vLLM / vLLM-Omni</th><th>其他参考</th></tr></thead><tbody>
+        <tr class="target-row"><td>性能资产</td><td class="yes">profile 方法 + benchmark + evals</td><td class="yes">benchmark 注册与 CI 统计</td><td class="yes">nightly 性能归档 + dashboard</td><td class="partial">diffusers 用 big-GPU marker 跑大显存用例</td></tr>
+        <tr class="target-row"><td>历史与基线</td><td class="no">无公开曲线与基线版本</td><td class="yes">周期性刷新 <code>est_time</code> 与统计</td><td class="yes">长期曲线与版本基线</td><td class="partial">FastVideo 用 full-suite / nightly marker 分层</td></tr>
+        <tr class="target-row"><td>门禁方式</td><td class="no">无</td><td class="partial">时间预算 + 失败监控</td><td class="yes">L1–L5 时间预算（L1/L2 &lt;15m、L3 &lt;30m、L4 &lt;3h）+ L4 性能流</td><td class="partial">PyTorch 以绿线分支保证可构建，不以性能门禁</td></tr>
+        <tr class="target-row"><td>环境指纹</td><td class="no">未记录镜像 digest 与硬件组合</td><td class="partial">runner 配置随用例登记</td><td class="yes">按硬件分 lane（CUDA/AMD/NPU）</td><td class="yes">diffusers 固定五个镜像，环境即指纹</td></tr>
+        <tr class="target-row"><td>成本观测</td><td class="no">无 NPU·小时统计</td><td class="yes"><code>runner-utilization.yml</code> 统计资源利用率</td><td class="partial">nightly 规模与预算可见</td><td class="partial">TensorRT-LLM 按“最便宜够格 GPU”调度</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>三条曲线必须分开</h3><p>功能（能不能跑）、精度（跑得对不对）、性能（跑得多快）是三条独立曲线，失败归因和责任人也不同。混在一条“nightly 红了”里，最终没人看得懂。</p></article><article class="card warn"><h3>阈值用相对基线与方差带</h3><p>先冻结一个基线版本与硬件组合，再定义“超过 2σ 或相对基线退化 &gt;5% 报警”。绝对数字在不同机器上没有可比性。</p></article><article class="card risk"><h3>性能先观测、后门禁</h3><p>没有历史数据就设门禁，只会造成大面积假警报与绕过。正确顺序是：采集 → 建曲线 → 定基线 → 再加门禁。</p></article></div>
+    </section>
+
+    <section id="quality" class="reveal">
+      <div class="section-head"><div class="secno">10 / QUALITY</div><div><span class="kicker">Dimension 06 · Red must be trustworthy</span><h2>质量工具链很完整，缺的是“红得准、债有主”</h2><p class="lead">ruff、mypy、clang-format、clang-tidy、markdownlint、gitleaks、pre-commit 与增量覆盖率门槛都在，Python/C++ 两侧都覆盖到了，这在同规模项目里属于上游水平。真正的缺口不在工具，而在质量信息的使用方式：没有全仓覆盖趋势、没有复杂度与重复代码看板、没有失败分类，也没有豁免/跳过的债务台账。</p></div></div>
+      <div class="grid3">
+        <article class="card good"><span class="tag fact">QUALITY / 4.0</span><h3>增量覆盖门槛是正确策略</h3><p>对新增 Python 文件要求 60% 行覆盖、30% 分支覆盖，既避免历史债务挡住新 PR，又防止新代码无测试合入。这是社区常用的“只对增量负责”做法。</p></article>
+        <article class="card warn"><span class="tag fact">分类 / 缺失</span><h3>失败没有分类</h3><p>环境失败、用例 flaky、真回归在日志里长得不一样，但没有 matcher 把它们分开；结果是“红灯一视同仁”，重跑与追责都无从下手。</p></article>
+        <article class="card risk"><span class="tag fact">债务 / 缺失</span><h3>豁免没有债主</h3><p>skip、xfail、waive 一旦没有 owner、Issue 与到期日，就会永久沉积。TensorRT-LLM 的“waive 必带 bug 链接”是可直接抄的最小制度。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：静态检查之外的四种能力</h3>
+      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend / SGLang</th><th>PyTorch</th><th>Kubernetes</th></tr></thead><tbody>
+        <tr class="target-row"><td>静态检查与格式</td><td class="yes">ruff / mypy / clang / markdownlint / gitleaks / pre-commit</td><td class="yes">同等工具链 + pre-commit 缓存</td><td class="yes">Lint 作为合入必需检查</td><td class="yes">verify / golint 类检查</td></tr>
+        <tr class="target-row"><td>覆盖率策略</td><td class="partial">仅新增文件增量门槛</td><td class="yes">SGLang <code>ci-coverage-overview.yml</code> 覆盖概览</td><td class="partial">有覆盖率工具，无硬门槛</td><td class="partial">覆盖率不作门禁</td></tr>
+        <tr class="target-row"><td>失败分类与 flaky</td><td class="no">无</td><td class="yes">vllm-ascend <code>matchers/</code>；SGLang failure monitor + auto bisect</td><td class="yes">Dr. CI 评论 + HUD 日志分类 + 按历史 flaky 数据限流重跑</td><td class="yes">零 flake 政策 + quarantine（<code>[Flaky]</code> 命名 + <code>kind/flake</code> 标签）</td></tr>
+        <tr class="target-row"><td>豁免与债务治理</td><td class="no">无台账</td><td class="partial">以标签与 issue 记录</td><td class="yes">禁用测试必须带 Issue，未授权请求会被自动关闭</td><td class="yes">quarantine 用例必须挂 Issue 与 frozen 标签</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>这个维度的下一档不是“更多检查”，而是“更可信的红灯”。</strong>先做两件小事：给测试文件加 <code>owner</code> 与 <code>disabled_issue</code> 字段（skip 必须有债主），再落一个日志 matcher 把环境失败、flaky 与真回归分开。等这两件事稳定，覆盖率趋势与复杂度看板才有意义——否则只是又多了一块没人看的仪表盘。</div>
+    </section>
+
+    <section id="release" class="reveal">
+      <div class="section-head"><div class="secno">11 / RELEASE</div><div><span class="kicker">Dimension 07 · A release must be a repeatable event</span><h2>有版本号，没有 release engineering</h2><p class="lead">公开快照显示 MindIE-SD 有 4 个 tag、3 个 release、PyPI 上的 <code>mindiesd</code> 包与 release notes，说明发布这件事确实发生过。但没有任何公开的发布流水线、版本日历、RC 验证清单、SBOM/签名/provenance 与回滚方案——也就是说，发布目前是一次人工事件，而不是一个可重复、可审计的流程。</p></div></div>
+      <div class="grid4">
+        <article class="card good"><span class="tag fact">RELEASE / 2.5</span><h3>产物通道已通</h3><p>tag、release notes 与 PyPI 包都在，说明打包与分发链路可用，缺的是自动化与可追溯性，不是从零开始。</p></article>
+        <article class="card warn"><span class="tag fact">自动化 / 缺失</span><h3>没有公开发布流水线</h3><p>无法回答“这次发布是从哪个 commit、用哪个 artifact、在哪台机器上构建的”，也无法重放。</p></article>
+        <article class="card warn"><span class="tag fact">供应链 / 缺失</span><h3>没有 SBOM / 签名 / provenance</h3><p>NPU 场景下用户要审计二进制来源与依赖清单；没有这些，企业用户无法把包纳入自己的合规流程。</p></article>
+        <article class="card risk"><span class="tag fact">回滚 / 缺失</span><h3>没有回滚与准点率</h3><p>发布没有 RC 窗口与回滚演练，出问题只能靠“赶紧再发一个版本”，这正是长期信心损耗的来源。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：发布被工程化到什么程度</h3>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>触发与产物</th><th>自动化程度</th><th>供应链与可追溯</th><th>节奏与冻结</th></tr></thead><tbody>
+        <tr class="target-row"><td>MindIE-SD</td><td class="partial">tag + 人工 PyPI 发布</td><td class="no">无公开 workflow</td><td class="no">无 SBOM / 签名 / provenance</td><td class="no">无发布日历与 RC 清单</td></tr>
+        <tr><td>diffusers</td><td class="yes">tag <code>v*</code> 触发 PyPI 发布</td><td class="yes">Trusted Publishing（<code>id-token</code>）+ <code>make pre/post-release</code> + <code>utils/release.py</code></td><td class="partial">以 OIDC 发布换取可验证来源</td><td class="no">无固定节奏文档</td></tr>
+        <tr><td>SGLang</td><td class="yes"><code>release-tag.yml</code> + PyPI 正式/夜间包 + 多平台镜像</td><td class="yes">tag 驱动全自动，含镜像重打标签</td><td class="partial">多平台镜像可追溯</td><td class="partial">跟随 tag 节奏</td></tr>
+        <tr><td>vllm-ascend</td><td class="yes">代码与 wheel 发布 workflow</td><td class="yes">定时/触发式发布</td><td class="partial">跟随上游版本</td><td class="partial">与 vLLM 版本对齐</td></tr>
+        <tr><td>PyTorch</td><td class="yes">RC tag 触发 <code>binary_build</code></td><td class="yes"><code>cut-release-branch.sh</code>、<code>apply-release-changes.sh</code>、<code>promote.sh</code>、<code>promote_pypi_to_staging.sh</code></td><td class="partial">脚本化晋升与 staging 验证</td><td class="yes">年度排期到 2.22；每 minor 最多 2 个 patch 且只服务最新 minor</td></tr>
+        <tr><td>Kubernetes</td><td class="yes"><code>krel</code> / <code>kpromo</code> / release-notes / BOM</td><td class="yes">工具链而非脚本堆</td><td class="yes">BOM 与制品清单</td><td class="yes">PRR → Enhancements → Code → Test → Docs 五级冻结，约 15 周一个周期</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>RC 与准点率是可承诺的</h3><p>先定“每季度一个 minor、tag 后 60 分钟内产出可验证 artifact、准点率 ≥90%”。有了这些数字，用户才敢把 MindIE-SD 排进自己的版本计划。</p></article><article class="card warn"><h3>同一 artifact 提升，禁止重编</h3><p>发布必须“提升”在 RC 阶段验证过的同一个 artifact（见第 06 章 artifact key 设计）。重新编译一次就等于换了一个未经测试的产物。</p></article><article class="card risk"><h3>供应链与回滚一起做</h3><p>SBOM、签名与 provenance 是同一批工作；回滚演练必须在上线前做过至少一次，否则“可回滚”只是一句口号。</p></article></div>
+    </section>
+
+<section id="bots" class="reveal">
+      <div class="section-head"><div class="secno">12 / AUTOMATION &amp; BOTS</div><div><span class="kicker">Dimension 08 · Command surface · triage · retest · backport · monitoring</span><h2>机器人维度：差距不在平台，而在仓库里的资产清单</h2><p class="lead">11 个维度里，机器人（1.5 分）是 MindIE-SD 最低的一项，也是唯一一项“平台已经把能力给足、项目却没有投入”的维度。本节把“机器人”拆成六层，逐层用可验证的仓内文件对比同源的 vllm-ascend 与第一梯队社区，并给出 90 天可落地的资产清单。机器人核验于 2026-09-11，其余章节数据快照仍为 2026-09-04。</p></div></div>
 
       <div class="callout"><strong>一句话结论：</strong>GitCode/AtomGit Action 已支持 <code>push</code>、<code>pull_request</code>、<code>pull_request_target</code>、<code>issue_comment</code>、<code>pull_request_comment</code>（支持正则过滤）、<code>schedule</code>、<code>workflow_dispatch</code>、<code>workflow_call</code> 八类触发器，以及 stage 串行、job 级 <code>needs</code> DAG、matrix、cache/artifact、<code>concurrency</code> 与自托管 runner。所以 1.5 分不是“平台做不到”，而是“仓库里只有 3 个 workflow、1 条命令、0 个分诊资产”；同一家公司在 vllm-ascend 里已经运营了 8 条评论命令、合并冲突机器人、stale 治理、失败分类 matcher 和发布流水线。</div>
 
@@ -364,7 +453,7 @@
         <tr class="target-row"><td><code>.gitcode/</code> 目录</td><td>只有 <code>workflows/</code> 与 <code>PULL_REQUEST_TEMPLATE.md</code>。</td><td class="no">—</td><td>无 <code>ISSUE_TEMPLATE</code>、无 labeler、无 stale、无 welcome、无 CODEOWNERS 类配置。</td></tr>
         <tr class="target-row"><td><code>AGENTS.md</code> / <code>CLAUDE.md</code> / <code>GEMINI.md</code> / <code>.agents/</code></td><td>面向 AI 编码代理的说明与技能资产（<code>skills/</code>、<code>scripts/</code>）。</td><td><span class="tag infer">开发期资产</span>提升的是写代码效率，不是社区运营。</td><td>未接入平台事件，无法在 Issue/PR 上执行动作、无法留痕，也不能替代分诊。</td></tr>
       </tbody></table></div>
-      <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 09 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
+      <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 14 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
 
       <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">能力矩阵：19 项机器人能力，MindIE-SD 只有 2 项有资产</h3>
       <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend（同源昇腾）</th><th>SGLang</th><th>参考实现</th></tr></thead><tbody>
@@ -442,25 +531,43 @@
       <div class="callout light"><strong>可直接复制的三件事：</strong>①把 vllm-ascend 的评论命令清单映射到 MindIE-SD 的 NPU 场景（<code>/rerun</code>、<code>/cancel</code> 先做，成本最低）；②照 SGLang 的 fork 权限判定与自研 handler 结构做命令安全模型，避免提权上下文执行不可信代码；③照 vllm-ascend 的 <code>matchers/</code> 建失败分类，先把“红得准”做出来，再谈自动化重跑。</div>
     </section>
 
-    <section id="governance" class="reveal">
-      <div class="section-head"><div class="secno">09 / GOVERNANCE</div><div><span class="kicker">Ownership is not yet a ladder</span><h2>角色名单清楚，但权力如何获得仍不清楚</h2><p class="lead">根目录 <code>OWNERS</code> 已列出 5 位 branch keeper、5 位 approver、18 位 reviewer；治理文档也说明 reviewer→approver→branch keeper 的合入链。这比许多同规模多模态项目成熟。但文档没有回答晋升标准、提名/投票、任期、emeritus、罢免、厂商多样性和非代码贡献路径。</p></div></div>
+    <section id="compatibility" class="reveal">
+      <div class="section-head"><div class="secno">13 / COMPATIBILITY</div><div><span class="kicker">Dimension 09 · The support matrix must be a build artifact</span><h2>支持矩阵是文档表格，不是被持续验证的产物</h2><p class="lead">MindIE-SD 公开了框架 × 模型 × 硬件 × 特性的支持矩阵，也明确了 CANN、Torch/TorchNPU 与 A2/A3 的平台边界——这比很多同规模项目只写“支持 Ascend”要诚实得多。问题是矩阵里每一个 ✅ 都没有绑定“最近一次通过的时间、在哪台硬件、由谁负责”，因此它会随时间静默失真。</p></div></div>
+      <div class="grid4">
+        <article class="card good"><span class="tag fact">COMPAT / 3.5</span><h3>边界写得清楚</h3><p>平台版本、硬件型号与特性组合都有文档，用户能在选型阶段判断能不能用，而不是装完才知道。</p></article>
+        <article class="card warn"><span class="tag fact">验证 / 缺失</span><h3>没有 last-green</h3><p>矩阵不是 nightly 的生成物，无法回答“这一格上周还通过吗”。文档正确性依赖人记得更新。</p></article>
+        <article class="card warn"><span class="tag fact">责任 / 缺失</span><h3>没有失效责任人</h3><p>某一格变红时，没有人被自动通知；也没有明确谁有权把 ✅ 改成 ❌ 或标为待验证。</p></article>
+        <article class="card risk"><span class="tag fact">弃用 / 缺失</span><h3>没有弃用窗口</h3><p>未说明旧 CANN / Torch / 硬件组合的支持截止时间，用户无法规划升级，维护者也难以收缩组合数。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：谁在自动维护兼容矩阵</h3>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>矩阵形态</th><th>验证方式</th><th>组合爆炸治理</th></tr></thead><tbody>
+        <tr class="target-row"><td>MindIE-SD</td><td class="partial">文档型表格（框架 × 模型 × 硬件 × 特性）</td><td class="no">人工维护，无 last-green</td><td class="no">无抽样与优先级机制</td></tr>
+        <tr><td>vllm-ascend</td><td class="yes">版本 / 硬件 / E2E 配置数据库（<code>configs/</code>、<code>_selected_tests.yaml</code>）</td><td class="yes">nightly 与 weekly 按 A2/A3/A5/310P/560T 分硬件 lane</td><td class="yes">硬件分 lane + 减层模型 + 显式选测清单</td></tr>
+        <tr><td>SGLang</td><td class="yes">多后端注册表（CPU / NPU / XPU / NVIDIA / AMD）</td><td class="yes">各后端独立 nightly 与 weekly</td><td class="yes">后端分 lane，失败互不阻塞</td></tr>
+        <tr><td>vLLM-Omni</td><td class="yes">CUDA / AMD / NPU 的 ready / merge / nightly / weekly 分层</td><td class="yes">L1–L5 分级 + 时间预算</td><td class="yes">按层抽样，重活只在 nightly</td></tr>
+        <tr><td>TensorRT-LLM</td><td class="yes">显式 YAML test-db（按硬件与 stage）</td><td class="yes">pre/post merge 分阶段执行</td><td class="yes">“最便宜够格 GPU”调度 + waive 必带 bug 链接</td></tr>
+        <tr><td>diffusers</td><td class="partial">不支持矩阵，但把版本下限做成镜像（minimum-cuda）</td><td class="yes">每日构建最低版本镜像并跑测试</td><td class="partial">只验证下限与当前版本两档</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>最关键的改造：把“支持矩阵”变成生成物。</strong>源数据至少包含 <code>framework / model / hardware / torch / torch_npu / CANN / dtype / feature / test_id / last_green / owner</code>；nightly 结果反向刷新站点，任何 ✅ 都能点到最近一次通过证据，任何 ❌ 都有负责人在追。这样矩阵才从“声明”变成“合同”。</div>
+    </section>
+
+<section id="governance" class="reveal">
+      <div class="section-head"><div class="secno">14 / GOVERNANCE &amp; MERGE CONTRACT</div><div><span class="kicker">Dimension 10 · Ownership is not yet a ladder</span><h2>角色名单清楚，但权力如何获得、意见如何闭环仍不清楚</h2><p class="lead">治理文档与社区 SIG 配置给出 branch keeper / approver / reviewer 的角色分工与合入责任链，这比许多同规模多模态项目成熟（本地仓树快照中未见根目录 <code>OWNERS</code>，交叉复核见第 12 章提示）。但文档没有回答晋升标准、提名/投票、任期、emeritus、罢免、厂商多样性和非代码贡献路径；本章后半部分把“外部贡献要求”写成可验证的合入契约。</p></div></div>
       <div class="grid3"><article class="card good"><h3>可见的责任链</h3><p>PR 模板要求 Issue、Purpose、Test Plan、Test Report；治理要求 reviewer 评审、approver 确认、branch keeper 合入。角色与受保护分支责任相匹配。</p></article><article class="card warn"><h3>root OWNERS 会成为漏斗</h3><p>仓库跨 ops、compilation、quantization、cache、docs、release 多个专业域，却只有根级名单。所有通知和审批容易集中到同一批人，无法显示实际模块所有权。</p></article><article class="card risk"><h3>公开沟通存在“双轨”</h3><p>Issue 是正式入口，微信群是快速入口。若 RFC、故障决策和路线优先发生在群内，外部贡献者无法检索上下文，也难以靠公开贡献积累 merit。</p></article></div>
       <div class="bar-chart" aria-label="最近 50 个关闭 Issue 的关闭周期 p50"><div class="bar-row"><b>MindIE-SD</b><div class="bar-track"><div class="bar issue" style="width:.34%"></div></div><span class="bar-value">1.32d / n50</span></div><div class="bar-row"><b>vLLM-Omni</b><div class="bar-track"><div class="bar issue" style="width:.45%"></div></div><span class="bar-value">1.77d / n50</span></div><div class="bar-row"><b>vllm-ascend</b><div class="bar-track"><div class="bar issue" style="width:3.4%"></div></div><span class="bar-value">13.31d / n50</span></div><div class="bar-row"><b>vLLM</b><div class="bar-track"><div class="bar issue" style="width:9.5%"></div></div><span class="bar-value">37.04d / n50</span></div><div class="bar-row"><b>FastVideo</b><div class="bar-track"><div class="bar issue" style="width:48.5%"></div></div><span class="bar-value">189.85d / n50</span></div><div class="bar-row"><b>TensorRT-LLM</b><div class="bar-track"><div class="bar issue" style="width:100%"></div></div><span class="bar-value">391.21d / n50</span></div></div>
       <div class="callout light"><strong>滚动样本的积极信号：</strong>MindIE-SD 最近公开样本闭环很快，说明维护团队当前响应积极；但它不足以证明长期可持续。真正要看的是首次人工响应、未关闭项年龄分布、外部贡献 PR 首 review、reviewer 负载、reopen、无响应率和贡献者留存。</div>
       <div class="table-wrap"><table><thead><tr><th>治理问题</th><th>当前可见状态</th><th>风险</th><th>建议机制</th></tr></thead><tbody>
-        <tr><td>谁能 review / approve / merge？</td><td class="yes">OWNERS 明确</td><td>只有根级 ownership</td><td>分目录 OWNERS + team alias + 每版本活跃性审计</td></tr>
+        <tr><td>谁能 review / approve / merge？</td><td class="partial">治理文档与社区 SIG 配置明确</td><td>仓树未见分目录或根级 OWNERS 文件</td><td>分目录 OWNERS + team alias + 每版本活跃性审计</td></tr>
         <tr><td>如何成为 reviewer / approver？</td><td class="no">未文档化</td><td>外部贡献没有可见成长路径</td><td>Contributor Ladder：贡献者→成员→reviewer→approver→maintainer</td></tr>
         <tr><td>如何做重大决策？</td><td class="partial">要求 RFC，但缺模板/索引/投票规则</td><td>重要决定可能依赖私域沟通</td><td>RFC repo/目录、最短公开评议期、决策记录和异议处理</td></tr>
         <tr><td>如何发布？</td><td class="partial">branch keeper 负责就绪</td><td>发布标准不可审计</td><td>Release Team、公开 checklist、RC 期、签名与投票记录</td></tr>
         <tr><td>如何退出/轮换？</td><td class="no">未观察到 emeritus/移除机制</td><td>名单陈旧、bus factor 隐藏</td><td>活跃窗口、emeritus、无活动自动提醒、替补培养</td></tr>
         <tr><td>如何衡量社区健康？</td><td class="no">未观察到公开 dashboard</td><td>只能靠印象管理 backlog</td><td>CHAOSS starter + CI cost + compatibility last-green 看板</td></tr>
       </tbody></table></div>
-    </section>
-
-    <section id="contribution-gates" class="reveal">
-      <div class="section-head"><div class="secno">10 / CONTRIBUTION GATES</div><div><span class="kicker">Small PR · closed review · green CI</span><h2>把外部贡献要求写成可验证的合入契约</h2><p class="lead">MindIE-SD 当前最直接的流程问题不是缺少行为准则，而是贡献指南、PR 模板、CI 触发方式和真实分支策略没有形成同一套门禁。规则应进入贡献指南和 PR 模板，由平台与 CI 强制；<code>CODE_OF_CONDUCT.md</code> 继续只负责社区行为边界。</p></div></div>
-
-      <div class="grid4">
+    
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:48px">外部贡献要求：把它写成可验证的合入契约</h3>
+      <p class="lead">MindIE-SD 当前最直接的流程问题不是缺少行为准则，而是贡献指南、PR 模板、CI 触发方式和真实分支策略没有形成同一套门禁。规则应进入贡献指南和 PR 模板，由平台与 CI 强制；<code>CODE_OF_CONDUCT.md</code> 继续只负责社区行为边界。</p>
+<div class="grid4">
         <article class="card risk"><span class="tag fact">分支错配</span><h3><code>main</code> 与仓库事实冲突</h3><p>中英文贡献指南要求从 <code>main</code> 创建分支，但当前远端长期分支是 <code>dev/master</code>，PR workflow 也监听 <code>dev/master</code>。文档会直接引导外部开发者选错基线或目标分支。</p></article>
         <article class="card warn"><span class="tag fact">规模缺口</span><h3>1000 行只约束 commit，不约束 PR</h3><p>现有本地治理规则提到历史整理时单个 commit diff 控制在 1000 行以内，但多个小 commit 仍可组成超大 PR，无法降低一次评审的认知负担。</p></article>
         <article class="card warn"><span class="tag fact">闭环缺口</span><h3>角色链不等于意见已闭环</h3><p>治理文档定义了 reviewer→approver→branch keeper，却没有要求所有评论得到答复、所有 conversation 已解决，以及新提交后重新确认批准。</p></article>
@@ -494,12 +601,34 @@
 
       <details><summary>建议加入 PR 模板的最小 checklist</summary><div><ul><li>本 PR 以 <code>dev</code> 为目标分支，并基于最新 <code>upstream/dev</code>。</li><li>本 PR 只解决一个主题，有效变更量不超过 1000 行；若超限，已关联批准的 RFC 和例外标签。</li><li>已执行适用的 pre-commit、构建、单元测试、准确性或性能测试，并在 Test Report 提供结果。</li><li>所有评审意见均已回复；需要修改的意见已完成修改并请求复审，未解决会话为 0。</li><li>用户可见变更已同步中英文文档；不适用时已说明原因。</li></ul></div></details>
       <div class="matrix-note"><b>统计口径建议：</b>“有效变更量”定义为整个 PR 相对目标分支的新增行与删除行之和；不要按 commit 分别计算，以免用多个小 commit 绕过门禁。二进制文件、自动生成文件、依赖锁文件、第三方镜像代码和大体量测试数据应维护显式排除清单。若团队坚持绝对硬上限，可删除 RFC 例外，但要接受大型重命名、生成物更新和迁移类变更无法正常提交的代价。</div>
+        </section>
+
+    <section id="operations" class="reveal">
+      <div class="section-head"><div class="secno">15 / OPERATIONS</div><div><span class="kicker">Dimension 11 · Responsiveness, triage and support load</span><h2>典型闭环很快，但没人能证明它可持续</h2><p class="lead">第 04 章的 50+50 样本显示 MindIE-SD 的典型闭环速度在第一梯队里都算快的：Issue 关闭 p50 1.32 天、PR 合入 p50 1.79 天。但 p90 长尾（27.55 / 10.52 天）与“首次人工响应、reopen、内外部作者差异、reviewer 集中度”全部不可观测，也没有任何公开 triage 机制或健康度看板——快，目前是一种状态，而不是一种被管理的能力。</p></div></div>
+      <div class="grid4">
+        <article class="card good"><span class="tag fact">OPS / 2.5</span><h3>当前响应积极</h3><p>入口活跃、关闭速度快，说明维护团队当下投入充足，这是很多企业主导项目缺的起点。</p></article>
+        <article class="card warn"><span class="tag fact">未知 / NOT OBSERVED</span><h3>首次响应不可见</h3><p>关闭快可能来自维护者自合并、机器人或批量清理；真正影响外部体验的是“第一个非作者回复等了多久”，这个数字目前不存在。</p></article>
+        <article class="card warn"><span class="tag fact">双轨 / 风险</span><h3>微信群是私域支持</h3><p>README 把微信群作为快速入口。若故障经验与 FAQ 不回写 Issue/文档，搜索者会重复提问，维护者承担不可复用的私域答疑。</p></article>
+        <article class="card risk"><span class="tag fact">制度 / 缺失</span><h3>没有 triage 轮值与 SLA</h3><p>没有标签化分诊流程、没有值班人、没有“多久必须响应/升级”的公开承诺，响应速度完全依赖个人自觉。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：响应机制与分诊制度</h3>
+      <div class="table-wrap"><table><thead><tr><th>项目</th><th>典型 / 长尾闭环</th><th>分诊机制</th><th>支持渠道</th><th>健康度公开</th></tr></thead><tbody>
+        <tr class="target-row"><td>MindIE-SD</td><td class="partial">Issue 1.32 / 27.55 天；PR 1.79 / 10.52 天（n=50）</td><td class="no">无标签化 triage 流程与轮值</td><td class="partial">Issue（公开）+ 微信群（私域）</td><td class="no">无公开看板</td></tr>
+        <tr><td>vLLM</td><td class="partial">Issue 37.04 / 186.47 天；PR 1.80 / 23.54 天</td><td class="yes">标签与 Dr. CI 状态评论辅助分类</td><td class="yes">GitHub Issues / Discussions</td><td class="partial">有部分公开看板</td></tr>
+        <tr><td>vllm-ascend</td><td class="yes">Issue 13.31 / 37.60 天；PR 0.50 / 7.45 天</td><td class="yes"><code>/wait-feedback</code> 打标 + 白名单鉴权 + Merge Oncall</td><td class="yes">GitHub Issues</td><td class="partial">nightly/weekly 结果可见</td></tr>
+        <tr><td>SGLang</td><td class="partial">Issue 60.66 / 121.19 天；PR 0.38 / 9.20 天</td><td class="yes">Merge Oncall + Codeowner 审批</td><td class="yes">GitHub + IM 通知（CI 结果进群）</td><td class="partial">CI 统计公开</td></tr>
+        <tr><td>PyTorch</td><td class="partial">无公开统一 SLA 数字</td><td class="yes"><code>oncall:</code> 子队列 + <code>triaged</code> / <code>triage review</code> 标签；AI 分诊被明确禁止关闭 Issue 或直接打高优先级</td><td class="yes">GitHub + Wiki</td><td class="yes">HUD 与分类器公开</td></tr>
+        <tr><td>Kubernetes</td><td class="partial">以制度而非速度著称</td><td class="yes">新 Issue 自动 <code>needs-triage</code> → <code>/triage accepted</code>；20 天无回应关闭、30 天催办 owner、90 天 stale</td><td class="yes">GitHub + 邮件列表 + Slack</td><td class="yes">TestGrid 与 triage 面板</td></tr>
+        <tr><td>diffusers</td><td class="partial">无公开统一数字</td><td class="yes">LLM 自动打标 + stale（23 天无活动起提醒、只标不关、真人评论复活）+ PR 未关联 Issue 10 天后自动关闭</td><td class="yes">GitHub Issues / Discussions</td><td class="partial">夜间测试结果进 Slack</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px"><article class="card good"><h3>先补三个数</h3><p>首次人工响应、外部作者 PR 首次 review、reopen 率。这三个数比再多的总量统计更能说明“外部贡献者体验到底如何”。</p></article><article class="card warn"><h3>把群聊经验变成公共资产</h3><p>设“群聊 → Issue/FAQ 回流”规则与值班轮换：高频问题每月回写文档，故障决策进 Issue，让后来者可检索、可引用。</p></article><article class="card risk"><h3>不要用关闭速度考核社区</h3><p>关闭快可能是批量清理。健康度要看 p50 与 p90 同时呈现、内外部作者拆分、reviewer 负载与贡献者留存，而不是单一速度指标。</p></article></div>
+      <div class="callout light"><strong>与第 04 章的衔接：</strong>本维度只解释机制；规模与节奏数字（Stars、Forks、开放积压、p50/p90）统一放在第 04 章，避免同一指标在两处给出不同口径。月度公开看板建议先上 CHAOSS starter 的 8 项指标：Issue 首次响应、PR 首次 review、合入周期、未关闭年龄 p90、flaky、reviewer 负载、首次贡献成功率、90 天留存。</div>
     </section>
 
-    <section id="books" class="reveal">
-      <div class="section-head"><div class="secno">11 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。本章沿用第 1 章的统一指标，只解释各框架要求什么机制以及 MindIE-SD 的现实缺口。</p></div></div>
+<section id="books" class="reveal">
+      <div class="section-head"><div class="secno">16 / CLASSICS</div><div><span class="kicker">Operate · measure · improve</span><h2>经典框架要落到运营动作和验收线</h2><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。本章沿用第 1 章的统一指标，只解释各框架要求什么机制以及 MindIE-SD 的现实缺口。</p></div></div>
       <div class="classic-summary">
-        <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>根 OWNERS：5 branch keepers、5 approvers、18 reviewers；有治理文档、贡献指南、PR 模板和 CPU UT 路径。</small></div>
+        <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>治理文档与社区 SIG 配置给出 branch keeper / approver / reviewer 角色（本地仓树快照未见 OWNERS 文件，见第 12 章提示）；贡献指南、PR 模板和 CPU UT 路径齐备。</small></div>
         <div class="classic-stat"><b>统一样本 / SAMPLE</b><strong>典型值快，长尾可见</strong><small>截至 2026-09-04，Issue 关闭 p50/p90 为 1.32/27.55 天；PR 合入为 1.79/10.52 天；两者均 n=50。</small></div>
         <div class="classic-stat"><b>关键未知 / NOT OBSERVED</b><strong>响应与可持续性不可见</strong><small>首次人工响应、外部 PR 首 review、积压年龄 p90、reviewer 集中度、贡献者留存和晋升数据未公开。</small></div>
         <div class="classic-stat"><b>90 天目标 / TARGET</b><strong>从“名单”走向“运行系统”</strong><small>固定运营节奏、分目录 OWNERS、贡献者阶梯、月度健康看板、公开 RFC/发布记录和可追责指标。</small></div>
@@ -525,20 +654,20 @@
       <div class="book"><div class="book-index">07 / TODO Group<br>OSPO</div><div><h3>衡量“上游影响”，而不只衡量下游代码量</h3><span class="lens">Outbound OSS</span><span class="lens">Upstream first</span><span class="lens">维护成本</span><p>MindIE-SD 的生态价值应包括：向 vLLM-Omni、Cache-DiT、LightX2V 等上游合入的 NPU 能力、被接受的接口设计、减少的 downstream patch、版本同步时延和跨社区维护者数量。OSPO 应帮助团队获得跨项目贡献时间和晋升认可，而不是只要求仓库内 commit。</p></div></div>
     </section>
 
-    <section id="roadmap" class="reveal">
-      <div class="section-head"><div class="secno">12 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
+<section id="roadmap" class="reveal">
+      <div class="section-head"><div class="secno">17 / ROADMAP</div><div><span class="kicker">90-day operating system</span><h2>先闭环，再扩张；先观测，再优化</h2><p class="lead">路线图刻意不从“再加更多测试”开始，而从资产盘点、责任归属和时间数据开始。没有注册表和 owner，测试越多只会让 CI 更慢、失败更吵。</p></div></div>
       <div class="roadmap">
         <article class="phase"><span class="week">WEEK 0–2 / INVENTORY</span><h3>把存量变成资产</h3><ul><li>所有测试标 L0–L4、硬件、模型、框架、预计耗时</li><li>输出 build/UT 分阶段 duration</li><li>建立 skipped/flaky/compatibility 债务表</li><li>为 ops/compile/quant/cache/docs 划 owner</li></ul><span class="exit">EXIT → 可回答“跑什么、在哪跑、多久、谁负责”</span></article>
         <article class="phase"><span class="week">WEEK 3–5 / CLOSE THE LOOP</span><h3>接通 merge 与 nightly</h3><ul><li>merge smoke：单 NPU + 减层模型</li><li>nightly：功能、精度、性能三条流</li><li>artifact 复用与 diff-aware 路由</li><li>失败自动建/关联 Issue，禁止裸 skip</li></ul><span class="exit">EXIT → 每个支持矩阵 ✅ 有 last-green</span></article>
         <article class="phase"><span class="week">WEEK 6–8 / RELEASE</span><h3>版本成为可重复事件</h3><ul><li>发布 checklist、RC 窗口与 release team</li><li>同一 artifact 提升到 PyPI/镜像</li><li>SBOM、签名、provenance、回滚演练</li><li>兼容窗口与弃用政策</li></ul><span class="exit">EXIT → 从 tag 到可验证产物 ≤ 60m</span></article>
-        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>先做 <code>/rerun</code>、<code>/cancel</code>，再补 labeler 与 nightly 失败建 Issue</li><li>welcome、stale（只提醒不关闭）、backport（第 08 章命令面）</li><li>Contributor Ladder + 分目录 OWNERS</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日；分诊覆盖 ≥90%</span></article>
+        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>先做 <code>/rerun</code>、<code>/cancel</code>，再补 labeler 与 nightly 失败建 Issue</li><li>welcome、stale（只提醒不关闭）、backport（第 12 章命令面）</li><li>Contributor Ladder + 分目录 OWNERS</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日；分诊覆盖 ≥90%</span></article>
       </div>
       <div class="callout light"><strong>指标承接：</strong>本路线的 Owner、目标与报警条件已统一前置到第 1 章指标表；这里仅保留实施顺序和每阶段退出条件，避免路线图再定义一套口径。</div>
-      <div class="callout"><strong>优先级排序：</strong>P0 是测试注册表、构建时长、merge/nightly、last-green，机器人只做成本最低的 <code>/rerun</code> 与 <code>/cancel</code>；P1 是 release engineering、分诊与失败治理类机器人、分目录 OWNERS；P2 才是复杂的 SIG/选举制度、backport 与发布自动化（第 08 章给出分层档位与退出条件）。先把机制跑起来，再提高治理复杂度。</div>
+      <div class="callout"><strong>优先级排序：</strong>P0 是测试注册表、构建时长、merge/nightly、last-green，机器人只做成本最低的 <code>/rerun</code> 与 <code>/cancel</code>；P1 是 release engineering、分诊与失败治理类机器人、分目录 OWNERS；P2 才是复杂的 SIG/选举制度、backport 与发布自动化（第 12 章给出分层档位与退出条件）。先把机制跑起来，再提高治理复杂度。</div>
     </section>
 
-    <section id="sources" class="reveal">
-      <div class="section-head"><div class="secno">13 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">技术证据核验于 2026-08-29，规模与节奏数据刷新于 2026-09-04，机器人章节的仓内文件核验于 2026-09-11。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
+<section id="sources" class="reveal">
+      <div class="section-head"><div class="secno">18 / SOURCES</div><div><span class="kicker">Primary evidence & reading list</span><h2>关键来源与证据边界</h2><p class="lead">技术证据核验于 2026-08-29，规模与节奏数据刷新于 2026-09-04，机器人章节的仓内文件核验于 2026-09-11。技术事实优先使用项目官方仓库、官方文档与 workflow；治理部分使用书籍官网、基金会与项目官方指南。GitCode 私有/内部 CI 不在公开证据范围内。</p></div></div>
       <h3>MindIE-SD 一手证据</h3>
       <div class="source-grid">
         <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD">MindIE-SD 官方 GitCode 仓库</a><span>仓库规模、默认分支、Issue/PR、release 与当前代码。</span></div>
@@ -604,6 +733,8 @@
       </div>
       <div class="callout light"><strong>限制：</strong>公开仓库看不到内部 runner、未公开流水线、队列容量、真实 GPU/NPU 成本和私域沟通内容；“workflow 文件数”和“test-like 文件数”只用于基础设施指纹，不等同于实际覆盖率。评分应随仓库演进更新，并由项目维护者对事实错误进行校正。</div>
     </section>
+
+
   </main>
   <footer><div class="shell">AscendPlayground · MindIE-SD Community Infrastructure &amp; Operations Audit · Data refreshed 2026-09-04 · Bots &amp; automation verified 2026-09-11 · Single-file offline report</div></footer>
   <script>
