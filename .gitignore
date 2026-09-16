@@ -1,1 +1,3 @@
-_site/
+﻿_site/
+scripts/report/.cache/
+__pycache__/

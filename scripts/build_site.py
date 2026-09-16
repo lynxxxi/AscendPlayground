@@ -14,11 +14,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "_site"
 CATEGORIES = (
+    ("report", "情报周报", 0),
     ("features", "特性研究", 1),
     ("frameworks", "框架分析", 2),
     ("models", "模型研究", 3),
     ("operators", "算子分析", 4),
 )
+
+# report/ 是纯产物目录（周报 HTML + README），整体发布即可
+REPORT_IGNORES = (".git", "__pycache__")
 
 
 def compact_text(value: str) -> str:
@@ -84,10 +88,14 @@ def scan_documents() -> list[dict[str, object]]:
             suffix = path.suffix.lower()
             if not path.is_file() or suffix not in {".html", ".md"}:
                 continue
+            relative = path.relative_to(ROOT)
+            # 目录首页由各自的分区页面承担，不作为检索条目
+            if path.name.lower() == "index.html":
+                continue
             title, description = markdown_metadata(path) if suffix == ".md" else html_metadata(path)
             entries.append(
                 {
-                    "path": path.relative_to(ROOT).as_posix(),
+                    "path": relative.as_posix(),
                     "title": title,
                     "description": description or "技术文档与研究记录。",
                     "category": category,
@@ -111,7 +119,11 @@ def build() -> None:
     for directory, _, _ in CATEGORIES:
         source = ROOT / directory
         if source.is_dir():
-            shutil.copytree(source, OUTPUT / directory)
+            shutil.copytree(
+                source,
+                OUTPUT / directory,
+                ignore=shutil.ignore_patterns(*REPORT_IGNORES) if directory == "report" else None,
+            )
     entries = scan_documents()
     manifest = {"site": "AscendPlayground", "contentCount": len(entries), "entries": entries}
     (OUTPUT / "site-manifest.json").write_text(

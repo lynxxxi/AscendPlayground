@@ -1,0 +1,984 @@
+{
+  "configVersion": "1.0.0",
+  "description": "AscendPlayground 多模态 Infra 情报系统 · 信息源注册表。所有信息源均为公开、免鉴权通道；修改本文件即可增删源，无需改动代码。",
+  "timezone": "Asia/Shanghai",
+  "defaults": {
+    "timeoutSeconds": 30,
+    "retries": 3,
+    "retryBackoffSeconds": 1.6,
+    "maxAgeDays": 14,
+    "minScore": 1.2,
+    "topPerSection": 25,
+    "requireDate": false,
+    "userAgent": "AscendPlayground-ReportBot/1.0 (+https://github.com/lynxxxi/AscendPlayground; research digest)"
+  },
+  "scoring": {
+    "titleWeight": 3.0,
+    "summaryWeight": 1.0,
+    "maxKeywordBoost": 12.0,
+    "lookbackDays": 7,
+    "minRecencyFactor": 0.35,
+    "newItemBoost": 1.35
+  },
+  "relevance": {
+    "requireAnyOf": [
+      "multimodal",
+      "multi-modal",
+      "omni",
+      "vision-language",
+      "vlm",
+      "video generation",
+      "diffusion",
+      "dit",
+      "visual",
+      "image",
+      "video",
+      "speech",
+      "audio",
+      "any-to-any",
+      "多模态",
+      "视觉",
+      "视频生成",
+      "扩散",
+      "文生图",
+      "图文"
+    ],
+    "heavy": [
+      "inference",
+      "serving",
+      "throughput",
+      "latency",
+      "kv cache",
+      "prefill",
+      "decode",
+      "parallelism",
+      "tensor parallel",
+      "sequence parallel",
+      "context parallel",
+      "expert parallel",
+      "quantization",
+      "quantized",
+      "fp8",
+      "int4",
+      "w8a8",
+      "sparse attention",
+      "attention kernel",
+      "flash attention",
+      "caching",
+      "cache reuse",
+      "scheduler",
+      "batching",
+      "continuous batching",
+      "disaggregated",
+      "moe",
+      "operator",
+      "kernel fusion",
+      "compilation",
+      "graph mode",
+      "ascend",
+      "npu",
+      "cann",
+      "mindie",
+      "torch_npu",
+      "推理",
+      "加速",
+      "吞吐",
+      "时延",
+      "量化",
+      "算子",
+      "并行",
+      "昇腾",
+      "缓存",
+      "显存"
+    ],
+    "medium": [
+      "benchmark",
+      "evaluation",
+      "deployment",
+      "distributed",
+      "memory",
+      "efficiency",
+      "optimization",
+      "scaling",
+      "long context",
+      "long video",
+      "resolution",
+      "streaming",
+      "real-time",
+      "alignment",
+      "preference",
+      "agent",
+      "vla",
+      "embodied",
+      "evaluation suite",
+      "性能",
+      "部署",
+      "显存优化",
+      "长视频",
+      "流式",
+      "评测"
+    ]
+  },
+  "keywords": {
+    "multimodal-serving": [
+      "multimodal serving",
+      "multimodal inference",
+      "vlm serving",
+      "vlm inference",
+      "omni-modal serving",
+      "any-to-any model serving",
+      "multimodal engine",
+      "multimodal scheduler",
+      "vision encoder acceleration",
+      "encoder disaggregation",
+      "multimodal prefill"
+    ],
+    "video-generation-inference": [
+      "video generation inference",
+      "diffusion inference",
+      "dit inference",
+      "diffusion transformer acceleration",
+      "step distillation",
+      "cache reuse diffusion",
+      "sparse video generation",
+      "long video generation",
+      "autoregressive video generation",
+      "real-time video generation",
+      "video super resolution inference"
+    ],
+    "kv-cache-and-memory": [
+      "kv cache compression",
+      "kv cache offloading",
+      "paged attention",
+      "prefix caching",
+      "attention sink",
+      "visual token compression",
+      "token pruning multimodal"
+    ],
+    "parallelism-and-kernels": [
+      "sequence parallel diffusion",
+      "context parallel attention",
+      "expert parallel moe inference",
+      "custom operator ascend",
+      "triton kernel inference",
+      "sparse attention kernel",
+      "flash attention vlm",
+      "quantized kernel generation"
+    ],
+    "quantization-and-compression": [
+      "quantization vlm",
+      "w8a8 diffusion",
+      "fp8 inference multimodal",
+      "int4 quantization video",
+      "post-training quantization multimodal",
+      "model compression diffusion"
+    ],
+    "ascend-and-mindie": [
+      "ascend inference",
+      "mindie",
+      "cann operator",
+      "torch_npu",
+      "ascend npu serving",
+      "mindie-sd",
+      "mindie-llm",
+      "ascend multimodal",
+      "昇腾 推理",
+      "昇腾 多模态",
+      "mindie 多模态"
+    ],
+    "models-and-teams": [
+      "qwen-vl",
+      "qwen3-vl",
+      "internvl",
+      "minicpm-v",
+      "deepseek-vl",
+      "hunyuan video",
+      "hunyuan image",
+      "wan video",
+      "kling",
+      "cogvideo",
+      "ltx video",
+      "seed multimodal",
+      "step-video",
+      "minimax",
+      "omni model release"
+    ],
+    "ecosystem-and-frameworks": [
+      "vllm omni",
+      "vllm-ascend",
+      "sglang multimodal",
+      "sglang omni",
+      "tensorrt-llm multimodal",
+      "dynamo inference",
+      "mstar serving",
+      "diffusers acceleration",
+      "cache-dit"
+    ]
+  },
+  "papers": {
+    "arxiv": {
+      "enabled": true,
+      "kind": "arxiv",
+      "label": "arXiv",
+      "group": "papers",
+      "weight": 1.35,
+      "endpoint": "https://export.arxiv.org/api/query",
+      "pageSize": 100,
+      "categories": [
+        "cs.CV",
+        "cs.DC",
+        "cs.LG",
+        "cs.CL",
+        "cs.MM",
+        "eess.IV"
+      ],
+      "queries": [
+        {
+          "id": "mm-serving",
+          "terms": [
+            "multimodal",
+            "serving"
+          ]
+        },
+        {
+          "id": "mm-inference",
+          "terms": [
+            "multimodal",
+            "inference"
+          ]
+        },
+        {
+          "id": "vlm-inference",
+          "terms": [
+            "vision-language",
+            "inference"
+          ]
+        },
+        {
+          "id": "vlm-serving",
+          "terms": [
+            "vision-language",
+            "serving"
+          ]
+        },
+        {
+          "id": "omni-serving",
+          "terms": [
+            "omni-modal",
+            "serving"
+          ]
+        },
+        {
+          "id": "diffusion-accel",
+          "terms": [
+            "diffusion",
+            "acceleration"
+          ]
+        },
+        {
+          "id": "dit-parallel",
+          "terms": [
+            "diffusion transformer",
+            "parallel"
+          ]
+        },
+        {
+          "id": "video-gen-inference",
+          "terms": [
+            "video generation",
+            "inference"
+          ]
+        },
+        {
+          "id": "video-gen-acceleration",
+          "terms": [
+            "video generation",
+            "acceleration"
+          ]
+        },
+        {
+          "id": "vlm-quantization",
+          "terms": [
+            "vision-language",
+            "quantization"
+          ]
+        },
+        {
+          "id": "mm-kvcache",
+          "terms": [
+            "multimodal",
+            "KV cache"
+          ]
+        },
+        {
+          "id": "sparse-attention-inference",
+          "terms": [
+            "sparse attention",
+            "inference"
+          ]
+        },
+        {
+          "id": "moe-mm-inference",
+          "terms": [
+            "mixture-of-experts",
+            "multimodal",
+            "inference"
+          ]
+        },
+        {
+          "id": "ascend-npu",
+          "terms": [
+            "Ascend",
+            "NPU"
+          ]
+        },
+        {
+          "id": "ascend-inference",
+          "terms": [
+            "Ascend",
+            "inference"
+          ]
+        }
+      ]
+    },
+    "huggingface-papers": {
+      "enabled": true,
+      "kind": "hf-daily-papers",
+      "label": "HuggingFace Daily Papers",
+      "group": "papers",
+      "weight": 1.25,
+      "endpoint": "https://huggingface.co/api/daily_papers",
+      "pageSize": 100
+    },
+    "openalex": {
+      "enabled": true,
+      "kind": "openalex",
+      "label": "OpenAlex",
+      "group": "papers",
+      "weight": 1.0,
+      "endpoint": "https://api.openalex.org/works",
+      "pageSize": 25,
+      "searches": [
+        "multimodal model inference acceleration",
+        "diffusion transformer inference optimization",
+        "video generation model serving"
+      ]
+    }
+  },
+  "teams": {
+    "hf-blog": {
+      "enabled": true,
+      "kind": "rss",
+      "label": "HuggingFace Blog",
+      "group": "teams",
+      "weight": 1.2,
+      "endpoint": "https://huggingface.co/blog/feed.xml"
+    },
+    "nv-developer-blog": {
+      "enabled": true,
+      "kind": "rss",
+      "label": "NVIDIA Developer Blog",
+      "group": "teams",
+      "weight": 1.15,
+      "endpoint": "https://developer.nvidia.com/blog/feed/"
+    },
+    "openai-news": {
+      "enabled": true,
+      "kind": "rss",
+      "label": "OpenAI News",
+      "group": "teams",
+      "weight": 1.1,
+      "endpoint": "https://openai.com/news/rss.xml"
+    },
+    "jiqizhixin": {
+      "enabled": false,
+      "kind": "rss",
+      "label": "机器之心",
+      "group": "teams",
+      "weight": 1.1,
+      "endpoint": "https://www.jiqizhixin.com/rss",
+      "note": "该站 RSS 已下线（返回 HTML 落地页），改由搜狗微信通道覆盖，默认关闭。"
+    },
+    "hf-models": {
+      "enabled": true,
+      "kind": "hf-models",
+      "label": "HuggingFace 模型发布雷达",
+      "group": "teams",
+      "weight": 1.2,
+      "endpoint": "https://huggingface.co/api/models",
+      "pageSize": 20,
+      "sort": "createdAt",
+      "orgs": [
+        "Qwen",
+        "deepseek-ai",
+        "openbmb",
+        "MiniMaxAI",
+        "tencent",
+        "Tencent-Hunyuan",
+        "Lightricks",
+        "Wan-AI",
+        "stepfun-ai",
+        "OpenGVLab",
+        "google",
+        "meta-llama",
+        "mistralai",
+        "moonshotai",
+        "zai-org",
+        "Kwai-Kolors",
+        "ByteDance",
+        "nvidia"
+      ],
+      "searchTerms": [
+        "qwen-vl",
+        "omni",
+        "video",
+        "image",
+        "vl"
+      ]
+    }
+  },
+  "repos": {
+    "requestBudget": 45,
+    "limits": {
+      "releasesPerRepo": 6,
+      "commitsPerRepo": 1,
+      "pullsPerRepo": 0,
+      "releaseWatchReleases": 8
+    },
+    "groups": {
+      "serving": "推理 / 服务框架",
+      "generation": "生成与加速",
+      "models": "多模态模型与训练",
+      "benchmark": "竞品基准",
+      "ascend": "昇腾 / MindIE 侧"
+    },
+    "watch": [
+      {
+        "repo": "Ascend/MindIE-LLM",
+        "group": "ascend",
+        "lang": "C++",
+        "note": "昇腾 LLM 推理引擎"
+      },
+      {
+        "repo": "Ascend/MindIE-SD",
+        "group": "ascend",
+        "lang": "Python",
+        "note": "昇腾多模态加速套件"
+      },
+      {
+        "repo": "vllm-project/vllm-ascend",
+        "group": "ascend",
+        "lang": "Python",
+        "note": "vLLM 昇腾后端"
+      },
+      {
+        "repo": "Ascend/cann",
+        "group": "ascend",
+        "lang": "C++",
+        "note": "CANN 软件栈｜GitHub 上无 releases/commits Atom feed（404），且通常镜像在 GitCode",
+        "enabled": false
+      },
+      {
+        "repo": "Ascend/ops-nn",
+        "group": "ascend",
+        "lang": "C++",
+        "note": "NN 算子库｜GitHub 上无 releases/commits Atom feed（404），且通常镜像在 GitCode",
+        "enabled": false
+      },
+      {
+        "repo": "Ascend/op-plugin",
+        "group": "ascend",
+        "lang": "C++",
+        "note": "PyTorch 算子插件"
+      },
+      {
+        "repo": "vllm-project/vllm-omni",
+        "group": "serving",
+        "lang": "Python",
+        "note": "多模态/omni 推理"
+      },
+      {
+        "repo": "sgl-project/sglang-omni",
+        "group": "serving",
+        "lang": "Python",
+        "note": "omni 多模态分支"
+      },
+      {
+        "repo": "mstar-project/mstar",
+        "group": "serving",
+        "lang": "Python",
+        "note": "any-to-any 通用服务框架"
+      },
+      {
+        "repo": "vllm-project/vllm",
+        "group": "serving",
+        "lang": "Python",
+        "note": "通用推理引擎"
+      },
+      {
+        "repo": "sgl-project/sglang",
+        "group": "serving",
+        "lang": "Python",
+        "note": "结构化生成运行时"
+      },
+      {
+        "repo": "xdit-project/xDiT",
+        "group": "generation",
+        "lang": "Python",
+        "note": "DiT 并行推理"
+      },
+      {
+        "repo": "vipshop/cache-dit",
+        "group": "generation",
+        "lang": "Python",
+        "note": "DiT 缓存加速"
+      },
+      {
+        "repo": "modelscope/DiffSynth-Studio",
+        "group": "generation",
+        "lang": "Python",
+        "note": "扩散模型训练/推理套件"
+      },
+      {
+        "repo": "ModelTC/LightX2V",
+        "group": "generation",
+        "lang": "Python",
+        "note": "轻量视频生成推理"
+      },
+      {
+        "repo": "Wan-Video/Wan2.1",
+        "group": "generation",
+        "lang": "Python",
+        "note": "视频生成基座"
+      },
+      {
+        "repo": "Tencent-Hunyuan/HunyuanVideo",
+        "group": "generation",
+        "lang": "Python",
+        "note": "混元视频生成"
+      },
+      {
+        "repo": "Tencent-Hunyuan/HunyuanImage-3.0",
+        "group": "generation",
+        "lang": "Python",
+        "note": "混元图像生成"
+      },
+      {
+        "repo": "hpcaitech/Open-Sora",
+        "group": "generation",
+        "lang": "Python",
+        "note": "开源视频生成"
+      },
+      {
+        "repo": "ali-vilab/VACE",
+        "group": "generation",
+        "lang": "Python",
+        "note": "视频生成编辑"
+      },
+      {
+        "repo": "QwenLM/Qwen3-VL",
+        "group": "models",
+        "lang": "Python",
+        "note": "Qwen VL 系列"
+      },
+      {
+        "repo": "OpenGVLab/InternVL",
+        "group": "models",
+        "lang": "Python",
+        "note": "InternVL 系列"
+      },
+      {
+        "repo": "OpenBMB/MiniCPM-V",
+        "group": "models",
+        "lang": "Python",
+        "note": "端侧多模态"
+      },
+      {
+        "repo": "deepseek-ai/DeepSeek-VL2",
+        "group": "models",
+        "lang": "Python",
+        "note": "DeepSeek 多模态"
+      },
+      {
+        "repo": "modelscope/ms-swift",
+        "group": "models",
+        "lang": "Python",
+        "note": "多模态微调/部署"
+      },
+      {
+        "repo": "hiyouga/LLaMA-Factory",
+        "group": "models",
+        "lang": "Python",
+        "note": "微调框架"
+      },
+      {
+        "repo": "NVIDIA/TensorRT-LLM",
+        "group": "benchmark",
+        "lang": "C++",
+        "note": "NVIDIA 推理栈（对标基线）"
+      },
+      {
+        "repo": "ai-dynamo/dynamo",
+        "group": "benchmark",
+        "lang": "Rust",
+        "note": "NVIDIA 分布式推理框架"
+      },
+      {
+        "repo": "NVIDIA/Megatron-LM",
+        "group": "benchmark",
+        "lang": "Python",
+        "note": "大规模训练/并行（对标）"
+      }
+    ],
+    "channel": "atom",
+    "channelNote": "atom = github.com/<repo>/releases.atom 与 commits.atom（无限流，推荐）；api = REST API（匿名 60 次/小时，仅作回退）。"
+  },
+  "wechat": {
+    "enabled": true,
+    "primary": {
+      "id": "sogou-wechat",
+      "label": "搜狗微信 · 公众号检索",
+      "weight": 1.15,
+      "endpoint": "https://weixin.sogou.com/weixin",
+      "type": 2,
+      "politeDelaySeconds": 2.5,
+      "note": "匿名可用的公众号检索通道：返回标题、摘要、发布日期；跳转链接需人机校验，故条目以检索结果链接为准。"
+    },
+    "searches": [
+      {
+        "id": "wx-mm-inference",
+        "query": "多模态 推理 加速"
+      },
+      {
+        "id": "wx-mm-serving",
+        "query": "多模态 大模型 部署 框架"
+      },
+      {
+        "id": "wx-video-gen",
+        "query": "视频生成 推理加速 开源"
+      },
+      {
+        "id": "wx-ascend",
+        "query": "昇腾 MindIE 多模态"
+      },
+      {
+        "id": "wx-vllm",
+        "query": "vLLM 多模态 推理"
+      },
+      {
+        "id": "wx-qwen-vl",
+        "query": "Qwen3-VL 部署 推理"
+      },
+      {
+        "id": "wx-diffusion-accel",
+        "query": "扩散模型 推理 加速 蒸馏"
+      },
+      {
+        "id": "wx-sparse-attn",
+        "query": "稀疏注意力 量化 推理优化"
+      },
+      {
+        "id": "wx-long-video",
+        "query": "长视频生成 加速 显存"
+      },
+      {
+        "id": "wx-jqzx",
+        "query": "机器之心 多模态 推理"
+      },
+      {
+        "id": "wx-xzy",
+        "query": "新智元 大模型 推理加速"
+      },
+      {
+        "id": "wx-ascend-dev",
+        "query": "昇腾AI开发者 MindIE 部署"
+      }
+    ],
+    "mediaMirrors": [
+      {
+        "id": "qbitai",
+        "kind": "rss",
+        "label": "量子位",
+        "group": "teams",
+        "weight": 1.1,
+        "endpoint": "https://www.qbitai.com/feed"
+      },
+      {
+        "id": "leiphone",
+        "kind": "rss",
+        "label": "雷峰网 AI科技评论",
+        "group": "teams",
+        "weight": 1.05,
+        "endpoint": "https://www.leiphone.com/feed"
+      },
+      {
+        "id": "tmtpost",
+        "kind": "rss",
+        "label": "钛媒体",
+        "group": "teams",
+        "weight": 0.95,
+        "endpoint": "https://www.tmtpost.com/rss.xml"
+      }
+    ],
+    "disabledEngines": [
+      {
+        "id": "bing-wechat",
+        "kind": "web-search",
+        "label": "Bing · 微信公众号",
+        "weight": 1.0,
+        "base": "https://www.bing.com/search",
+        "siteFilter": "mp.weixin.qq.com",
+        "market": "zh-CN",
+        "enabled": false,
+        "note": "实测匿名抓取被投毒：返回与查询无关的结果，默认关闭。"
+      },
+      {
+        "id": "bing-open",
+        "kind": "web-search",
+        "label": "Bing · 中文技术媒体",
+        "weight": 0.9,
+        "base": "https://www.bing.com/search",
+        "siteFilter": null,
+        "market": "zh-CN",
+        "enabled": false,
+        "note": "同上，默认关闭。"
+      },
+      {
+        "id": "ddg-wechat",
+        "kind": "web-search",
+        "label": "DuckDuckGo · 微信公众号",
+        "weight": 0.8,
+        "base": "https://html.duckduckgo.com/html/",
+        "siteFilter": "mp.weixin.qq.com",
+        "market": null,
+        "enabled": false,
+        "note": "匿名 POST 返回 202 反爬页，默认关闭。"
+      }
+    ],
+    "curatedAccounts": [
+      {
+        "name": "机器之心",
+        "channel": "sogou-wechat",
+        "query": "机器之心 多模态 推理"
+      },
+      {
+        "name": "量子位",
+        "channel": "rss",
+        "mirror": "https://www.qbitai.com/feed"
+      },
+      {
+        "name": "新智元",
+        "channel": "sogou-wechat",
+        "query": "新智元 大模型 推理加速"
+      },
+      {
+        "name": "AI前线",
+        "channel": "sogou-wechat",
+        "query": "AI前线 多模态 推理"
+      },
+      {
+        "name": "昇腾AI开发者",
+        "channel": "sogou-wechat",
+        "query": "昇腾AI开发者 MindIE 部署"
+      },
+      {
+        "name": "机器之心 / 雷峰网 / 钛媒体",
+        "channel": "rss",
+        "mirror": "https://www.leiphone.com/feed, https://www.tmtpost.com/rss.xml"
+      }
+    ]
+  },
+  "competitors": {
+    "releaseWatch": [
+      "vllm-project/vllm",
+      "vllm-project/vllm-omni",
+      "sgl-project/sglang",
+      "sgl-project/sglang-omni",
+      "mstar-project/mstar",
+      "NVIDIA/TensorRT-LLM",
+      "ai-dynamo/dynamo",
+      "Ascend/MindIE-LLM",
+      "Ascend/MindIE-SD",
+      "vllm-project/vllm-ascend"
+    ],
+    "engines": [
+      {
+        "id": "vllm",
+        "label": "vLLM",
+        "repo": "vllm-project/vllm",
+        "stack": "通用"
+      },
+      {
+        "id": "vllm-omni",
+        "label": "vLLM-Omni",
+        "repo": "vllm-project/vllm-omni",
+        "stack": "多模态"
+      },
+      {
+        "id": "sglang",
+        "label": "SGLang",
+        "repo": "sgl-project/sglang",
+        "stack": "通用"
+      },
+      {
+        "id": "sglang-omni",
+        "label": "SGLang-Omni",
+        "repo": "sgl-project/sglang-omni",
+        "stack": "多模态"
+      },
+      {
+        "id": "mstar",
+        "label": "M*",
+        "repo": "mstar-project/mstar",
+        "stack": "any-to-any"
+      },
+      {
+        "id": "tensorrt-llm",
+        "label": "TensorRT-LLM",
+        "repo": "NVIDIA/TensorRT-LLM",
+        "stack": "通用"
+      },
+      {
+        "id": "dynamo",
+        "label": "NVIDIA Dynamo",
+        "repo": "ai-dynamo/dynamo",
+        "stack": "分布式"
+      },
+      {
+        "id": "mindie-llm",
+        "label": "MindIE-LLM",
+        "repo": "Ascend/MindIE-LLM",
+        "stack": "昇腾"
+      },
+      {
+        "id": "mindie-sd",
+        "label": "MindIE-SD",
+        "repo": "Ascend/MindIE-SD",
+        "stack": "昇腾多模态"
+      },
+      {
+        "id": "vllm-ascend",
+        "label": "vLLM-Ascend",
+        "repo": "vllm-project/vllm-ascend",
+        "stack": "昇腾"
+      }
+    ],
+    "focus": [
+      "mindie-llm",
+      "mindie-sd",
+      "vllm-ascend"
+    ]
+  },
+  "mindie": {
+    "ownedRepos": [
+      {
+        "repo": "Ascend/MindIE-LLM",
+        "label": "MindIE-LLM"
+      },
+      {
+        "repo": "Ascend/MindIE-SD",
+        "label": "MindIE-SD"
+      },
+      {
+        "repo": "vllm-project/vllm-ascend",
+        "label": "vLLM-Ascend"
+      },
+      {
+        "repo": "Ascend/cann",
+        "label": "CANN"
+      },
+      {
+        "repo": "Ascend/ops-nn",
+        "label": "ops-nn"
+      },
+      {
+        "repo": "Ascend/op-plugin",
+        "label": "op-plugin"
+      }
+    ],
+    "capabilityProbes": [
+      {
+        "id": "qwen-vl",
+        "label": "Qwen-VL 系列",
+        "terms": [
+          "qwen-vl",
+          "qwen2.5-vl",
+          "qwen3-vl",
+          "qwen vl"
+        ]
+      },
+      {
+        "id": "internvl",
+        "label": "InternVL 系列",
+        "terms": [
+          "internvl"
+        ]
+      },
+      {
+        "id": "video-gen",
+        "label": "视频生成（DiT/Wan/Hunyuan）",
+        "terms": [
+          "wan2",
+          "wan 2",
+          "hunyuanvideo",
+          "hunyuan video",
+          "cogvideo",
+          "ltx-video",
+          "video generation"
+        ]
+      },
+      {
+        "id": "diffusion-accel",
+        "label": "扩散加速（缓存/蒸馏）",
+        "terms": [
+          "cache-dit",
+          "cache dit",
+          "step distillation",
+          "few-step",
+          "lightx2v",
+          "diffusion cache"
+        ]
+      },
+      {
+        "id": "sparse-attention",
+        "label": "稀疏/量化注意力",
+        "terms": [
+          "sparse attention",
+          "block sparse",
+          "quantized attention",
+          "quant flash"
+        ]
+      },
+      {
+        "id": "omni-serving",
+        "label": "Omni / any-to-any 服务",
+        "terms": [
+          "vllm-omni",
+          "sglang-omni",
+          "omni serving",
+          "any-to-any"
+        ]
+      },
+      {
+        "id": "moe-inference",
+        "label": "MoE 推理优化",
+        "terms": [
+          "moe inference",
+          "expert parallel",
+          "moe serving"
+        ]
+      },
+      {
+        "id": "quantization",
+        "label": "量化（W8A8/FP8/INT4）",
+        "terms": [
+          "w8a8",
+          "fp8",
+          "int4",
+          "quantization",
+          "量化"
+        ]
+      }
+    ]
+  }
+}
