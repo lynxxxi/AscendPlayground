@@ -208,7 +208,12 @@ def build_competitor_matrix(
                 "latestTitle": (latest or {}).get("title", ""),
                 "recentReleases": recent_releases,
                 "topItems": [
-                    {"title": item.get("title"), "url": item.get("url"), "kind": item.get("kind")}
+                    {
+                        "title": item.get("title"),
+                        "url": item.get("url"),
+                        "kind": item.get("kind"),
+                        "digest": item.get("digest"),
+                    }
                     for item in sorted(engine_items, key=lambda entry: entry.get("score", 0), reverse=True)[:5]
                 ],
             }

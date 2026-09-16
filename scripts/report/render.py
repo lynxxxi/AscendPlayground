@@ -513,20 +513,34 @@ def render_html(
         if not releases:
             continue
         focus = bool(entry.get("isFocus"))
+        # 版本说明缺失或过短（如只有版本号）时，用该引擎最新变更摘要兜底
+        fallback = ""
+        for candidate in entry.get("topItems") or []:
+            text = str(candidate.get("digest") or candidate.get("title") or "").strip()
+            if len(text) > 40:
+                fallback = text
+                break
         cards = []
         for release in releases:
             feature = str(release.get("digest") or "").strip()
+            is_thin = len(feature) < 30
+            shown = feature if not is_thin else ""
+            extra = ""
+            if is_thin:
+                shown = fallback or feature
+                extra = ' <span class="rp-desc muted">（该版本未附说明，以下为最近变更）</span>' if shown else ""
             cards.append(
                 '<div class="rp-rel{0}">'
                 '<div class="rp-rel-top"><span class="rp-rel-tag">{1}</span>'
                 '<span class="rp-rel-day">{2}</span>'
                 '<a href="{3}" target="_blank" rel="noopener">releases ↗</a></div>'
-                "<p>{4}</p></div>".format(
+                "<p>{4}{5}</p></div>".format(
                     " focus" if focus else "",
                     _esc(release.get("tag", "")),
                     _esc(release.get("day", "")),
                     _esc(release.get("url", "")),
-                    _esc(feature) if feature else '<span class="rp-desc muted">该版本未提供说明文本</span>',
+                    _esc(shown) if shown else '<span class="rp-desc muted">该版本未提供说明文本</span>',
+                    extra,
                 )
             )
         badge = '<span class="badge focus">FOCUS</span> ' if focus else ""
