@@ -398,6 +398,8 @@ def build_mindie_section(
                 "day": item.get("day"),
                 "group": item.get("group"),
                 "isNew": item.get("isNew"),
+                "digest": item.get("digest"),
+                "kind": item.get("kind"),
             }
             for item in topic_hits[:12]
         ],

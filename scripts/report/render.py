@@ -86,6 +86,22 @@ def _html_link(title: str, url: str, limit: int = 130) -> str:
     return f'<a href="{_esc(url)}" target="_blank" rel="noopener noreferrer">{label}</a>'
 
 
+def degraded_note(source_reports: list[dict[str, Any]], source_ids: set[str]) -> str:
+    """当指定信息源降级（限流/失败）时，在该维度顶部给出显式提示。"""
+    for report in source_reports:
+        if str(report.get("id")) not in source_ids:
+            continue
+        if report.get("errors") or (report.get("enabled", True) and not report.get("kept")):
+            reason = "；".join(report.get("errors", [])[:2]) or "本轮未取到结果（可能被限流）"
+            return (
+                '<div class="rp-warn"><b>该维度本期数据不完整</b>：'
+                f'{_esc(str(report.get("label") or report.get("id")))} 未成功采集'
+                f'（{_esc(truncate(reason, 200))}）。'
+                "等待十几分钟后重跑即可补齐，已有快照不会浪费。</div>"
+            )
+    return ""
+
+
 def _search_blob(item: dict[str, Any]) -> str:
     parts = [
         str(item.get("title") or ""),
@@ -499,7 +515,8 @@ def render_html(
             "公众号与中文媒体",
             f"搜狗微信检索 {len(((config.get('wechat') or {}).get('searches') or []))} 组关键词 + 中文技术媒体 RSS。"
             f"标题即原文直链（本期解析成功 {resolved}/{len(wechat)} 条），可直接点开阅读。",
-            table(["新", "日期", "标题（点击进入原文）", "内容说明", "公众号", "检索词"], wechat_rows)
+            degraded_note(source_reports, {"sogou-wechat"})
+            + table(["新", "日期", "标题（点击进入原文）", "内容说明", "公众号", "检索词"], wechat_rows)
             + '<h3 class="rp-sub">D.1 按检索词分布</h3>'
             + table(["检索词", "命中", "新增"], query_rows),
         )

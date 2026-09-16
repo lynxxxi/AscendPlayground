@@ -19,6 +19,7 @@ from typing import Any, Callable, Iterable, Optional
 from report.lib.feed import Feed, FeedEntry, parse_feed
 from report.lib.httpclient import DEFAULT_USER_AGENT, FetchError, HttpClient, SnapshotCache
 from report.lib.relevance import Scorer, TagExtractor
+from report.zh import CuratedDescriptions, CuratedReleases
 from report.lib.util import (
     UTC,
     clean_title,
@@ -50,6 +51,7 @@ class SourceReport:
     filtered: int = 0
     droppedNoDate: int = 0
     droppedByDate: int = 0
+    droppedOffTopic: int = 0
     errors: list[str] = field(default_factory=list)
     snapshots: list[str] = field(default_factory=list)
 
@@ -66,6 +68,7 @@ class SourceReport:
             "filtered": self.filtered,
             "droppedNoDate": self.droppedNoDate,
             "droppedByDate": self.droppedByDate,
+            "droppedOffTopic": self.droppedOffTopic,
             "errors": self.errors,
             "snapshots": self.snapshots,
         }
@@ -163,6 +166,9 @@ class Collector:
         self.github_attempted: set[str] = set()
         # 竞品发版历史（不经过条目窗口过滤），用于构建版本节奏矩阵
         self.release_history: dict[str, list[dict[str, Any]]] = {}
+        # 中文说明层（人工撰写，按 stableId / repo+tag 匹配）
+        self.curated = CuratedDescriptions(config.get("_curatedPath"))
+        self.curated_releases = CuratedReleases(config.get("_curatedReleasesPath"))
 
     # ------------------------------------------------------------------
     # 通用包装：跑一个采集函数并统一处理错误与统计
@@ -212,6 +218,11 @@ class Collector:
     ) -> list[dict[str, Any]]:
         kept: list[dict[str, Any]] = []
         seen: set[str] = set()
+        # 部分源（如 OpenAlex 全文检索）噪声大，要求至少命中若干关键词组
+        min_groups = int(source.get("minKeywordGroups", 0) or 0)
+        min_hits = int(source.get("minKeywordHits", 0) or 0)
+        # 逐源设置，避免污染其它信息源
+        require_scope_title = bool(source.get("requireScopeInTitle", False))
         for item in raw_items:
             title = clean_title(item.get("title"))
             if not title:
@@ -229,8 +240,6 @@ class Collector:
                 continue
             item["title"] = title
             item["published"] = iso(published) if published else ""
-            # 每条都生成一句到两句的说明，报告里可直接阅读，不必点进原文
-            item["digest"] = item.get("digest") or _build_digest(item)
             text = f"{title} {item.get('summary') or ''}"
             if not self.scorer.passes_gate(text):
                 report.filtered += 1
@@ -241,6 +250,28 @@ class Collector:
             item.setdefault("kind", report.kind)
             item.setdefault("weight", float(source.get("weight", 1.0)))
             item["keywords"] = self.extractor.extract(text)
+            if min_groups or min_hits:
+                groups = {str(term).split("/")[0] for term in item["keywords"]}
+                if len(groups) < min_groups or len(item["keywords"]) < min_hits:
+                    report.droppedOffTopic += 1
+                    report.filtered += 1
+                    continue
+            # 可选：要求标题本身落在多模态 infra 范围内（用于 OpenAlex 这类全文检索源）
+            if require_scope_title and not self.scorer.passes_gate(title):
+                report.droppedOffTopic += 1
+                report.filtered += 1
+                continue
+            # 每条都生成一句到两句的说明，报告里可直接阅读，不必点进原文
+            item["digest"] = item.get("digest") or _build_digest(item)
+            # 发版条目：优先用人工撰写的中文发版说明（与竞品卡片口径一致）
+            if item.get("kind") in {"repo-release", "competitor-release"} and self.curated_releases:
+                curated_release = self.curated_releases.lookup(
+                    str(item.get("repo") or ""), str((item.get("signals") or {}).get("tag") or "")
+                )
+                if curated_release:
+                    item["digest"] = curated_release
+            if not item.get("digest"):
+                item["digest"] = _build_digest(item)
             item["stableId"] = item.get("stableId") or short_id(
                 report.id, item.get("nativeId") or item.get("url") or title
             )
@@ -248,6 +279,9 @@ class Collector:
                 report.filtered += 1
                 continue
             seen.add(item["stableId"])
+            # 若已有中文说明（config/curated_zh.json），覆盖为中文标题与说明
+            if self.curated is not None:
+                self.curated.apply(item)
             item["score"] = self.scorer.score(item, self.reference)
             item["day"] = day(published)
             item["isNew"] = True
@@ -542,6 +576,10 @@ class Collector:
                     self.github_rate_limited = True
             raise
 
+    def _release_section_for_path(self, entry: dict[str, Any]) -> str:
+        """取该仓库 release notes 中与关注的子系统相关的段落标题。"""
+        return str(entry.get("releaseSection") or "")
+
     def _github_atom(self, repo: str, feed_name: str) -> list[FeedEntry]:
         url = f"https://github.com/{repo}/{feed_name}.atom"
         result = self.client.get(url, accept="application/atom+xml, application/xml, */*")
@@ -559,7 +597,11 @@ class Collector:
         watch = [entry for entry in (source.get("watch") or []) if entry.get("enabled") is not False]
         limits = config_repo_limits(self.config)
         max_commits = int(limits.get("commitsPerRepo", 1)) * 20
-        self.log(f"  · Atom 通道（无限流）/ {len(watch)} 个仓库，每仓最多 {max_commits} 条提交")
+        path_watch = [entry for entry in watch if entry.get("pathFilter")]
+        self.log(
+            f"  · Atom 通道（无限流）/ {len(watch)} 个仓库"
+            + (f"，其中 {len(path_watch)} 个按代码路径过滤" if path_watch else "")
+        )
 
         for entry in watch:
             repo = str(entry.get("repo") or "")
@@ -572,16 +614,60 @@ class Collector:
             note = str(meta.get("note") or entry.get("note") or "")
             label = group_label(self.config, group)
 
-            try:
-                releases = self._github_atom(repo, "releases")
-            except FetchError as error:
-                failures.append(f"{repo} releases.atom: {error}")
-                releases = []
+            # 按路径过滤：只取特定代码目录的提交（用于主仓里的多模态子系统）
+            path_filters = [str(p) for p in (entry.get("pathFilter") or []) if str(p).strip()]
+            releases: list[FeedEntry] = []
+            if entry.get("includeReleases", True):
+                try:
+                    releases = self._github_atom(repo, "releases")
+                except FetchError as error:
+                    failures.append(f"{repo} releases.atom: {error}")
+
+            if path_filters:
+                for path in path_filters:
+                    try:
+                        commits = self._github_atom(repo, f"commits/main/{path.strip('/')}")
+                    except FetchError as error:
+                        failures.append(f"{repo} {path} commits: {error}")
+                        continue
+                    section = self._release_section_for_path(entry)
+                    for commit in commits[: max_commits // max(1, len(path_filters))]:
+                        message = clean_title(commit.title)
+                        if not message or not is_interesting_commit(message):
+                            continue
+                        entries.append(
+                            self._item(
+                                title=f"[{repo}] {message}",
+                                summary=truncate(commit.summary or "", 900),
+                                url=commit.link,
+                                published=commit.published,
+                                native_id=commit.guid or commit.link,
+                                kind="repo-commit",
+                                signals={
+                                    "repo": repo,
+                                    "author": commit.author,
+                                    "subject": message,
+                                    "codePath": path.strip("/"),
+                                    "channelNote": str(entry.get("channelNote") or ""),
+                                },
+                                extra={
+                                    "repo": repo,
+                                    "repoGroup": group,
+                                    "repoNote": note,
+                                    "repoGroupLabel": label,
+                                    "repoActivity": "commit",
+                                },
+                            )
+                        )
+                continue
+
             for release in releases[: int(limits.get("releasesPerRepo", 5))]:
                 tag, _, subject = release.title.partition(":")
+                tag = tag.strip() or release.title
+                curated_release = self.curated_releases.lookup(repo, tag)
                 entries.append(
                     self._item(
-                        title=f"[{repo}] 发布 {tag.strip() or release.title}：{clean_title(subject)}",
+                        title=f"[{repo}] 发布 {tag}：{clean_title(subject)}",
                         summary=truncate(release.summary or subject, 4000),
                         url=release.link,
                         published=release.published,
@@ -589,7 +675,7 @@ class Collector:
                         kind="repo-release",
                         signals={
                             "repo": repo,
-                            "tag": tag.strip(),
+                            "tag": tag,
                             "author": release.author,
                         },
                         extra={
@@ -598,10 +684,10 @@ class Collector:
                             "repoNote": note,
                             "repoGroupLabel": label,
                             "repoActivity": "release",
+                            "digest": curated_release or None,
                         },
                     )
                 )
-
             try:
                 commits = self._github_atom(repo, "commits")
             except FetchError as error:
@@ -809,6 +895,8 @@ class Collector:
         # 搜狗必须先建立 cookie 会话，否则跳转请求会被反爬页拦截
         self.client.session_headers(BROWSER_USER_AGENT)
         entries: list[dict[str, Any]] = []
+        consecutive_bot = 0
+        bot_backoff = float(source.get("botBackoffSeconds", 20) or 0)
         for index, search in enumerate(self.config.get("wechat", {}).get("searches", []) or []):
             query = str(search.get("query") or "").strip()
             if not query:
@@ -831,7 +919,18 @@ class Collector:
                 continue
             hits = parse_sogou_wechat(result.body)
             if not hits:
-                self.log("    ! 未解析到结果（可能触发人机校验）")
+                if is_sogou_bot_page(result.body):
+                    consecutive_bot += 1
+                    self.log(f"    ! 触发搜狗人机校验（连续 {consecutive_bot} 次）")
+                    if consecutive_bot >= 2:
+                        self.log("    x 判定已被限流，提前结束公众号采集（稍后重跑会复用已有结果）")
+                        break
+                    time.sleep(bot_backoff)
+                    continue
+                self.log("    ! 未解析到结果")
+                consecutive_bot = 0
+                continue
+            consecutive_bot = 0
             resolved = 0
             for hit_index, hit in enumerate(hits):
                 article_url = hit["url"]
@@ -991,7 +1090,11 @@ class Collector:
                     tag, _, subject = release.title.partition(":")
                     tag = tag.strip() or release.title
                     published = parse_datetime(release.published)
-                    feature = digest(release.summary, limit=420, prefer_bullets=True) or digest(subject, limit=200)
+                    feature = (
+                        self.curated_releases.lookup(repo, tag)
+                        or digest(release.summary, limit=420, prefer_bullets=True)
+                        or digest(subject, limit=200)
+                    )
                     # 版本历史用于竞品矩阵的"最新版本 + 特性说明"；发版往往早于采集窗口，
                     # 因此这里独立记录，不依赖条目是否被窗口过滤器保留。
                     self.release_history.setdefault(repo, []).append(
@@ -1191,6 +1294,19 @@ BROWSER_USER_AGENT = (
 )
 SOGOU_TIME_RE = re.compile(r"timeConvert\('(\d{9,12})'\)")
 _SOGOU_NOISE = re.compile(r"<!--.*?-->|<!--red_beg-->|<!--red_end-->", re.S)
+
+
+SOGOU_BOT_MARKERS = ("antispider", "验证码", "请输入验证码", "verifycode", "seccodeImage")
+
+
+def is_sogou_bot_page(body: str) -> bool:
+    """判断搜狗返回的是否为人机校验页而非真实搜索结果。"""
+    if not body:
+        return True
+    if SOGOU_BLOCK_RE.search(body):
+        return False
+    lowered = body.lower()
+    return any(marker.lower() in lowered for marker in SOGOU_BOT_MARKERS)
 
 
 def parse_sogou_wechat(body: str) -> list[dict[str, Any]]:

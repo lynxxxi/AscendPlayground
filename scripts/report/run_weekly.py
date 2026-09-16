@@ -37,6 +37,7 @@ from report.corpus import build_corpus  # noqa: E402
 from report.lib.httpclient import DEFAULT_USER_AGENT, HttpClient, SnapshotCache  # noqa: E402
 from report.lib.util import (  # noqa: E402
     UTC,
+    dump_json,
     ensure_dir,
     iso,
     now_utc,
@@ -221,6 +222,24 @@ def main(argv: Optional[list[str]] = None) -> int:
     # 每个周期只产出一个文件：report/<week>.html（直接覆盖当周）
     html_path = report_dir / f"{week}.html"
     html_path.write_text(report_html, encoding="utf-8")
+
+    # 中文说明覆盖情况：列出仍缺中文标题/说明的条目，便于后续补写。
+    # 这是工作清单而非报告产物，因此写入采集缓存目录（report/ 只放 HTML）。
+    pending = [
+        {
+            "stableId": item.get("stableId"),
+            "group": item.get("group"),
+            "kind": item.get("kind"),
+            "title": item.get("title"),
+            "day": item.get("day"),
+            "url": item.get("url"),
+        }
+        for item in corpus.items
+        if item.get("digestSource") != "curated"
+    ]
+    pending.sort(key=lambda row: (str(row.get("group")), str(row.get("stableId"))))
+    pending_path = snapshot_dir.parent / "pending_zh.json"
+    dump_json(pending_path, pending)
 
     log("")
     log("产出：")

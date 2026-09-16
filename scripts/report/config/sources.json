@@ -339,7 +339,8 @@
             "inference"
           ]
         }
-      ]
+      ],
+      "note": "arXiv 走精确的 AND 组合查询，相关性闸门已保证主题相关，故不额外收紧。"
     },
     "huggingface-papers": {
       "enabled": true,
@@ -351,7 +352,7 @@
       "pageSize": 100
     },
     "openalex": {
-      "enabled": true,
+      "enabled": false,
       "kind": "openalex",
       "label": "OpenAlex",
       "group": "papers",
@@ -359,10 +360,13 @@
       "endpoint": "https://api.openalex.org/works",
       "pageSize": 25,
       "searches": [
-        "multimodal model inference acceleration",
+        "multimodal inference acceleration",
+        "multimodal model serving system",
         "diffusion transformer inference optimization",
-        "video generation model serving"
-      ]
+        "vision language model efficient deployment",
+        "video generation model acceleration"
+      ],
+      "note": "实测结论：OpenAlex 为全文检索，返回结果中大量为建筑安全、医学影像、教育等无关领域论文；其 metadata 又几乎不命中本项目的多模态 infra 关键词组，因此任何足够严格的关键词阈值都会把真正相关的论文一起滤掉。论文维度已由 arXiv（精确 AND 组合查询）+ HuggingFace Daily Papers 覆盖，故默认关闭。如需机构/引用维度，可改小 searches 范围后重新启用。"
     }
   },
   "teams": {
@@ -522,6 +526,18 @@
         "note": "结构化生成运行时"
       },
       {
+        "repo": "sgl-project/sglang",
+        "id": "sglang-mm",
+        "group": "serving",
+        "lang": "Python",
+        "note": "主仓多模态子系统",
+        "channelNote": "仅跟踪 python/sglang/srt/multimodal 下的多模态/视觉相关改动",
+        "includeReleases": false,
+        "pathFilter": [
+          "python/sglang/srt/multimodal"
+        ]
+      },
+      {
         "repo": "xdit-project/xDiT",
         "group": "generation",
         "lang": "Python",
@@ -641,8 +657,9 @@
       "weight": 1.15,
       "endpoint": "https://weixin.sogou.com/weixin",
       "type": 2,
-      "politeDelaySeconds": 2.5,
-      "note": "匿名可用的公众号检索通道：返回标题、摘要、发布日期；跳转链接需人机校验，故条目以检索结果链接为准。"
+      "politeDelaySeconds": 4,
+      "note": "匿名可用的公众号检索通道：返回标题、摘要、发布日期；跳转链接需人机校验，故条目以检索结果链接为准。",
+      "botBackoffSeconds": 45
     },
     "searches": [
       {

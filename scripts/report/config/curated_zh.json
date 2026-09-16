@@ -1,0 +1,976 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2026-09-16",
+    "note": "人工撰写的中文标题与说明。按 stableId 精确匹配，未命中的条目回退到自动抽取的原文说明。",
+    "scope": "人工撰写的中文标题与说明。按 stableId 精确匹配，未命中的条目回退到自动抽取的原文说明。当前覆盖：论文、团队动态、仓库更新、公众号；共 168 条。"
+  },
+  "papers": {
+    "arxiv:9d1abf296e07": {
+      "title": "StackTok：用预算自适应视觉 Token 选择加速 VLM 推理",
+      "digest": "针对高分辨率输入下视觉 token 过多拖慢推理的问题，提出按预算自适应选择视觉 token 的机制，在保持精度的同时降低 VLM 的视觉侧计算量。属于可直接落地的推理优化方向。"
+    },
+    "arxiv:ee42f7498506": {
+      "title": "层、注意力汇与缩放：多模态大模型的自适应证据选择",
+      "digest": "分析多模态大模型在不同层与注意力汇上的证据分布规律，据此做自适应证据选择，用于压缩视觉输入并提升推理效率。"
+    },
+    "arxiv:0763820eda0a": {
+      "title": "SAVOR：置信度校准强化学习的自感知视觉定位，缓解多模态幻觉",
+      "digest": "用置信度校准的强化学习让模型自我感知视觉定位质量，从而减少多模态幻觉，属于提升多模态输出可靠性的一类方法。"
+    },
+    "arxiv:0c93b5ae9dec": {
+      "title": "世界模型硬件加速器",
+      "digest": "面向世界模型推理的专用硬件加速方案，讨论了此类负载的算力与访存特征，对理解端侧/专用芯片上的多模态推理有参考价值。"
+    },
+    "arxiv:d311119b9667": {
+      "title": "DIDO：把交互中心动力学蒸馏为一步去噪的世界动作模型",
+      "digest": "将交互动力学蒸馏成单步去噪过程，降低世界动作模型的推理步数，属于少步数生成的加速路线。"
+    },
+    "arxiv:129843411f38": {
+      "title": "LynnReal-Omni：面向智能体视觉流程的原生多模态视频生成",
+      "digest": "视频扩散模型本身随机且难以精确控制，本文面向智能体化的视觉工作流做原生多模态视频生成，强调生成结果要能被下游任务稳定消费。"
+    },
+    "arxiv:dce456a7d997": {
+      "title": "无损投机解码真的无损吗？Orthrus 中数值精度的影响",
+      "digest": "Orthrus 是混合自回归-扩散的加速架构。本文检验其“无损”假设在数值精度层面是否成立：不同精度下输出会出现偏差，说明仅比对接受率不足以证明严格等价，对投机解码的正确性评估有直接意义。"
+    },
+    "arxiv:63f126f1f3a5": {
+      "title": "MindTopo：基础模型能在拓扑空间推理吗？",
+      "digest": "构建拓扑空间推理的评测，考察基础模型的空间与结构推理能力，反映多模态推理能力的边界。"
+    },
+    "arxiv:2ad668148ac4": {
+      "title": "VoT：面向统一多模态表示对齐的思维视觉",
+      "digest": "提出 Vision-of-Thought 思路做统一多模态表示对齐，用视觉链式推理改善跨模态表征一致性。"
+    },
+    "huggingface-papers:dbf45976b62e": {
+      "title": "PhysStream：结构化场景记忆与细粒度运动控制的流式物理视频生成",
+      "digest": "以结构化场景记忆维持长时序一致性，并支持细粒度运动控制的流式视频生成，面向实时长视频场景。"
+    },
+    "huggingface-papers:75c8ec9486f5": {
+      "title": "PhysBrain 1.5：从视觉语言模型走向物理基础模型",
+      "digest": "把视觉语言模型扩展为物理基础模型，强调对物理规律与操作的建模，是 VLM 向具身/物理世界延伸的代表工作。"
+    },
+    "huggingface-papers:b7b078d96dd8": {
+      "title": "Omni-Streaming Thinking：全模态流式思考",
+      "digest": "面向全模态输入的流式思考范式，处理连续到达的音视频流并在线推理，属于 omni 模型的服务形态探索。"
+    },
+    "huggingface-papers:76fe394db692": {
+      "title": "AlayaVista：从全景状态到透视视频的流式世界建模",
+      "digest": "以全景状态为输入流式生成透视视频，做世界模型式的状态到视角转换，对视频生成的一致性与实时性都有要求。"
+    },
+    "huggingface-papers:2506a78b7306": {
+      "title": "StepAudio 3 Music 技术报告",
+      "digest": "阶跃 StepAudio 3 系列的音乐生成模型技术报告，披露训练与生成方案，属于音频生成方向的模型侧进展。"
+    },
+    "huggingface-papers:16f4ec186e80": {
+      "title": "StepAudio 3 Gen 技术报告",
+      "digest": "阶跃 StepAudio 3 系列的音频生成技术报告，与其 ASR/TTS/Realtime 同批发布，体现语音全栈布局。"
+    },
+    "huggingface-papers:c268d819dc53": {
+      "title": "StepAudio 3 Realtime 技术报告",
+      "digest": "阶跃实时语音模型技术报告，主打低延迟全双工交互，是实时语音服务的关键一环。"
+    },
+    "huggingface-papers:193643b04b5e": {
+      "title": "Dynin-Robotics：全模态统一扩散视觉-语言-动作模型",
+      "digest": "用统一扩散框架融合全模态输入与动作输出，做视觉-语言-动作一体化建模，属于 VLA 方向。"
+    },
+    "huggingface-papers:36aab95546e4": {
+      "title": "模态自回归世界动作模型",
+      "digest": "按模态自回归方式组织世界动作模型，讨论多模态时序建模与动作生成的结构设计。"
+    },
+    "huggingface-papers:499fd3986af0": {
+      "title": "记忆即计划：以记忆为基的世界动作建模与规划",
+      "digest": "把记忆作为规划基座构建世界动作模型，强调长程任务中的记忆管理与决策一致性。"
+    },
+    "huggingface-papers:9bcad15a1398": {
+      "title": "FreeFlow：无偏置的层次化光流估计 Transformer",
+      "digest": "层次化 Transformer 做光流估计并去除位置偏置，属于视频理解底层感知模块的改进。"
+    },
+    "huggingface-papers:bcc638486e35": {
+      "title": "X-AuT：语音大模型音频编码器的渐进压缩与跨尺度蒸馏",
+      "digest": "用跨尺度蒸馏渐进压缩语音大模型的音频编码器，直接降低音频侧计算开销，属于语音 LLM 的推理优化。"
+    },
+    "huggingface-papers:ed21685e1604": {
+      "title": "Attention-DP3：几何对齐注意力条件的空间物体感知 3D 扩散策略",
+      "digest": "在 3D 扩散策略中引入几何对齐的注意力条件，提升空间物体感知，属于具身操作策略的结构改进。"
+    },
+    "arxiv:758e0642e42d": {
+      "title": "翻转之前：量化视觉语言模型在答案改变前的隐藏分数漂移",
+      "digest": "考察量化对 VLM 的影响：答案尚未改变时置信分数已经漂移，提示仅看准确率会低估量化风险，对量化部署评估有直接价值。"
+    },
+    "huggingface-papers:71bf3a03ed49": {
+      "title": "LLaDA-UI：把块级扩散引入视觉语言 GUI 智能体",
+      "digest": "在 GUI 智能体中加入块级扩散解码，提升界面操作任务的生成效率与稳定性。"
+    },
+    "huggingface-papers:61d1dfdfd686": {
+      "title": "TRACE：轨迹鲁棒准入与证据排序的高效 GUI 智能体",
+      "digest": "通过轨迹鲁棒的准入控制与证据排序降低 GUI 智能体的无效步数，属于 agent 推理成本优化。"
+    },
+    "huggingface-papers:fd25dff8fc0d": {
+      "title": "打破视觉-动作捷径：面向可泛化机器人基础模型的潜在接口训练",
+      "digest": "指出机器人基础模型存在视觉到动作的捷径学习，提出潜在接口训练以提升泛化，对 VLA 训练策略有参考意义。"
+    },
+    "arxiv:91196679896d": {
+      "title": "Uncertainty DMD：恢复少步自回归视频蒸馏中的多样性",
+      "digest": "针对少步蒸馏导致视频生成多样性下降的问题，引入不确定性建模恢复多样性，属于扩散/自回归视频加速的质量保障工作。"
+    },
+    "huggingface-papers:94c5ab8dbddf": {
+      "title": "把图像分词器当作统一多模态模型中的视觉语言来研究",
+      "digest": "系统比较图像 tokenizer 在统一多模态模型中的作用，对视觉 token 设计与压缩策略有指导意义。"
+    },
+    "arxiv:371c3e9afb05": {
+      "title": "MCPO：面向多模态思维链压缩的模态对比偏好优化",
+      "digest": "用模态对比的偏好优化压缩多模态思维链，减少推理 token 开销，属于多模态推理效率优化。"
+    },
+    "huggingface-papers:f992d19715e7": {
+      "title": "MoE 强化学习中的专家空间探索",
+      "digest": "研究 MoE 结构下强化学习的专家空间探索策略，对 MoE 模型的训练与服务效率都有影响。"
+    },
+    "huggingface-papers:9c99e3d88012": {
+      "title": "ActionSplice：交互式世界模型的在飞动作编辑",
+      "digest": "支持在生成过程中即时编辑动作的交互式世界模型，强调实时交互能力。"
+    },
+    "huggingface-papers:cac53237dcba": {
+      "title": "MobileVLA-R1 2.0：面向移动机器人控制的强化推理",
+      "digest": "用强化学习增强移动机器人 VLA 的推理能力，属于端侧具身控制的模型侧进展。"
+    },
+    "arxiv:bf4c2f548cd3": {
+      "title": "时序自蒸馏：离散扩散语言模型的更快推理",
+      "digest": "用时序自蒸馏降低离散扩散语言模型的推理步数，是扩散类 LM 的加速方法。"
+    },
+    "huggingface-papers:ff41574852d2": {
+      "title": "Vidu S2：实时交互、可编辑、空间化的视频生成",
+      "digest": "主打实时交互与可编辑的空间化视频生成，代表视频生成向实时可控方向演进。"
+    },
+    "huggingface-papers:891fe2e8b461": {
+      "title": "Benchmark Radar：AI 评测基准的活数据库与搜索引擎",
+      "digest": "把分散的 AI 评测基准整理成可持续更新的数据库与检索入口，便于选型与对比，对评测工作流有实用价值。"
+    },
+    "huggingface-papers:95a809bc2b99": {
+      "title": "HazardAuditor：从可执行威胁到更安全的电脑操作智能体",
+      "digest": "面向 computer-use 智能体做可执行威胁审计，属于智能体安全方向。"
+    },
+    "huggingface-papers:ce2535d2c602": {
+      "title": "提示并非等价：探索引导的提示脚手架用于多模态强化后训练",
+      "digest": "指出多模态强化后训练中提示质量差异显著，提出探索引导的提示脚手架以提升训练效率。"
+    },
+    "huggingface-papers:e906732a7e79": {
+      "title": "Ambient @ EgoLongQA 2026：把长视频感知蒸馏进 2B 以下小模型",
+      "digest": "把长视频理解能力蒸馏到 2B 以下小模型，属于长视频推理的轻量化路线，对端侧多模态部署有参考价值。"
+    },
+    "huggingface-papers:eb8473d93057": {
+      "title": "面向视觉文档检索的生成式后交互嵌入",
+      "digest": "用生成式后交互嵌入做视觉文档检索，兼顾检索精度与向量化成本，属于多模态 RAG 的基础能力改进。"
+    },
+    "huggingface-papers:369995742622": {
+      "title": "跨模态上下文学习的趋同涌现",
+      "digest": "研究上下文学习能力在不同模态间的涌现规律，对多模态统一模型的能力迁移有启示。"
+    },
+    "huggingface-papers:82914e5ef6d5": {
+      "title": "ReMoMask-2：潜在检索增强的掩码动作生成",
+      "digest": "用潜在检索增强掩码式人体动作生成，属于动作生成方向。"
+    },
+    "huggingface-papers:66781d027755": {
+      "title": "链接之前先思考：多语言实体链接中的稀有性、推理与检索",
+      "digest": "在实体链接前引入推理与检索环节，处理长尾稀有实体，属于 RAG 与推理结合的方法。"
+    },
+    "huggingface-papers:a7d235a6503f": {
+      "title": "用方向分解拆解 Transformer 中的表征演化",
+      "digest": "通过方向分解分析 Transformer 内部表征演化，属于可解释性与表征分析，对量化/裁剪的敏感层定位有潜在帮助。"
+    },
+    "huggingface-papers:8fc451e0488d": {
+      "title": "有限反馈下的 LLM 专家在线学习",
+      "digest": "在反馈有限的条件下做多专家在线学习，属于路由/集成推理的效率问题。"
+    },
+    "huggingface-papers:0c5b4b313b39": {
+      "title": "RSIAgent：新环境中递归自我改进的自主探索",
+      "digest": "让智能体在新环境中自主探索并递归自我改进，属于 agent 能力增长机制。"
+    },
+    "huggingface-papers:3de077ee8b52": {
+      "title": "DataFlex-RL：RLVR 数据策略评测平台",
+      "digest": "面向可验证奖励强化学习的数据策略评测平台，用于对比数据配比与筛选效果。"
+    },
+    "huggingface-papers:7f4263b9ede1": {
+      "title": "Emergence World：长程多智能体系统的对抗压力测试",
+      "digest": "对长程多智能体系统做对抗式压力测试，暴露协同与稳定性问题，属于智能体系统评测。"
+    },
+    "huggingface-papers:772c4e442e93": {
+      "title": "HarnessVLN：用智能体外壳统一免训练具身导航",
+      "digest": "以免训练方式统一具身视觉语言导航任务，降低各数据集分别适配的成本。"
+    },
+    "huggingface-papers:9a8eb07fe35e": {
+      "title": "Pelican-Sim 1.0：面向具身智能的通用世界模型模拟器",
+      "digest": "通用世界模型模拟器，为具身智能提供可复用的仿真环境与数据来源。"
+    },
+    "huggingface-papers:ca9ddcf4c0c1": {
+      "title": "ReactHuman：具身多模态大模型类人反应决策的物理基准",
+      "digest": "为具身多模态大模型建立物理合理的类人反应决策基准，补齐交互式评测的缺口。"
+    },
+    "huggingface-papers:33bb2464a680": {
+      "title": "BVB：用 Blender 程序化重建的智能体视频理解基准",
+      "digest": "通过 Blender 程序化重建构建视频理解基准，用于评测智能体式视频理解能力。"
+    },
+    "huggingface-papers:8549a0786888": {
+      "title": "Kaininja：把原生 3D 生成器扩展到部件级",
+      "digest": "把 3D 生成从整体扩展到部件粒度，对 3D 内容生产与后续装配任务更有用。"
+    },
+    "huggingface-papers:015bad1bf38a": {
+      "title": "SNAP3D：从单图生成可用于装配的物理合理 3D 部件",
+      "digest": "从单张图片生成物理合理、可用于装配的 3D 部件，属于单图到 3D 的实用化方向。"
+    },
+    "huggingface-papers:de95dbfebbb1": {
+      "title": "ModaLens：度量医学 VLM 的图像敏感性",
+      "digest": "提出度量报告条件化医学 VLM 对图像敏感性的方法，用于判断模型是否真的“看图说话”。"
+    },
+    "huggingface-papers:94c8f4358e22": {
+      "title": "E2A-Bench：金融图表推理中从证据到行动的可靠性基准",
+      "digest": "评测金融图表推理中证据到行动的可靠性，关注多步推理的落地一致性。"
+    },
+    "huggingface-papers:2cb892a5daca": {
+      "title": "IdeaAMBIG：研究想法描述中影响实现的关键歧义基准",
+      "digest": "度量研究想法描述里的实现关键歧义，对用大模型辅助科研的可靠性评估有意义。"
+    },
+    "huggingface-papers:23b8176f5102": {
+      "title": "UniH^3：统一层次同质与异质性的全能医学图像复原",
+      "digest": "用统一框架处理多类医学图像复原任务，属于视觉复原方向的模型统一化工作。"
+    },
+    "huggingface-papers:5630bb2f2fa6": {
+      "title": "Mi-Ripple：修复迭代 AI 编辑造成的图像退化",
+      "digest": "针对多次 AI 编辑后的图像退化做修复，属于生成后处理与画质恢复。"
+    },
+    "huggingface-papers:4298b3af9d09": {
+      "title": "不可逆火烧损伤后物体的特征恢复",
+      "digest": "研究物体严重损伤后的特征恢复，属于视觉增强在特殊场景的应用。"
+    },
+    "huggingface-papers:9c4a7c0327b4": {
+      "title": "Decoy Direction Optimization：对抗 LLM 消融的后置防御",
+      "digest": "针对模型安全对齐被消融（abliteration）的问题提出后置防御，属于模型安全方向。"
+    },
+    "huggingface-papers:b51b0a1a4f5d": {
+      "title": "挑你的毒：学习选择投毒集合以增强 LLM 后门攻击",
+      "digest": "研究如何选择更强的投毒集合实施后门攻击，属于安全攻防研究，用于评估训练数据风险。"
+    },
+    "huggingface-papers:a8cafe27b0d0": {
+      "title": "为 Vibe 设计智能体开启创造性探索",
+      "digest": "面向设计类智能体增强创造性探索能力，属于生成式设计应用方向。"
+    },
+    "huggingface-papers:a7e60fa1db38": {
+      "title": "COBRA-Skills：上下文赌博机引导的智能体技能演化",
+      "digest": "用上下文赌博机引导智能体技能的迭代优化，提升技能库的自动演化效率。"
+    },
+    "huggingface-papers:260eef848d8b": {
+      "title": "Agent as Policy：把智能体作为机器人操作策略",
+      "digest": "把智能体直接作为机器人操作策略使用，探索大模型 agent 与底层控制的结合方式。"
+    },
+    "huggingface-papers:b217115cdfd6": {
+      "title": "Ambient @ EgoProactive 2026：带视觉接地监督的主动式第一视角辅助",
+      "digest": "面向第一视角的主动式辅助任务，加入视觉接地监督，属于可穿戴场景的多模态应用。"
+    },
+    "huggingface-papers:426c5431e7ec": {
+      "title": "构建生产级希腊语-英语语音识别系统",
+      "digest": "给出生产环境希腊语-英语语音识别的落地经验，对多语种语音部署有参考价值。"
+    },
+    "huggingface-papers:a0074ed5794c": {
+      "title": "用合成语音构建并评测固定音色泰语 TTS",
+      "digest": "基于合成语音构建固定音色泰语 TTS 并给出评测，属于低资源语音合成实践。"
+    },
+    "huggingface-papers:261e6b33cd4a": {
+      "title": "面向临床语言模型的确定性数学求解器",
+      "digest": "为临床语言模型提供确定性数学求解能力，减少数值推理错误，属于推理可靠性增强。"
+    },
+    "huggingface-papers:ea9c9f286f0a": {
+      "title": "Feyospace-v1：前沿网络安全模型是如何训练的",
+      "digest": "披露前沿网络安全模型的训练方法，属于安全领域模型训练经验。"
+    },
+    "huggingface-papers:095bb653ca68": {
+      "title": "负向自蒸馏：通过避免缺陷来学习推理",
+      "digest": "用负向自蒸馏让模型显式规避错误模式，属于推理能力提升的训练方法。"
+    },
+    "huggingface-papers:8b43d5e0df1c": {
+      "title": "Atria Dawn：智能体超级智能的开端",
+      "digest": "面向智能体化超级智能的系统性工作，讨论能力组织与扩展路径。"
+    },
+    "huggingface-papers:6c224d10a96f": {
+      "title": "墙上的另一张蓝图：如何像孩子一样提问前沿 AI",
+      "digest": "研究面向前沿模型的提问方式，关注交互质量对能力发挥的影响。"
+    },
+    "arxiv:32e0d4f54623": {
+      "title": "神经符号层次化的人类行为意图预判",
+      "digest": "把神经与符号方法结合，在行为尚未完成时就分层预判人类目标，属于具身交互中的意图预测能力建设。"
+    },
+    "arxiv:0d980a85f1d5": {
+      "title": "稀疏 MLLM 锚点 + 稠密适配：打破野外测试时自适应的自指循环",
+      "digest": "针对测试时自适应中模型自我引用导致的退化问题，用稀疏锚点配合稠密适配来稳定在线更新。"
+    },
+    "arxiv:3bb3c1557fec": {
+      "title": "MUSHY：面向光谱数据融合的多模态流式摊销贝叶斯推断",
+      "digest": "用流式摊销贝叶斯推断融合多模态光谱数据，属于多模态科学数据融合方法。"
+    },
+    "arxiv:ffdb0157bede": {
+      "title": "PAI-Actor：动态场景中的电影级多角色替换",
+      "digest": "面向动态场景做多角色替换的视频编辑，强调角色一致性与画面稳定，属视频生成编辑方向。"
+    },
+    "arxiv:0834887b08b1": {
+      "title": "幻觉揭示了多模态推理的什么？用对比解码探针诊断视觉接地失败",
+      "digest": "通过对比解码探针定位多模态模型的视觉接地失败位置，把幻觉从笼统现象拆成可定位的推理环节问题。"
+    },
+    "arxiv:0b298cd39cce": {
+      "title": "音视频 Transformer 与知识蒸馏的多模态紧急车辆识别",
+      "digest": "用音视频双模态 Transformer 配合知识蒸馏做紧急车辆识别，属多模态感知的落地应用。"
+    },
+    "arxiv:1128dc5c6c23": {
+      "title": "ShallowStream：先浅层索引再深层作答的流式视频理解",
+      "digest": "流式视频理解采用先浅层索引、再按需深层推理的两级策略，降低连续视频流的平均计算量。"
+    },
+    "arxiv:11d4f46f0b96": {
+      "title": "超图正则化 Gramian 体积用于多模态检索",
+      "digest": "用超图正则化的 Gramian 体积度量做多模态检索，提升跨模态表征的判别性。"
+    },
+    "arxiv:12267388a160": {
+      "title": "DSAQuant：对齐去噪阶段的视频生成量化感知训练",
+      "digest": "针对视频扩散模型做量化感知训练，并让量化误差与去噪阶段对齐，属于生成模型低比特部署的关键工作。"
+    },
+    "arxiv:13973bde96f5": {
+      "title": "面向机器人学习与控制的世界动作模型：综述",
+      "digest": "系统梳理世界动作模型在机器人学习与控制中的路线与开放问题，适合作为该方向的入门索引。"
+    },
+    "arxiv:1ac631d59200": {
+      "title": "在隐空间推理！让隐式视觉推理变得必要",
+      "digest": "提出让模型必须在隐空间完成视觉推理的训练设定，避免绕过视觉证据直接作答。"
+    },
+    "arxiv:216216e05bef": {
+      "title": "更快的 VLA 部署如何改变闭环行为：SmolVLA 在 PyTorch 与 ONNX 变体下的任务成功率-时延分析",
+      "digest": "对比 SmolVLA 在 PyTorch 与 ONNX 下的部署表现，指出单纯提速会改变闭环任务的成功率，对具身部署的评测口径有直接参考价值。"
+    },
+    "arxiv:240b0cc17a52": {
+      "title": "离散思维产生连续动作：端到端自动驾驶的潜空间对齐规划",
+      "digest": "把大模型的离散推理与连续控制对齐，用于端到端自动驾驶的规划，属 VLA 在驾驶场景的落地。"
+    },
+    "arxiv:2537f364e288": {
+      "title": "FolDeX：可形变物体长程机器人操作的真实世界基准",
+      "digest": "面向可形变物体的长程操作建立真实世界基准，补齐该场景缺乏统一评测的问题。"
+    },
+    "arxiv:2707a2135c57": {
+      "title": "流匹配中基于稀疏矩阵分解的主时间步受限初始化",
+      "digest": "用稀疏矩阵分解约束流匹配的主时间步初始化，属生成模型采样过程的结构改进。"
+    },
+    "arxiv:283988d5af0c": {
+      "title": "用视觉语言模型从辐射方向图反推天线参数",
+      "digest": "把 VLM 用于从辐射方向图推断天线参数，属多模态模型在工程领域的跨域应用。"
+    },
+    "arxiv:29095f38d346": {
+      "title": "HoliBench：面向 CPS-IoT 基础模型的跨平台基准与部署工具包",
+      "digest": "为 CPS-IoT 场景的基础模型提供跨平台基准与部署工具，关注端侧部署的可比性。"
+    },
+    "arxiv:2962b6e5bf09": {
+      "title": "PACE：渐进式角度到范数的对比嵌入",
+      "digest": "提出从角度到范数的渐进式对比嵌入，改善多模态表征训练中的对齐质量。"
+    },
+    "arxiv:367e9bdf258e": {
+      "title": "ViD：面向大型视觉语言模型的视觉主导性别偏置缓解",
+      "digest": "让模型更多依赖视觉证据来缓解 LVLM 的性别偏置，属多模态模型的公平性改进。"
+    },
+    "arxiv:3b07d49e8112": {
+      "title": "BodyCam-VQA：用多模态推理与探针问题生成增强执法记录仪视频描述",
+      "digest": "针对执法记录仪视频做描述增强，通过探针问题生成提升多模态推理质量。"
+    },
+    "arxiv:474d8bb814fc": {
+      "title": "MOCC-R1：强化多模态心理咨询回复的推理-回复一致性",
+      "digest": "用强化学习提升多模态咨询场景中推理过程与最终回复的一致性，属多模态对齐方法。"
+    },
+    "arxiv:504de905f883": {
+      "title": "ECOKV：用互补多样性度量做几何感知的 KV Cache 淘汰",
+      "digest": "从几何角度设计互补多样性指标来淘汰 KV cache，属长上下文推理的显存优化，可直接迁移到多模态长输入场景。"
+    },
+    "arxiv:5f4bdf7d5332": {
+      "title": "FluxVLA Engine：面向具身智能的一站式 VLA 工程平台",
+      "digest": "把 VLA 模型的训练、部署与评测整合为一站式工程平台，降低具身模型的落地门槛。"
+    },
+    "arxiv:5fe88729135e": {
+      "title": "不发送你不需要的：问题引导的 Token 剪枝作为视觉语言模型的隐私防御",
+      "digest": "用问题引导的视觉 token 剪枝，在减少计算的同时避免把无关图像内容发送出去，兼顾效率与隐私。"
+    },
+    "arxiv:60b13e3e5750": {
+      "title": "面向治理的自主 GIS：LLM 驱动 GeoAI 的伦理与隐私风险综述",
+      "digest": "梳理 LLM 驱动地理智能中的伦理与隐私风险，属治理层面的综述。"
+    },
+    "arxiv:623b4083b06a": {
+      "title": "TEMPO：面向动态机器人操作的时间上下文学习",
+      "digest": "让机器人操作策略学习时间上下文，改善动态操作任务中的时序决策。"
+    },
+    "arxiv:6944b0703590": {
+      "title": "分块视觉-语言-动作模型的时频几何交叉注意力",
+      "digest": "为分块式 VLA 模型设计时频几何交叉注意力，提升多模态时序对齐。"
+    },
+    "arxiv:6aeb9b4192ff": {
+      "title": "面向机器人产线的高效视觉-语言-动作管理与服务",
+      "digest": "面向机器人产线场景做 VLA 的管理与 serving 优化，属具身模型的服务化方向。"
+    },
+    "arxiv:6ddd6461b1a4": {
+      "title": "Early-Bird Decoding：用可学习块大小与并行采样加速扩散 LLM",
+      "digest": "通过可学习的块大小与并行采样策略减少扩散语言模型的解码步数，是扩散 LLM 的加速方法。"
+    },
+    "arxiv:6f7123e46dbd": {
+      "title": "XRoboToolKit-T：带触觉感知的高稳定高精度遥操作，面向富接触操作",
+      "digest": "用触觉感知提升遥操作的稳定性与精度，面向富接触操作任务。"
+    },
+    "arxiv:723f0e071f0b": {
+      "title": "多模态可控的连贯动作生成",
+      "digest": "通过多模态条件控制生成连贯的人体动作，属可控动作生成。"
+    },
+    "arxiv:86a3e3b24704": {
+      "title": "打破视觉-动作捷径：面向可泛化机器人基础模型的潜在接口训练",
+      "digest": "指出机器人基础模型容易学到视觉到动作的捷径，提出潜在接口训练提升跨环境泛化。"
+    },
+    "arxiv:93fcef7f025a": {
+      "title": "OpenWAM：面向系统化世界动作模型预训练的开放模块化探索",
+      "digest": "提供开放、模块化的世界动作模型预训练方案，便于系统性比较与复现。"
+    },
+    "arxiv:99fe1f7eb2cd": {
+      "title": "Circuit-MLLM：拓扑逻辑引导的隐空间视觉推理用于电路原理图理解",
+      "digest": "结合拓扑逻辑与隐空间视觉推理理解电路原理图，属多模态模型在专业图纸场景的应用。"
+    },
+    "arxiv:9af01b88e35d": {
+      "title": "VC-Attention：低比特注意力的数值平滑与 Softmax 升精度",
+      "digest": "通过数值平滑与 Softmax 升精度让低比特注意力可用，属量化推理的关键数值稳定性工作。"
+    },
+    "arxiv:a0131c0b2c03": {
+      "title": "ResLRP：残差抵消在视觉 Transformer 归因不稳定中的作用",
+      "digest": "分析视觉 Transformer 中残差连接导致的归因不稳定，对可解释性与敏感层分析有帮助。"
+    },
+    "arxiv:a2c31e0b7fc8": {
+      "title": "学习适应与校准：医学 VLM 小样本不确定性预测的分数分布对齐",
+      "digest": "通过分数分布对齐改善医学 VLM 在小样本下的不确定性预测，关注模型可靠性。"
+    },
+    "arxiv:a2fc35c6e5ad": {
+      "title": "BrainFocus：EEG 引导的 ROI 选择用于高效视觉语言模型",
+      "digest": "用脑电信号引导 ROI 选择，减少 VLM 需要处理的视觉区域，属于仿脑启发的视觉侧降算力思路。"
+    },
+    "arxiv:a53349304f46": {
+      "title": "RoLA：面向高效扩散 Transformer 的旋转位置低秩线性注意力",
+      "digest": "为扩散 Transformer 设计旋转位置编码配合低秩线性注意力，降低注意力复杂度，属 DiT 推理加速的结构改进。"
+    },
+    "arxiv:a56fa57a50f6": {
+      "title": "拆解动作先验正则化在数据稀缺机器人插孔任务中的作用",
+      "digest": "分析动作先验正则化在数据稀缺场景下的实际收益与边界。"
+    },
+    "arxiv:b2fc67146b33": {
+      "title": "机器人数据工厂",
+      "digest": "提出系统化的机器人数据生产方案，属具身智能数据基础设施。"
+    },
+    "arxiv:b355488d0258": {
+      "title": "MoEMB：用高效 MoE 模型扩展通用多模态嵌入",
+      "digest": "用 MoE 结构扩展多模态嵌入模型的容量与效率，属多模态检索/嵌入的基础模型工作。"
+    },
+    "arxiv:b947e15968e2": {
+      "title": "OmniKVQuant：面向 Omni-LLM 的 KV Cache 量化",
+      "digest": "针对全模态大模型的 KV cache 做量化压缩，属 omni 模型长上下文推理的显存优化。"
+    },
+    "arxiv:c1e3fd3b19cf": {
+      "title": "利用内在主体感知注意力实现可控多主体视频生成",
+      "digest": "利用模型内在的主体感知注意力实现多主体可控视频生成，提升主体一致性。"
+    },
+    "arxiv:cd58e6326ad8": {
+      "title": "探索扩散 Transformer 在多模态脑状态解码中的跨模态增强",
+      "digest": "用扩散 Transformer 做跨模态增强以提升脑状态解码效果。"
+    },
+    "arxiv:d05f0004fead": {
+      "title": "超越单轴测试：视觉-语言-动作策略复合鲁棒性的配对评估",
+      "digest": "指出对 VLA 策略只做单轴鲁棒性测试会高估能力，提出配对评估复合扰动，对具身评测方法有直接价值。"
+    },
+    "arxiv:d128df85ce13": {
+      "title": "ProbPlug：为 LLM 二分类提供可靠置信度的插件式不确定性网络",
+      "digest": "用插件式不确定性网络提升 LLM 二分类的置信度可靠性。"
+    },
+    "arxiv:daa01157235d": {
+      "title": "用联合多流扩散实现高效一对多翻译",
+      "digest": "用联合多流扩散做一对多翻译，属扩散模型在多输出生成上的效率改进。"
+    },
+    "arxiv:de325cc85f35": {
+      "title": "VideoMM：高效视频 MLLM 的宏微观自适应推理",
+      "digest": "对视频 MLLM 采用宏观-微观两级自适应推理，按内容复杂度分配算力，属视频理解推理优化。"
+    },
+    "arxiv:eee9bd903957": {
+      "title": "带驾驶员相关加速度的 Aw-Rascle-Zhang 型模型的微观到宏观推导与稳定性分析",
+      "digest": "交通流宏观模型的数学推导与稳定性分析，与多模态 infra 无关。"
+    },
+    "arxiv:f502ae751d0b": {
+      "title": "MVWeaver：带学习式歌曲到画面桥接的层次化音乐视频生成 Agent",
+      "digest": "用层次化 agent 串联歌曲理解与画面生成完成音乐视频制作，属多模态生成的应用编排。"
+    },
+    "arxiv:f5ed7cc62a32": {
+      "title": "面向边缘视觉语言模型的跨模态对齐量化感知蒸馏",
+      "digest": "用量化感知蒸馏配合跨模态对齐，把 VLM 压缩到边缘设备可用规模。"
+    }
+  },
+  "teams": {
+    "nv-developer-blog:2751a48f60ef": {
+      "title": "何时使用编码-预填充-解码（EPD）分离来加速多模态模型服务",
+      "digest": "NVIDIA 官方博客：把视觉编码、预填充、解码三个阶段拆到不同资源池，并给出适用边界与收益判断。对多模态 serving 架构选型是一篇直接的工程参考。"
+    },
+    "hf-models:a9373ef2b288": {
+      "title": "新模型权重：r0b0tlab/Ling-3.0-flash-VL-NVFP4-MP",
+      "digest": "Ling-3.0-flash-VL 的 NVFP4 量化多卡版本，属多模态模型量化权重发布。"
+    },
+    "hf-models:30207c483b34": {
+      "title": "新模型权重：inclusionAI/Ling-3.0-flash-VL-int4",
+      "digest": "Ling-3.0-flash-VL 的 INT4 量化版本，可用于显存受限场景的多模态推理。"
+    },
+    "hf-models:7ba82ffc0250": {
+      "title": "新模型权重：inclusionAI/Ling-3.0-flash-VL-fp4",
+      "digest": "Ling-3.0-flash-VL 的 FP4 量化版本，反映多模态模型向低比特权重演进的趋势。"
+    },
+    "hf-models:9359b531b364": {
+      "title": "新模型权重：inclusionAI/Ling-3.0-flash-VL-fp8",
+      "digest": "Ling-3.0-flash-VL 的 FP8 量化版本，是当前多模态模型部署的主流精度档位。"
+    },
+    "hf-models:2936ff7b80e5": {
+      "title": "新模型发布：Gander-Omni/Gander",
+      "digest": "全模态对话模型，支持音频、视频与全双工交互，属于 omni 模型方向的新增权重。"
+    },
+    "hf-models:c5f370959b65": {
+      "title": "新模型发布：SwinliQ-AIs/OmniVoice-MLX-4bit",
+      "digest": "面向 Apple MLX 的 4bit 语音合成模型，属于端侧语音生成部署版本。"
+    },
+    "hf-models:0208b325e9d8": {
+      "title": "新模型发布：zero-runtime/echo-omni",
+      "digest": "面向语音交互的端点检测与打断识别模型，属于实时语音对话的基础组件。"
+    },
+    "hf-models:ea496b4b64f6": {
+      "title": "新模型发布：deepseek-ai/DeepSeek-V4.1-Flash",
+      "digest": "DeepSeek 发布 V4.1-Flash 权重，是本期热度最高的新模型之一。"
+    },
+    "hf-models:7acb15b447fa": {
+      "title": "新模型发布：wanvideo/wan-3-0-video",
+      "digest": "Wan 3.0 视频生成模型权重发布，属开源视频生成基座的新版本。"
+    },
+    "hf-models:7563bfc3942c": {
+      "title": "新模型发布：tencent/EVIE-8B",
+      "digest": "腾讯发布 EVIE-8B，属其多模态/生成方向的模型更新。"
+    },
+    "hf-models:2033607f3a13": {
+      "title": "新模型发布：inclusionAI/Ling-3.0-flash-VL",
+      "digest": "Ling-3.0-flash-VL 多模态模型基础版本发布，随后迅速衍生出 FP8/FP4/INT4 等多个量化版本。"
+    },
+    "hf-models:38d23401f149": {
+      "title": "新模型发布：Lightricks/LTX-2.5-22b-LoRA-Cinemagraph",
+      "digest": "LTX-2.5 的 Cinemagraph（局部动态）LoRA，属视频生成的可控性扩展。"
+    },
+    "hf-models:7294a46ba717": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Ingredients",
+      "digest": "LTX-2.5 的 Ingredients IC-LoRA，控制画面元素构成。"
+    },
+    "hf-models:f4352d0568bc": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Colorization",
+      "digest": "LTX-2.5 的上色 In-Context LoRA，通过上下文条件控制为视频上色，属视频生成可控性扩展。"
+    },
+    "hf-models:4ddecc637c6f": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Decompression",
+      "digest": "LTX-2.5 的解压缩 In-Context LoRA，用于修复压缩伪影，属视频生成后处理能力。"
+    },
+    "hf-models:a740ad3aff82": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Deblur",
+      "digest": "LTX-2.5 的去模糊 In-Context LoRA，用于提升生成视频的清晰度。"
+    },
+    "hf-models:b56a714b36e3": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Clean-Plate",
+      "digest": "LTX-2.5 的干净底板 IC-LoRA，用于画面清理。"
+    },
+    "hf-models:e01274c7d2f3": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Water-Simulation",
+      "digest": "LTX-2.5 的水体模拟 IC-LoRA，属物理效果生成。"
+    },
+    "hf-models:6552e863664a": {
+      "title": "新模型发布：LTX-2.5-22b-IC-LoRA-Day-To-Night",
+      "digest": "LTX-2.5 的昼夜转换 In-Context LoRA，用于改变生成视频的时段光照。"
+    },
+    "hf-models:7537d24730a9": {
+      "title": "新模型发布：AtomicChat/Ling-3.0-flash-VL-GGUF",
+      "digest": "Ling-3.0-flash-VL 的 GGUF 量化版本，面向 CPU/端侧多模态推理。"
+    },
+    "hf-models:87b3d6d23845": {
+      "title": "新模型发布：nvidia/GLM-5.3-Flash-NVFP4",
+      "digest": "NVIDIA 发布 GLM-5.3-Flash 的 NVFP4 量化权重，属低比特部署权重供给。"
+    },
+    "hf-models:e0408292c5a5": {
+      "title": "新模型发布：tencent/EVIE-4.5B",
+      "digest": "腾讯 EVIE 4.5B 权重发布，属其多模态方向的模型更新。"
+    },
+    "hf-models:8c6c48cad151": {
+      "title": "新模型发布：MiniMax-H3-Image-Training-Adapter",
+      "digest": "MiniMax-H3 的图像训练适配器权重发布，用于在 H3 基座上做图像任务适配。"
+    },
+    "openai-news:305f03a4aa6a": {
+      "title": "OpenAI 发布 ChatGPT Images 2.5",
+      "digest": "OpenAI 更新图像生成能力至 Images 2.5，属闭源侧图像生成的能力迭代，可作为开源方案的对照参照。"
+    },
+    "hf-blog:96a3500c5a4b": {
+      "title": "NeoMME：高效的多模态原生多语言编码器",
+      "digest": "HuggingFace 博客介绍 NeoMME——同时兼顾多模态原生与多语言的编码器，面向多模态检索与嵌入场景。"
+    },
+    "hf-models:f7075e2de141": {
+      "title": "新模型发布：tsinghua-ee/video-SALMONN-2-Pro-32B",
+      "digest": "清华团队发布 video-SALMONN 2 Pro 32B，属大规模视频理解模型的新版本。"
+    }
+  },
+  "wechat": {
+    "leiphone:05b7af64a52f": {
+      "title": "阶跃发布 StepAudio 3，多款语音模型登顶 Artificial Analysis 全球榜单",
+      "digest": "阶跃一次性发布 StepAudio 3 Realtime / ASR / TTS / Gen 系列语音模型并登顶第三方榜单，反映国产语音全栈模型的竞争节奏。"
+    },
+    "leiphone:dd531e9f59c8": {
+      "title": "亚太唯一：腾讯云首次入选 IDC 全球托管边缘服务领导者类别",
+      "digest": "腾讯云 EdgeOne 入选 IDC MarketScape 托管边缘服务领导者，与边缘侧推理部署的基础设施演进相关。"
+    },
+    "leiphone:cbd225e2e497": {
+      "title": "豆包 2.1 Pro 模型更新并接入豆包工作",
+      "digest": "豆包 2.1 Pro 更新至 0915 版本并在火山方舟全量上线，侧重工作任务执行能力，属模型能力迭代动态。"
+    },
+    "leiphone:bebe173f8e51": {
+      "title": "被 AI 放大的光学“戏份”：舜宇的生意为何越做越大",
+      "digest": "从人形机器人与智能眼镜出货增长切入，分析光学供应链受益逻辑，属具身智能产业侧观察。"
+    },
+    "sogou-wechat:15b2dbb4ca56": {
+      "title": "视觉 Token 剪枝、扩散加速与 Agent 执行结构：多模态与推理前沿突破",
+      "digest": "公众号综述近期多模态与推理方向进展：3D 推理效率、视频生成加速、LLM 推理压缩、机器人控制等，并提到用多模态 LLM 做语义条件控制、VAE 处理声学条件的混合结构。"
+    }
+  },
+  "repos": {
+    "github-repos:491b22a845d6": {
+      "title": "vLLM-Ascend：削减 A5 MLA prolog v3 的模板组合数",
+      "digest": "A5 镜像在编译 mla_prolog_v3 时遇到编译器 OOM，为此把 A3 上已验证的非量化/MXFP8 适用范围裁剪过来，减少模板组合。属算子编译期的资源优化。"
+    },
+    "github-repos:81b04062d493": {
+      "title": "vLLM-Ascend：支持 KV cache 池化与跨 PCP 缓存共享",
+      "digest": "在 MRV2 与 PCP 并行下支持 KV cache 池化以及跨 PCP 的缓存共享，减少重复计算与显存占用。对长上下文多模态推理的缓存复用有直接价值。"
+    },
+    "github-repos:af2b48cfbc2f": {
+      "title": "vLLM-Ascend：回退投机解码的未使用原始张量克隆优化",
+      "digest": "回退上一版投机解码优化，属稳定性优先的取舍。"
+    },
+    "github-repos:3ccde39296b6": {
+      "title": "vLLM-Omni：NPU CI 镜像加入 torchmetrics",
+      "digest": "为 NPU 的 CI 镜像补齐 torchmetrics 依赖，说明该项目已把昇腾 NPU 纳入持续集成范围。"
+    },
+    "github-repos:fd22888b9249": {
+      "title": "SGLang-Omni：为 Qwen3-TTS 增加 Ascend NPU 支持",
+      "digest": "给 Qwen3-TTS 语音合成链路加上昇腾 NPU 支持，是竞品框架在语音多模态上对昇腾的适配动作，值得作为对标跟踪。"
+    },
+    "github-repos:63f1e315418a": {
+      "title": "Ascend op-plugin：修复 Ascend950 定长 LSTM 回退路径",
+      "digest": "修复 Ascend950 上定长 LSTM 回退路径不被支持的问题，属算子插件侧兼容性修复。"
+    },
+    "github-repos:c282e232fbbb": {
+      "title": "M* 发布 v0.2.1：首次发布到 PyPI",
+      "digest": "any-to-any 多模态推理引擎 M* 首次发布到 PyPI（pip install mstar-ai），开始有正式分发包。"
+    },
+    "github-repos:7e4fb288afff": {
+      "title": "vLLM 发布 v0.29.0",
+      "digest": "594 个提交、277 位贡献者，Model Runner V2 转正为默认执行路径，是本期 vLLM 最大的结构性变化。"
+    },
+    "github-repos:2fbc73a3678a": {
+      "title": "SGLang-Omni 发布 v0.1.5",
+      "digest": "修复 MOSS-TTS 语音输入长度元数据、为 Qwen3-TTS 增加可中断的 Prefill CUDA Graph、补充分阶段绝对时间等语音链路优化。"
+    },
+    "github-repos:87a094ca6e54": {
+      "title": "vLLM-Omni 发布 v0.29.0rc1",
+      "digest": "159 项合并改动，主线为扩散推理的批处理与显存控制扩展、全双工运行时转正、新增图像与音视频模型支持。"
+    },
+    "github-repos:a243800ba245": {
+      "title": "LightX2V 发布 0.5.0",
+      "digest": "轻量视频生成推理框架的版本更新，同期合并了 SM120 FP8 GEMM 的算子优化。"
+    },
+    "github-repos:58607c4b94be": {
+      "title": "NVIDIA Dynamo 发布 v1.4.1-a.x-k2-post.1",
+      "digest": "实验性快照构建，在 vLLM 后端早期支持 A.X-K2。官方标注不建议生产使用、非 QA 门禁版本。"
+    },
+    "github-repos:99ba08156767": {
+      "title": "NVIDIA Dynamo 发布 v1.5.0-kimi-k3-dev.1",
+      "digest": "实验性快照，在 vLLM 后端早期支持 Kimi K3，反映其对新模型的跟进速度。"
+    },
+    "github-repos:ab25677a31a9": {
+      "title": "TensorRT-LLM 发布 v1.3.0rc26",
+      "digest": "给出已知问题清单：Qwen3 MoE 中被路由专家的 LoRA 适配器会被静默忽略；V2 KV cache manager 在显存充足时仍可能启动失败。"
+    },
+    "github-repos:972016ef1801": {
+      "title": "ms-swift 发布 v4.5.3",
+      "digest": "多模态微调与部署框架版本更新，同期修复 LoRA 与独立多模态对齐层的目标匹配问题。"
+    },
+    "github-repos:0a1d4eb1321b": {
+      "title": "cache-dit 发布 v1.5.2",
+      "digest": "DiT 缓存加速库版本更新，集中在缓存分片、指标导入与 offload 去重等修复。"
+    },
+    "github-repos:cf0a865c7675": {
+      "title": "SGLang 发布 v0.5.19",
+      "digest": "786 个 PR、214 位贡献者。新增 Qwen3.8（2.4T-A95B）等模型支持，并含独立多模态段落：PaddleOCR-VL 预处理重叠、ViT 打包、prefill CUDA graph。"
+    },
+    "github-repos:b2b7c549cdde": {
+      "title": "NVIDIA Dynamo 发布 v1.5.0-deepseek-v4-pro-0813-dev.1",
+      "digest": "实验性快照，早期支持 DeepSeek V4 Pro 0813。"
+    },
+    "github-repos:0dd706cbce0b": {
+      "title": "NVIDIA Dynamo 发布 v1.5.0-inkling-dev.1",
+      "digest": "实验性快照，早期支持 Inkling 模型。"
+    },
+    "github-repos:461dd9b6869a": {
+      "title": "Dynamo：校验扩散输入引用并限制媒体拉取",
+      "digest": "为 SGLang 后端的图像扩散与视频生成链路增加输入引用校验与媒体拉取边界，属服务端安全性与稳健性修复。"
+    },
+    "github-repos:785cec0c2b1f": {
+      "title": "DiffSynth-Studio：支持 LTX-2.5",
+      "digest": "扩散模型套件新增 LTX-2.5 视频生成模型支持。"
+    },
+    "github-repos:d23bb559a08b": {
+      "title": "LightX2V：优化 SM120 上 FP8 GEMM 的 FP16 累加",
+      "digest": "针对 SM120 架构优化 FP8 GEMM 并用 FP16 累加，属生成模型的底层算子性能改进。"
+    },
+    "github-repos:3e35806e84d6": {
+      "title": "M*：保序的多模态输入适配器",
+      "digest": "新增保序的多模态输入适配层，避免图文交错的顺序信息在预处理中丢失。对任何图文混排的 serving 都有参考意义。"
+    },
+    "github-repos:360e04222850": {
+      "title": "DiffSynth-Studio：补齐 Qwen-Image 验证示例的数据集下载",
+      "digest": "修复 Qwen-Image 验证示例缺失的数据集下载步骤。"
+    },
+    "github-repos:03f1cd9bfcec": {
+      "title": "cache-dit：在上下文并行下分片 Fn 残差",
+      "digest": "为 ulysses/ring 上下文并行分片 Fn 残差，修复并行下的缓存正确性问题。属 DiT 并行推理的关键修复。"
+    },
+    "github-repos:f45bee304273": {
+      "title": "vLLM-Omni：CUDA 上融合 Qwen-Image-Edit 的 select01 调制",
+      "digest": "把 Qwen-Image-Edit 的 select01 调制算子融合到 CUDA 实现，减少图像编辑推理的算子开销。"
+    },
+    "github-repos:68f86e3de3b4": {
+      "title": "xDiT：MiniMax-H3 tile 并行 VAE 解码",
+      "digest": "通过 --use_parallel_vae 启用 MiniMax-H3 的 tile 并行 VAE 解码，针对高分辨率视频生成解码显存瓶颈。"
+    },
+    "github-repos:be78ba82c7f1": {
+      "title": "xDiT：MHA v4 特性与修复合集",
+      "digest": "多头注意力 v4 实现的功能补充与缺陷修复合集。"
+    },
+    "github-repos:b26a1da0070c": {
+      "title": "vLLM-Omni：稳定 MiniCPM-o 的 code2wav CUDA graph 缓存",
+      "digest": "修复 MiniCPM-o 语音解码部分 CUDA graph 缓存不稳定导致的重复捕获问题。"
+    },
+    "github-repos:8329b11841db": {
+      "title": "M*：input_audio.data 接受非补齐 base64",
+      "digest": "音频输入接口放宽 base64 填充要求，避免客户端因编码细节被拒。"
+    },
+    "github-repos:95297ce80245": {
+      "title": "vLLM-Omni：异步视频任务保持排队并在删除时中止",
+      "digest": "修复异步视频生成任务的排队与取消语义，避免任务丢失或资源泄漏。"
+    },
+    "github-repos:5020040c0e79": {
+      "title": "xDiT：FastH3 支持 VSA-H3 文生音视频",
+      "digest": "为 FastH3 增加 VSA-H3 的文生音视频能力，扩展生成模态。"
+    },
+    "github-repos:ce0d1717190d": {
+      "title": "SGLang-Omni：Fun-CosyVoice3 启发式选择 cuDNN 算法",
+      "digest": "在 S3 语音链路中按启发式选择 cuDNN 算法，提升解码吞吐。"
+    },
+    "github-repos:e8cfac174216": {
+      "title": "vLLM-Omni：Boogu-Image 融合 QKV/FFN 投影并改用扩散 RMSNorm",
+      "digest": "对 Boogu-Image 融合 QKV 与 FFN 投影并切换扩散侧 RMSNorm，属图像生成模型的算子级优化。"
+    },
+    "github-repos:28a584a84f8d": {
+      "title": "vLLM-Omni：分离式 MiniMax-H3 阶段扩展 VAE 编码器",
+      "digest": "把 VAE 编码器纳入 MiniMax-H3 的分离式服务阶段，让编码与去噪可以独立扩缩容。"
+    },
+    "github-repos:1434b98d1120": {
+      "title": "Dynamo：为 vLLM 后端提供无编解码依赖的 OpenCV",
+      "digest": "解决镜像中 OpenCV 编解码依赖问题，属图像输入的部署可用性修复。"
+    },
+    "github-repos:6359a03cbd3b": {
+      "title": "SGLang-Omni：Qwen3-TTS 参考前缀引导重放",
+      "digest": "通过捕获窗口重放参考音频前缀引导，降低语音合成首包延迟。"
+    },
+    "github-repos:1d25ffcb0d18": {
+      "title": "SGLang：优化 H100 上 Qwen3-VL 的重复图像服务",
+      "digest": "针对同一图像被多次请求的场景做去重与缓存优化，直接提升 VLM serving 吞吐。属于可迁移的视觉侧优化思路。"
+    },
+    "github-repos:0d382078a379": {
+      "title": "vLLM-Omni：新增 MiniMax-H3 ComfyUI 文生视频工作流",
+      "digest": "提供 ComfyUI 形式的 MiniMax-H3 文生视频工作流，降低使用门槛。"
+    },
+    "github-repos:e8317c8ad4cf": {
+      "title": "Dynamo：新增 Nemotron 3 Nano Omni 视频路由",
+      "digest": "在多模态路由中加入视频模态的 Nemotron 3 Nano Omni 支持。"
+    },
+    "github-repos:04c2401d69cb": {
+      "title": "vLLM-Omni：对齐视频帧消费统计与提示采样",
+      "digest": "修正视频帧消费数与提示采样不一致导致的统计偏差。"
+    },
+    "github-repos:5c7f1f0cd199": {
+      "title": "Dynamo：新增 Nemotron 3 Nano Omni 图像路由",
+      "digest": "在多模态路由中加入图像模态的 Nemotron 3 Nano Omni 支持。"
+    },
+    "github-repos:8dfc2a5d1261": {
+      "title": "SGLang-Omni：Fun-ASR 支持 HF 扁平权重布局",
+      "digest": "适配 HuggingFace 的扁平 checkpoint 布局，减少权重加载的适配成本。"
+    },
+    "github-repos:4a3db683ebc9": {
+      "title": "SGLang-Omni：长音频转写增加全局准入上限",
+      "digest": "为长音频转写请求增加全局准入控制，避免长请求挤占导致服务雪崩。"
+    },
+    "github-repos:6fd323477fe4": {
+      "title": "DiffSynth-Studio：修复显存管理映射中的两个不可达键",
+      "digest": "修正显存管理模块映射表中两个永不生效的键，属显存调度配置修复。"
+    },
+    "github-repos:235f2798c8e9": {
+      "title": "cache-dit：修复 image_reward 指标导入报错",
+      "digest": "补齐 compute_reward_score 导入，修复评估指标抛异常的问题。"
+    },
+    "github-repos:434e5c1d6b0e": {
+      "title": "vLLM-Omni：CosyVoice3 有界窗口增量 HiFT 声码器流式化",
+      "digest": "把 HiFT 声码器改为有界窗口的增量流式实现，降低语音合成的流式时延与显存占用。"
+    },
+    "github-repos:00efb599f79d": {
+      "title": "SGLang-Omni：CosyVoice 声码器流式化重构",
+      "digest": "对 CosyVoice 声码器做流式重构，支撑连续音频输出。"
+    },
+    "github-repos:04239fa60a6c": {
+      "title": "SGLang-Omni：CosyVoice 声码器流式化重构（前置改动）",
+      "digest": "CosyVoice 声码器流式化的前置重构改动。"
+    },
+    "github-repos:562d8df1cb06": {
+      "title": "LLaMA-Factory：支持多模态 Ulysses 上下文并行与分块低显存损失",
+      "digest": "在训练侧引入多模态 Ulysses 上下文并行并提供 chunk loss 以降低显存，属多模态训练的可扩展性改进。"
+    },
+    "github-repos:aef03ad3902e": {
+      "title": "SGLang：CPU 侧支持 Qwen3.8 文本+视频输入",
+      "digest": "为 CPU 推理补齐 torchcodec、ffmpeg 依赖以支持 Qwen3.8 的文本与视频混合输入。"
+    },
+    "github-repos:691165b3f70b": {
+      "title": "M*：图像编辑接口透传原始请求",
+      "digest": "图像编辑路径保留原始请求信息，便于服务端做条件控制与审计。"
+    },
+    "github-repos:121a878cfdcf": {
+      "title": "SGLang：消除 GLM4V 图文混排的偏移歧义",
+      "digest": "修复 GLM4V 在图文混合输入时位置偏移计算歧义，属多模态输入正确性修复。"
+    },
+    "github-repos:f73f98e44097": {
+      "title": "DiffSynth-Studio：修复 Z-Image-Turbo 的轨迹对齐",
+      "digest": "修正 Z-Image-Turbo 的轨迹对齐，属蒸馏/加速流程的正确性修复。"
+    },
+    "github-repos:a2c7afee27ce": {
+      "title": "ms-swift：修复 LoRA 与独立多模态对齐层的目标匹配",
+      "digest": "让 LoRA 能正确匹配独立的多模态 aligner 层，属多模态微调的可用性修复。"
+    },
+    "github-repos:b14a409ab47f": {
+      "title": "vLLM-Omni：双工会话超长时主动失败",
+      "digest": "当全双工会话长度超过 max_model_len 时主动报错而非静默截断，避免不可预期的输出。"
+    },
+    "github-repos:095f067aebed": {
+      "title": "vLLM-Omni：评估组件支持加载本地 HF 数据集布局",
+      "digest": "让 Omni-DuplexEval 支持本地数据集目录，便于离线评测。"
+    },
+    "github-repos:4dd575697954": {
+      "title": "vLLM：修复 XPU 上长音频导致的 Qwen2-Audio 报错",
+      "digest": "修复超长音频在 XPU 上触发 ValueError 的问题，属音频多模态的兼容性修复。"
+    },
+    "github-repos:8bbc636c6ee4": {
+      "title": "vLLM-Omni：新增 MiniMax-H3 参考图与 Ref2VA 工作流",
+      "digest": "补充 MiniMax-H3 的参考图输入与 Ref2VA 生成工作流。"
+    },
+    "github-repos:6685b9e0bc62": {
+      "title": "vLLM：容忍畸形的 EXIF 元数据",
+      "digest": "在图像哈希阶段容忍非法 EXIF，避免脏元数据导致多模态请求整体失败。"
+    },
+    "github-repos:625aad1ea9f4": {
+      "title": "vLLM-Omni：H3 VSA 稀疏策略下沉到模型并共享稀疏先验",
+      "digest": "把 H3 的 VSA 稀疏策略放回模型侧并共享稀疏先验，属视频生成注意力稀疏化的结构调整。"
+    },
+    "github-repos:a7374ca4ace9": {
+      "title": "vLLM-Omni：DreamZero 跳过纯文本预热",
+      "digest": "避免对 DreamZero 执行无意义的纯文本预热，减少启动与首包开销。"
+    },
+    "github-repos:db8a560d1fb3": {
+      "title": "vLLM-Omni：Qwen3-TTS 的 Code2Wav 遵循阶段 dtype",
+      "digest": "让语音解码阶段按配置的 dtype 执行，避免精度与性能不匹配。"
+    },
+    "github-repos:e23978397d58": {
+      "title": "vLLM-Omni：Qwen3-TTS 编解码帧输出的按 key 累加策略",
+      "digest": "修正语音编解码帧输出的累加方式，提升流式输出正确性。"
+    },
+    "github-repos:21bd1727e0e0": {
+      "title": "vLLM-Omni：Wan2.2 只应用一次 UniPC flow shift",
+      "digest": "修复 Wan2.2 上 UniPC 调度器的 flow shift 被重复应用导致的结果偏差。"
+    },
+    "github-repos:fd0729f220ee": {
+      "title": "M*：张量传输拆除前增加读者排空屏障",
+      "digest": "在张量传输通道拆除前等待读者排空，避免数据传输竞态。属服务框架并发正确性修复。"
+    },
+    "github-repos:a506c6de2fc6": {
+      "title": "Dynamo：TRT-LLM 运行时 Triton JIT 与镜像解耦",
+      "digest": "让 TensorRT-LLM 运行时的 Triton JIT 不再依赖镜像内容，提升部署可移植性。"
+    },
+    "github-repos:ecc4c04a094e": {
+      "title": "SGLang-Omni：降低 CosyVoice 批分组准入开销",
+      "digest": "优化语音批处理分组的准入判断，减少调度开销。"
+    },
+    "github-repos:4fac35175701": {
+      "title": "Megatron-LM：多模态与 SFT 分词器支持 gigatoken",
+      "digest": "为多模态与 SFT 训练的分词器加入 gigatoken 支持，提升大规模数据吞吐。属训练侧基础设施改进。"
+    },
+    "github-repos:d6c15f215746": {
+      "title": "SGLang：新增开关强制 Kimi 图像预处理在 CPU 执行",
+      "digest": "提供开关把图像预处理强制放到 CPU，用于规避 GPU 侧预处理与推理争抢资源。"
+    },
+    "github-repos:09c33edaddae": {
+      "title": "SGLang-Omni：默认融合 QK norm 与 RoPE",
+      "digest": "把 QK 归一化与旋转位置编码融合为单个算子并默认开启，属注意力算子的常规性能优化。"
+    },
+    "github-repos:3f84f2ec8e1d": {
+      "title": "DiffSynth-Studio：修复音频加载缺陷",
+      "digest": "修复音频加载相关问题，属多模态数据管线的可用性修复。"
+    },
+    "github-repos:1a3f05bfdc93": {
+      "title": "SGLang-Omni：拉取安装包时保留 release tag",
+      "digest": "修正安装器检出逻辑，保留 release tag 以便版本可追溯。"
+    },
+    "github-repos:05314fc64956": {
+      "title": "SGLang：支持 NemotronH_Omni_Reasoning_V3",
+      "digest": "新增 NemotronH Omni 推理模型支持，扩展 omni 模型覆盖。"
+    },
+    "github-repos:459332cdc329": {
+      "title": "xDiT：增加确定性校验",
+      "digest": "为并行推理增加确定性检查，用于定位并行导致的非确定性输出，对结果可复现性有直接帮助。"
+    },
+    "github-repos:2beac1f3008c": {
+      "title": "xDiT：性能统计改用所有 rank 的起始时间",
+      "digest": "修正并行性能度量口径，避免单 rank 计时导致统计失真。"
+    },
+    "github-repos:ffeb051d4603": {
+      "title": "xDiT：修复 FA3 ring attention 参数转发",
+      "digest": "修复 FlashAttention-3 在 ring attention 场景下的参数转发错误。"
+    },
+    "github-repos:e66ea3f120b1": {
+      "title": "xDiT：修复 flux 负向 embeds 的回调弹出",
+      "digest": "修复 flux 模型在缺失负向 embeds 时回调弹栈异常。"
+    },
+    "github-repos:fcccc01e7cf5": {
+      "title": "xDiT：修复 sd3/hunyuandit 未定义负向 embeds 的回调弹出",
+      "digest": "同类回调缺陷在 SD3 与 HunyuanDiT 上的修复。"
+    },
+    "github-repos:a0bbc7a4c4e4": {
+      "title": "MiniCPM-V：修复 web_demo 中 vad_utils 的缺失导入",
+      "digest": "修复 MiniCPM-o 演示程序中 vad_utils 的导入缺失，属易用性修复。"
+    },
+    "github-repos:fa56a8076d19": {
+      "title": "DiffSynth-Studio：修复 Qwen-Image-Distill-DMD2 示例的模型路径",
+      "digest": "修正蒸馏示例中的模型路径错误。"
+    },
+    "github-repos:b47b1bf83414": {
+      "title": "SGLang：加固 EPD 接收端校验与存活检测",
+      "digest": "加强编码-预填充-解码分离架构中接收端的校验与存活判断，提升多模态服务稳定性。"
+    },
+    "github-repos:17932cb86998": {
+      "title": "cache-dit：按层目标去重共享权重",
+      "digest": "在逐层 offload 时对绑定权重去重，避免同一权重被重复搬运。属显存 offload 的效率修复。"
+    },
+    "github-repos:3bee057496c3": {
+      "title": "SGLang：修复 Alpha 通道图像与工具结果媒体排序",
+      "digest": "处理带 Alpha 通道图像以及工具调用结果中的媒体顺序问题，属多模态输入健壮性修复。"
+    }
+  }
+}

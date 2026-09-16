@@ -199,12 +199,14 @@ def dedupe(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for key in order:
         item = by_id[key]
-        fingerprint = title_key(item.get("title", ""))
-        if fingerprint and fingerprint in by_title:
-            _merge_into(by_title[fingerprint], item)
+        # 中文标题会改变标题指纹，因此同时用原文标题（若存在）参与跨源去重
+        fingerprints = [fp for fp in (item.get("originalTitleKey"), title_key(item.get("title", ""))) if fp]
+        matched = next((by_title[fp] for fp in fingerprints if fp in by_title), None)
+        if matched is not None:
+            _merge_into(matched, item)
             continue
-        if fingerprint:
-            by_title[fingerprint] = item
+        for fp in fingerprints:
+            by_title[fp] = item
         result.append(item)
     return result
 

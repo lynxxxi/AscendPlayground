@@ -83,7 +83,14 @@ sha256sum report/2026-W38.html                          # Linux/macOS
 |----|------|------|
 | arXiv | `export.arxiv.org/api/query`，15 组关键词（`all:"a" AND all:"b"`） | ✅ 主力 |
 | HuggingFace Daily Papers | `huggingface.co/api/daily_papers` | ✅ 热度交叉验证 |
-| OpenAlex | `api.openalex.org/works` | ✅ 机构维度补充（偶发 429，已降级处理） |
+| OpenAlex | `api.openalex.org/works` | ⛔ 默认禁用（见下） |
+
+> **OpenAlex 为什么默认关闭**：它是全文检索，返回结果里大量是建筑安全、医学影像、
+> 教育等无关领域论文；而它的 metadata 又几乎不命中本项目的多模态 infra 关键词组，
+> 导致任何足够严格的关键词阈值都会把真正相关的论文一起滤掉（实测：阈值设为
+> `minKeywordHits>=1` 时保留数直接归零）。论文维度已由 arXiv 的精确 AND 组合查询
+> 加 HuggingFace Daily Papers 充分覆盖，故默认关闭；如需机构/引用维度，
+> 可在 `config/sources.json` 中收窄 `searches` 后重新启用。
 
 ### 维度 B · 技术团队与官方动态
 
@@ -99,10 +106,13 @@ sha256sum report/2026-W38.html                          # Linux/macOS
 **默认走 GitHub Atom feed**（`github.com/<repo>/releases.atom` 与 `commits.atom`）：
 
 - **无限流、无需鉴权**，含完整 release 说明与 commit 信息，是最稳的通道；
-- 覆盖 **27 个启用的仓库**，按优先级排序（昇腾侧 → 服务框架 → 生成加速 → 模型仓 → 竞品基准）；
+- 覆盖 **30 个启用的监控项**，按优先级排序（昇腾侧 → 服务框架 → 生成加速 → 模型仓 → 竞品基准）；
+- 主仓的多模态子系统单独建通道：例如 **sglang 主仓**通过
+  `commits/main/python/sglang/srt/multimodal.atom` 只跟踪多模态目录下的改动
+  （配合 `pathFilter` 配置项），避免被通用提交淹没；
 - 每条变更都抽取一句到两句**变更说明**（`lib/util.py` 的 `digest` / `commit_digest`），
-  自动剔除 changelog 样板、`[Docs]`/`[CI]`/`[chore]` 类杂务提交、`Co-authored-by` 等 trailer，
-  因此报告正文可直接阅读，不必逐条点开；
+  自动剔除 changelog 样板、`[Docs]`/`[CI]`/`[chore]`/`[branding]` 类杂务提交、
+  `Co-authored-by` 等 trailer，因此报告正文可直接阅读；
 - `Ascend/cann`、`Ascend/ops-nn` 在 GitHub 上没有 Atom feed（404），已在配置中禁用并注明原因。
 
 > REST API 通道保留为回退（`repos.channel: "api"`），但匿名限额只有 60 次/小时。
@@ -149,20 +159,38 @@ scripts/report/
 ├── collect.py             采集层：各源适配器 + 公众号/搜狗结果解析
 ├── corpus.py              语料层：去重、打分、主题聚类、竞品与能力矩阵
 ├── render.py              渲染层：自包含 HTML 报告
+├── zh.py                  中文说明层：按 stableId / repo+tag 套用人工撰写的中文
 ├── selftest.py            离线自检（78 项断言）
-├── config/sources.json    信息源注册表（改这里就能增删源）
+├── config/
+│   ├── sources.json           信息源注册表（改这里就能增删源）
+│   ├── curated_zh.json        人工撰写的中文标题与说明（按 stableId 匹配）
+│   └── curated_releases_zh.json 人工撰写的中文发版说明（按 repo + tag 匹配）
 └── lib/
-    ├── httpclient.py      HTTP + 快照缓存 + 重试
+    ├── httpclient.py      HTTP + 快照缓存 + 重试 + cookie 会话
     ├── feed.py            RSS 2.0 / Atom 1.0 解析（替代 feedparser）
     ├── relevance.py       关键词抽取、打分、跨源去重
-    └── util.py            时间/文本/ID 工具
+    └── util.py            时间/文本/ID 工具 + 说明文字抽取
 ```
 
-### 处理链路
+### 4.1 中文说明层（重要）
+
+报告的标题与说明**以中文为准**，由 `config/curated_zh.json` 与
+`config/curated_releases_zh.json` 提供，全部由人工撰写（不调用任何翻译服务）：
+
+- 按 `stableId`（条目）与 `repo + tag`（发版）精确匹配，命中即覆盖标题与说明；
+- 未命中的条目回退到自动抽取的原文说明，并在 `report/pending_zh.json` 中列出待补清单；
+- 中文标题会同时保留原文标题（`originalTitle` / `originalTitleKey`），
+  以确保跨源去重仍按原文标题指纹进行（否则中英标题会变成两条）；
+- 首次运行新周期时，`report/pending_zh.json` 就是需要补写中文的清单。
+
+> 设计取舍：说明文字**不由脚本自动翻译**（无 LLM、无翻译 API 调用），
+> 因此质量与术语可控，且同一份快照重跑结果完全一致。
+
+### 4.2 处理链路
 
 ```
-信息源 (config) → 抓取 + 快照落盘 → 归一化条目 → 相关性闸门 → 打分
-   → 跨源去重 → 分类聚合（维度 A–F）→ HTML 渲染
+信息源 (config) → 抓取 + 快照落盘 → 归一化条目 + 抽取说明 → 相关性闸门 → 打分
+   → 跨源去重 → 套用中文说明层 → 分类聚合（维度 A–F）→ HTML 渲染
 ```
 
 **打分模型**（`config.scoring` 可调参）：
@@ -207,7 +235,10 @@ python scripts/build_site.py                            # 更新站点（含周�
 2. **公众号原文直链**：解析依赖搜狗会话 cookie，且直链带时效签名——因此
    `--offline` **无法**重建公众号维度的链接（会回退到检索结果链接），
    其余维度均可离线复现。解析请求不走快照缓存也是这个原因。
-3. **搜索引擎**：Bing / DuckDuckGo 匿名抓取已不可用，适配器保留但默认禁用。
+3. **搜狗限流**：连续快速请求会触发人机校验。系统会检测校验页并在连续 2 次后
+   提前结束该维度（避免无效请求与加重限流），并在报告附录中标注。遇到这种情况
+   等十几分钟重跑即可，已有快照不会浪费。
+4. **搜索引擎**：Bing / DuckDuckGo 匿名抓取已不可用，适配器保留但默认禁用。
 4. **机器之心**：官方 RSS 已下线；其内容通过搜狗微信通道按关键词覆盖，非全量订阅。
 5. **OpenAlex** 在负载高时会返回 429，系统重试 3 次后降级，不影响其它源。
 6. **中文媒体 RSS** 字段质量不一：部分源不提供发布时间，这类条目不会被标记为 `NEW`。
