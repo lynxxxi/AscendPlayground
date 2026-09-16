@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MindIE-SD 能力清单与上游社区接入覆盖分析：vLLM-Omni、SGLang、DiffSynth-Studio、FastVideo、LightX2V 的 SD 接口覆盖打分与逐社区取证。">
+  <title>MindIE-SD 能力 × 上游社区接入覆盖分析｜2026-09</title>
+  <style>
+    :root {
+      --paper: #f3f0e7;
+      --paper-2: #e8e2d3;
+      --ink: #17201d;
+      --muted: #5b645f;
+      --line: #b9b2a2;
+      --deep: #102c28;
+      --deep-2: #183c36;
+      --signal: #e85d35;
+      --lime: #c4db55;
+      --gold: #cf962e;
+      --blue: #31758f;
+      --red: #a8463e;
+      --white: #fffdf7;
+      --serif: "Iowan Old Style", "Baskerville", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      --sans: "Aptos", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+      --shadow: 0 18px 46px rgba(24, 34, 30, .12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 4%, rgba(196,219,85,.18), transparent 24rem),
+        linear-gradient(rgba(16,44,40,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,44,40,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 28px 28px, 28px 28px, auto;
+      font-family: var(--sans);
+      line-height: 1.72;
+    }
+    a { color: var(--blue); text-underline-offset: 3px; }
+    a:hover { color: var(--signal); }
+    code { font-family: var(--mono); font-size: .9em; padding: .1em .34em; border-radius: 3px; background: rgba(16,44,40,.08); }
+    .progress { position: fixed; z-index: 200; top: 0; left: 0; width: 0; height: 4px; background: linear-gradient(90deg,var(--signal),var(--gold),var(--lime)); }
+    .topbar { position: sticky; z-index: 120; top: 0; color: var(--white); background: rgba(16,44,40,.95); border-bottom: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); }
+    .topbar-inner { width: min(1500px, calc(100% - 40px)); min-height: 58px; margin: auto; display: flex; align-items: center; gap: 24px; }
+    .brand { flex: none; font: 800 .72rem/1 var(--mono); letter-spacing: .14em; color: var(--lime); }
+    nav { display: flex; gap: 17px; overflow-x: auto; scrollbar-width: none; }
+    nav a { flex: none; padding: 19px 0 15px; border-bottom: 3px solid transparent; color: #d1ddd8; text-decoration: none; font-size: .76rem; }
+    nav a:hover, nav a.active { color: var(--white); border-color: var(--signal); }
+    .print { margin-left: auto; flex: none; border: 1px solid rgba(255,255,255,.3); color: var(--white); background: transparent; padding: 7px 10px; font: 700 .68rem/1 var(--mono); cursor: pointer; }
+    .hero {
+      min-height: 720px;
+      position: relative;
+      overflow: hidden;
+      color: var(--white);
+      background:
+        linear-gradient(120deg, rgba(232,93,53,.13), transparent 42%),
+        repeating-linear-gradient(135deg, transparent 0 15px, rgba(255,255,255,.025) 15px 16px),
+        var(--deep);
+      border-bottom: 9px solid var(--lime);
+    }
+    .hero::after { content: "ADOPT"; position: absolute; right: -2vw; bottom: -11rem; font: 900 clamp(11rem,25vw,30rem)/1 var(--sans); letter-spacing: -.1em; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.1); }
+    .hero-inner { width: min(1400px, calc(100% - 80px)); margin: auto; padding: 88px 0 68px; position: relative; z-index: 1; }
+    .eyebrow { display: flex; align-items: center; gap: 12px; font: 800 .73rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); }
+    .eyebrow::before { content: ""; width: 42px; height: 3px; background: var(--signal); }
+    h1 { max-width: 1100px; margin: 30px 0 20px; overflow-wrap: anywhere; font: 700 clamp(3rem,7vw,7.2rem)/.92 var(--serif); letter-spacing: -.065em; }
+    .hero-lead { max-width: 980px; margin: 0; color: #dce8e3; font: 1.23rem/1.72 var(--serif); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 42px; }
+    .pill { padding: 8px 11px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(255,255,255,.04); font: 700 .7rem/1 var(--mono); }
+    .hero-score { width: min(660px,100%); display: grid; grid-template-columns: 145px 1fr; gap: 20px; align-items: end; margin-top: 48px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.23); }
+    .score-big { font: 800 4.2rem/.85 var(--serif); color: var(--lime); }
+    .score-copy b { display:block; color: var(--white); }
+    .score-copy span { color:#b9cbc4; font-size:.85rem; }
+    .shell { width: min(1500px, calc(100% - 56px)); margin: 0 auto; }
+    section { scroll-margin-top: 76px; padding: 74px 0; border-bottom: 1px solid var(--line); }
+    section:last-child { border-bottom: 0; }
+    .section-head { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 28px; margin-bottom: 30px; }
+    .secno { padding-top: 12px; font: 800 .72rem/1 var(--mono); color: var(--signal); letter-spacing: .13em; }
+    .kicker { font: 800 .68rem/1 var(--mono); color: var(--blue); letter-spacing: .14em; text-transform: uppercase; }
+    h2 { margin: 8px 0 14px; overflow-wrap: anywhere; font: 700 clamp(2.2rem,4.5vw,4.6rem)/.98 var(--serif); letter-spacing: -.052em; color: var(--deep); }
+    h3 { margin: 12px 0 9px; color: var(--deep); font-size: 1.12rem; line-height: 1.32; }
+    h4 { margin: 20px 0 8px; color: var(--deep); font-size: .95rem; }
+    .lead { max-width: 1040px; margin: 0; color: #35423d; font: 1.08rem/1.76 var(--serif); }
+    .callout { margin: 20px 0; padding: 27px 29px; color: var(--white); background: var(--deep); border-left: 8px solid var(--signal); box-shadow: var(--shadow); font: 1.1rem/1.68 var(--serif); }
+    .callout strong { color: var(--lime); }
+    .callout.light { color: var(--ink); background: rgba(255,253,247,.75); border-color: var(--gold); box-shadow: none; }
+    .grid2,.grid3,.grid4 { display: grid; gap: 14px; }
+    .grid2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .grid4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .card { position: relative; overflow: hidden; min-width: 0; padding: 22px; background: rgba(255,253,247,.78); border: 1px solid var(--line); }
+    .card::before { content: ""; position:absolute; top:0; left:0; width:100%; height:4px; background:var(--blue); }
+    .card.good::before { background:var(--lime); }
+    .card.warn::before { background:var(--gold); }
+    .card.risk::before { background:var(--red); }
+    .card p,.card li { margin-top: 7px; color: var(--muted); font-size: .89rem; }
+    .card ul { margin: 9px 0 0; padding-left: 18px; }
+    .tag { display: inline-block; padding: 5px 8px; color: var(--white); background: var(--deep-2); font: 800 .63rem/1 var(--mono); letter-spacing: .08em; }
+    .tag.fact { background:var(--blue); }.tag.sample{background:var(--gold)}.tag.infer{background:var(--signal)}.tag.target{background:var(--red)}
+    .metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:24px 0; }
+    .metric { min-height: 125px; padding: 18px; background: rgba(255,253,247,.8); border:1px solid var(--line); }
+    .metric b { display:block; margin-bottom:10px; color:var(--deep); font:700 2rem/1 var(--serif); }
+    .metric small { display:block; color:var(--muted); font-size:.74rem; line-height:1.45; }
+    .table-wrap { overflow:auto; background:rgba(255,253,247,.72); border:1px solid var(--line); }
+    table { width:100%; border-collapse:collapse; min-width:980px; }
+    th,td { padding:12px 13px; border-bottom:1px solid #d6d0c3; text-align:left; vertical-align:top; font-size:.79rem; }
+    th { position:sticky; top:0; z-index:2; color:var(--white); background:var(--deep); font:700 .67rem/1.3 var(--mono); letter-spacing:.04em; white-space:nowrap; }
+    tbody tr:hover { background:rgba(196,219,85,.12); }
+    tbody tr:last-child td { border-bottom:0; }
+    .target-row { background:rgba(232,93,53,.055); }
+    .target-row td:first-child { font-weight:800; color:var(--signal); }
+    .muted { color:var(--muted); }
+    .yes { color:#176b50; font-weight:800; }.partial{color:#a06f16;font-weight:800}.no{color:var(--red);font-weight:800}.na{color:#7a7d79}
+    .legend,.filterbar { display:flex; gap:8px; flex-wrap:wrap; margin:15px 0; }
+    .legend span,.filterbar button { border:1px solid var(--line); padding:7px 10px; background:rgba(255,253,247,.62); color:var(--ink); font:700 .66rem/1 var(--mono); }
+    .filterbar button { cursor:pointer; border-radius:999px; }
+    .filterbar button.active,.filterbar button:hover { color:var(--white); background:var(--deep); border-color:var(--deep); }
+    .heat { text-align:center; font-weight:900; font-family:var(--mono); min-width:48px; }
+    .h5 { background:#c5dd66; }.h4 { background:#dce79f; }.h3 { background:#f0d797; }.h2 { background:#efb08d; }.h1 { background:#dc8981; }.h0 { background:#d8d4ca; }
+    .avg { font-weight:900; color:var(--deep); background:rgba(16,44,40,.07); text-align:center; font-family:var(--mono); }
+    .bar-chart { display:grid; gap:9px; margin:20px 0; }
+    .bar-row { display:grid; grid-template-columns:175px minmax(160px,1fr) 88px; gap:12px; align-items:center; font-size:.78rem; }
+    .bar-track { height:15px; background:#ddd7ca; position:relative; }
+    .bar { height:100%; min-width:2px; background:var(--blue); }
+    .bar.issue { background:var(--signal); }.bar.pr{background:var(--blue)}
+    .bar-value { text-align:right; font:800 .68rem/1 var(--mono); }
+    .scoreboard { display:grid; grid-template-columns:1.05fr .95fr; gap:18px; }
+    .score-panel { padding:26px; color:var(--white); background:var(--deep); }
+    .score-panel .n { color:var(--lime); font:700 5rem/.9 var(--serif); }
+    .score-panel p { color:#c6d4cf; }
+    .gaps { display:grid; gap:9px; }
+    .gap { display:grid; grid-template-columns:90px 1fr; gap:12px; padding:13px 15px; background:rgba(255,253,247,.74); border-left:5px solid var(--gold); }
+    .gap b { font:800 .68rem/1.4 var(--mono); color:var(--deep); }
+    .gap span { color:var(--muted); font-size:.82rem; }
+    .book { display:grid; grid-template-columns:150px minmax(0,1fr); gap:20px; padding:25px 0; border-top:1px solid var(--line); }
+    .book:first-child { border-top:0; }
+    .book-index { font:800 .67rem/1.5 var(--mono); color:var(--signal); }
+    .book h3 { font:700 1.5rem/1.2 var(--serif); }
+    .book p { color:var(--muted); }
+    .lens { display:inline-block; margin:2px 4px 2px 0; padding:4px 7px; color:var(--deep); background:rgba(196,219,85,.45); font:700 .63rem/1 var(--mono); }
+    .matrix-note { margin:13px 0 22px; padding:13px 15px; color:var(--muted); background:rgba(49,117,143,.07); border-left:5px solid var(--blue); font-size:.8rem; }
+    .metric-name { display:block; color:var(--deep); font-weight:800; }
+    .metric-formula { display:block; margin-top:4px; color:var(--muted); font-size:.7rem; line-height:1.45; }
+    .now { display:block; margin-top:6px; color:var(--muted); font-size:.72rem; line-height:1.45; }
+    .roadmap { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .phase { min-height:250px; padding:21px; background:rgba(255,253,247,.78); border-top:5px solid var(--signal); }
+    .phase:nth-child(2){border-color:var(--gold)}.phase:nth-child(3){border-color:var(--blue)}.phase:nth-child(4){border-color:var(--lime)}
+    .phase .week { font:800 .65rem/1 var(--mono); color:var(--signal); }
+    .phase ul { padding-left:17px; color:var(--muted); font-size:.82rem; }
+    .exit { display:block; margin-top:13px; color:#19694f; font:800 .65rem/1.5 var(--mono); }
+    .source-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; counter-reset:src; }
+    .source { position:relative; min-width:0; padding:15px 16px 15px 50px; background:rgba(255,253,247,.7); border:1px solid var(--line); }
+    .source::before { counter-increment:src; content:counter(src,decimal-leading-zero); position:absolute; left:16px; top:17px; color:var(--signal); font:800 .68rem/1 var(--mono); }
+    .source a { font-size:.85rem; font-weight:700; overflow-wrap:anywhere; }
+    .source span { display:block; color:var(--muted); font-size:.72rem; }
+    details { margin:10px 0; background:rgba(255,253,247,.66); border:1px solid var(--line); }
+    summary { cursor:pointer; padding:13px 15px; color:var(--deep); font-weight:800; }
+    details > div { padding:0 16px 15px; color:var(--muted); font-size:.83rem; }
+    .community-head { display:grid; grid-template-columns:minmax(0,1fr) 190px; gap:22px; align-items:start; }
+    .verdict-box { padding:20px; color:var(--white); background:var(--deep); }
+    .verdict-box b { display:block; color:var(--lime); font:800 .66rem/1 var(--mono); letter-spacing:.1em; }
+    .verdict-box .n { font:700 3.4rem/.95 var(--serif); color:var(--white); }
+    .verdict-box small { display:block; margin-top:8px; color:#c6d4cf; font-size:.72rem; line-height:1.5; }
+    .chain { display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:9px; margin:24px 0; }
+    .node { min-height:150px; padding:16px 14px; color:var(--white); background:var(--deep); position:relative; }
+    .node:nth-child(even){background:var(--deep-2)}
+    .node::after { content:"→"; position:absolute; z-index:2; right:-13px; top:46%; color:var(--signal); font-size:1.3rem; font-weight:900; }
+    .node:last-child::after { display:none; }
+    .node i { display:block; color:var(--lime); font:800 .63rem/1 var(--mono); font-style:normal; }
+    .node b { display:block; margin:10px 0 6px; font-size:.9rem; }
+    .node span { color:#c7d6d0; font-size:.75rem; line-height:1.45; }
+    footer { padding:32px 0 60px; color:#77807b; font:700 .68rem/1.7 var(--mono); }
+    .reveal { opacity:0; transform:translateY(12px); transition:.5s ease; }
+    .reveal.on { opacity:1; transform:none; }
+    @media(max-width:1050px){.grid4,.metrics,.roadmap{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.scoreboard{grid-template-columns:1fr}.chain{grid-template-columns:1fr}.node::after{content:"↓";right:50%;top:auto;bottom:-20px}.section-head{grid-template-columns:110px 1fr}.community-head{grid-template-columns:1fr}}
+    @media(max-width:720px){.topbar-inner{width:calc(100% - 24px);display:block;padding-top:13px}.brand{margin-bottom:7px}.print{display:none}nav a{padding:10px 0 13px}.hero-inner,.shell{width:calc(100% - 28px)}.hero-inner{padding-top:65px}.eyebrow{align-items:flex-start;font-size:.62rem;line-height:1.45;letter-spacing:.1em}.eyebrow::before{flex:none;margin-top:.42em}h1{font-size:clamp(2.4rem,12vw,3rem);line-height:.96;letter-spacing:-.045em}.hero-lead{font-size:1.05rem;line-height:1.65}.hero-meta{margin-top:30px}.hero-score{grid-template-columns:1fr}.section-head{grid-template-columns:1fr;gap:5px}.section-head h2{font-size:clamp(2rem,10vw,2.75rem);line-height:1.04}.grid2,.grid4,.metrics,.roadmap,.source-grid{grid-template-columns:1fr}.bar-row{grid-template-columns:115px 1fr 70px}.book{grid-template-columns:1fr;gap:2px}.gap{grid-template-columns:1fr}.hero{min-height:780px}}
+    @media print{.topbar,.progress,.filterbar,.print{display:none!important}.hero{min-height:0;break-after:page}.reveal{opacity:1;transform:none}.shell,.hero-inner{width:100%}section{padding:35px 0}.card,.metric,.phase,.source,.table-wrap{break-inside:avoid}body{background:#fff}.source-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / SD INTERFACE COVERAGE</div><nav aria-label="报告导航"><a href="#method">口径</a><a href="#capability">SD 能力</a><a href="#matrix">打分表</a><a href="#verdict">结论</a><a href="#vllmomni">vLLM-Omni</a><a href="#sglang">SGLang</a><a href="#diffsynth">DiffSynth</a><a href="#fastvideo">FastVideo</a><a href="#lightx2v">LightX2V</a><a href="#patterns">接入模式</a><a href="#roadmap">路线</a><a href="#sources">来源</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Capability × Adoption · Repo snapshot 2026-09-16</div>
+      <h1>MindIE-SD 能力<br>上游接入覆盖分析</h1>
+      <p class="hero-lead">先把 MindIE-SD 对外能提供的能力收敛成一份可核对的能力清单，再用同一把尺子量五个上游社区：谁真的把 <code>mindiesd</code> 加载进运行时，谁只是抄了同名算法自己实现，谁的注意力选择器根本不给第三方留位置。</p>
+      <div class="hero-meta"><span class="pill">14 项能力 × 5 社区</span><span class="pill">RUNTIME / PARALLEL / NONE</span><span class="pill">ATTENTION REGISTRY</span><span class="pill">QUANT PLUGIN</span><span class="pill">CACHE / USP / COMPILE</span></div>
+      <div class="hero-score"><div class="score-big">1.5<span style="font-size:1.2rem"> / 5</span></div><div class="score-copy"><b>只有 vLLM-Omni 真正把 MindIE-SD 当平台级后端</b><span>五社区 70 格加权总分 103，等权平均 1.47。vLLM-Omni 2.6 分是唯一的平台级运行时接入；LightX2V 1.7 分是单点硬依赖；SGLang 与 FastVideo 各 1.1 分、DiffSynth-Studio 0.9 分，本质是“能力已被移植或平行实现、MindIE-SD 没被接入”。</span></div></div>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <section id="method" class="reveal">
+      <div class="section-head"><div class="secno">01 / METHOD &amp; METRICS</div><div><span class="kicker">Evidence before score</span><h2>先定义“接入”，再谈覆盖率</h2><p class="lead">本报告的证据来自五个上游仓库与 MindIE-SD 仓库的本地默认分支快照，全部结论可由文件路径、导入语句、注册表和枚举值复核。评分衡量的是 <em>MindIE-SD 被上游采纳的程度</em>，不是上游自身能力的强弱：一个社区即使把同类算法做得很完整，只要没有接入 <code>mindiesd</code>，本表就不会给它高分。</p></div></div>
+      <div class="legend"><span><span class="tag fact">事实</span> 可在仓库/文档直接验证</span><span><span class="tag sample">样本</span> 有窗口或快照限制</span><span><span class="tag infer">推断</span> 从事实推导的分析</span><span><span class="tag target">目标</span> 建议项，不是现状</span></div>
+      <div class="grid2">
+        <article class="card"><h3>五个被审计社区，三种角色</h3><ul><li><b>服务化框架：</b>vLLM-Omni（多模态服务）、SGLang（LLM + <code>multimodal_gen</code> 扩散栈）。</li><li><b>模型生态框架：</b>DiffSynth-Studio（面向 diffusers 的模型/训练引擎）。</li><li><b>专业生成框架：</b>FastVideo（视频 DiT 训练+推理）、LightX2V（轻量视频生成、多平台算子层）。</li></ul></article>
+        <article class="card"><h3>为什么必须区分“接入”与“移植/平行实现”</h3><ul><li><b>运行时接入：</b>存在 <code>import mindiesd</code> 或 <code>find_spec("mindiesd")</code>，能力由 MindIE-SD 提供。</li><li><b>代码移植：</b>把 MindIE-SD 的算法代码搬进上游，只换算子命名空间（已发现一例且无署名）。</li><li><b>平行实现：</b>上游用 <code>torch_npu</code>、<code>sgl_kernel_npu</code>、<code>fastvideo_kernel</code> 自研同名能力。</li><li><b>参考实现：</b>只在上游注释里被引用为设计来源，无代码依赖。</li><li>四者对“MindIE-SD 生态位”的含义完全不同，因此必须分开计分。</li></ul></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">评分规则（0–5）：描述接入深度，不描述算法优劣</h3>
+      <div class="table-wrap"><table><thead><tr><th>分值</th><th>档位</th><th>判定标准</th><th>典型证据</th></tr></thead><tbody>
+        <tr><td class="heat h5">5</td><td><b>默认路径</b></td><td>MindIE-SD 是该能力的自动首选实现，有 E2E/CI 覆盖与兼容矩阵</td><td>平台默认路由到 mindiesd + PR 级 NPU CI</td></tr>
+        <tr><td class="heat h4">4</td><td><b>一等后端</b></td><td>有稳定枚举名/注册项、typed 配置、官方文档、单测、能力或版本门禁</td><td>独立后端枚举 + 能力探测函数 + 版本门禁</td></tr>
+        <tr><td class="heat h3">3</td><td><b>可选接入</b></td><td>有延后导入与开关，可运行，但无版本门禁、无测试或依赖私有 API</td><td><code>try: import mindiesd</code> + 配置项 + <code>assert</code></td></tr>
+        <tr><td class="heat h2">2</td><td><b>移植 / 平行实现</b></td><td>上游存在同语义能力：或把 MindIE-SD 代码搬过来只换算子命名空间，或由自研/第三方内核提供</td><td>同名后端枚举 + 相同 kernel 参数表；或走 <code>torch_npu</code> / <code>sgl_kernel_npu</code></td></tr>
+        <tr><td class="heat h1">1</td><td><b>仅有理论挂载点</b></td><td>存在可复用的注册表、枚举或分派点，但零接入；或仅注释引用</td><td>空的可扩展注册表 + 注释里引用 MindIE-SD 实现</td></tr>
+        <tr><td class="heat h0">0</td><td><b>无接入且无挂载点</b></td><td>既无 <code>mindiesd</code> 引用，也没有等价能力或可注册接口</td><td>目录中不存在该能力</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>计分边界：</strong>14 项能力等权平均，规模（Star、模型数、发布节奏）不参与打分；“上游很成熟”不会转化为 MindIE-SD 的接入分。凡上游自研了同语义内核，本表记为 2 分而不是 0 分——因为 0 表示“没有机会”，2 表示“有机会但被替代实现占住了”。</div>
+      <details><summary>当前提交快照与被审计仓库</summary><div><code>MindIE-SD</code> · <code>vllm-omni</code> · <code>sglang</code>（含 <code>multimodal_gen</code>）· <code>DiffSynth-Studio</code> · <code>FastVideo</code> · <code>LightX2V</code>，均为 <code>C:\Users\sos11\Desktop\project\</code> 下的本地默认分支检出。证据检索以 <code>mindiesd / MindIE / rainfusion / sparse_attention / MXFP4 / usp / ulysses</code> 等关键词全仓 grep，并以关键文件的直接阅读交叉验证。</div></details>
+    </section>
+
+    <section id="capability" class="reveal">
+      <div class="section-head"><div class="secno">02 / SD CAPABILITY INVENTORY</div><div><span class="kicker">What MindIE-SD actually exports</span><h2>MindIE-SD 对外提供的是一组“可替换的函数与模块”，不是一个插件框架</h2><p class="lead">MindIE-SD 的接入面分两层：顶层 <code>mindiesd</code> 只重导出 13 个名字，其余能力必须通过子模块路径访问；同时它没有对外发布“框架级插件注册入口”（如 diffusers 的 attention dispatcher 或 vLLM 的 quant config），所以上游要接入就必须改自己的模型代码。这一点直接解释了第 03 章的覆盖分布。</p></div></div>
+      <div class="metrics"><div class="metric"><b>13</b><small>顶层 <code>__all__</code> 导出名<br>函数与类，不含子模块 API</small></div><div class="metric"><b>16</b><small>打分用能力标题<br>归并为 14 项参与均分</small></div><div class="metric"><b>6</b><small>能力分层<br>注意力 / 量化 / 缓存 / 并行 / 编译 / 平台</small></div><div class="metric"><b>2</b><small>接入粒度<br>函数级 + <code>nn.Module</code> 级</small></div><div class="metric"><b>0</b><small>对外插件注册入口<br>仅内部 <code>AttnOpRegistry</code> 按芯片注册</small></div></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif)">A. 注意力与融合算子：MindIE-SD 最成熟、也是被接入最多的一层</h3>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>能力标题</th><th>公开接口</th><th>形态</th><th>关键约束</th></tr></thead><tbody>
+        <tr class="target-row"><td>C1</td><td><b>稠密 FA / 变长 FA</b></td><td><code>attention_forward</code><br><code>attention_forward_varlen</code></td><td>函数</td><td>4D <code>[B,S,N,D]</code> 或 <code>[B,N,S,D]</code>；<code>opt_mode</code> 支持 runtime/static/manual，manual 可选 <code>prompt_flash_attn</code>、<code>fused_attn_score</code>、<code>ascend_laser_attention</code>；仅前向</td></tr>
+        <tr class="target-row"><td>C2</td><td><b>块稀疏注意力 RainFusion</b></td><td><code>sparse_attention</code>（<code>rf_v2</code>/<code>rf_v3</code>/<code>ada_bsa</code>）<br><code>SparseLinearAttention</code></td><td>函数 / <code>nn.Module</code></td><td><code>block_size=128</code>；<code>rf_v2</code> 需 <code>txt_len</code> + <code>latent_shape_q/k</code>；<code>rf_v3</code> 的 <code>precision="mxfp4"</code> 仅 950(A5)；仅前向</td></tr>
+        <tr class="target-row"><td>C3</td><td><b>融合算子族</b><br>RoPE / Norm / AdaLN / 激活 / 残差</td><td><code>rotary_position_embedding</code>、<code>RMSNorm</code>、<code>fast_layernorm</code>、<code>layernorm_scale_shift</code>、<code>get_activation_layer</code>、<code>muls_add</code>、<code>residual_gate_add</code></td><td>函数 / <code>nn.Module</code></td><td>RoPE 有两种旋转模式；<code>layernorm_scale_shift</code> 对 <code>scale/shift</code> 维度有约束；均有 <code>fused=False</code> 回退</td></tr>
+        <tr class="target-row"><td>C4</td><td><b>融合 MoE / 频域调制</b></td><td><code>fused_moe</code>、<code>frequency_regulator</code></td><td>函数</td><td><code>fused_moe</code> 有融合/非融合两条路径，依赖 dispatcher、通信组与量化配置</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">B. 量化：算法面很宽，但对外只有一个 <code>quantize()</code> 入口</h3>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>能力标题</th><th>公开接口</th><th>形态</th><th>关键约束</th></tr></thead><tbody>
+        <tr class="target-row"><td>C5</td><td><b>Linear 量化</b></td><td><code>quantize</code>、<code>QuantConfig</code>、<code>OnlineQuantConfig</code></td><td>函数 + 配置</td><td>覆盖 W8A16 / W4A16 / AWQ / GPTQ / W8A8 / W4A4 / MXFP8 / MXFP4 共 10+ 算法；权重与描述符由 msmodelslim 离线导出</td></tr>
+        <tr class="target-row"><td>C6</td><td><b>时间步动态量化</b></td><td><code>TimestepManager</code>、<code>TimestepPolicyConfig</code></td><td>函数 + 配置</td><td>模型侧必须在每个 denoise step 前调用 <code>set_timestep_idx(i)</code>；Linear 只切换激活精度，权重保持 MXFP4</td></tr>
+        <tr class="target-row"><td>C7</td><td><b>FA 量化 / KV 量化</b></td><td><code>quantize</code> 自动注入 <code>FP8RotateQuantFA</code><br><code>fa_block_quant_preprocess</code></td><td>函数（子模块）</td><td>仅 Atlas 800I A2；Q/K 块 128、K/V 块 256；需 <code>q_rot</code>/<code>k_rot</code> 离线导出；MXFP4 复用 <code>quant_flash_attn</code> 算子</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">C. 以存代算与显存：能力独立，但需要模型侧手工插入 <code>cache.apply()</code></h3>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>能力标题</th><th>公开接口</th><th>形态</th><th>关键约束</th></tr></thead><tbody>
+        <tr class="target-row"><td>C8</td><td><b>以存代算 Cache</b></td><td><code>CacheConfig</code>、<code>CacheAgent</code>、<code>DiTBlockCache</code>、<code>AttentionCache</code></td><td>类 + 配置</td><td>需在 Transformer 内保存 <code>self.cache</code> 并把 block 调用改写成 <code>self.cache.apply(block, ...)</code>；<code>AttentionCache</code> 显著增加显存占用</td></tr>
+        <tr class="target-row"><td>C9</td><td><b>CPU Offload / 显存共享</b></td><td><code>mindiesd.offload.enable_offload</code><br><code>init_share_memory</code>、<code>share_memory</code></td><td>函数（子模块）</td><td><code>share_memory</code> 依赖 <code>pyzmq</code> 广播句柄；仅多实例场景需要</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">D. 并行：只有 USP 是封装好的 API，其余是文档化的改造模式</h3>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>能力标题</th><th>公开接口</th><th>形态</th><th>关键约束</th></tr></thead><tbody>
+        <tr class="target-row"><td>C10</td><td><b>USP 序列并行</b></td><td><code>mindiesd.layers.usp.usp_attention</code></td><td>函数（子模块）</td><td>严格 Ulysses（head 数须被 world size 整除）+ KV-AllGather；<code>layouts</code> 仅 BSND/BNSD；<code>chunk_size</code> 不能与 <code>attn_mask</code>/<code>head_chunk_size</code>/<code>overlap</code> 同时用；<b>明确不支持真正的 Ring Attention</b></td></tr>
+        <tr class="target-row"><td>C11</td><td><b>TP / CFG / CV / Ring 并行</b></td><td><code>docs/zh/features/parallelism.md</code> 中的示例代码</td><td>文档 + 样例</td><td>仓库中<b>没有</b>对应的可导入模块；TP、CFG 并行、CFG 融合、Ring SP 均为“改写指南”，需要上游自己落代码</td></tr>
+        <tr class="target-row"><td>C12</td><td><b>DyEPLB 动态专家负载均衡</b></td><td><code>DynamicDispatcher</code>、<code>ExpertLoadCollector</code>、<code>construct_expert_info_transfer_pool</code></td><td>类 + 函数（子模块）</td><td>面向 MoE 多卡场景；需接入方自行改造专家分发路径</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">E. 编译与平台：接入成本最低的一层，也最容易被忽略</h3>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>能力标题</th><th>公开接口</th><th>形态</th><th>关键约束</th></tr></thead><tbody>
+        <tr class="target-row"><td>C13</td><td><b>图编译 / 融合 pass / 算子注册</b></td><td><code>MindieSDBackend</code>、<code>CompilationConfig</code><br><code>mindiesd.env.set_environment_variables()</code></td><td>后端类 + 隐式副作用</td><td><code>torch.compile(backend=MindieSDBackend())</code> 即可启用，但<b>未注册为具名后端</b>，无法按名字发现；ACLGraph 不支持动态 shape 与控制流。导入 <code>mindiesd</code> 会把 3 个 vendor 目录前插到 <code>ASCEND_CUSTOM_OPP_PATH</code>，必须早于 CANN 首次 custom-op 注册快照</td></tr>
+        <tr class="target-row"><td>C14</td><td><b>FA_Power_Cap</b></td><td>文档化改造模式（<code>comm_type</code> + <code>attention_forward</code>）</td><td>文档 + 样例</td><td>需改 <code>generate.py</code>、attention block 与注意力层四处；面向长序列视频生成，切分 FA 并重排 FA 与通信顺序以降功耗</td></tr>
+      </tbody></table></div>
+
+      <div class="callout light"><strong>能力清单自身的三个缺口（已核实）：</strong>其一，<code>docs/zh/features/core_layers.md</code> 在 <b>Linear</b> 一节写明 <code>from mindiesd import Linear</code>，但 <code>mindiesd/layers/</code> 下不存在任何 <code>Linear</code> 实现，该导入会直接失败。其二，文档开头声明“所有接口均可通过 <code>from mindiesd import &lt;接口名&gt;</code> 直接导入”，但 <code>muls_add</code>、<code>residual_gate_add</code>、<code>SparseLinearAttention</code>、<code>scale_shift</code>、<code>swiglu</code> 都不在顶层 <code>__all__</code> 中。其三，<b><code>MindieSDBackend</code> 没有注册成具名的 torch.compile 后端</b>：<code>mindiesd/compilation/__init__.py</code> 只导出类本身，<code>mindiesd/plugin/__init__.py</code> 是 0 字节空文件，<code>setup.py</code> 与 <code>pyproject.toml</code> 中都没有 <code>entry_points</code> 或 <code>torch_dynamo_backends</code>。因此它只能被显式构造后传入（<code>backend=MindieSDBackend()</code>），<b>任何按名字选择编译后端的框架都无法发现它</b>。上游若照文档接入，会先撞到导入错误——这会直接抬高接入成本。</div>
+    </section>
+
+    <section id="matrix" class="reveal">
+      <div class="section-head"><div class="secno">03 / COVERAGE MATRIX</div><div><span class="kicker">Capability × community</span><h2>接入打分表：14 项能力 × 5 个社区</h2><p class="lead">矩阵按第 01 章的 0–5 规则逐格判定，每格背后都有可复核的文件证据，证据在 05–09 章逐社区展开。颜色只表示接入深度，不表示算法质量：<b>绿色不代表 MindIE-SD 更强，红色也不代表上游做得差</b>。</p></div></div>
+      <div class="filterbar" aria-label="矩阵筛选"><button class="active" data-filter="all">全部</button><button data-filter="best">vLLM-Omni</button><button data-filter="mid">LightX2V</button><button data-filter="low">SGLang / FastVideo</button><button data-filter="none">DiffSynth-Studio</button></div>
+      <div class="table-wrap"><table id="score-table"><thead><tr><th>能力标题</th><th>vLLM-Omni</th><th>SGLang</th><th>DiffSynth</th><th>FastVideo</th><th>LightX2V</th><th>五社区最高</th></tr></thead><tbody>
+        <tr data-group="best"><td><b>C1</b> 稠密 FA / 变长 FA</td><td class="heat h5">5</td><td class="heat h2">2</td><td class="heat h1">1</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h5">5</td></tr>
+        <tr data-group="best"><td><b>C2</b> 稀疏注意力 RainFusion</td><td class="heat h4">4</td><td class="heat h2">2</td><td class="heat h0">0</td><td class="heat h2">2</td><td class="heat h4">4</td><td class="heat h4">4</td></tr>
+        <tr data-group="best"><td><b>C3</b> 融合算子族（RoPE/Norm/AdaLN/激活/残差）</td><td class="heat h4">4</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h4">4</td></tr>
+        <tr data-group="best"><td><b>C4</b> 融合 MoE / 频域调制</td><td class="heat h2">2</td><td class="heat h1">1</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h1">1</td><td class="heat h2">2</td></tr>
+        <tr data-group="best"><td><b>C5</b> Linear 量化（W8A16→W4A4/MXFP4）</td><td class="heat h3">3</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h3">3</td></tr>
+        <tr data-group="best"><td><b>C6</b> 时间步动态量化</td><td class="heat h1">1</td><td class="heat h1">1</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h1">1</td><td class="heat h1">1</td></tr>
+        <tr data-group="best"><td><b>C7</b> FA 量化 / KV 量化</td><td class="heat h3">3</td><td class="heat h1">1</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h1">1</td><td class="heat h3">3</td></tr>
+        <tr data-group="mid"><td><b>C8</b> 以存代算 Cache</td><td class="heat h1">1</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h2">2</td></tr>
+        <tr data-group="mid"><td><b>C9</b> Offload / 显存共享</td><td class="heat h1">1</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td></tr>
+        <tr data-group="best"><td><b>C10</b> USP 序列并行</td><td class="heat h4">4</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h4">4</td></tr>
+        <tr data-group="best"><td><b>C11</b> TP / CFG / CV 并行</td><td class="heat h3">3</td><td class="heat h2">2</td><td class="heat h1">1</td><td class="heat h2">2</td><td class="heat h2">2</td><td class="heat h3">3</td></tr>
+        <tr data-group="best"><td><b>C12</b> DyEPLB 动态专家负载均衡</td><td class="heat h1">1</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h1">1</td></tr>
+        <tr data-group="best"><td><b>C13</b> 图编译 / 融合 pass / 算子注册</td><td class="heat h4">4</td><td class="heat h0">0</td><td class="heat h1">1</td><td class="heat h1">1</td><td class="heat h3">3</td><td class="heat h4">4</td></tr>
+        <tr data-group="none"><td><b>C14</b> FA_Power_Cap</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td><td class="heat h0">0</td></tr>
+        <tr><td><b>14 项等权均分</b></td><td class="avg">2.6</td><td class="avg">1.1</td><td class="avg">0.9</td><td class="avg">1.1</td><td class="avg">1.7</td><td class="avg">1.5</td></tr>
+        <tr><td><b>累计分（满分 70）</b></td><td class="avg">36</td><td class="avg">15</td><td class="avg">13</td><td class="avg">15</td><td class="avg">24</td><td class="avg">103</td></tr>
+      </tbody></table></div>
+      <div class="matrix-note"><b>读法：</b>最后一列“五社区最高”回答的是“这项能力在生态里最好的接入水平是什么”。C1 = 5、C2 = 4、C10 = 4 说明注意力、稀疏注意力和序列并行三项已经跑通；C8/C9 = 2 说明缓存与显存管理全线被上游自研替代；C14 = 0 说明 FA_Power_Cap 在五个社区里<b>完全无人接入</b>。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">接入方式分类：同一份能力清单，三种完全不同的生态关系</h3>
+      <div class="table-wrap"><table><thead><tr><th>社区</th><th>关系类型</th><th>判定依据</th><th>接入点数量</th><th>是否有版本/能力门禁</th><th>是否被 CI 覆盖</th></tr></thead><tbody>
+        <tr class="target-row"><td><b>vLLM-Omni</b></td><td class="yes">运行时依赖（主路径）</td><td>全仓 139 处 <code>mindiesd</code> 命中，其中 <b>9 个生产接入点</b>（其余为测试与文档）；NPU 默认扩散注意力后端由 <code>find_spec("mindiesd")</code> 决定</td><td>5 类能力被真正消费、9 个接入点</td><td class="yes">有（<code>_mindiesd_supports_precision</code>、<code>_supports_video_spans</code>、<code>USPError</code>）</td><td class="partial">契约级 CPU 单测（注入 fake <code>mindiesd</code>）；NPU pipeline 本身不安装也不引用 mindiesd</td></tr>
+        <tr data-group="mid"><td><b>LightX2V</b></td><td class="partial">运行时依赖（单点、私有 API）</td><td>全仓 <code>mindie</code> 命中 8 行，<b>全部在 1 个文件</b>；调用 <code>sparse_flash_attn_rf_v2.rain_fusion_attention</code> 私有路径</td><td>2 类能力、1 个 op 槽位</td><td class="no">无（只有构造期 <code>assert</code>，无版本/SoC 门禁）</td><td class="no">无（仅 lint workflow；<code>test_cases/</code> 8 个脚本全为 CUDA）</td></tr>
+        <tr data-group="low"><td><b>SGLang</b></td><td class="partial">代码移植 + 参考实现</td><td><code>RAIN_FUSION_ATTN</code> 的算法与参数表来自 MindIE-SD <code>sparse_flash_attn_rf_v2.py</code>，但<b>无署名、无 import</b>，内核走 <code>torch.ops.attentions</code>；MXFP4 方案有 11 处注释引用 MindIE-SD 为设计来源</td><td>0 个运行时接入点</td><td class="no">无</td><td class="no">无</td></tr>
+        <tr data-group="low"><td><b>FastVideo</b></td><td class="no">无接入（有同等成熟的自研栈）</td><td>零 <code>mindiesd</code> 引用；自带 14 个注意力后端枚举、vLLM 风格量化插件、TeaCache</td><td>0 个接入点</td><td class="no">无</td><td class="no">无</td></tr>
+        <tr data-group="none"><td><b>DiffSynth-Studio</b></td><td class="no">无接入（零感知）</td><td>零 <code>mindiesd</code> 引用；NPU 路径仅 1 个模型（Z-Image）用 <code>torch_npu</code> 融合算子打补丁</td><td>0 个接入点</td><td class="no">无</td><td class="no">无（CI 不跑测试）</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">按能力看总分分布</h3>
+      <div class="bar-chart">
+        <div class="bar-row"><span>C1 稠密 FA</span><div class="bar-track"><div class="bar pr" style="width:44%"></div></div><span class="bar-value">11 / 25</span></div>
+        <div class="bar-row"><span>C2 稀疏 RainFusion</span><div class="bar-track"><div class="bar" style="width:48%"></div></div><span class="bar-value">12 / 25</span></div>
+        <div class="bar-row"><span>C3 融合算子族</span><div class="bar-track"><div class="bar" style="width:44%"></div></div><span class="bar-value">11 / 25</span></div>
+        <div class="bar-row"><span>C5 Linear 量化</span><div class="bar-track"><div class="bar" style="width:44%"></div></div><span class="bar-value">11 / 25</span></div>
+        <div class="bar-row"><span>C10 USP 序列并行</span><div class="bar-track"><div class="bar" style="width:44%"></div></div><span class="bar-value">11 / 25</span></div>
+        <div class="bar-row"><span>C8 Cache</span><div class="bar-track"><div class="bar" style="width:28%"></div></div><span class="bar-value">7 / 25</span></div>
+        <div class="bar-row"><span>C9 Offload / 共享显存</span><div class="bar-track"><div class="bar" style="width:32%"></div></div><span class="bar-value">8 / 25</span></div>
+        <div class="bar-row"><span>C7 FA 量化 / KV 量化</span><div class="bar-track"><div class="bar issue" style="width:20%"></div></div><span class="bar-value">5 / 25</span></div>
+        <div class="bar-row"><span>C6 时间步量化</span><div class="bar-track"><div class="bar issue" style="width:12%"></div></div><span class="bar-value">3 / 25</span></div>
+        <div class="bar-row"><span>C12 DyEPLB</span><div class="bar-track"><div class="bar issue" style="width:4%"></div></div><span class="bar-value">1 / 25</span></div>
+        <div class="bar-row"><span>C14 FA_Power_Cap</span><div class="bar-track"><div class="bar issue" style="width:1%"></div></div><span class="bar-value">0 / 25</span></div>
+      </div>
+      <div class="callout light"><strong>结构性结论：</strong>MindIE-SD 的接入集中在“<b>改一行就能换掉的算子</b>”上（注意力、RoPE、AdaLN、Norm）。凡是需要接入方改模型结构、改训练循环、或改动自己已有调度器的能力（Cache、Offload、时间步量化、DyEPLB、FA_Power_Cap），接入率立刻掉到 0–2 分。这不是上游不愿意用，而是 <b>MindIE-SD 没有提供“不改模型就能挂上”的接口形态</b>。</div>
+    </section>
+
+    <section id="verdict" class="reveal">
+      <div class="section-head"><div class="secno">04 / VERDICT</div><div><span class="kicker">Executive readout</span><h2>不是“MindIE-SD 不够强”，而是它把接入成本推给了每一个上游</h2><p class="lead">同样的 RainFusion，在 vLLM-Omni 里是带能力门禁、typed 配置和文档的一等后端；在 LightX2V 里是一个绕过公开 API 的 <code>assert</code>；在 SGLang 里则连算法代码带 kernel 参数表被整体搬走，却不留依赖、不留署名。差异不在内核质量，而在<b>接入契约</b>：谁提供了注册表、枚举、typed 配置和回退路径。</p></div></div>
+      <div class="grid3">
+        <article class="card good"><span class="tag fact">已观察事实</span><h3>vLLM-Omni 是唯一真正落地的接入</h3><p>NPU 平台上，<code>FLASH_ATTN</code> 是否成为默认扩散注意力后端，直接取决于 <code>importlib.util.find_spec("mindiesd")</code>；<code>RAINFUSION_ATTN</code> 有独立枚举、typed 配置、专门文档页与单测；USP 通过 <code>AscendUSPExecutor</code> 做能力探测 + <code>USPError</code> 门禁 + 原生实现回退。</p></article>
+        <article class="card warn"><span class="tag fact">结构缺口</span><h3>缓存、显存、时间步量化三项全线失守</h3><p>Cache 得分最高的社区只有 2 分，且都是自研替代：FastVideo 的 TeaCache、LightX2V 的 KV Cache 池、DiffSynth 的两份重复 <code>TeaCache</code>。Offload 与显存共享同样如此。MindIE-SD 的 <code>CacheAgent</code> 在这五个仓库里出现次数为 <b>0</b>。</p></article>
+        <article class="card risk"><span class="tag infer">生态推断</span><h3>“同名不同源”已经开始固化</h3><p>SGLang 的 <code>RAIN_FUSION_ATTN</code>、<code>LASER_ATTN</code>、<code>BLOCK_SPARSE_ATTN</code> 与 MindIE-SD 的 <code>rain_fusion_attention</code>、<code>ascend_laser_attention</code>、<code>block_sparse_attention</code> 名字几乎一一对应，而其中 RainFusion 一路是<b>带着 MindIE-SD 的参数表与辅助函数搬家、却没有署名、也没有 import</b>。命名趋同会掩盖依赖关系的缺失，使“昇腾稀疏注意力”长期存在两套并行实现，并叠加一层 Mulan PSL v2 → Apache-2.0 的归属待澄清问题。</p></article>
+      </div>
+      <div class="callout"><strong>一句话策略：</strong>MindIE-SD 下一步不该再扩能力清单，而应该<b>把已有能力改成可注册的插件形态</b>——发布 <code>diffusers</code> AttentionProcessor、vLLM 风格 <code>QuantizationConfig</code>、<code>CacheBackend</code> 基类，并把私有子模块路径（<code>sparse_flash_attn_rf_v2.rain_fusion_attention</code>）正式提升为公开 API。接入成本每降一档，覆盖分会立刻从 1.5 上移。</div>
+      <div class="metrics"><div class="metric"><b>1.5</b><small>五社区 × 14 项<br>103 ÷ 70 = 1.47</small></div><div class="metric"><b>2.6</b><small>vLLM-Omni 均分<br>唯一的平台级运行时接入</small></div><div class="metric"><b>2</b><small>真正 <code>import mindiesd</code> 的社区<br>vLLM-Omni 主路径 / LightX2V 单点</small></div><div class="metric"><b>0</b><small>接入 <code>CacheAgent</code> 的社区<br>全仓出现次数为 0</small></div><div class="metric"><b>1</b><small>五社区全零的能力项<br>C14 FA_Power_Cap</small></div></div>
+    </section>
+
+    <section id="vllmomni" class="reveal">
+      <div class="section-head"><div class="secno">05 / vLLM-OMNI</div><div><span class="kicker">Runtime dependency · primary path</span><h2>把 MindIE-SD 变成 NPU 的默认扩散注意力后端</h2><p class="lead">vLLM-Omni 是五个社区里唯一把 <code>mindiesd</code> 当作平台级运行时依赖来编排的：它既没有把 MindIE-SD 藏进某个可选插件，也没有为 NPU 另起一套内核，而是让<b>能力探测结果直接决定平台默认后端</b>，并为不能覆盖的调用准备原生回退。</p></div></div>
+      <div class="community-head">
+        <div>
+          <p class="lead">全仓 139 处 <code>mindiesd</code> 命中，其中 9 个生产接入点。运行时真正消费 <b>5 类能力</b>：稠密 FA（含变长）、RainFusion 稀疏注意力、RoPE/LayerNorm/AdaLN 融合算子、USP 序列并行、FA 块量化预处理。另有两条非能力型接入：MXFP4 量化的<b>参考实现</b>，以及靠导入 side-effect 完成的 <code>ASCEND_CUSTOM_OPP_PATH</code> 早注册。</p>
+        </div>
+        <div class="verdict-box"><b>14 项等权均分</b><div class="n">2.6</div><small>累计 36 / 70；稠密 FA 与算子注册两项达到 4–5 分，Cache / Offload / DyEPLB / FA_Power_Cap 为 0–1 分。</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">接入点清单：能力探测决定默认路由</h3>
+      <div class="table-wrap"><table><thead><tr><th>MindIE-SD 能力</th><th>接入位置</th><th>mindiesd 符号</th><th>门禁 / 回退</th></tr></thead><tbody>
+        <tr class="target-row"><td>C1 稠密 FA</td><td><code>diffusion/attention/backends/flash_attn.py</code></td><td><code>attention_forward</code>、<code>attention_forward_varlen</code></td><td>NPU 平台下由 <code>find_spec("mindiesd")</code> 决定默认后端；缺失时回落 <code>TORCH_SDPA</code>，并在启动日志打印解析结果</td></tr>
+        <tr class="target-row"><td>C2 RainFusion</td><td><code>diffusion/attention/backends/rainfusion_attn.py</code></td><td><code>sparse_attention</code></td><td>独立 <code>RAINFUSION_ATTN</code> 枚举 + typed <code>block_sparse</code> 配置；warmup、跳层、缺视频几何、视频段不足 32 block 时自动下沉到 <code>FLASH_ATTN</code></td></tr>
+        <tr class="target-row"><td>C3 融合算子族</td><td><code>diffusion/layers/rope.py</code>、<code>norm.py</code>、<code>adalayernorm.py</code>、<code>fused_qk_norm_rope.py</code></td><td><code>rotary_position_embedding</code>、<code>fast_layernorm</code>、<code>layernorm_scale_shift</code></td><td>逐层 <code>find_spec</code> 探测 + <code>logger.warning_once</code> + 回落 <code>torch_npu</code>；<code>apply_rotary_emb_mindiesd</code> 会把 3D 布局归一化到 BSND</td></tr>
+        <tr class="target-row"><td>C7 FA / KV 量化</td><td><code>platforms/npu/quant/kv_quant_npu.py</code></td><td><code>layers.quant.block_quant.fa_block_quant_preprocess</code></td><td>需 <code>torch_npu</code> + MindIE-SD + MSModelSlim 三者齐备，否则给出带文档链接的错误</td></tr>
+        <tr class="target-row"><td>C10 USP</td><td><code>platforms/npu/usp.py</code></td><td><code>mindiesd.layers.usp.usp_attention</code>（含 <code>USPError</code>）</td><td><code>AscendUSPExecutor</code> 逐项校验 FLASH_ATTN、strict Ulysses、无 mask、无 joint QKV 等 10 余个条件；任一不满足返回 <code>None</code> 请求回退</td></tr>
+        <tr class="target-row"><td>C13 算子注册</td><td><code>platforms/npu/platform.py</code></td><td><code>import mindiesd</code>（触发 <code>env.py</code>）</td><td>仅在 <code>FLASH_ATTN</code>/<code>RAINFUSION_ATTN</code> 且 mindiesd 可用时才 eager import，避免破坏可选安装；注释解释了若不早于 CANN 快照会一直报 <code>EZ1001</code></td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">契约成熟度：三项机制让它区别于其他社区</h3>
+      <div class="grid3">
+        <article class="card good"><h3>能力探测而非版本假设</h3><p><code>_mindiesd_supports_precision()</code> 检测已安装的 <code>sparse_attention</code> 是否接受 <code>precision=</code>；旧版本会通过 <code>**kwargs</code> 静默忽略该参数并跑 BF16，因此 vLLM-Omni 选择在请求非 <code>bf16</code> 时<b>直接抛错</b>，而不是静默降级。</p></article>
+        <article class="card good"><h3>正式后端而非隐藏开关</h3><p>RainFusion 拥有独立枚举值、<code>BlockSparseSpec</code> typed 配置、专门用户文档页、以及 <code>tests/diffusion/attention/test_rainfusion_plan.py</code> 覆盖 <code>validate_available</code> 与精度门禁分支。</p></article>
+        <article class="card good"><h3>回退是显式契约</h3><p>USP 执行器在契约不满足时返回 <code>None</code>，由上层通用注意力层继续用自己的 Ulysses/Ring 实现；注释明确写出“不重复实现集合通信”。这是把“回退”当成接口的一部分来设计。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">仍未覆盖的部分</h3>
+      <div class="gaps">
+        <div class="gap"><b>Cache / Offload</b><span>0 处使用 <code>CacheAgent</code>、<code>enable_offload</code> 或 <code>share_memory</code>；vLLM-Omni 自己的扩散缓存栈是 <code>cache_dit</code> + <code>teacache</code>/<code>stepcache</code>/<code>mag_cache</code>，offload 用自研 <code>diffusion/offloader/</code>。</span></div>
+        <div class="gap"><b>时间步量化</b><span>未观察到 <code>TimestepManager</code>/<code>TimestepPolicyConfig</code> 的调用；NPU 量化走自己的 config 体系。</span></div>
+        <div class="gap"><b>Linear 量化</b><span><code>quantization/mxfp4_config.py</code> 在注释中引用 MindIE-SD 的 <code>W4A4MXFP4QuantLinear</code> 与 <code>W4A4MXFP4DualQuantLinear</code> 作为设计来源，但实现基于 <code>torch_npu</code>，属<b>参考实现</b>而非运行时依赖；<code>mxfp8_config.py</code>、<code>int8_config.py</code> 同理。</span></div>
+        <div class="gap"><b>编译后端</b><span><code>NPUOmniPlatform.supports_torch_inductor()</code> 返回 <code>False</code>，NPU 上 <code>torch.compile</code> 被主动关闭，因此 <code>MindieSDBackend</code> 完全不可用；vLLM-Omni 接入的只是导入 side-effect（算子路径注册），不是编译后端。</span></div>
+        <div class="gap"><b>融合 MoE 与残差算子</b><span>NPU 的 <code>fused_moe</code> 走 <strong>vllm-ascend</strong>（<code>AscendMoERunner</code>）；<code>muls_add</code>、<code>residual_gate_add</code>、<code>scale_shift</code>、<code>get_activation_layer</code>、<code>frequency_regulator</code> 均未取自 <code>mindiesd</code>。</span></div>
+        <div class="gap"><b>DyEPLB</b><span>vLLM-Omni 的 MoE 负载均衡沿用 vLLM 体系，未见 <code>mindiesd.eplb</code>。</span></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">契约强度与脆弱点：接入最深，也暴露了 MindIE-SD 的接口债</h3>
+      <div class="table-wrap"><table><thead><tr><th>维度</th><th>观察到的做法</th><th>暴露的问题</th></tr></thead><tbody>
+        <tr><td>能力探测的生命周期</td><td><code>find_spec("mindiesd")</code> 在 5 处被用作能力代理，但求值时机有 <b>4 种</b>：模块导入期（<code>norm.py</code>、<code>adalayernorm.py</code>）、实例初始化期（<code>rope.py</code>）、每次调用（<code>fused_qk_norm_rope.py</code>）、平台查询期（<code>platform.py</code>）</td><td class="partial">探测结果不一致意味着“装了但坏掉的 mindiesd”在不同层表现不同；命名空间包遮蔽或半安装会让 <code>find_spec</code> 返回 <code>True</code> 却没有可调用符号</td></tr>
+        <tr><td>回退的对称性</td><td><code>norm.py</code>/<code>adalayernorm.py</code> 捕获 <code>ImportError</code> 并降级到 <code>torch_npu</code>/FP32；<code>rope.py</code> 与 <code>fused_qk_norm_rope.py</code> 仅凭 <code>find_spec</code> 就执行无保护的 <code>from mindiesd import ...</code></td><td class="no">同一次 mindiesd 故障，在一层是告警降级，在另一层是崩溃——上游无法依赖统一契约，只能自己写防御</td></tr>
+        <tr><td>内部一致性</td><td><code>LayerNorm.forward_npu</code> 用 <code>mindiesd.fast_layernorm</code>，而 <code>RMSNorm.forward_npu</code> 直接用 <code>torch_npu.npu_rms_norm</code></td><td class="no">MindIE-SD 的 <code>RMSNorm</code> 是一个现成的 <code>nn.Module</code> 级替换点，却在本社区最深的接入方那里被漏掉——说明能力清单对上游不够易读</td></tr>
+        <tr><td>版本治理</td><td>只有 3 个 <code>inspect.signature</code> 特性探测（<code>precision</code>、<code>video_spans</code>、USP 鸭子类型）；<b>没有任何 <code>mindiesd.__version__</code> 检查，没有版本下限，没有 requirements 条目</b></td><td class="partial">是“<b>特性探测契约</b>”而非版本契约：能防住已知的静默忽略，防不住未知的签名漂移。文档反复出现“requires a compatible MindIE-SD release”却从不给出具体版本号</td></tr>
+        <tr><td>环境变量耦合</td><td><code>MINDIE_SD_FA_TYPE</code> 决定走 varlen 还是 prefix-KV-slice；代码与回归测试都记录了“除 <code>ascend_laser_attention</code> 以外的任何取值（含合法值与拼写错误）都会静默走 varlen”</td><td class="no">一个 MindIE-SD 专有开关被上游以“静默兜底”的方式接受，属于已被固化的已知缺陷</td></tr>
+        <tr><td>导入时序</td><td>必须在 CANN 首次 custom-op <code>regInfo</code> 查询前 <code>import mindiesd</code>，否则整个进程后续都报 <code>EZ1001 "does not support opType"</code></td><td class="partial">这条硬时序约束只由一段代码注释和一个 CPU 单测守护，随 vLLM-Ascend/CANN 版本变动极易失效</td></tr>
+      </tbody></table></div>
+      <div class="callout light"><strong>这一节的可复制经验：</strong>vLLM-Omni 证明了只要上游提供“<b>后端注册表 + 平台默认路由 + 显式回退</b>”，MindIE-SD 就能被干净地接入，而不需要在 MindIE-SD 侧做任何妥协。反过来，上面六条脆弱点几乎全部源于 <b>MindIE-SD 侧缺少一个官方能力查询接口</b>：如果 <code>mindiesd</code> 能提供 <code>has_capability("sparse_attention.precision")</code> 与语义化版本，上游就不必用 5 处 <code>find_spec</code> 和 3 个 <code>inspect.signature</code> 自行拼装契约。最有效的动作是把 vLLM-Omni 已经写好的这套模式<b>反向收敛成官方的“能力查询 API + 接入手册”</b>。</div>
+    </section>
+
+    <section id="sglang" class="reveal">
+      <div class="section-head"><div class="secno">06 / SGLANG</div><div><span class="kicker">Code port without attribution · closed registry</span><h2>把 MindIE-SD 的 RainFusion 代码搬了过来，却没有一行 import</h2><p class="lead">SGLang 的 <code>multimodal_gen</code> 是这批社区里注意力抽象最完整的一个：19 个 <code>AttentionBackendEnum</code> 成员、后端类解析、平台分派、按组件覆盖。但它与 MindIE-SD 的关系是本报告里最微妙的一种——<b>算法代码被完整移植，却没有任何运行时依赖，也没有署名</b>。</p></div></div>
+      <div class="community-head">
+        <div><p class="lead">全仓 <b>零</b> <code>import mindiesd</code>、零 <code>find_spec("mindiesd")</code>、零 <code>mindiesd</code> 出现在任何 requirements/pyproject。文本命中分两类：MXFP4 量化文件里的 11 处<b>注释引用</b>，以及一个<b>完全不提 MindIE-SD 的代码移植文件</b>。</p></div>
+        <div class="verdict-box"><b>14 项等权均分</b><div class="n">1.1</div><small>累计 15 / 70；得分靠“有等价能力/有挂载点”，但 C2 的性质应重新表述为“代码移植”而非“平行实现”。</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">最重要的单项发现：无署名的代码移植</h3>
+      <div class="callout"><strong>证据：</strong><code>runtime/layers/attention/backends/rain_fusion_attn.py</code> 从第 1 行开始就是 <code>import math</code>——没有 SPDX 头、没有 “adapted from” 声明。它的内核调用参数表（<code>select_idx, select_num_idx, blockshape, attn_mask, actual_seq_qlen, actual_seq_kvlen, block_table, q_input_layout, kv_input_layout, head_num, mask_type, scale, inner_precise, block_size</code>）与 MindIE-SD 的 <code>mindiesd/layers/_custom_ops.py</code> 中 <code>rain_fusion_attention</code> 的定义<b>完全一致</b>；辅助函数 <code>_avgpool</code>、<code>_get_mask_index</code>、<code>_get_blockwise_mask</code>、<code>_rearrange_with_remaining</code>、<code>_inv_rearrange_with_remaining</code>、<code>_do_tensor_rearrange_pooling</code> 与 MindIE-SD 的 <code>sparse_flash_attn_rf_v2.py</code> 逐项对应，<b>连 docstring 中的张量重排形状注释都相同</b>（<code>b (f hn hb wn wb) n d -&gt; b (f hn wn hb wb) n d</code>）。唯一差别是算子命名空间：SGLang 调 <code>torch.ops.attentions.rainfusionattention</code>，MindIE-SD 调 <code>torch.ops.mindiesd.*</code>。</div>
+      <div class="grid3">
+        <article class="card risk"><h3>许可与合规风险</h3><p>MindIE-SD 使用 <b>Mulan PSL v2</b>，SGLang 使用 <b>Apache-2.0</b>。在缺少署名与来源声明的情况下搬运实现，是一个需要 MindIE-SD 侧主动澄清的合规问题，而不只是技术问题。</p></article>
+        <article class="card warn"><h3>升级不同步</h3><p>被移植的算法不会再收到 MindIE-SD 的修复与优化（例如 rf_v3 的 Hadamard 旋转 + MXFP4 通路、A5 自动降级）。两条代码路径会独立漂移，而对外名字相同，使用户难以判断自己跑的是哪一版。</p></article>
+        <article class="card"><h3>对本表的影响</h3><p>C2 保持 2 分（无运行时接入），但性质从“平行实现”改为“<b>代码移植</b>”：能力和算法已经一致，缺的只是依赖关系与版本契约。这实际上意味着<b>接入的边际成本非常低</b>——把算子命名空间换回 <code>mindiesd</code> 并加依赖声明即可。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">NPU 注意力后端全景：名字与参数像 MindIE-SD，来源是 sgl-kernel-npu</h3>
+      <div class="table-wrap"><table><thead><tr><th>后端枚举</th><th>实现文件</th><th>实际内核来源</th><th>与 MindIE-SD 的关系</th></tr></thead><tbody>
+        <tr><td><code>AttentionBackendEnum.FA</code></td><td><code>backends/ascend_fa.py</code></td><td><code>torch.ops.npu.npu_fused_infer_attention_score</code></td><td class="na">平行实现（对应 MindIE-SD <code>fused_infer_attention_score_v2</code>）</td></tr>
+        <tr class="target-row"><td><code>RAIN_FUSION_ATTN</code></td><td><code>backends/rain_fusion_attn.py</code></td><td><code>torch.ops.attentions.rainfusionattention</code></td><td class="no"><b>代码移植（无署名）</b>：算法与参数表逐项来自 MindIE-SD <code>sparse_flash_attn_rf_v2.py</code></td></tr>
+        <tr><td><code>LASER_ATTN</code></td><td><code>backends/laser_attn.py</code></td><td><code>torch.ops.attentions.la</code>（<code>sgl_kernel_npu</code>）</td><td class="na">平行实现（对应 MindIE-SD <code>ascend_laser_attention</code> / <code>la_preprocess</code>）</td></tr>
+        <tr><td><code>BLOCK_SPARSE_ATTN</code></td><td><code>backends/block_sparse_attn.py</code></td><td><code>torch.ops.attentions.ada_block_sparse_attention</code></td><td class="na">平行实现（对应 MindIE-SD <code>ada_block_sparse_attention</code>）</td></tr>
+      </tbody></table></div>
+      <div class="matrix-note"><b>算子命名空间不兼容：</b>SGLang 走 <code>torch.ops.attentions.*</code>（sgl-kernel-npu）与 <code>torch.ops.npu.*</code>（torch_npu）；MindIE-SD 的算子在 <code>torch.ops.mindiesd.*</code>（<code>csrc/plugin/register_ops.cpp</code>）。两者<b>没有二进制/ABI 兼容性</b>，因此不是“改一行导入”就能互换，必须经过适配层。这是 SGLang 接入 MindIE-SD 的真实工程量所在。</div>
+      <div class="matrix-note"><b>注意 SGLang 的自研元数据设计：</b><code>RainFusionAttentionMetadata</code> 自己维护 <code>current_timestep</code>、<code>skip_first_steps</code>、<code>sparsity</code>、<code>latent_shape</code>，并由 <code>RainFusionAttentionMetadataBuilder</code> 计算视频网格；<code>denoising.py</code> 的 stage 里还有一段按 <code>attn_backend.get_enum()</code> 展开的 if/elif 元数据构造。也就是说<b>稀疏调度的语义层也在 SGLang 侧</b>。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">量化侧的“参考实现”关系：11 处注释全部指向 MindIE-SD</h3>
+      <div class="table-wrap"><table><thead><tr><th>文件</th><th>引用形式</th><th>性质</th></tr></thead><tbody>
+        <tr><td><code>runtime/layers/quantization/modelslim_mxfp4_scheme.py</code></td><td>“Reference: MindIE-SD <code>W4A4MXFP4DualQuantLinear</code> (<code>MindIE-SD/mindiesd/quantization/layer.py</code>)”；并逐行标注 <code>quant_matmul</code>、<code>_init_dynamic_quant_param</code> 的对应行号</td><td class="partial">参考实现（设计对齐，无代码依赖）</td></tr>
+        <tr><td><code>runtime/layers/quantization/mxfp4_npu.py</code></td><td>“experimental. MindIE-SD only uses an offline (pre-quantized) path for MXFP4”</td><td class="partial">参考 + 差异说明</td></tr>
+        <tr><td><code>srt/hardware_backend/npu/quantization/linear_method_npu.py</code></td><td>“Reference: Diffusion <code>NPUMXFP4DiffusionLinearMethod</code> / MindIE-SD”</td><td class="partial">参考实现</td></tr>
+      </tbody></table></div>
+      <div class="grid3" style="margin-top:16px">
+        <article class="card warn"><h3>为什么“参考”不等于“接入”</h3><p>注释引用意味着算法语义被采纳，但版本演进、bug 修复、算子优化都不会流回 SGLang。一旦 CANN 更换算子签名，MindIE-SD 与 SGLang 需要各自修一遍。</p></article>
+        <article class="card good"><h3>好消息：挂载点已经现成</h3><p><code>AttentionBackendEnum</code> 已有 <code>RAIN_FUSION_ATTN</code> 等枚举，<code>NPUPlatformBase.get_attn_backend_cls_str()</code> 已有分支结构。把实现从 <code>attentions</code> 换成 <code>mindiesd</code> 只需改 4 个后端类的内核调用，<b>不需要动架构</b>。</p></article>
+        <article class="card"><h3>缺口在依赖声明</h3><p>SGLang 目前没有 <code>mindiesd</code> 的 extra、没有安装文档指引、也没有任何版本门禁，因此即使替换内核，也缺少“装错版本怎么办”的契约。</p></article>
+      </div>
+      <div class="callout light"><strong>建议的接入顺序：</strong>先做 <code>LASER_ATTN</code>（<code>la_preprocess</code> 与 MindIE-SD 语义最接近，SGLang 侧已有 padding 与 SDPA 回落逻辑），再做 <code>RAIN_FUSION_ATTN</code>（需要把 <code>latent_shape</code>/<code>sparsity</code> 映射到 <code>sparse_attention</code> 的 <code>latent_shape_q/k</code>）。两者都可以复用现成的枚举与平台分派，属于低成本高感知的接入。</div>
+    </section>
+
+    <section id="diffsynth" class="reveal">
+      <div class="section-head"><div class="secno">07 / DIFFSYNTH-STUDIO</div><div><span class="kicker">Zero awareness · strongest quant hook</span><h2>零引用，但拥有整批社区里最好用的量化插件注册表</h2><p class="lead">DiffSynth-Studio 对 <code>mindiesd</code> 的感知为零：25 组关键词全仓检索只得到同名误报。同时它具备一个<b>真正可扩展的量化后端注册机制</b>，以及一个针对 NPU 的算子打补丁先例——这两点意味着它是“最容易接入但完全没接”的社区。</p></div></div>
+      <div class="community-head">
+        <div><p class="lead">NPU 路径真实但很浅：<code>core/device/npu_compatible_device.py</code> 提供 <code>IS_NPU_AVAILABLE</code>、<code>get_device_type()</code>、<code>hccl</code> 后端与 bf16 精度开关；<code>pyproject.toml</code> 有 <code>npu</code> / <code>npu_aarch64</code> extra（<code>torch-npu==2.7.1</code>）。但只有 Z-Image 一个模型挂了 NPU 融合算子补丁。</p></div>
+        <div class="verdict-box"><b>14 项等权均分</b><div class="n">0.9</div><small>累计 13 / 70；分数几乎全部来自“上游已有同语义的平行实现”，没有任何 MindIE-SD 运行时调用。</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">零引用的判定依据</h3>
+      <div class="table-wrap"><table><thead><tr><th>检索维度</th><th>覆盖范围</th><th>结果</th></tr></thead><tbody>
+        <tr><td>包与模块名</td><td><code>mindiesd</code>、<code>mindie_sd</code>、<code>MindIE</code>、<code>MindieSDBackend</code></td><td class="no">0 命中（唯一相近项为 <code>step1x_connector.py</code> 自带的 <code>get_activation_layer</code>，与本项目无关）</td></tr>
+        <tr><td>API 名称</td><td><code>rainfusion</code>、<code>sparse_attention</code>、<code>attention_forward_varlen</code>、<code>fast_layernorm</code>、<code>layernorm_scale_shift</code>、<code>rotary_position_embedding</code>、<code>fused_moe</code>、<code>muls_add</code>、<code>residual_gate_add</code>、<code>block_quant</code>、<code>CacheAgent</code>、<code>DiTBlockCache</code>、<code>share_memory</code></td><td class="no">0 命中（<code>mxfp4</code>/<code>W4A4</code> 是 torchao 的方法名；<code>usp</code>/<code>ulysses</code> 是 xfuser 的 USP）</td></tr>
+        <tr><td>依赖声明</td><td><code>pyproject.toml</code> dependencies 与所有 extra</td><td class="no">无 <code>mindiesd</code></td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">能力对照：上游的“平行实现”在功能上高度重合</h3>
+      <div class="table-wrap"><table><thead><tr><th>MindIE-SD 能力</th><th>DiffSynth 的对应实现</th><th>差距</th></tr></thead><tbody>
+        <tr><td>C3 融合算子（RMSNorm / RoPE）</td><td><code>core/npu_patch/npu_fused_operator.py</code>：<code>torch_npu.npu_rms_norm</code>、<code>torch_npu.npu_rotary_mul(..., rotary_mode="interleave")</code>，由 <code>pipelines/z_image.py</code> 的 <code>apply_npu_patch()</code> 直接改写 <code>RMSNorm.forward</code> 与 <code>Attention.apply_rotary_emb</code></td><td class="partial">语义等价、实现不同；仅覆盖 Z-Image，且是 monkey-patch 而非注册式接入。<b>这是 MindIE-SD 最低成本的插入点</b></td></tr>
+        <tr><td>C5 Linear 量化</td><td><code>QUANT_BACKENDS</code> + <code>register_quant_backend()</code> 注册表，17 个方法（bitsandbytes / torchao / comfy_kitchen），含 <code>torchao_mxfp4_w4a4</code> 与 <code>torchao_nvfp4_w4a4</code></td><td class="partial">插件机制成熟且已有模型自注册先例（<code>models/ideogram4_dit.py</code> 注册 <code>ideogram4_fp8</code>），但无任何 Ascend W8A8/W4A4 内核路径，且 <code>check_backend_contract</code> 默认 <code>compute_device="cuda"</code></td></tr>
+        <tr><td>C8 / C9 Cache 与显存</td><td>两份互相独立、逐 pipeline 复制的 <code>TeaCache</code>（<code>flux_image.py</code>、<code>wan_video.py</code>）+ HiDream-O1/Boogu 的内联 block cache；VRAM 侧是 <code>AutoTorchModule</code> 七态机 + <code>DiskMap</code> + <code>OffloadTrainingManager</code>/<code>PinnedArenaPool</code></td><td class="partial">功能重合但没有任何共享 Cache 抽象，MindIE-SD 的 <code>CacheAgent</code> 属于净新增子系统</td></tr>
+        <tr><td>C10 USP</td><td><code>utils/xfuser/xdit_context_parallel.py</code>（xfuser + yunchang），且已有 NPU 分支：<code>AttnType.NPU</code> / <code>ring_impl_type="basic_npu"</code></td><td class="partial">与 <code>mindiesd.layers.usp</code> <b>直接竞争</b>而非互补；替换需要改写 <code>usp_attn_forward</code> 与 pipeline 的 <code>initialize_usp</code></td></tr>
+        <tr><td>C1 稠密 FA</td><td><code>core/attention/attention.py</code>：导入期探测 FA4/FA3/FA2/sage/xformers/flex，用 <code>DIFFSYNTH_ATTENTION_IMPLEMENTATION</code> 环境变量选定一个<b>模块级冻结常量</b>，再走 if/elif 分派</td><td class="no">无注册表；未知名直接 <code>NotImplementedError</code>；要接入必须改上游代码或 monkey-patch。此外约 40 处直接调用 <code>F.scaled_dot_product_attention</code> 绕过该分派器</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>接入障碍的准确表述：</strong>DiffSynth 的问题不是“没有关注 NPU”，而是<b>注意力层缺少注册表</b>。量化层已经证明这个团队愿意做插件化（<code>register_quant_backend</code> 甚至允许模型文件自己注册），但注意力层仍停留在模块级 if/elif。只要注意力引入和量化同级的注册表，MindIE-SD 的 C1/C2/C3 就能一次性接入。</div>
+      <div class="callout light"><strong>另需注意的仓库健康问题（与接入无关但影响可行性）：</strong>全仓<b>没有任何测试文件</b>，唯一的 <code>.github/workflows/publish.yaml</code> 只在打 tag 时发布到 PyPI，且引用了仓库中并不存在的根目录 <code>requirements.txt</code>。这意味着即使接入 MindIE-SD，也没有 CI 能验证 NPU 路径。</div>
+    </section>
+
+    <section id="fastvideo" class="reveal">
+      <div class="section-head"><div class="secno">08 / FASTVIDEO</div><div><span class="kicker">Zero integration · mature in-house stack</span><h2>注意力注册表做得比谁都规范，NPU 上却只允许 SDPA</h2><p class="lead">FastVideo 拥有本报告里最工程化的注意力选择机制：14 个后端枚举、构造期一次性解析、按组件记录解析结果、结果缓存在全部输入上。然而它的 NPU 平台实现只有一行结论——<b>“Ascend NPU only supports the Torch SDPA backend.”</b></p></div></div>
+      <div class="community-head">
+        <div><p class="lead">FastVideo 对 MindIE-SD 同样零感知：<code>mindiesd</code>/<code>MindIE</code>/<code>RainFusion</code> 在全仓（含文档、CI、<code>pyproject.toml</code>）<b>无一命中</b>；<code>README.md</code> 的致谢名单列了 xDiT、vLLM、SGLang、ThunderKittens、DMD2、diffusers、Wan，<b>没有 MindIE-SD</b>。它的 NPU 支持停留在平台层（HCCL、<code>NpuCommunicator</code>、设备查询），计算内核层是空的。</p></div>
+        <div class="verdict-box"><b>14 项等权均分</b><div class="n">1.1</div><small>累计 15 / 70；与 SGLang 同分，但成因相反：SGLang 是内核被自家栈替换，FastVideo 是 NPU 上根本没有内核可选。</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">NPU 平台的注意力分派被写死成 SDPA</h3>
+      <div class="table-wrap"><table><thead><tr><th>位置</th><th>代码事实</th><th>对 MindIE-SD 的含义</th></tr></thead><tbody>
+        <tr class="target-row"><td><code>fastvideo/platforms/npu.py</code></td><td><code>get_attn_backend_cls()</code> 对<b>任何</b> <code>selected_backend</code> 都无条件返回 <code>fastvideo.attention.backends.sdpa.SDPABackend</code>；若环境变量不是 <code>TORCH_SDPA</code>，只打印一行 “Ascend NPU only supports the Torch SDPA backend.”</td><td class="no">MindIE-SD 的稠密 FA / RainFusion 在此平台<b>没有任何入口</b>：用户显式请求 <code>FLASH_ATTN</code> 也拿不到</td></tr>
+        <tr class="target-row"><td><code>fastvideo/platforms/npu.py</code></td><td><code>simple_compile_backend = "eager"  # Disable torch.compile()</code></td><td class="no">NPU 上 <code>torch.compile</code> 被显式关闭；而该字段全仓唯一消费者是 <code>layers/vocab_parallel_embedding.py</code>，因此即便换成 <code>MindieSDBackend</code> 也不会让 DiT 用上它</td></tr>
+        <tr class="target-row"><td><code>fastvideo/platforms/npu.py</code></td><td><code>get_device_capability()</code> 返回 <code>None</code>，于是 <code>has_device_capability()</code> 恒为 <code>False</code></td><td class="no">FastVideo 的能力门禁惯用法（<code>attn_qat_infer</code>、<code>flash_attn_cute</code>、<code>fp8linear</code> 都依赖它）在 NPU 上会<b>静默自我禁用</b>；接入方必须改用自有探测</td></tr>
+        <tr class="target-row"><td><code>fastvideo/platforms/interface.py</code></td><td><code>AttentionBackendEnum</code> 含 <code>FLASH_ATTN</code>、<code>VIDEO_SPARSE_ATTN</code>、<code>BSA_ATTN</code>、<code>VMOBA_ATTN</code>、<code>SLA_ATTN</code>、<code>SAGE_SLA_ATTN</code> 等 14 项；注册方式是各平台 <code>get_attn_backend_cls()</code> 里的 if/elif + qualname 字符串</td><td class="partial">枚举与契约已经留好（<code>AttentionBackend</code> + <code>AttentionMetadata</code> + <code>AttentionMetadataBuilder</code>），文档 <code>docs/contributing/attention_backend.md</code> 还给出 5 步清单——<b>接入改造成本最低的社区之一</b></td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">为什么它的“未接入”不构成能力缺口</h3>
+      <div class="grid3">
+        <article class="card"><h3>稀疏视频注意力已自研</h3><p><code>VIDEO_SPARSE_ATTN</code>（VSA）、<code>BSA_ATTN</code>（块稀疏）、<code>VMOBA_ATTN</code> 覆盖了与 RainFusion 相同的功能位，内核在独立的 <code>fastvideo-kernel</code>（CUDA/CUTLASS/Triton，需 <code>sm_90a</code>/<code>sm_120a</code>）。所以 C2 记 2 分而非 0 分。</p></article>
+        <article class="card"><h3>量化插件是 vLLM 风格</h3><p><code>register_quantization_config()</code> + <code>QuantizationConfig.get_quant_method()</code> 是一等插件契约，配置可挂在 <code>dit_config.quant_config</code> 上。但可用方法是 <code>AbsMaxFP8 / FP8 / NVFP4 / nvfp4_qat* / fp8_qat_train</code>——<b>没有 INT8、没有 MXFP4、没有 W4A4</b>，且 <code>nvfp4_config.py</code> 明确声明不实现 MX-FP4。</p></article>
+        <article class="card warn"><h3>Cache 只有“空座位”</h3><p><code>enable_teacache</code> 在 <code>ForwardBatch</code>/<code>SamplingParam</code>/OpenAI 协议里一路透传，但<b>全仓没有任何消费者</b>；<code>CacheParams(cache_type="none")</code> 是空占位类。真正存在的只是 step 级 CFG 未条件增量复用与因果 KV cache。C8 因此记 1 分：<b>有现成的挂载点，但没有实现</b>。</p></article>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">除了注意力分支，还有四个真实障碍</h3>
+      <div class="gaps">
+        <div class="gap"><b>SP 预热写死 CUDA</b><span><code>distributed/communication_op.py</code> 的 <code>warmup_sequence_parallel_communication()</code> 直接构造 <code>torch.device("cuda")</code> 并调用 <code>torch.cuda.synchronize()</code>——这是 NPU 多卡路径上的硬阻断，而不是可降级的差异。</span></div>
+        <div class="gap"><b>平台探测顺序</b><span>平台解析顺序是 MPS → ROCm → CUDA → <b>NPU</b> → CPU：在同时具备 CUDA 与 NPU 的机器上 CUDA 胜出，NPU 路径永远不会被选中。</span></div>
+        <div class="gap"><b>内核层无法移植</b><span><code>fastvideo-kernel</code> 的构建系统只支持 <code>CUDA</code> 与 <code>ROCM</code>（<code>enable_language(HIP)</code>），子模块是 ThunderKittens + CUTLASS，FP4 内核直接发 <code>cvt.e2m1x2</code> PTX。<b>没有 Ascend/CANN 构建路径</b>。</span></div>
+        <div class="gap"><b>自定义算子分派被禁用</b><span><code>layers/custom_op.py</code> 的 <code>dispatch_forward()</code> 被写死为 <code>forward_native</code>（带 FIXME 注释），因此已注册的 <code>rms_norm</code>、<code>silu_and_mul</code>、<code>rotary_embedding</code> 等全部走 eager Python，没有可替换的算子分派层。</span></div>
+      </div>
+      <div class="callout light"><strong>接入建议与一个不利条件：</strong>正确切入点是<b>新增一个 NPU 注意力后端</b>（把 <code>FLASH_ATTN</code> 与 <code>BSA_ATTN</code> 映射到 <code>mindiesd.attention_forward</code> 与 <code>mindiesd.sparse_attention</code>），按 <code>docs/contributing/attention_backend.md</code> 的 5 步清单施工，并参照 <code>nabla.py</code> 的模块 docstring 风格声明 SP 支持缺口。但要注意：<code>fastvideo/tests/attention/</code> 与 <code>fastvideo/tests/layers/</code>——正是 MindIE 后端单测与融合算子对齐测试的天然落点——被 <code>tests/contract/test_ci_test_collection.py</code> 显式列入“<b>无 CI lane</b>”白名单；CI 全部跑在 Modal 的 H100/L40S 上，GitHub 侧<b>不跑任何 pytest</b>。因此新增的 NPU 路径在当前配置下无法被 CI 看护，只能本地手工验证。此外 <code>FASTVIDEO_ATTENTION_BACKEND</code> 是性能基线记录的 identity 字段之一，新后端需要配套一份全新的性能基线。</div>
+    </section>
+
+    <section id="lightx2v" class="reveal">
+      <div class="section-head"><div class="secno">09 / LIGHTX2V</div><div><span class="kicker">Single-slot runtime dependency</span><h2>唯一第二个真跑 mindiesd 的社区，但只有一条 op 槽位、一个私有 API</h2><p class="lead">LightX2V 的 <code>lightx2v_platform/</code> 是一套设计良好的多平台算子注册体系（attn / mm / norm / rope 四类 × 九种硬件平台），理论上可以逐槽替换成 MindIE-SD。现实中它只填了一格：<code>ascend_npu</code> 的 RainFusion 注意力，而且调用的是 MindIE-SD 的私有子模块路径。</p></div></div>
+      <div class="community-head">
+        <div><p class="lead">全仓只有 1 个文件、6 处 <code>mindiesd</code> 引用，全部在 <code>lightx2v_platform/ops/attn/ascend_npu/npu_rainfusion_attn.py</code>。同目录下的 <code>npu_flash_attn.py</code>、<code>npu_rms_norm.py</code>、<code>npu_layer_norm.py</code>、<code>npu_rope.py</code>、<code>mm_weight.py</code> 一律使用 <code>torch_npu</code>。</p></div>
+        <div class="verdict-box"><b>14 项等权均分</b><div class="n">1.7</div><small>累计 24 / 70；五个社区中第二高，但分数集中在 C2（4 分）与 C13（3 分），其余多为平行实现。</small></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">唯一的接入点：三处契约缺陷</h3>
+      <div class="table-wrap"><table><thead><tr><th>维度</th><th>代码事实</th><th>问题</th></tr></thead><tbody>
+        <tr class="target-row"><td>用了私有 API</td><td><code>mindiesd.layers.flash_attn.sparse_flash_attn_rf_v2.rain_fusion_attention(...)</code>，并传入 <code>select_idx</code>、<code>select_num_idx</code>、<code>blockshape</code>、<code>actual_seq_lengths</code></td><td class="no">绕过了官方公开的 <code>mindiesd.sparse_attention</code>，直接绑定内部函数与内核参数——MindIE-SD 任何内部重构都会静默打断它</td></tr>
+        <tr class="target-row"><td>算法层留在上游</td><td>LightX2V 自己计算 <code>select_idx</code>/<code>select_num_idx</code>，只在拿到掩码后调用内核</td><td class="partial">RainFusion 的“代表 Token 预测 + 空时重排 + 首帧 sink”整体语义没有复用，只复用了最后一级 kernel</td></tr>
+        <tr class="target-row"><td>无版本与降级契约</td><td>导入用 <code>try/except ImportError</code> 设 <code>_HAS_MINDIESD</code>，使用时 <code>assert _HAS_MINDIESD, "mindiesd is not installed..."</code></td><td class="no">缺依赖时是 <code>AssertionError</code> 而非可操作的错误；没有版本门禁（对比 vLLM-Omni 的 <code>_mindiesd_supports_precision</code>）；<code>.github/workflows</code> 下只有 <code>lint.yml</code>，无测试</td></tr>
+      </tbody></table></div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">四个更深层的问题：依赖、代际、注册表与打包</h3>
+      <div class="table-wrap"><table><thead><tr><th>问题</th><th>证据</th><th>后果</th></tr></thead><tbody>
+        <tr class="target-row"><td><b>隐式属性路径依赖</b></td><td><code>npu_rainfusion_attn.py</code> 用属性链访问 <code>mindiesd.layers.flash_attn.sparse_flash_attn_rf_v2</code>，<b>从未直接 import 该子模块</b>。它能解析纯粹是因为 MindIE-SD 的 <code>layers/__init__.py</code> → <code>sparse_flash_attn.py</code> 内部 import 把属性绑定到了父包上</td><td class="no">MindIE-SD 一旦调整这串内部 import，LightX2V 会在<b>推理时</b>报 <code>AttributeError</code>，而不是在导入时——故障发现被推迟到最晚</td></tr>
+        <tr class="target-row"><td><b>硬编码 rf_v2，无代际门禁</b></td><td>LightX2V 固定调用 <code>rain_fusion_attention</code>（rf_v2）。MindIE-SD 的 <code>rf_v2</code> 在 Ascend A5 上会抛 <code>ParametersInvalid</code>，而 MindIE-SD 自己的 <code>sparse_attention</code> 会自动路由到 <code>rf_v3</code></td><td class="no">LightX2V <b>无法在新一代昇腾上使用 RainFusion</b>，且没有任何 SoC 探测或版本门禁来提前告警</td></tr>
+        <tr class="target-row"><td><b>只有 6 个算子类别注册表</b></td><td><code>registry_factory.py</code> 提供 device / attn / mm / rms / layernorm / rope 六个注册表，<b>没有</b> moe、quant、activation、fused-residual、usp、cache、offload、compile 类别；<code>ops/__init__.py</code> 还是按 <code>PLATFORM</code> 环境变量硬编码的 import 分支</td><td class="partial">C3/C4/C7/C8/C9/C10/C13 的接入不是“填一个槽位”，而是要新增注册表对象、新增 <code>merge()</code> 行、新增 <code>ops/__init__.py</code> 分支——属于框架级改动</td></tr>
+        <tr class="target-row"><td><b>依赖与打包完全缺位</b></td><td><code>mindiesd</code> 不在 <code>requirements.txt</code>、不在 <code>Dockerfile_ascend_910b</code>、不在任何 <code>.md</code>；全仓唯一的安装指引是代码里的一行注释 URL</td><td class="no"><b>官方发布的昇腾镜像开箱无法运行 RainFusion 路径</b>；而 10 个 <code>configs/platforms/ascend_npu/*.json</code> 全部用 <code>npu_flash_attn</code>，说明 Ascend 平台本身并不需要 mindiesd</td></tr>
+      </tbody></table></div>
+      <div class="matrix-note"><b>NPU 量化的重复建设（C5 = 2 的依据）：</b>LightX2V 的 <code>int8-npu</code> 方案完全基于 <code>torch_npu.npu_dynamic_quant</code> + <code>npu_quant_matmul</code> 自研，<b>NPU 上没有 W8A8 / W4A4 / MXFP4</b>（<code>mxfp4</code>/<code>nvfp4</code> 只存在于 CUDA 侧的 <code>lightx2v_kernel</code>）；<code>mindiesd.quantization</code> 与 <code>fa_block_quant_preprocess</code> 一次都未被调用。另有一处真实缺陷：<code>ops/mm/ascend_npu/npu_q_linear.py</code> 的 <code>except ImportError</code> 分支写成 <code>tmo = None</code>（应为 <code>torch_npu = None</code>），模块可正常导入但 <code>forward()</code> 在非 NPU 主机会抛 <code>NameError</code>——而 CI 只有 <code>lint.yml</code>，没有任何 NPU 测试能发现它。</div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:26px">它其实是最好的接入载体，却没有被用满</h3>
+      <div class="grid2">
+        <article class="card good"><h3>注册体系完备</h3><ul><li><code>registry_factory.py</code> 暴露 device / attn / mm / rms / layernorm / rope 六个注册表，装饰器支持 <code>@REG("key")</code> 与裸 <code>@REG</code> 两种写法。</li><li>另有跨平台层 <code>ATTN_WEIGHT_REGISTER</code>（<code>lightx2v/common/ops/attn/</code>），已注册 <code>flash_attn2/3/4</code>、<code>sage_attn2/3</code>、<code>ulysses</code>、<code>ring</code>、<code>rainfusion_attn</code>、<code>svg_attn</code> 等约 30 项。</li><li><code>rainfusion_attn</code> 是跨平台 Weight 类，按 <code>backend</code>（<code>auto</code> → 依据 <code>AI_DEVICE</code> 判定）分派到 <code>ascend_npu</code> 的 <code>NpuRainfusionOperator</code>——<b>这正是 MindIE-SD 最需要的形态</b>。</li><li>还有 <code>lightx2v.platform_plugins</code> entry-point 组，是唯一的树外扩展入口。</li></ul></article>
+        <article class="card warn"><h3>但其余槽位全部指向 torch_npu</h3><ul><li><code>npu_flash_attn</code>（<code>PLATFORM_ATTN_WEIGHT_REGISTER</code>）用 <code>torch_npu</code> 的融合算子，<b>没有</b>走 <code>mindiesd.attention_forward</code>。</li><li><code>npu_rms_norm</code> / <code>npu_layer_norm</code> / <code>npu_rope</code> / <code>mm_weight</code> 同样只用 <code>torch_npu</code>，对应 MindIE-SD 的 C3 完全空缺。</li><li>USP：LightX2V 自带 <code>UlyssesAttnWeight</code>（<code>@ATTN_WEIGHT_REGISTER("ulysses")</code>）与 <code>RingAttnWeight</code>，并且是 <code>seq_p_attn_type</code> 的默认值——与 <code>mindiesd.layers.usp</code> 竞争。</li><li>Cache：<code>common/kvcache/</code> 下有 FIFO / Rolling / Step / Hybrid / Spatial / KIVI 量化等一整套自研 KV Cache 池，另有 TeaCache 与 MagCache；<code>CacheAgent</code> 无位置。</li></ul></article>
+      </div>
+      <div class="callout"><strong>最可惜的一点：</strong>LightX2V 已经写好了 MindIE-SD 最需要的那个抽象——<b>“按平台分派算子”的注册表</b>，并且在 <code>configs/distill/wan22/</code> 下已经有 <code>wan_moe_i2v_distill_int8_4step_ulysses_npu.json</code> 这类真实可用的 NPU 配置（<code>self_attn_1_type: "rainfusion_attn"</code> + <code>rainfusion_attn_setting</code>，并省略 <code>backend</code> 以自动判定为 npu）。如果 <code>npu_rms_norm</code> / <code>npu_rope</code> / <code>npu_flash_attn</code> 三个槽位也接上 <code>mindiesd</code>，并顺带把 <code>rf_v2</code> 换成公开的 <code>sparse_attention</code>（自动代际路由），LightX2V 的覆盖分会从 1.7 跳到 3.0 量级，而改动量只是几个文件加一条依赖声明。</div>
+    </section>
+
+    <section id="patterns" class="reveal">
+      <div class="section-head"><div class="secno">10 / CROSS-CUTTING PATTERNS</div><div><span class="kicker">What actually gates adoption</span><h2>决定接入成败的四个结构性因素</h2><p class="lead">把五个社区的差异拆开看，接入率并不取决于社区规模，也不取决于 NPU 是否被官方支持，而取决于下面四件事是否成立。</p></div></div>
+      <div class="chain">
+        <div class="node"><i>01 / REGISTRY</i><b>上游有没有注册表</b><span>有注册表：vLLM-Omni、LightX2V、FastVideo、DiffSynth（量化侧）。无注册表：DiffSynth（注意力侧）。</span></div>
+        <div class="node"><i>02 / PUBLIC API</i><b>MindIE-SD 暴露的接口形态</b><span>公开函数可直接替换；私有子模块路径会把接入变成版本脆弱的硬绑定。</span></div>
+        <div class="node"><i>03 / FALLBACK</i><b>失败时怎么办</b><span>返回 <code>None</code>/回退原生实现可被接受；<code>assert</code> 与静态异常会挡住真实部署。</span></div>
+        <div class="node"><i>04 / CI</i><b>有没有人替它看门</b><span>只有 vLLM-Omni 把 NPU + mindiesd 路径放进 ready/nightly pipeline。</span></div>
+        <div class="node"><i>05 / SEMANTICS</i><b>算法层归谁</b><span>上游自己算稀疏掩码、自己管 cache 时，MindIE-SD 只剩内核位置。</span></div>
+      </div>
+
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:30px">阻断点分类：MindIE-SD 侧 vs 上游侧</h3>
+      <div class="table-wrap"><table><thead><tr><th>阻断点</th><th>归属</th><th>证据</th><th>消除方式</th></tr></thead><tbody>
+        <tr><td><b>缺少框架级插件入口</b>：没有 AttentionProcessor / CacheBackend / 官方 QuantizationConfig 适配层</td><td class="no">MindIE-SD 侧</td><td>五个社区里，凡是需要改自己模型代码才能接入的能力（C8/C9/C6/C12/C14）得分全部 ≤ 2</td><td>发布 diffusers <code>AttentionProcessor</code> 与 vLLM 风格 <code>QuantizationConfig</code>，把接入从“改模型”降级为“注册”</td></tr>
+        <tr><td><b>文档与实现不一致</b>：<code>Linear</code> 被文档描述但不存在；多个算子不在顶层 <code>__all__</code></td><td class="no">MindIE-SD 侧</td><td><code>docs/zh/features/core_layers.md</code> 的 Linear 一节；<code>mindiesd/__init__.py</code> 的 13 项 <code>__all__</code></td><td>补齐或删除文档条目；把 <code>muls_add</code>、<code>residual_gate_add</code>、<code>SparseLinearAttention</code> 提升到顶层</td></tr>
+        <tr><td><b>公开 API 覆盖不足</b>：真实接入方要下沉到私有子模块</td><td class="no">MindIE-SD 侧</td><td>LightX2V 调用 <code>sparse_flash_attn_rf_v2.rain_fusion_attention</code>；该路径参数（<code>select_idx</code> 等）未被 <code>sparse_attention</code> 公开</td><td>把带掩码入参的内核入口提升为公开 API，或提供“自算掩码”模式</td></tr>
+        <tr><td><b>并行能力以文档代替 API</b>：TP / CFG 并行只有示例代码</td><td class="no">MindIE-SD 侧</td><td><code>docs/zh/features/parallelism.md</code> 用 <code>dist.all_reduce</code> 示范 TP，仓库无对应模块</td><td>至少提供 <code>ColumnParallelLinear</code>/<code>RowParallelLinear</code> 与 CFG 并行上下文管理器</td></tr>
+        <tr><td><b>文档内部矛盾</b>：并行章写入 Ring SP，USP 章声明不支持 Ring</td><td class="no">MindIE-SD 侧</td><td><code>parallelism.md</code> 的“Ring Sequence Parallel”一节 vs <code>usp.md</code> 末句“当前不支持真正的 Ring Attention”</td><td>明确 Ring 的实现状态与路线，避免上游据此做设计</td></tr>
+        <tr><td><b>同名内核平行实现 / 代码移植</b>：<code>sgl_kernel_npu</code> 的 <code>attentions</code> 提供同名能力，RainFusion 一路则直接搬运了 MindIE-SD 的算法代码</td><td class="partial">上游侧</td><td>SGLang 的 <code>LASER_ATTN</code>/<code>BLOCK_SPARSE_ATTN</code> 走 <code>attentions</code>；<code>RAIN_FUSION_ATTN</code> 与之同名，但算法与辅助函数（含 docstring）与 MindIE-SD 逐项一致</td><td>MindIE-SD 需要证明内核层面的可比收益，或与 sgl-kernel-npu 明确分工；同时需澄清移植代码的归属与许可</td></tr>
+        <tr><td><b>注意力层无注册表</b>：模块级冻结常量 + if/elif</td><td class="partial">上游侧</td><td>DiffSynth <code>core/attention/attention.py</code> 的 <code>ATTENTION_IMPLEMENTATION</code></td><td>可先用 monkey-patch 方式接入（DiffSynth 已有 NPU 补丁先例），最好推动上游引入注册表</td></tr>
+        <tr><td><b>NPU 平台分支写死</b>：只允许 SDPA、显式关闭 torch.compile</td><td class="partial">上游侧</td><td>FastVideo <code>platforms/npu.py</code> 的两处</td><td>向上游提交 NPU 后端实现，复用现成的 <code>AttentionBackend</code> 契约</td></tr>
+        <tr><td><b>闭源枚举 + 硬校验</b>：新增后端必须改主仓；<code>--attention-backend</code> 对未知名字直接 <code>ValueError</code></td><td class="partial">上游侧</td><td>SGLang <code>server_args.py</code> 的 <code>_normalize_attention_backend_name</code>、<code>dits/base.py</code> 的逐模型白名单、<code>denoising.py</code> 的元数据 if/elif</td><td>MindIE-SD 可先在 <code>sglang.srt.platforms</code> 式的 entry-point 机制上争取一等公民，但 MM 侧插件体系尚不存在（代码里仍是 TODO）</td></tr>
+        <tr><td><b>算子命名空间不互操作</b>：<code>torch.ops.attentions.*</code>/<code>torch.ops.npu.*</code> 与 <code>torch.ops.mindiesd.*</code> 无 ABI 兼容</td><td class="partial">双方</td><td>SGLang 的四个 NPU 后端全部指向 <code>sgl_kernel_npu</code> 与 <code>torch_npu</code></td><td>需要一层适配而不是替换；这决定了 SGLang 接入的真实工程量</td></tr>
+        <tr><td><b>代际/SoC 无门禁</b>：上游硬编码 <code>rf_v2</code>，而 MindIE-SD 在 A5 上对 <code>rf_v2</code> 抛错、自己的 <code>sparse_attention</code> 会自动路由 <code>rf_v3</code></td><td class="no">MindIE-SD 侧</td><td>LightX2V <code>npu_rainfusion_attn.py</code> 固定调用 <code>rain_fusion_attention</code></td><td>把代际路由保留在公开 <code>sparse_attention</code> 内，并提供 SoC 能力查询，让上游无需硬编码策略名</td></tr>
+        <tr><td><b>代码移植无署名</b>：算法实现被搬走但未声明来源</td><td class="partial">上游侧</td><td>SGLang <code>rain_fusion_attn.py</code> 无 SPDX/attribution 头，参数表与辅助函数（含 docstring）与 MindIE-SD 逐项一致；许可为 Mulan PSL v2 → Apache-2.0</td><td>需要 MindIE-SD 侧主动澄清归属与许可，否则“同名不同源”会同时带来合规与升级同步风险</td></tr>
+        <tr><td><b>打包与文档缺位</b>：<code>mindiesd</code> 不在 requirements、不在 Ascend 镜像、不在任何文档</td><td class="partial">双方</td><td>LightX2V 全仓唯一安装指引是代码注释；vLLM-Omni 的安装说明只存在于 4 个模型 recipe；FastVideo/DiffSynth 完全没有</td><td>MindIE-SD 应发布“上游接入手册”，上游应把可选依赖写进 extra 与平台镜像</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>归因结论：</strong>十三条阻断点里有六条完全在 MindIE-SD 自己手里（缺插件入口、文档与实现不一致、公开 API 覆盖不足、并行能力以文档代替 API、文档内部矛盾、代际路由要求上游硬编码），且都不涉及算法或性能。这意味着当前 1.5 的覆盖分有相当大的改善空间是<b>低成本</b>的；真正需要长期投入的只有“算子命名空间互操作”与“上游闭源注册表”这两条，它们需要与上游共同设计。</div>
+    </section>
+
+    <section id="roadmap" class="reveal">
+      <div class="section-head"><div class="secno">11 / ROADMAP</div><div><span class="kicker">From capability to adoption</span><h2>按“降低接入成本”排序的四阶段</h2><p class="lead">目标不是再增加能力，而是让已有能力被更多社区加载进运行时。每个阶段的验收标准都写成可核对的仓库状态，而不是主观感受。</p></div></div>
+      <div class="roadmap">
+        <article class="phase"><span class="week">PHASE 0 / 2 周</span><h3>接口与文档自洽</h3><ul><li>删除或补齐文档中的 <code>Linear</code>；把 <code>muls_add</code>/<code>residual_gate_add</code>/<code>SparseLinearAttention</code> 提升到顶层 <code>__all__</code>。</li><li>把 <code>MindieSDBackend</code> 注册成具名 torch.compile 后端（<code>torch_dynamo_backends</code> entry point），否则按名字选择后端的框架永远发现不了它。</li><li>在 <code>parallelism.md</code> 中标注 TP/CFG/Ring 的实际实现状态，消除与 <code>usp.md</code> 的矛盾。</li><li>为 <code>sparse_attention</code> 增加“调用方自带 <code>select_idx</code>”的公开模式，并把 SoC 代际路由纳入公开 API。</li></ul><span class="exit">EXIT → 文档所述导入路径 100% 可执行；具名编译后端可出现；Ring 状态无歧义</span></article>
+        <article class="phase"><span class="week">PHASE 1 / 3–4 周</span><h3>发布可注册的插件形态</h3><ul><li>diffusers <code>AttentionProcessor</code>：让 <code>pipe.transformer</code> 一行切换 FA / RainFusion。</li><li>vLLM 风格 <code>QuantizationConfig</code> 适配层，便于 SGLang 与 FastVideo 复用其既有注册表。</li><li><code>CacheBackend</code> 基类 + 官方 <code>TeaCache</code>/<code>DBCache</code> 适配，替代上游各自的重复实现。</li></ul><span class="exit">EXIT → 接入 C1/C2/C5/C8 不再需要改上游模型代码</span></article>
+        <article class="phase"><span class="week">PHASE 2 / 4–8 周</span><h3>把 vLLM-Omni 契约产品化</h3><ul><li>发布 <code>mindiesd.capabilities.has_capability()</code>，替代上游自建的 5 处 <code>find_spec</code> 与 3 个 <code>inspect.signature</code> 探测。</li><li>发布《上游接入手册》，以 vLLM-Omni 的门禁 + 回退模式为参考实现，并给出每个能力的版本下限（这是上游唯一缺的那块，才能写出 <code>mindiesd&gt;=X</code>）。</li><li>为每个公开能力规定“缺失时的推荐回退分支”，避免上游写 <code>assert</code> 或让 <code>find_spec</code> 通过却崩溃。</li><li>澄清 SGLang 侧代码移植的归属与许可问题。</li></ul><span class="exit">EXIT → 上游可按手册独立完成接入、自带回退，并能写出版本约束</span></article>
+        <article class="phase"><span class="week">PHASE 3 / 8–16 周</span><h3>攻真实接入位</h3><ul><li>LightX2V：把 <code>npu_rms_norm</code>/<code>npu_rope</code>/<code>npu_flash_attn</code> 三个槽位接上 mindiesd；把私有 <code>rf_v2</code> 调用换成公开 <code>sparse_attention</code>；补 requirements、Ascend 镜像与一个 NPU 测试。</li><li>SGLang：把 <code>LASER_ATTN</code> 与 <code>RAIN_FUSION_ATTN</code> 的内核经适配层切到 mindiesd，保留既有枚举与平台分派（需先解决算子命名空间互操作）。</li><li>FastVideo：新增 NPU 注意力后端替换写死的 SDPA，替换 <code>get_device_capability()</code> 的能力代偿，并修复 SP 预热里写死的 CUDA 设备。</li><li>DiffSynth：先以 NPU 融合算子补丁方式接入 C3（已有 Z-Image 先例），再推动注意力注册表；同时为其接入一台可跑测试的 CI。</li></ul><span class="exit">EXIT → 覆盖分从 1.5 提升到 2.5+；至少 4 个社区存在运行时依赖</span></article>
+      </div>
+      <div class="callout light"><strong>为什么不建议先做 FA_Power_Cap 和 DyEPLB 的推广：</strong>这两项能力当前五社区接入均为 0–1 分，且都需要接入方改动推理循环或专家分发路径。在 PHASE 0–2 未完成前推广，它们会重复 Cache/Offload 的命运——能力存在、无人加载。</div>
+    </section>
+
+    <section id="sources" class="reveal">
+      <div class="section-head"><div class="secno">12 / SOURCES</div><div><span class="kicker">Primary evidence</span><h2>来源、证据边界与复核方式</h2><p class="lead">本报告全部结论来自本地仓库检出的直接阅读与全仓检索，未依赖外部站点。所有评分均为基于可观察证据的分析判断，不是任何社区的官方评价。</p></div></div>
+      <h3 style="margin-top:6px">被审计仓库（本地默认分支）</h3>
+      <div class="source-grid">
+        <div class="source"><a href="https://gitcode.com/Ascend/MindIE-SD">MindIE-SD</a><span>能力清单来源：<code>mindiesd/__init__.py</code>、<code>mindiesd/layers/__init__.py</code>、<code>mindiesd/compilation/__init__.py</code>、<code>mindiesd/plugin/__init__.py</code>（0 字节）、<code>mindiesd/env.py</code>、<code>setup.py</code>、<code>pyproject.toml</code>、<code>docs/zh/architecture.md</code>、<code>docs/zh/features/*</code>。</span></div>
+        <div class="source"><a href="https://github.com/vllm-project/vllm-omni">vLLM-Omni</a><span><code>vllm_omni/platforms/npu/{platform,usp}.py</code>、<code>vllm_omni/diffusion/layers/{rope,norm,adalayernorm,fused_qk_norm_rope}.py</code>、<code>vllm_omni/diffusion/attention/{registry.py,backends/{flash_attn,rainfusion_attn}.py}</code>、<code>vllm_omni/platforms/npu/quant/kv_quant_npu.py</code>、<code>vllm_omni/quantization/mxfp4_config.py</code>、<code>tests/platforms/npu/*</code>、<code>tests/diffusion/attention/{test_mindiesd_usp,test_rainfusion_plan}.py</code>、<code>.buildkite/npu/*</code>、<code>docs/user_guide/diffusion/*</code>。</span></div>
+        <div class="source"><a href="https://github.com/sgl-project/sglang">SGLang</a><span><code>python/sglang/multimodal_gen/runtime/layers/attention/backends/{ascend_fa,laser_attn,block_sparse_attn,rain_fusion_attn}.py</code>、<code>runtime/platforms/{interface,npu}.py</code>、<code>runtime/server_args/server_args.py</code>、<code>runtime/pipelines_core/stages/denoising.py</code>、<code>runtime/layers/quantization/{modelslim_mxfp4_scheme,mxfp4_npu}.py</code>、<code>srt/hardware_backend/npu/quantization/linear_method_npu.py</code>。</span></div>
+        <div class="source"><a href="https://github.com/modelscope/DiffSynth-Studio">DiffSynth-Studio</a><span><code>diffsynth/core/attention/attention.py</code>、<code>diffsynth/core/quant/{base,config}.py</code>、<code>diffsynth/core/vram/layers.py</code>、<code>diffsynth/core/npu_patch/npu_fused_operator.py</code>、<code>diffsynth/pipelines/z_image.py</code>、<code>diffsynth/utils/xfuser/xdit_context_parallel.py</code>、<code>pyproject.toml</code>、<code>.github/workflows/publish.yaml</code>。</span></div>
+        <div class="source"><a href="https://github.com/hao-ai-lab/FastVideo">FastVideo</a><span><code>fastvideo/platforms/{interface,npu}.py</code>、<code>fastvideo/attention/{selector,layer,AGENTS.md}</code>、<code>fastvideo/attention/backends/*</code>、<code>fastvideo/layers/{custom_op,layernorm,rotary_embedding,activation}.py</code>、<code>fastvideo/layers/quantization/*</code>、<code>fastvideo/distributed/communication_op.py</code>、<code>fastvideo/pipelines/{pipeline_batch_info.py,composed_pipeline_base.py,stages/denoising.py}</code>、<code>fastvideo/tests/contract/test_ci_test_collection.py</code>、<code>fastvideo-kernel/CMakeLists.txt</code>。</span></div>
+        <div class="source"><a href="https://github.com/ModelTC/LightX2V">LightX2V</a><span><code>lightx2v_platform/registry_factory.py</code>、<code>lightx2v_platform/ops/attn/ascend_npu/{npu_flash_attn,npu_rainfusion_attn}.py</code>、<code>lightx2v_platform/ops/{norm,rope,mm}/ascend_npu/*</code>、<code>lightx2v/common/ops/attn/{__init__,rainfusion_attn,ulysses_attn,ring_attn}.py</code>、<code>lightx2v/common/kvcache/*</code>、<code>configs/distill/wan22/*npu*.json</code>、<code>configs/platforms/ascend_npu/*.json</code>、<code>requirements.txt</code>、<code>dockerfiles/platforms/Dockerfile_ascend_910b</code>、<code>.github/workflows/lint.yml</code>。</span></div>
+      </div>
+      <h3 style="margin-top:30px">限制与免责</h3>
+      <div class="callout light"><strong>证据边界：</strong>所有仓库均取自本地检出快照，未联网核验上游最新提交，因此结论对“未来新增的接入”不成立；社区演进很快，评分应随快照更新重算。关键词检索存在假阴性风险（例如上游用别名或间接封装导入 <code>mindiesd</code>），本报告对每个记 0 分的判断都同时给出了“无等价能力且无挂载点”的架构性证据，而非仅凭 grep 结果。LightX2V 的 <code>dense_attention</code> 通过 <code>mindiesd.attention_forward</code> 调用（<code>op_type="ascend_laser_attention"</code>），仅在 RainFusion 算子的稠密回退分支内可达，因此 C1 记 2 分而非更高。所有分值均为分析判断，事实性错误欢迎以上述文件路径校正。</div>
+    </section>
+
+  </main>
+  <footer><div class="shell">AscendPlayground · MindIE-SD SD Capability × Upstream Adoption Coverage · Repo snapshot 2026-09-16 · Single-file offline report</div></footer>
+  <script>
+    const progress=document.getElementById('progress');
+    const updateProgress=()=>{const d=document.documentElement,max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%'};
+    addEventListener('scroll',updateProgress,{passive:true});updateProgress();
+    const reveals=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.04});
+    document.querySelectorAll('.reveal').forEach(e=>reveals.observe(e));
+    if(location.hash){requestAnimationFrame(()=>{const target=document.querySelector(location.hash);if(target){document.documentElement.style.scrollBehavior='auto';target.classList.add('on');target.scrollIntoView({block:'start'});requestAnimationFrame(()=>document.documentElement.style.removeProperty('scroll-behavior'))}})}
+    const sections=[...document.querySelectorAll('main section')],links=[...document.querySelectorAll('nav a')];
+    const spy=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-20% 0px -72% 0px'});
+    sections.forEach(s=>spy.observe(s));
+    document.querySelectorAll('.filterbar button').forEach(btn=>btn.addEventListener('click',()=>{
+      const f=btn.dataset.filter;document.querySelectorAll('.filterbar button').forEach(b=>b.classList.toggle('active',b===btn));
+      document.querySelectorAll('#score-table tbody tr').forEach(row=>{if(!row.dataset.group){return}row.hidden=f!=='all'&&row.dataset.group!==f});
+    }));
+  </script>
+</body>
+</html>
