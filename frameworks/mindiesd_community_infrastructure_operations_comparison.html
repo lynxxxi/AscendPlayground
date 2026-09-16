@@ -342,7 +342,7 @@
         <div class="metric"><b>1</b><small>可用评论命令<br>仅 <code>compile</code>，正则精确匹配</small></div>
         <div class="metric"><b>8</b><small>vllm-ascend 评论命令<br><code>/e2e /rerun /cancel /nightly /cherry-pick /revert /weekly /wait-feedback</code></small></div>
         <div class="metric"><b>9+</b><small>SGLang 评论命令<br>含 <code>/rerun-failed-ci</code>、<code>/run-full-ci</code>、<code>/rerun-group</code></small></div>
-        <div class="metric"><b>2 / 17</b><small>能力矩阵中的已覆盖项<br>安全扫描与命令触发</small></div>
+        <div class="metric"><b>2 / 19</b><small>能力矩阵中有资产项<br>安全扫描（完整）+ 命令触发（部分）</small></div>
       </div>
 
       <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">把“机器人”拆成六层，才知道差在哪一层</h3>
@@ -366,19 +366,21 @@
       </tbody></table></div>
       <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 09 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
 
-      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">能力矩阵：17 项机器人能力，MindIE-SD 覆盖 2 项</h3>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">能力矩阵：19 项机器人能力，MindIE-SD 只有 2 项有资产</h3>
       <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend（同源昇腾）</th><th>SGLang</th><th>参考实现</th></tr></thead><tbody>
         <tr class="target-row"><td><b>评论命令分发</b></td><td class="partial">仅 <code>compile</code></td><td class="yes">8 条，<code>peter-evans/slash-command-dispatch@v5</code></td><td class="yes">9+ 条，自研 <code>slash_command_handler.py</code></td><td class="yes">Prow / pytorchbot 命令族</td></tr>
         <tr class="target-row"><td><b>命令权限模型</b></td><td class="no">无</td><td class="yes">用户白名单 + <code>[Bot]</code> 拒绝回复 + reaction</td><td class="yes">fork PR 按 collaborator 权限判定，最小授权</td><td class="yes">Prow 按 org 成员/OWNERS 授权</td></tr>
         <tr class="target-row"><td><b>自动打标签 / 分诊</b></td><td class="no">未观察到</td><td class="partial"><code>/wait-feedback</code> 打标；标签可触发任务</td><td class="partial">命令驱动 CI 标签</td><td class="yes">label 插件 + labeler</td></tr>
         <tr class="target-row"><td><b>首次贡献欢迎</b></td><td class="no">无</td><td class="no">无</td><td class="no">无</td><td class="yes">Prow welcome</td></tr>
         <tr class="target-row"><td><b>reviewer 自动路由</b></td><td class="no">无</td><td class="partial">建 PR 自动流程，非按模块路由</td><td class="partial">Codeowners 审批要求</td><td class="yes">blunderbuss + OWNERS</td></tr>
-        <tr class="target-row"><td><b>失败重跑</b></td><td class="no">只能重新评论全量跑</td><td class="yes"><code>/rerun</code>、<code>/e2e</code>、<code>/nightly</code>、<code>/weekly</code></td><td class="yes"><code>/rerun-failed-ci</code>、<code>/rerun-group</code>、<code>rerun-test.yml</code></td><td class="yes"><code>/retest</code></td></tr>
+        <tr class="target-row"><td><b>失败重跑</b></td><td class="no">只能重新评论全量跑</td><td class="yes"><code>/rerun</code>、<code>/e2e</code>、<code>/nightly</code>、<code>/weekly</code></td><td class="yes"><code>/rerun-failed-ci</code>、<code>/rerun-group</code>、<code>rerun-test.yml</code></td><td class="yes">K8s <code>/retest</code> 且政策禁止自动重试；PyTorch 按历史 flaky 数据限流重跑</td></tr>
         <tr class="target-row"><td><b>取消过期运行</b></td><td class="no">未配置 <code>concurrency</code></td><td class="yes"><code>/cancel</code> + 专用 command workflow</td><td class="yes">关闭 PR 与新提交时取消旧任务</td><td class="yes">tide / 队列治理</td></tr>
         <tr class="target-row"><td><b>失败分类 / flaky</b></td><td class="no">无 matcher</td><td class="yes">仓内 <code>matchers/</code> 目录</td><td class="yes">failure monitor + auto bisect</td><td class="yes">CI 失败分类看板</td></tr>
         <tr class="target-row"><td><b>失败看板 / last-green</b></td><td class="no">无</td><td class="partial">多硬件 nightly/weekly 结果</td><td class="yes">CI 统计与失败监控</td><td class="yes">vLLM dashboard</td></tr>
         <tr class="target-row"><td><b>PR 停滞 / 冲突提醒</b></td><td class="no">无</td><td class="yes">合并冲突与 Issue 管理机器人</td><td class="partial">命令与标签提示</td><td class="yes">needs-rebase、lifecycle</td></tr>
+        <tr class="target-row"><td><b>stale / 生命周期治理</b></td><td class="no">无</td><td class="yes">stale 管理定时任务</td><td class="partial">命令与标签驱动</td><td class="yes">PyTorch 仅对 PR 60+30 天关闭；K8s 20/30/90 天三级并支持 <code>/lifecycle frozen</code>；diffusers 只标不关、真人评论即复活</td></tr>
         <tr class="target-row"><td><b>backport / cherry-pick</b></td><td class="no">无</td><td class="yes"><code>/cherry-pick</code>、<code>/revert</code> 专用 workflow</td><td class="yes"><code>bot-cherry-pick.yml</code></td><td class="yes">release 分支 cherry-pick 机器人</td></tr>
+        <tr class="target-row"><td><b>自动合入 / merge queue</b></td><td class="no">人工合入，<code>ascend-robot</code> 只负责执行</td><td class="partial">命令触发 CI，不自动合入</td><td class="partial">Codeowner 批准 + 人工合入</td><td class="yes">PyTorch <code>@pytorchbot merge</code> + <code>merge_rules.yaml</code> 门禁；K8s Tide 合并池（labels / missingLabels / 批准要求）</td></tr>
         <tr class="target-row"><td><b>版本 / 依赖 bump</b></td><td class="no">无 dependabot/renovate</td><td class="no">未观察到</td><td class="yes">5 个 <code>bot-bump-*</code> workflow</td><td class="yes">dependabot / renovate</td></tr>
         <tr class="target-row"><td><b>发布自动化</b></td><td class="partial">PyPI 有包，无公开流水线</td><td class="yes">代码与 wheel 发布 workflow</td><td class="yes"><code>release-*</code> 一整套</td><td class="yes">release pipeline</td></tr>
         <tr class="target-row"><td><b>文档链检 / 翻译</b></td><td class="partial">RTD 双语构建，无链检任务</td><td class="yes">链检与文档翻译定时任务</td><td class="partial">文档版本 bump 机器人</td><td class="yes">docs preview + linkcheck</td></tr>
@@ -387,6 +389,7 @@
         <tr class="target-row"><td><b>安全 / 依赖扫描</b></td><td class="yes">SCA PR 扫描 + 恶意代码扫描 + gitleaks</td><td class="partial">间接覆盖</td><td class="partial">镜像漏洞扫描</td><td class="yes">多工具组合</td></tr>
       </tbody></table></div>
       <div class="legend"><span><span class="tag fact">已核实</span> 来自本次抓取的仓内文件</span><span><span class="tag infer">推断</span> 由文件结构推导</span><span><span class="tag target">目标</span> 建议补齐项</span></div>
+      <div class="callout"><strong>同样成熟，路线相反：</strong>“自动重跑”和“自动关闭”这两个动作，第一梯队社区给出的答案是对立的，而且都是刻意的政策选择。Kubernetes 明令零 flake 政策——测试失败不得自动重试，重跑只能人工 <code>/retest</code>，flaky 走 quarantine 隔离；PyTorch 反过来有自动重跑机器人，但必须先查历史 flaky 数据、区分基础设施失败与真实失败，并对一次超过 5 个 job 的失败限流。stale 同理：PyTorch 只对 PR 做 60+30 天关闭，Kubernetes 用 20/30/90 天三级提醒并允许 <code>/lifecycle frozen</code> 冻结，HuggingFace diffusers 的 stale 机器人只打标签不关闭、任何真人评论都会自动复活。结论：机器人阈值是对组织判断的显影（红灯可不可信、用户会不会被赶走），不能照抄别人的数字——这正是 MindIE-SD 该先定政策、再写 workflow 的原因。</div>
 
       <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">命令面：从 1 条到 8 条，权限设计比数量更重要</h3>
       <div class="table-wrap"><table><thead><tr><th>命令</th><th>语义</th><th>vllm-ascend</th><th>SGLang</th><th>MindIE-SD</th><th>建议优先级</th></tr></thead><tbody>
@@ -565,8 +568,13 @@
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/.github/workflows/slash_command_dispatch.yml">vllm-ascend slash command dispatch</a><span>8 条命令：<code>/e2e /rerun /cancel /nightly /cherry-pick /revert /weekly /wait-feedback</code>。</span></div>
         <div class="source"><a href="https://github.com/vllm-project/vllm-ascend/blob/main/.github/workflows/issue_wait_feedback_command.yml">vllm-ascend /wait-feedback</a><span>用户白名单鉴权、<code>[Bot]</code> 拒绝回复与 reaction、自动打标签。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/.github/workflows/slash-command-handler.yml">SGLang slash command handler</a><span><code>/rerun-failed-ci</code>、<code>/run-full-ci</code>、<code>/run-extra-ci</code>、<code>/rerun-group</code>；fork PR 权限判定与安全 checkout。</span></div>
-        <div class="source"><a href="https://github.com/pytorch/pytorch/wiki/Bot-commands">PyTorch Bot commands</a><span>命令式机器人参考：标签、cherry-pick、revert 与 CI 流程控制。</span></div>
-        <div class="source"><a href="https://prow.infra.cert-manager.io/plugins">Prow Plugin Catalog</a><span>Kubernetes 生态插件族：lgtm、approve、blunderbuss、tide、lifecycle、cherrypicker、needs-rebase。</span></div>
+        <div class="source"><a href="https://github.com/pytorch/pytorch/wiki/Bot-commands">PyTorch Bot commands</a><span>单入口 <code>@pytorchbot</code>：merge / revert / rebase / label / drci / cherry-pick，没有斜杠命令。</span></div>
+        <div class="source"><a href="https://github.com/pytorch/test-infra/blob/main/torchci/lib/bot/README.md">PyTorch bot 模块清单</a><span>autoLabel、retry、Dr. CI、ciflow 等机器人实现，重跑依赖历史 flaky 数据。</span></div>
+        <div class="source"><a href="https://github.com/pytorch/pytorch/blob/main/.github/workflows/stale.yml">PyTorch stale workflow</a><span>自研实现，只处理 PR：60 天打 <code>Stale</code>、再 30 天关闭，<code>no-stale</code> 豁免。</span></div>
+        <div class="source"><a href="https://github.com/kubernetes/community/blob/master/contributors/devel/automation.md">Kubernetes 自动化与 stale 政策</a><span>PR 90 天关闭与 60/30 天两级预警，<code>lifecycle/frozen</code> 可阻止。</span></div>
+        <div class="source"><a href="https://github.com/huggingface/diffusers/blob/main/.github/workflows/diffusers_bot.yml">diffusers <code>/diffusers-bot</code></a><span>命令式机器人：style / review / pytest，仅 admin 与 write 协作者可触发。</span></div>
+        <div class="source"><a href="https://github.com/huggingface/diffusers/blob/main/.github/workflows/stale.yml">diffusers stale workflow</a><span>只打 <code>stale</code> 标签不关闭，出现真人评论后自动移除。</span></div>
+        <div class="source"><a href="https://prow.infra.cert-manager.io/plugins">Prow Plugin Catalog</a><span>Kubernetes 生态插件族：label、approve、lgtm、blunderbuss、tide、lifecycle、cherrypicker。注意当前 Prow 已无 stale/triage 独立插件，<code>/triage</code> 由 label 插件承担。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/test/registered/README.md">SGLang Registered Tests</a><span>注册发现、unit/kernel/E2E/benchmark 分类。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/tree/main/.github/workflows">SGLang workflows</a><span>多后端 nightly、发布、失败监控、rerun 和 runner utilization。</span></div>
         <div class="source"><a href="https://github.com/sgl-project/sglang/blob/main/docs/developer_guide/contribution_guide.md">SGLang Contribution Guide</a><span>主题分支、pre-commit、单元测试、CI 授权触发和大变更拆分。</span></div>
