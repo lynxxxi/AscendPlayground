@@ -151,7 +151,8 @@ td.mono,th.mono{font-family:var(--mono);white-space:nowrap}
 .rp-bar{display:inline-block;height:9px;background:var(--cyan);vertical-align:middle;border-radius:2px}
 .rp-bar.ascend{background:var(--acid)}
 .bar-cell{min-width:120px}
-footer{padding:26px 24px 42px;color:#aabfc4;background:var(--night);text-align:center;font:.66rem/1.6 var(--mono)}footer a{color:var(--acid)}
+footer{padding:26px 24px 42px;color:#aabfc4;background:var(--night);text-align:center;font:.66rem/1.6 var(--mono)}footer a{color:var(--acid)}footer code{color:var(--acid);font-family:var(--mono)}
+.rp-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:16px}.rp-legend span{padding:6px 10px;border:1px solid rgba(255,255,255,.18);color:#cfe0e3;font:.62rem/1.3 var(--mono)}.rp-legend b{color:var(--acid)}
 mark{background:var(--acid);color:var(--night);padding:0 2px}
 @media(max-width:980px){.rp-body{grid-template-columns:1fr}.rp-nav{position:relative;top:0}.rp-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.rp-stats{grid-template-columns:1fr}.rp-hero h1{font-size:2.2rem}table{font-size:.72rem}th,td{padding:7px 6px}}
@@ -663,7 +664,17 @@ def render_html(
     {"".join(sections)}
   </main>
 </div>
-<footer>ASCENDPLAYGROUND · MULTIMODAL INFRA WEEKLY · 自动生成于 {_esc(corpus.generated_at)} · <a href="https://github.com/lynxxxi/AscendPlayground" target="_blank" rel="noopener">SOURCE ON GITHUB</a></footer>
+<footer>
+  <div class="rp-legend">
+    <span><b>NEW</b> 发布时间在最近 {_esc(corpus.freshness_days)} 天内</span>
+    <span><b>SEEN</b> 更早、仍在采集窗口内</span>
+    <span><b>FOCUS</b> 昇腾 / MindIE 侧跟踪目标</span>
+    <span>顶部搜索框可跨全部维度过滤</span>
+  </div>
+  ASCENDPLAYGROUND · MULTIMODAL INFRA WEEKLY · {_esc(corpus.week)} · 生成于 {_esc(corpus.generated_at)}<br>
+  离线复现：<code>python scripts/report/run_weekly.py --offline</code> · 自检：<code>python scripts/report/selftest.py</code><br>
+  <a href="https://github.com/lynxxxi/AscendPlayground" target="_blank" rel="noopener">SOURCE ON GITHUB</a>
+</footer>
 <script>{SCRIPT}</script>
 </body>
 </html>

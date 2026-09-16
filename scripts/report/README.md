@@ -22,19 +22,18 @@ python scripts/report/run_weekly.py
 # 离线复现（只读快照，完全不联网）
 python scripts/report/run_weekly.py --offline
 
-# 离线自检（68 项断言，不联网）
+# 离线自检（78 项断言，不联网）
 python scripts/report/selftest.py
 
 # 查看当前配置里的全部信息源
 python scripts/report/run_weekly.py --list-sources
 ```
 
-`report/` 目录**只放产物**：
+`report/` 目录**只放 HTML 产物**：
 
 | 产物 | 说明 |
 |------|------|
 | `report/<周>.html` | 当周可视化报告（自包含、无外部依赖，可离线打开；同一周重复运行直接覆盖） |
-| `report/README.md` | 阅读说明 |
 
 采集缓存放在脚本目录下，**不属于产物、可随时删除**（删掉后重新联网跑一次即可重建）：
 
@@ -138,7 +137,7 @@ scripts/report/
 ├── collect.py             采集层：各源适配器 + 公众号/搜狗结果解析
 ├── corpus.py              语料层：去重、打分、主题聚类、竞品与能力矩阵
 ├── render.py              渲染层：自包含 HTML 报告
-├── selftest.py            离线自检（68 项断言）
+├── selftest.py            离线自检（78 项断言）
 ├── config/sources.json    信息源注册表（改这里就能增删源）
 └── lib/
     ├── httpclient.py      HTTP + 快照缓存 + 重试
