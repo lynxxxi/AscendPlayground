@@ -15,12 +15,12 @@ from report.corpus import GROUP_LABELS, KIND_LABELS, Corpus
 from report.lib.util import parse_datetime, truncate
 
 DIMENSIONS = (
-    ("papers", "维度 A · 多模态 Infra 论文", "arXiv / HuggingFace Daily Papers / OpenAlex"),
-    ("teams", "维度 B · 技术团队与官方动态", "团队博客、模型发布雷达、行业媒体"),
-    ("repos", "维度 C · 主要多模态仓库更新细则", "release / 关键 commit / PR"),
-    ("wechat", "维度 D · 公众号与中文媒体", "Bing site:mp.weixin.qq.com + 中文技术媒体 RSS"),
-    ("competitors", "维度 E · 竞品发版与工程节奏", "vLLM / SGLang / M* / TensorRT-LLM / Dynamo vs 昇腾"),
-    ("mindie", "维度 F · MindIE / 昇腾竞争力", "自有仓库活跃度 + 能力覆盖探针"),
+    ("papers", "维度 A · 多模态 Infra 论文", "arXiv / HuggingFace Daily Papers / OpenAlex，附摘要要点"),
+    ("teams", "维度 B · 技术团队与官方动态", "团队博客、模型发布雷达、行业媒体，附内容说明"),
+    ("repos", "维度 C · 主要多模态仓库更新细则", "release 与关键 commit，附变更说明"),
+    ("wechat", "维度 D · 公众号与中文媒体", "搜狗微信检索（标题直链原文）+ 中文技术媒体 RSS"),
+    ("competitors", "维度 E · 竞品发版特性说明", "vLLM / SGLang / M* / TensorRT-LLM / Dynamo 各版本做了什么"),
+    ("mindie", "维度 F · MindIE / 昇腾竞争力", "自有仓库版本特性 + 能力覆盖探针"),
 )
 
 NAV = (
@@ -29,7 +29,7 @@ NAV = (
     ("teams", "B · 团队动态"),
     ("repos", "C · 仓库更新"),
     ("wechat", "D · 公众号"),
-    ("competitors", "E · 竞品节奏"),
+    ("competitors", "E · 竞品版本特性"),
     ("mindie", "F · MindIE 竞争力"),
     ("appendix", "G · 附录"),
 )
@@ -71,6 +71,14 @@ def _badge(item: dict[str, Any]) -> str:
     return f'<span class="badge {css}">{text}</span>'
 
 
+def _desc(item: dict[str, Any], fallback_limit: int = 200) -> str:
+    """条目说明文字：优先用抽取好的 digest，退化到摘要。"""
+    text = str(item.get("digest") or "").strip()
+    if not text:
+        text = truncate(str(item.get("summary") or ""), fallback_limit)
+    return _esc(text) if text else '<span class="rp-desc muted">—</span>'
+
+
 def _html_link(title: str, url: str, limit: int = 130) -> str:
     label = _esc(truncate(title or "", limit))
     if not url:
@@ -81,6 +89,7 @@ def _html_link(title: str, url: str, limit: int = 130) -> str:
 def _search_blob(item: dict[str, Any]) -> str:
     parts = [
         str(item.get("title") or ""),
+        str(item.get("digest") or ""),
         str(item.get("summary") or "")[:200],
         str(item.get("sourceLabel") or ""),
         str(item.get("kind") or ""),
@@ -151,6 +160,19 @@ td.mono,th.mono{font-family:var(--mono);white-space:nowrap}
 .rp-bar{display:inline-block;height:9px;background:var(--cyan);vertical-align:middle;border-radius:2px}
 .rp-bar.ascend{background:var(--acid)}
 .bar-cell{min-width:120px}
+.rp-desc{color:#41565d;font-size:.8rem;line-height:1.62;min-width:260px}
+.rp-desc.muted{color:var(--muted)}
+.rp-hl{display:grid;gap:12px}
+.rp-rel{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--cyan)}
+.rp-rel.focus{border-left-color:var(--acid)}
+.rp-rel-top{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px}
+.rp-rel-tag{padding:4px 9px;color:var(--night);background:var(--acid);font:800 .7rem/1 var(--mono)}
+.rp-rel-day{color:var(--muted);font:.65rem/1 var(--mono)}
+.rp-rel p{margin:0;color:#31474e;font-size:.8rem;line-height:1.68}
+.rp-rel a{font:.65rem/1 var(--mono)}
+.rp-eng{margin:0 0 10px;font:800 1rem/1.3 var(--serif);color:var(--night)}
+.rp-eng .rp-stack{margin-left:8px;color:var(--muted);font:700 .62rem/1 var(--mono)}
+.rp-block{margin-bottom:24px}
 footer{padding:26px 24px 42px;color:#aabfc4;background:var(--night);text-align:center;font:.66rem/1.6 var(--mono)}footer a{color:var(--acid)}footer code{color:var(--acid);font-family:var(--mono)}
 .rp-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:16px}.rp-legend span{padding:6px 10px;border:1px solid rgba(255,255,255,.18);color:#cfe0e3;font:.62rem/1.3 var(--mono)}.rp-legend b{color:var(--acid)}
 mark{background:var(--acid);color:var(--night);padding:0 2px}
@@ -232,8 +254,6 @@ def render_html(
     top_per_section: int = 25,
 ) -> str:
     stats = corpus.stats
-    competitor_summary = corpus.competitor_matrix.get("summary") or {}
-    ratios = competitor_summary.get("ratio")
 
     def table(columns: list[str], rows: list[str], empty: str = "本期无条目") -> str:
         if not rows:
@@ -316,13 +336,8 @@ def render_html(
                 _badge(item),
                 f'<span class="mono">{_esc(_day_of(item))}</span>',
                 _html_link(item.get("title", ""), item.get("url", "")),
+                f'<div class="rp-desc">{_desc(item, 300)}</div>',
                 f'<span class="mono">{_esc(item.get("sourceLabel",""))}</span>',
-                _esc(
-                    truncate(
-                        "、".join(str(term).split("/")[-1] for term in (item.get("keywords") or [])[:4]), 70
-                    )
-                    or "—"
-                ),
                 f'<span class="num">{_score(item):.2f}</span>',
             ],
             item,
@@ -335,8 +350,8 @@ def render_html(
             "A",
             "多模态 Infra 论文",
             f"arXiv 组合检索（{arxiv_queries} 组关键词）+ HuggingFace Daily Papers 热度交叉验证 + OpenAlex 机构维度；"
-            f"采集窗口 {window.get('maxAgeDays')} 天，本期命中 {len(papers)} 条。",
-            table(["新", "日期", "标题", "来源", "关键词命中", "分"], paper_rows),
+            f"采集窗口 {window.get('maxAgeDays')} 天，本期命中 {len(papers)} 条。每条附摘要要点。",
+            table(["新", "日期", "标题", "内容说明", "来源", "分"], paper_rows),
         )
     )
 
@@ -348,9 +363,9 @@ def render_html(
                 _badge(item),
                 f'<span class="mono">{_esc(_day_of(item))}</span>',
                 _html_link(item.get("title", ""), item.get("url", "")),
+                f'<div class="rp-desc">{_desc(item, 200)}</div>',
                 f'<span class="mono">{_esc((item.get("signals") or {}).get("org",""))}</span>',
                 f'<span class="num">♥{_esc((item.get("signals") or {}).get("likes",0))}</span>',
-                f'<span class="num">⤓{_esc((item.get("signals") or {}).get("downloads",0))}</span>',
             ],
             item,
         )
@@ -363,6 +378,7 @@ def render_html(
                 _badge(item),
                 f'<span class="mono">{_esc(_day_of(item))}</span>',
                 _html_link(item.get("title", ""), item.get("url", "")),
+                f'<div class="rp-desc">{_desc(item, 280)}</div>',
                 f'<span class="mono">{_esc(item.get("sourceLabel",""))}</span>',
                 f'<span class="num">{_score(item):.2f}</span>',
             ],
@@ -376,11 +392,11 @@ def render_html(
             "teams",
             "B",
             "技术团队与官方动态",
-            "团队官方博客 / 模型发布雷达 / 中文技术媒体；模型发布条目用于观察各团队多模态节奏。",
+            "团队官方博客 / 模型发布雷达 / 中文技术媒体；每条附内容说明，无需点开即可判断是否相关。",
             '<h3 class="rp-sub">B.1 新模型 / 新权重发布</h3>'
-            + table(["新", "日期", "模型", "组织", "点赞", "下载"], model_rows)
+            + table(["新", "日期", "模型", "内容说明", "组织", "点赞"], model_rows)
             + '<h3 class="rp-sub">B.2 团队博客与行业资讯</h3>'
-            + table(["新", "日期", "标题", "来源", "分"], blog_rows),
+            + table(["新", "日期", "标题", "内容说明", "来源", "分"], blog_rows),
         )
     )
 
@@ -395,7 +411,6 @@ def render_html(
                 f'<span class="mono">{_esc(cluster.get("group",""))}</span>',
                 f'<span class="num">{cluster.get("counts",{}).get("release",0)}</span>',
                 f'<span class="num">{cluster.get("counts",{}).get("commit",0)}</span>',
-                f'<span class="num">{cluster.get("counts",{}).get("pr",0)}</span>',
                 f'<span class="bar-cell"><span class="rp-bar" style="width:{(cluster.get("total",0)/max_total*100):.0f}%"></span> {cluster.get("total",0)}</span>',
                 f'<span class="mono">{_esc(cluster.get("latestIso",""))}</span>',
                 _esc(cluster.get("note", "")),
@@ -405,47 +420,56 @@ def render_html(
         for cluster in clusters
     ]
     detail_cards = []
-    for cluster in clusters[:14]:
-        inner = "".join(
-            f'<li>{_badge(item)} <span class="mono">{_esc(_day_of(item))}</span> '
-            f'{_html_link(item.get("title",""), item.get("url",""), 110)} '
-            f'<span class="mono">[{_esc(KIND_LABELS.get(str(item.get("kind")), item.get("kind")))}]</span></li>'
-            for item in sorted(cluster.get("items", []), key=_score, reverse=True)[:6]
-        )
+    for cluster in clusters[:16]:
+        items_html = []
+        for item in sorted(cluster.get("items", []), key=_score, reverse=True)[:5]:
+            kind_label = KIND_LABELS.get(str(item.get("kind")), item.get("kind"))
+            note = str(item.get("digest") or item.get("summary") or "")
+            items_html.append(
+                f'<li>{_badge(item)} <span class="mono">{_esc(_day_of(item))}</span> '
+                f'<span class="mono">[{_esc(kind_label)}]</span> '
+                f'{_html_link(item.get("title",""), item.get("url",""), 130)}'
+                + (f'<div class="rp-desc">{_esc(truncate(note, 300))}</div>' if note else "")
+                + "</li>"
+            )
         blob = _esc(
             (
                 cluster["repo"]
                 + " "
-                + " ".join(str(entry.get("title", "")) for entry in cluster.get("items", []))
+                + " ".join(
+                    f"{entry.get('title','')} {entry.get('digest','')}" for entry in cluster.get("items", [])
+                )
             ).lower()
         )
         detail_cards.append(
             f'<div class="rp-card" data-search="{blob}"><h3>{_esc(cluster["repo"])} · {_esc(cluster.get("note",""))}</h3>'
-            f"<ul>{inner}</ul></div>"
+            f'<ul>{"".join(items_html)}</ul></div>'
         )
     sections.append(
         _section(
             "repos",
             "C",
             "主要多模态仓库更新细则",
-            f"监控 {len(((config.get('repos') or {}).get('watch') or []))} 个仓库的 release / 关键 commit / PR；"
-            f"本期命中 {len(clusters)} 个活跃仓库。",
-            table(["仓库", "分区", "发布", "提交", "PR", "信号量", "最近动态", "说明"], repo_rows)
-            + '<h3 class="rp-sub">C.1 重点仓库明细</h3>'
+            f"监控 {len(((config.get('repos') or {}).get('watch') or []))} 个仓库的 release 与关键 commit；"
+            f"本期命中 {len(clusters)} 个活跃仓库，每条附变更说明。",
+            table(["仓库", "分区", "发布", "提交", "信号量", "最近动态", "说明"], repo_rows)
+            + '<h3 class="rp-sub">C.1 重点仓库变更明细</h3>'
             + ("".join(detail_cards) or '<div class="rp-empty">本期无仓库明细</div>'),
         )
     )
 
     # ---- D 公众号 ----
     wechat = _sort_new_first(_items_by_group(corpus, "wechat"))
+    resolved = sum(1 for item in wechat if (item.get("signals") or {}).get("linkResolved"))
     wechat_rows = [
         row(
             [
                 _badge(item),
                 f'<span class="mono">{_esc(_day_of(item))}</span>',
                 _html_link(item.get("title", ""), item.get("url", "")),
+                f'<div class="rp-desc">{_desc(item, 280)}</div>',
+                _esc((item.get("signals") or {}).get("account", "") or "—"),
                 _esc((item.get("signals") or {}).get("query", "")),
-                f'<span class="mono">{_esc((item.get("signals") or {}).get("engine",""))}</span>',
             ],
             item,
         )
@@ -473,8 +497,9 @@ def render_html(
             "wechat",
             "D",
             "公众号与中文媒体",
-            "通道：Bing <code>site:mp.weixin.qq.com</code> 受控检索 + 机器之心 / 量子位 RSS 镜像；全部免鉴权、可复现。",
-            table(["新", "日期", "标题", "检索词", "引擎"], wechat_rows)
+            f"搜狗微信检索 {len(((config.get('wechat') or {}).get('searches') or []))} 组关键词 + 中文技术媒体 RSS。"
+            f"标题即原文直链（本期解析成功 {resolved}/{len(wechat)} 条），可直接点开阅读。",
+            table(["新", "日期", "标题（点击进入原文）", "内容说明", "公众号", "检索词"], wechat_rows)
             + '<h3 class="rp-sub">D.1 按检索词分布</h3>'
             + table(["检索词", "命中", "新增"], query_rows),
         )
@@ -482,56 +507,102 @@ def render_html(
 
     # ---- E 竞品 ----
     comp_rows = corpus.competitor_matrix.get("rows") or []
-    signals = [entry.get("window2w", 0) for entry in comp_rows]
-    max_signal = max(signals) if signals and max(signals) > 0 else 1
-    comp_html_rows = []
+    engine_blocks = []
     for entry in comp_rows:
-        badge = '<span class="badge focus">FOCUS</span> ' if entry.get("isFocus") else ""
-        bar_class = "rp-bar ascend" if entry.get("isFocus") else "rp-bar"
-        comp_html_rows.append(
-            row(
-                [
-                    f'{badge}{_esc(entry.get("label",""))}',
-                    f'<span class="mono">{_esc(entry.get("stack",""))}</span>',
-                    f'<span class="mono">{_esc(entry.get("latestTag","") or "—")}</span>',
-                    f'<span class="mono">{_esc((entry.get("latestRelease") or "—")[:10])}</span>',
-                    f'<span class="num">{entry.get("window1w",0)}</span>',
-                    f'<span class="bar-cell"><span class="{bar_class}" style="width:{(entry.get("window2w",0)/max_signal*100):.0f}%"></span> {entry.get("window2w",0)}</span>',
-                    f'<span class="num">{entry.get("velocity",0)}</span>',
-                ],
-                {"title": entry.get("label", ""), "summary": entry.get("latestTitle", "")},
+        releases = entry.get("recentReleases") or []
+        if not releases:
+            continue
+        focus = bool(entry.get("isFocus"))
+        cards = []
+        for release in releases:
+            feature = str(release.get("digest") or "").strip()
+            cards.append(
+                '<div class="rp-rel{0}">'
+                '<div class="rp-rel-top"><span class="rp-rel-tag">{1}</span>'
+                '<span class="rp-rel-day">{2}</span>'
+                '<a href="{3}" target="_blank" rel="noopener">releases ↗</a></div>'
+                "<p>{4}</p></div>".format(
+                    " focus" if focus else "",
+                    _esc(release.get("tag", "")),
+                    _esc(release.get("day", "")),
+                    _esc(release.get("url", "")),
+                    _esc(feature) if feature else '<span class="rp-desc muted">该版本未提供说明文本</span>',
+                )
             )
+        badge = '<span class="badge focus">FOCUS</span> ' if focus else ""
+        engine_blocks.append(
+            f'<div class="rp-block" data-search="{_esc((entry.get("label","") + " " + entry.get("stack","")).lower())}">'
+            f'<h3 class="rp-eng">{badge}{_esc(entry.get("label",""))}'
+            f'<span class="rp-stack">{_esc(entry.get("stack",""))} · {_esc(entry.get("repo",""))}</span></h3>'
+            f'<div class="rp-hl">{"".join(cards)}</div></div>'
         )
-    ratio_text = f"，比值 {ratios}" if ratios is not None else ""
-    note = (
-        f'<div class="rp-note">近 7 天信号数：昇腾侧 <b>{competitor_summary.get("ascendWeeklySignals",0)}</b>'
-        f' vs 非昇腾 <b>{competitor_summary.get("nonAscendWeeklySignals",0)}</b>{ratio_text}。'
-        f'vLLM 系 {competitor_summary.get("vllmWeekly",0)} / SGLang 系 {competitor_summary.get("sglangWeekly",0)} / '
-        f'NVIDIA 系 {competitor_summary.get("nvidiaWeekly",0)}。日均 = 近 7 天信号数 ÷ 7。</div>'
-    )
     sections.append(
         _section(
             "competitors",
             "E",
-            "竞品发版与工程节奏",
-            "同一口径横向比较各推理引擎的发布与工程活跃度，作为昇腾竞争力的外部参照。",
-            note + table(["引擎", "技术栈", "最新版本", "最新发版", "近 7 天", "近 14 天", "日均"], comp_html_rows),
+            "竞品发版特性说明",
+            "逐个引擎列出最近几个版本的官方特性说明，重点看「这版做了什么」以及昇腾侧对标目标。"
+            "（发版次数、日均信号等节奏指标不再作为展示重点。）",
+            "".join(engine_blocks) or '<div class="rp-empty">本期无竞品发版数据</div>',
         )
     )
 
     # ---- F MindIE ----
-    mindie_repo_rows = [
-        row(
-            [
-                f'<a href="https://github.com/{_esc(section["repo"])}" target="_blank" rel="noopener">{_esc(section.get("label") or section["repo"])}</a>',
-                f'<span class="num">{section.get("count",0)}</span>',
-                f'<span class="num rp-add">{section.get("newCount",0)}</span>',
-                f'<span class="mono">{_esc(section.get("latest") or "—")}</span>',
-            ],
-            {"title": section["repo"]},
+    mindie_blocks = []
+    for section in corpus.mindie.get("repos", []):
+        if not section.get("items") and not (section.get("latestRelease") or {}).get("digest"):
+            continue
+        releases = [item for item in section["items"] if item.get("kind") == "repo-release"]
+        # 优先展示发版特性，其次才是有技术信号的提交
+        ordered_items = releases + [item for item in section["items"] if item.get("kind") != "repo-release"]
+        rows_html = []
+        for item in ordered_items[:5]:
+            kind_label = KIND_LABELS.get(str(item.get("kind")), item.get("kind"))
+            note = str(item.get("digest") or "")
+            tag = (item.get("signals") or {}).get("tag") or ""
+            rows_html.append(
+                f'<li>{_badge(item)} <span class="mono">{_esc(item.get("day",""))}</span> '
+                f'<span class="mono">[{_esc(kind_label)}{" " + _esc(tag) if tag else ""}]</span> '
+                f'{_html_link(item.get("title",""), item.get("url",""), 120)}'
+                + (f'<div class="rp-desc">{_esc(truncate(note, 320))}</div>' if note else "")
+                + "</li>"
+            )
+        latest = section.get("latestRelease") or {}
+        if isinstance(latest, dict) and latest.get("digest"):
+            window_note = "" if latest.get("inWindow") else "（窗口外，取自最近一次发版）"
+            release_html = (
+                f'<div class="rp-note"><b>最新发版 {_esc(latest.get("tag",""))}</b>'
+                f'<span class="mono"> · {_esc(latest.get("day",""))}{_esc(window_note)}</span><br>'
+                f'{_esc(truncate(str(latest.get("digest")), 500))}'
+                + (
+                    f' <a href="{_esc(latest.get("url",""))}" target="_blank" rel="noopener">releases ↗</a>'
+                    if latest.get("url")
+                    else ""
+                )
+                + "</div>"
+            )
+        else:
+            release_html = ""
+        block_blob = _esc(
+            (
+                section.get("repo", "")
+                + " "
+                + " ".join(str(entry.get("digest", "")) for entry in section.get("items", []))
+            ).lower()
         )
-        for section in corpus.mindie.get("repos", [])
-    ]
+        body = release_html + (
+            f'<ul>{"".join(rows_html)}</ul>'
+            if rows_html
+            else '<div class="rp-desc muted">本周无窗口内更新，见上方最近发版说明。</div>'
+        )
+        mindie_blocks.append(
+            f'<div class="rp-card" data-search="{block_blob}">'
+            f'<h3><a href="https://github.com/{_esc(section["repo"])}" target="_blank" rel="noopener">'
+            f'{_esc(section.get("label") or section["repo"])}</a>'
+            f' · 本期 {section.get("count",0)} 条（新增 {section.get("newCount",0)}）</h3>'
+            + body
+            + "</div>"
+        )
     capability_rows = [
         row(
             [
@@ -555,6 +626,7 @@ def render_html(
                 _badge(item),
                 f'<span class="mono">{_esc(item.get("day",""))}</span>',
                 _html_link(item.get("title", ""), item.get("url", "")),
+                f'<div class="rp-desc">{_desc(item, 240)}</div>',
                 _esc(GROUP_LABELS.get(str(item.get("group")), item.get("group"))),
             ],
             item,
@@ -575,14 +647,14 @@ def render_html(
             "mindie",
             "F",
             "MindIE / 昇腾竞争力",
-            "自有仓库活跃度 + 能力覆盖探针：用外部生态语料反推昇腾当前的能力覆盖与缺口。",
-            '<h3 class="rp-sub">F.1 自有仓库动态</h3>'
-            + table(["仓库", "本期条目", "新增", "最近动态"], mindie_repo_rows)
+            "自有仓库的最新版本特性与关键变更说明，以及能力覆盖探针（用外部生态语料反推覆盖与缺口）。",
+            '<h3 class="rp-sub">F.1 自有仓库特性与变更</h3>'
+            + ("".join(mindie_blocks) or '<div class="rp-empty">本期无自有仓库动态</div>')
             + '<h3 class="rp-sub">F.2 能力覆盖探针</h3>'
             + gap_html
             + table(["能力域", "生态命中", "本周新增", "覆盖判断", "代表条目"], capability_rows)
             + '<h3 class="rp-sub">F.3 昇腾 / MindIE 相关语料</h3>'
-            + table(["新", "日期", "标题", "维度"], topic_rows),
+            + table(["新", "日期", "标题", "内容说明", "维度"], topic_rows),
         )
     )
 

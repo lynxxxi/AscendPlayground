@@ -111,7 +111,7 @@ def build_corpus(
         competitor_matrix=build_competitor_matrix(kept, config, reference, release_history or {}),
         capability_matrix=build_capability_matrix(kept, config),
         themes=build_themes(kept, config),
-        mindie=build_mindie_section(kept, config, reference),
+        mindie=build_mindie_section(kept, config, reference, release_history or {}),
     )
 
 
@@ -168,15 +168,26 @@ def build_competitor_matrix(
         commits = [item for item in engine_items if item.get("repoActivity") == "commit"]
         pulls = [item for item in engine_items if item.get("repoActivity") == "pr"]
         releases_sorted = sorted(releases, key=lambda entry: entry.get("published", ""), reverse=True)
-        latest = releases_sorted[0] if releases_sorted else None
-        if latest is None:
-            # 回退到不经过窗口过滤的发版历史
-            history_sorted = sorted(
-                history.get(repo.lower(), []), key=lambda entry: entry.get("published", ""), reverse=True
-            )
-            latest = history_sorted[0] if history_sorted else None
+        history_sorted = sorted(
+            history.get(repo.lower(), []), key=lambda entry: entry.get("published", ""), reverse=True
+        )
+        latest = releases_sorted[0] if releases_sorted else (history_sorted[0] if history_sorted else None)
         window_1w = _count_since(engine_items, reference, days=7)
         window_2w = _count_since(engine_items, reference, days=14)
+        # 展示用：最近几次发版的特性说明（而非发版次数）
+        recent_releases = [
+            {
+                "tag": entry.get("tag", ""),
+                "published": entry.get("published", ""),
+                "day": (entry.get("published", "") or "")[:10],
+                "digest": entry.get("digest", ""),
+                "url": entry.get("url", ""),
+                "isNew": (parse_datetime(entry.get("published")) or reference) >= reference - timedelta(days=14)
+                if entry.get("published")
+                else False,
+            }
+            for entry in history_sorted[: int(competitors.get("releaseHighlightsPerEngine", 3))]
+        ]
         rows.append(
             {
                 "id": engine.get("id"),
@@ -193,7 +204,9 @@ def build_competitor_matrix(
                 "velocity": round(window_1w / 7.0, 2),
                 "latestTag": (latest or {}).get("tag") or (latest or {}).get("signals", {}).get("tag") or "",
                 "latestRelease": (latest or {}).get("published", ""),
+                "latestDigest": (latest or {}).get("digest", ""),
                 "latestTitle": (latest or {}).get("title", ""),
+                "recentReleases": recent_releases,
                 "topItems": [
                     {"title": item.get("title"), "url": item.get("url"), "kind": item.get("kind")}
                     for item in sorted(engine_items, key=lambda entry: entry.get("score", 0), reverse=True)[:5]
@@ -304,14 +317,41 @@ def build_themes(items: list[dict[str, Any]], config: dict[str, Any]) -> list[di
 
 
 def build_mindie_section(
-    items: list[dict[str, Any]], config: dict[str, Any], reference: datetime
+    items: list[dict[str, Any]],
+    config: dict[str, Any],
+    reference: datetime,
+    release_history: Optional[dict[str, list[dict[str, Any]]]] = None,
 ) -> dict[str, Any]:
     owned = (config.get("mindie") or {}).get("ownedRepos") or []
     labels = {str(entry.get("repo", "")).lower(): entry.get("label") for entry in owned}
+    history = {str(repo).lower(): list(rows) for repo, rows in (release_history or {}).items()}
     sections: list[dict[str, Any]] = []
     for repo, label in labels.items():
         repo_items = _items_for_repo(items, repo)
         repo_items.sort(key=lambda entry: entry.get("published", ""), reverse=True)
+        # 发版特性：窗口内 may 无发版，回退到不受窗口限制的发版历史
+        releases = [item for item in repo_items if item.get("kind") == "repo-release"]
+        latest_release: dict[str, Any] = {}
+        if releases:
+            latest_release = {
+                "tag": (releases[0].get("signals") or {}).get("tag", ""),
+                "published": releases[0].get("published", ""),
+                "day": releases[0].get("day", ""),
+                "digest": releases[0].get("digest", ""),
+                "url": releases[0].get("url", ""),
+                "inWindow": True,
+            }
+        else:
+            rows = sorted(history.get(repo, []), key=lambda entry: entry.get("published", ""), reverse=True)
+            if rows:
+                latest_release = {
+                    "tag": rows[0].get("tag", ""),
+                    "published": rows[0].get("published", ""),
+                    "day": (rows[0].get("published", "") or "")[:10],
+                    "digest": rows[0].get("digest", ""),
+                    "url": rows[0].get("url", ""),
+                    "inWindow": False,
+                }
         sections.append(
             {
                 "repo": repo,
@@ -319,6 +359,8 @@ def build_mindie_section(
                 "count": len(repo_items),
                 "newCount": sum(1 for item in repo_items if item.get("isNew")),
                 "latest": repo_items[0].get("published", "") if repo_items else "",
+                "latestRelease": latest_release,
+                "releaseCount": len(history.get(repo, [])),
                 "items": [
                     {
                         "title": item.get("title"),
@@ -327,6 +369,8 @@ def build_mindie_section(
                         "kind": item.get("kind"),
                         "isNew": item.get("isNew"),
                         "score": item.get("score"),
+                        "digest": item.get("digest"),
+                        "tag": (item.get("signals") or {}).get("tag", ""),
                     }
                     for item in repo_items[:8]
                 ],

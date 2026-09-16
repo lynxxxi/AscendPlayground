@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import gzip
+import http.cookiejar
 import io
 import json
 import ssl
@@ -166,6 +167,29 @@ class HttpClient:
         self._context = ssl.create_default_context()
 
     # ------------------------------------------------------------------
+    # 会话 / cookie
+    # ------------------------------------------------------------------
+    def session_headers(self, user_agent: str, **extra: str) -> dict[str, str]:
+        """为某个站点建立一个持久会话（带 cookie jar）。
+
+        部分站点（如搜狗微信）必须先获取搜索页拿到 cookie，后续跳转请求才不被
+        判定为爬虫；只带 header 而没有 cookie 会被反爬页拦截。
+        """
+        jar = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(jar),
+            urllib.request.HTTPSHandler(context=self._context),
+        )
+        self._opener = opener
+        return {"User-Agent": user_agent, **extra}
+
+    def _request_opener(self) -> urllib.request.OpenerDirector:
+        opener = getattr(self, "_opener", None)
+        if opener is not None:
+            return opener
+        return urllib.request.build_opener(urllib.request.HTTPSHandler(context=self._context))
+
+    # ------------------------------------------------------------------
     def get(
         self,
         url: str,
@@ -173,10 +197,15 @@ class HttpClient:
         headers: Optional[dict[str, str]] = None,
         cache_key: Optional[str] = None,
         accept: str = "*/*",
+        use_cache: bool = True,
     ) -> FetchResult:
-        """抓取 URL。cache_key 允许把多个不同 header 的同一 URL 区分缓存。"""
+        """抓取 URL。
+
+        cache_key 允许把多个不同 header 的同一 URL 区分缓存；
+        use_cache=False 用于一次性/带签名的跳转链接（缓存会导致过期结果被复用）。
+        """
         effective_url = cache_key or url
-        if not self.refresh:
+        if use_cache and not self.refresh:
             cached = self.cache.load(effective_url)
             if cached is not None:
                 self.stats.cache_hits += 1
@@ -201,12 +230,16 @@ class HttpClient:
             self.stats.record(url)
             try:
                 request = urllib.request.Request(url, headers=request_headers, method="GET")
-                with urllib.request.urlopen(request, timeout=self.timeout, context=self._context) as response:
+                opener = self._request_opener()
+                with opener.open(request, timeout=self.timeout) as response:
                     raw = response.read()
                     body = self._decode(raw, dict(response.headers))
                     status = int(getattr(response, "status", 200) or 200)
                     content_type = response.headers.get("Content-Type", "")
-                    snapshot = self.cache.store(effective_url, status, body, content_type)
+                    if use_cache:
+                        snapshot = self.cache.store(effective_url, status, body, content_type)
+                    else:
+                        snapshot = None
                     return FetchResult(
                         url=url,
                         status=status,
@@ -239,9 +272,10 @@ class HttpClient:
                 time.sleep(self.backoff ** attempt)
 
         self.stats.errors += 1
-        snapshot = self.cache.store(
-            effective_url, status, "", "", error=str(last_error) if last_error else "unknown"
-        )
+        if use_cache:
+            self.cache.store(
+                effective_url, status, "", "", error=str(last_error) if last_error else "unknown"
+            )
         raise FetchError(str(last_error or "unknown error"), status or None)
 
     @staticmethod

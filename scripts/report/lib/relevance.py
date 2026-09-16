@@ -231,6 +231,8 @@ def _merge_into(target: dict[str, Any], incoming: dict[str, Any]) -> None:
     target["signals"] = signals
     if not target.get("summary") and incoming.get("summary"):
         target["summary"] = incoming["summary"]
+    if not target.get("digest") and incoming.get("digest"):
+        target["digest"] = incoming["digest"]
     if incoming.get("weight", 0) > target.get("weight", 0):
         target["weight"] = incoming["weight"]
     target_published = parse_datetime(target.get("published"))

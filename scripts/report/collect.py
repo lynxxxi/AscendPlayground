@@ -22,12 +22,16 @@ from report.lib.relevance import Scorer, TagExtractor
 from report.lib.util import (
     UTC,
     clean_title,
+    commit_digest,
     day,
+    digest,
+    first_paragraph,
     iso,
     now_utc,
     parse_datetime,
     short_id,
     strip_html,
+    summarise_abstract,
     truncate,
     within_window,
 )
@@ -225,6 +229,8 @@ class Collector:
                 continue
             item["title"] = title
             item["published"] = iso(published) if published else ""
+            # 每条都生成一句到两句的说明，报告里可直接阅读，不必点进原文
+            item["digest"] = item.get("digest") or _build_digest(item)
             text = f"{title} {item.get('summary') or ''}"
             if not self.scorer.passes_gate(text):
                 report.filtered += 1
@@ -576,7 +582,7 @@ class Collector:
                 entries.append(
                     self._item(
                         title=f"[{repo}] 发布 {tag.strip() or release.title}：{clean_title(subject)}",
-                        summary=truncate(release.summary or subject, 900),
+                        summary=truncate(release.summary or subject, 4000),
                         url=release.link,
                         published=release.published,
                         native_id=release.guid or release.link,
@@ -609,12 +615,12 @@ class Collector:
                 entries.append(
                     self._item(
                         title=f"[{repo}] {message}",
-                        summary=truncate(commit.summary or "", 400),
+                        summary=truncate(commit.summary or "", 900),
                         url=commit.link,
                         published=commit.published,
                         native_id=commit.guid or commit.link,
                         kind="repo-commit",
-                        signals={"repo": repo, "author": commit.author},
+                        signals={"repo": repo, "author": commit.author, "subject": message},
                         extra={
                             "repo": repo,
                             "repoGroup": group,
@@ -798,6 +804,10 @@ class Collector:
         endpoint = source["endpoint"]
         search_type = str(source.get("type", 2))
         delay = float(source.get("politeDelaySeconds", 0) or 0)
+        resolve = bool(source.get("resolveLinks", True))
+        max_resolve = int(source.get("maxResolvePerQuery", 20))
+        # 搜狗必须先建立 cookie 会话，否则跳转请求会被反爬页拦截
+        self.client.session_headers(BROWSER_USER_AGENT)
         entries: list[dict[str, Any]] = []
         for index, search in enumerate(self.config.get("wechat", {}).get("searches", []) or []):
             query = str(search.get("query") or "").strip()
@@ -813,6 +823,8 @@ class Collector:
                     url,
                     headers={"Referer": "https://weixin.sogou.com/"},
                     accept="text/html,application/xhtml+xml",
+                    # 搜索结果里的跳转链接与会话 cookie 绑定，复用旧快照会导致解析失败
+                    use_cache=False,
                 )
             except FetchError as error:
                 self.log(f"    x {error}")
@@ -820,12 +832,21 @@ class Collector:
             hits = parse_sogou_wechat(result.body)
             if not hits:
                 self.log("    ! 未解析到结果（可能触发人机校验）")
-            for hit in hits:
+            resolved = 0
+            for hit_index, hit in enumerate(hits):
+                article_url = hit["url"]
+                if resolve and hit["url"].startswith("https://weixin.sogou.com/link") and hit_index < max_resolve:
+                    if delay:
+                        time.sleep(delay)
+                    direct = self._resolve_sogou_link(hit["url"], referer=url)
+                    if direct:
+                        article_url = direct
+                        resolved += 1
                 entries.append(
                     self._item(
                         title=hit["title"],
                         summary=hit.get("summary", ""),
-                        url=hit["url"],
+                        url=article_url,
                         published=hit.get("published"),
                         native_id=hit["url"],
                         kind="wechat-article",
@@ -833,10 +854,42 @@ class Collector:
                             "query": query,
                             "engine": "sogou-wechat",
                             "account": hit.get("account", ""),
+                            "searchUrl": url,
+                            "linkResolved": article_url != hit["url"],
                         },
                     )
                 )
+            if resolve and hits:
+                self.log(f"    ↳ 原文直链解析 {resolved}/{len(hits)}")
         return entries
+
+    def _resolve_sogou_link(self, link: str, *, referer: str) -> str:
+        """把搜狗 /link?url=... 跳转解析为 mp.weixin.qq.com 原文直链。
+
+        关键点：搜狗返回的 href 内嵌换行等控制字符，必须先清理，否则请求非法；
+        跳转页用 `url += '...'` 分片拼接真实地址。
+        """
+        target = re.sub(r"[\s\x00-\x1f]+", "", link)
+        try:
+            page = self.client.get(
+                target,
+                headers={"Referer": referer},
+                accept="text/html,application/xhtml+xml",
+                use_cache=False,
+            ).body
+        except FetchError:
+            return ""
+        fragments = re.findall(r"url\s*\+=\s*'([^']*)'", page)
+        if not fragments:
+            return ""
+        raw = "".join(fragments)
+        # 注意顺序：查询串里的 "&timestamp=" 会被 html.unescape 当成 "&times;" 实体
+        # 变成 "×tamp="，因此先把被误转义的形式还原，再做实体解码。
+        raw = raw.replace("&times;tamp", "&timestamp").replace("\u00d7tamp", "&timestamp")
+        candidate = html.unescape(raw).replace("@", "")
+        candidate = candidate.replace("\u00d7tamp", "&timestamp")
+        match = re.search(r"https?://mp\.weixin\.qq\.com/s[^\s\"'<>\\]*", candidate)
+        return re.sub(r"[\s\x00-\x1f]+", "", match.group(0)) if match else ""
 
     # ------------------------------------------------------------------
     # 通用搜索引擎（默认关闭；适配器保留供有鉴权通道时启用）
@@ -938,15 +991,21 @@ class Collector:
                     tag, _, subject = release.title.partition(":")
                     tag = tag.strip() or release.title
                     published = parse_datetime(release.published)
-                    # 版本历史用于竞品矩阵的"最新版本"列；发版往往早于采集窗口，
+                    feature = digest(release.summary, limit=420, prefer_bullets=True) or digest(subject, limit=200)
+                    # 版本历史用于竞品矩阵的"最新版本 + 特性说明"；发版往往早于采集窗口，
                     # 因此这里独立记录，不依赖条目是否被窗口过滤器保留。
                     self.release_history.setdefault(repo, []).append(
-                        {"tag": tag, "published": iso(published) if published else "", "url": release.link}
+                        {
+                            "tag": tag,
+                            "published": iso(published) if published else "",
+                            "url": release.link,
+                            "digest": feature,
+                        }
                     )
                     entries.append(
                         self._item(
                             title=f"[{repo}] release {tag}",
-                            summary=truncate(release.summary or subject, 400),
+                            summary=truncate(release.summary or subject, 4000),
                             url=release.link,
                             published=release.published,
                             native_id=release.guid or release.link,
@@ -971,10 +1030,20 @@ class Collector:
                 tag = release.get("tag_name") or release.get("name") or ""
                 if not tag:
                     continue
+                published = parse_datetime(release.get("published_at") or release.get("created_at"))
+                body_text = strip_html(release.get("body") or "")
+                self.release_history.setdefault(repo, []).append(
+                    {
+                        "tag": tag,
+                        "published": iso(published) if published else "",
+                        "url": release.get("html_url") or f"https://github.com/{repo}/releases",
+                        "digest": digest(body_text, limit=420, prefer_bullets=True),
+                    }
+                )
                 entries.append(
                     self._item(
                         title=f"[{repo}] release {tag}",
-                        summary=truncate(strip_html(release.get("body") or ""), 400),
+                        summary=truncate(body_text, 4000),
                         url=release.get("html_url") or f"https://github.com/{repo}/releases",
                         published=release.get("published_at") or release.get("created_at"),
                         native_id=f"{repo}@{release.get('id')}",
@@ -1024,6 +1093,22 @@ def group_label(config: dict[str, Any], group: str) -> str:
     return str(((config.get("repos") or {}).get("groups") or {}).get(group) or group)
 
 
+def _build_digest(item: dict[str, Any]) -> str:
+    """按条目类型抽取可读说明。"""
+    kind = str(item.get("kind") or "")
+    summary = str(item.get("summary") or "")
+    title = str(item.get("title") or "")
+    if kind == "paper":
+        return summarise_abstract(summary)
+    if kind in {"repo-release", "competitor-release"}:
+        return digest(summary, limit=360, prefer_bullets=True)
+    if kind == "repo-commit":
+        return commit_digest(item.get("signals", {}).get("subject") or title, summary)
+    if kind == "model-release":
+        return digest(summary, limit=200)
+    return digest(summary, limit=260) or digest(title, limit=160)
+
+
 INTERESTING_COMMIT_HINTS = (
     "feat",
     "fix",
@@ -1051,18 +1136,59 @@ INTERESTING_COMMIT_HINTS = (
     "release",
 )
 
+# 这些前缀表示纯工程杂务，不构成技术信号
+COMMIT_NOISE_PREFIXES = (
+    "[docs]",
+    "[doc]",
+    "[ci]",
+    "[build]",
+    "[test]",
+    "[style]",
+    "[chore]",
+    "[branding]",
+    "[misc]",
+    "[skip ci]",
+    "docs:",
+    "doc:",
+    "style:",
+    "test:",
+    "ci:",
+    "build:",
+    "chore:",
+    "typo",
+)
+COMMIT_NOISE_PHRASES = (
+    "message auto-generated",
+    "no-merge-commit",
+    "update readme",
+    "update logo",
+    "update license",
+    "codecheck",
+    "cleancode",
+    "fix typo",
+    "bump version",
+)
+
 
 def is_interesting_commit(message: str) -> bool:
-    """过滤掉纯粹的 chore/typo/格式类提交，降低噪声。"""
-    lowered = (message or "").lower()
-    if not lowered.strip():
+    """过滤掉纯杂务提交，只保留具备技术信号的变更。"""
+    lowered = (message or "").strip().lower()
+    if not lowered:
         return False
-    if lowered.startswith(("chore", "typo", "docs:", "style:", "test:", "ci:")):
+    if lowered.startswith(COMMIT_NOISE_PREFIXES):
+        return False
+    if any(phrase in lowered for phrase in COMMIT_NOISE_PHRASES):
         return False
     return any(hint in lowered for hint in INTERESTING_COMMIT_HINTS)
 
 
 SOGOU_BLOCK_RE = re.compile(r'<li[^>]+id="sogou_vr_11002601_box_\d+"', re.IGNORECASE)
+
+# 需要 cookie 会话 + 浏览器指纹的站点（搜狗微信）使用真实浏览器 UA
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 SOGOU_TIME_RE = re.compile(r"timeConvert\('(\d{9,12})'\)")
 _SOGOU_NOISE = re.compile(r"<!--.*?-->|<!--red_beg-->|<!--red_end-->", re.S)
 
