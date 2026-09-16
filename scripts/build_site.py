@@ -18,7 +18,6 @@ CATEGORIES = (
     ("frameworks", "框架分析", 2),
     ("models", "模型研究", 3),
     ("operators", "算子分析", 4),
-    ("work", "工作记录", 5),
 )
 
 
