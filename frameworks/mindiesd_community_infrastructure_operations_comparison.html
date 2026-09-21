@@ -236,7 +236,7 @@
         <tr data-group="mm"><td>FastVideo</td><td class="heat h4">4.25</td><td class="heat h4">4.25</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h3">2.5</td><td class="avg">3.8</td></tr>
         <tr data-group="mm"><td>DiffSynth-Studio</td><td class="heat h2">1.5</td><td class="heat h3">2.75</td><td class="heat h4">4.0</td><td class="heat h3">3.0</td><td class="heat h2">1.5</td><td class="heat h1">1.0</td><td class="heat h5">4.5</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.5</td></tr>
       </tbody></table></div>
-      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">MindIE-SD：11 个维度逐项为什么这样打</h3>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">MindIE-SD：九个维度逐项为什么这样打</h3>
       <div class="table-wrap"><table><thead><tr><th>维度</th><th>分数</th><th>已观察到的得分依据</th><th>未到下一档的原因</th></tr></thead><tbody>
         <tr><td><b>测试与 CI/CD</b></td><td class="heat h4">3.5</td><td>CPU/NPU 入口、增量发现；pytest-infra 有 SD 模型 E2E 与性能断言。<br>12 个启用 webhook、PR 阶段回传、组织合入标签规则、外部手动/定时测试。</td><td>外部调度已知；近期覆盖、长稳和最新 SD SHA 绑定待运行报告核验。<br>各 webhook 与具体任务的完整映射、夜间版本与公开结果入口待补。</td></tr>
         <tr><td><b>构建与发布</b></td><td class="heat h4">3.25</td><td>PR lane、SWR 镜像、ccache 下载/统计/OBS 上传；MindIE-CI 有 SD 构建及产物路径。<br>4 tags / 3 releases；MindIE-CI 有构建、OBS 路径与打包资产。</td><td>主流程 lane 名与复用 job 固定 ARM 标签需核对；时长分布与命中率未统计。<br>正式发布由谁触发、是否晋升同一产物、签名/回滚与日历仍未核验。</td></tr>
@@ -953,8 +953,10 @@
     const progress=document.getElementById('progress');
     const updateProgress=()=>{const d=document.documentElement,max=d.scrollHeight-d.clientHeight;progress.style.width=(max?d.scrollTop/max*100:0)+'%'};
     addEventListener('scroll',updateProgress,{passive:true});updateProgress();
-    const reveals=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.04});
-    document.querySelectorAll('.reveal').forEach(e=>reveals.observe(e));
+    /* 章节可能远高于视口，用 threshold 比例会永不触发（手机端整章空白）；改为任意相交即显现。 */
+    const revealOnce=e=>e.target.classList.add('on');
+    const reveals=('IntersectionObserver' in window)?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)revealOnce(e)}),{threshold:0,rootMargin:'0px 0px -8% 0px'}):null;
+    document.querySelectorAll('.reveal').forEach(e=>{reveals?reveals.observe(e):e.classList.add('on')});
     if(location.hash){requestAnimationFrame(()=>{const target=document.querySelector(location.hash);if(target){document.documentElement.style.scrollBehavior='auto';target.classList.add('on');target.scrollIntoView({block:'start'});requestAnimationFrame(()=>document.documentElement.style.removeProperty('scroll-behavior'))}})}
     const sections=[...document.querySelectorAll('main section')],links=[...document.querySelectorAll('nav a')];
     const spy=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-20% 0px -72% 0px'});
