@@ -183,7 +183,7 @@
 </head>
 <body>
   <div class="progress" id="progress"></div>
-  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#overview">总览</a><a href="#testing-cicd">测试与 CI/CD</a><a href="#build-release">构建与发布</a><a href="#docs">文档与开发者体验</a><a href="#performance">性能</a><a href="#quality">质量</a><a href="#bots">机器人与自动化</a><a href="#compatibility">兼容性</a><a href="#governance">治理与合入契约</a><a href="#operations">社区运营</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand">ASCENDPLAYGROUND / COMMUNITY OPS</div><nav aria-label="报告导航"><a href="#overview">总览</a><a href="#testing-cicd">测试、CI/CD 与质量</a><a href="#build-release">构建与发布</a><a href="#docs">文档与开发者体验</a><a href="#performance">性能</a><a href="#bots">机器人与自动化</a><a href="#compatibility">兼容性</a><a href="#governance">治理与合入契约</a><a href="#operations">社区运营</a></nav><button class="print" onclick="print()">PRINT / PDF</button></div></div>
 
   <header class="hero">
     <div class="hero-inner">
@@ -191,12 +191,12 @@
       <h1>MindIE-SD<br>社区运行系统审计</h1>
       <p class="hero-lead">不只问“代码能不能跑”，而是追问一个开源项目能否稳定地接纳变更、发现回归、发布版本、回答用户、培养维护者，并把昇腾多模态生态的协作成本持续降下来。</p>
       <div class="hero-meta"><span class="pill">UT / E2E / NIGHTLY</span><span class="pill">BUILD TIME</span><span class="pill">DOCS / CI/CD</span><span class="pill">PERF / QUALITY</span><span class="pill">RELEASE / BOTS</span><span class="pill">COMPATIBILITY</span><span class="pill">GOVERNANCE / CHAOSS</span></div>
-      <div class="hero-score"><div class="score-big">3.6<span style="font-size:1.2rem"> / 5</span></div><div class="score-copy"><b>跨仓基础设施已具备，重点补运行证据与可靠性</b><span>SD 按最新 GitCode、组织 webhook、MindIE-CI 与 pytest-infra 复核：9 项指标合计 32.25，等权均分 3.583（显示 3.6）；两组合并项分别取原子项均分。已有 E2E/性能断言、缓存、PR 回传、审批规则和晋升机制；改进重点是退出码、版本绑定、持续运行可观测与发布追溯。评分为分析判断，不是实测服务等级。</span></div></div>
+      <div class="hero-score"><div class="score-big">3.6<span style="font-size:1.2rem"> / 5</span></div><div class="score-copy"><b>跨仓基础设施已具备，重点补运行证据与可靠性</b><span>SD 按最新 GitCode、组织 webhook、MindIE-CI 与 pytest-infra 复核：8 项指标合计 28.75，等权均分 3.594（显示 3.6）；测试/CI-CD/质量三项与构建/发布两项分别取原子项均分。已有 E2E/性能断言、缓存、PR 回传、审批规则和晋升机制；改进重点是退出码、版本绑定、持续运行可观测与发布追溯。评分为分析判断，不是实测服务等级。</span></div></div>
     </div>
   </header>
 
   <main class="shell">
-<section id="overview" class="reveal"><div class="section-head"><div class="secno">01 / OVERVIEW</div><div><span class="kicker">Overview · Evidence · Nine metrics · Summary</span><h2>总览：九项指标、评价依据与改进汇总</h2><p class="lead">全篇按九项指标组织，每项一个章节。总览集中呈现评价口径、评分矩阵、历史规模、改进路线、治理框架与证据来源；测试与 CI/CD、构建与发布分别合并，保留原有事实与来源。</p></div></div>
+<section id="overview" class="reveal"><div class="section-head"><div class="secno">01 / OVERVIEW</div><div><span class="kicker">Overview · Evidence · Eight metrics · Summary</span><h2>总览：八项指标、评价依据与改进汇总</h2><p class="lead">全篇按八项指标组织，每项一个章节。总览集中呈现评价口径、评分矩阵、历史规模、改进路线、治理框架与证据来源；测试/CI-CD 与质量、构建与发布分别合并，保留原有事实与来源。</p></div></div>
 <div id="method" class="dimension-part">
       <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">评价口径与统一指标</h3><p class="lead">SD 技术事实于 2026-09-21 通过 GitCode CLI 在线读取，覆盖产品仓、测试仓、CI 仓、组织配置和 webhook；其他社区沿用原核验结论。规模与节奏数据更新于 2026-09-04，治理效率统一采用最近 50 个已关闭 Issue 与最近 50 个已合入 PR。所有评分都是基于下列可观察证据的分析判断，不是社区官方评级。</p>
       <div class="legend"><span><span class="tag fact">事实</span> 仓库/官方文档可直接验证</span><span><span class="tag sample">样本</span> 有窗口和样本量限制</span><span><span class="tag infer">推断</span> 从事实推导的分析</span><span><span class="tag target">目标</span> 建议 SLO，不是现状</span></div>
@@ -204,10 +204,10 @@
         <article class="card"><h3>对标集：两类社区，不能只排一个榜</h3><ul><li><b>通用推理/后端：</b>vLLM、vllm-ascend、SGLang、TensorRT-LLM。</li><li><b>多模态生成：</b>vLLM-Omni、Cache-DiT、LightX2V、FastVideo、DiffSynth-Studio。</li><li><b>审计对象：</b>MindIE-SD，既是 NPU 加速套件，又向多个上层社区提供后端能力。</li></ul></article>
         <article class="card"><h3>滚动效率样本的统一读法</h3><ul><li>所有项目均取最近更新的 50 个已关闭 Issue，计算创建→关闭的 p50/p90。</li><li>所有项目均取最近合入的 50 个 PR，计算创建→合入的 p50/p90；不再从 closed PR 中二次筛出小样本。</li><li>p50 描述典型体验，p90 暴露长尾；二者必须同时呈现。</li><li>它仍不等于首次响应；小时级低值也可能受维护者自合并或机器人影响。</li></ul></article>
       </div>
-      <details open><summary>评分规则（0–5）</summary><div><b>0</b> 未观察到资产；<b>1</b> 手工/零散；<b>2</b> 有基础入口但未形成门禁；<b>3</b> PR 级可重复且有文档；<b>4</b> PR/merge/nightly/release 多层闭环并可观测；<b>5</b> 元数据驱动、跨硬件、成本治理、自动恢复和公开运营机制均成熟。先将测试/CI/CD、构建/发布分别取原分数的算术平均，再对 9 项指标等权平均；规模只用于解释负载，不直接加分。效率数据仅进入“运营”维度，并且同时检查 p50/p90、开放积压、内外部差异和数据完整性，避免“关得快”被误当成整体成熟。</div></details>
+      <details open><summary>评分规则（0–5）</summary><div><b>0</b> 未观察到资产；<b>1</b> 手工/零散；<b>2</b> 有基础入口但未形成门禁；<b>3</b> PR 级可重复且有文档；<b>4</b> PR/merge/nightly/release 多层闭环并可观测；<b>5</b> 元数据驱动、跨硬件、成本治理、自动恢复和公开运营机制均成熟。先将测试/CI/CD 与质量、构建与发布分别取原分数的算术平均，再对 8 项指标等权平均；规模只用于解释负载，不直接加分。效率数据仅进入“运营”维度，并且同时检查 p50/p90、开放积压、内外部差异和数据完整性，避免“关得快”被误当成整体成熟。</div></details>
       <details><summary>提交快照：SD 已按最新 dev 复核，其他项目沿用原快照</summary><div><code>MindIE-SD dev 3bde8c32b472ca5bf7701fafe1e3747e4c6c39cc</code> · <code>vLLM 79bb395e</code> · <code>vllm-ascend 1a086ce8</code> · <code>SGLang 76d14018</code> · <code>TensorRT-LLM 958d651b</code> · <code>vLLM-Omni d150a4fd</code> · <code>Cache-DiT f86744a</code> · <code>LightX2V 08c0d480</code> · <code>FastVideo a837fe84</code> · <code>DiffSynth-Studio 72fb128e</code>。</div></details>
       <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">统一统计指标：定义、现状、目标与评分用途</h3>
-      <p class="lead" style="margin-bottom:18px">以下指标作为规模统计和 9 项指标评分的共同底座。关闭速度只能描述已关闭对象，不能替代首次响应、开放积压与贡献者体验。</p>
+      <p class="lead" style="margin-bottom:18px">以下指标作为规模统计和 8 项指标评分的共同底座。关闭速度只能描述已关闭对象，不能替代首次响应、开放积压与贡献者体验。</p>
       <div class="table-wrap"><table><thead><tr><th>指标与算法</th><th>当前可见值</th><th>建议起步线 / 报警</th><th>用于哪个评分维度</th><th>数据责任</th></tr></thead><tbody>
         <tr><td><span class="metric-name">Issue 响应与闭环</span><span class="metric-formula">首次人工响应；创建→关闭 p50/p90；reopen；类型拆分</span></td><td><span class="sample">闭环 1.32 / 27.55 天，n=50</span><span class="now">首次人工响应与 reopen 未知。</span></td><td>首响 p50≤1、p90≤3 工作日；无解释关闭=0</td><td>运营、治理</td><td>Community Lead；连续两周 p90 超标报警</td></tr>
         <tr><td><span class="metric-name">PR review 与合入</span><span class="metric-formula">首次有效 review；创建→merge p50/p90；内外部与规模拆分</span></td><td><span class="sample">合入 1.79 / 10.52 天，n=50</span><span class="now">首次 review 与内外部差异未知。</span></td><td>首 review p50≤1、p90≤2 工作日；合入 p50≤7、p90≤21 天</td><td>运营、治理</td><td>Contributor Experience；连续两周 p90 超标报警</td></tr>
@@ -222,41 +222,40 @@
     <div class="matrix-note"><b>2026-09-21 · SD 远端复核：</b>认证读取与匿名公开可见性分开：MindIE-CI 匿名 Contents API 返回 403，但当前账号 CLI 可读取，不能据 403 断言无资产。本报告不公开 webhook 密钥、完整回调标识或设备凭据。规模/关闭时长继续保留 2026-09-04 的历史窗口，未重算为当前指标。</div>
     </div>
 <div id="matrix" class="dimension-part">
-      <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">九项指标评分与证据</h3><p class="lead">旧版 SD 总分 3.0 与机器人 1.5 使用了过窄的仓内审计范围，已撤换。合并指标按原两项评分的算术平均计算，再对九项等权求均值；所有社区使用同一换算，其他社区未重新审计。当前逐项评价同时承认共享配置、外部流水线和脚本资产，并把“资产已存在”“已接入”“有运行结果”“持续可靠”分开；无法核验的运行覆盖不按不存在处理。</p>
+      <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">八项指标评分与证据</h3><p class="lead">旧版 SD 总分 3.0 与机器人 1.5 使用了过窄的仓内审计范围，已撤换。合并指标按原各项评分的算术平均计算（测试/CI-CD/质量三项、构建/发布两项），再对八项等权求均值；所有社区使用同一换算，其他社区未重新审计。当前逐项评价同时承认共享配置、外部流水线和脚本资产，并把“资产已存在”“已接入”“有运行结果”“持续可靠”分开；无法核验的运行覆盖不按不存在处理。</p>
       <div class="filterbar" aria-label="矩阵筛选"><button class="active" data-filter="all">全部</button><button data-filter="target">MindIE-SD</button><button data-filter="engine">通用引擎 / 后端</button><button data-filter="mm">多模态社区</button></div>
-      <div class="table-wrap"><table id="score-table"><thead><tr><th>项目</th><th>测试与 CI/CD</th><th>构建与发布</th><th>文档/DX</th><th>性能</th><th>质量</th><th>机器人</th><th>兼容性</th><th>治理</th><th>运营</th><th>均分</th></tr></thead><tbody>
-        <tr class="target-row" data-group="target"><td>MindIE-SD · 09-21</td><td class="heat h4">3.5</td><td class="heat h3">3.25</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h4">3.5</td><td class="heat h4">3.5</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h3">3.0</td><td class="avg">3.6</td></tr>
-        <tr data-group="engine"><td>vLLM</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="avg">4.6</td></tr>
-        <tr data-group="engine"><td>vllm-ascend</td><td class="heat h5">4.8</td><td class="heat h5">4.5</td><td class="heat h4">4.3</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.8</td><td class="heat h5">5.0</td><td class="heat h4">4.0</td><td class="heat h4">3.7</td><td class="avg">4.5</td></tr>
-        <tr data-group="engine"><td>SGLang</td><td class="heat h5">5.0</td><td class="heat h5">4.75</td><td class="heat h4">4.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="avg">4.5</td></tr>
-        <tr data-group="engine"><td>TensorRT-LLM</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h3">3.0</td><td class="avg">4.6</td></tr>
-        <tr data-group="mm"><td>vLLM-Omni</td><td class="heat h5">4.8</td><td class="heat h5">4.65</td><td class="heat h5">4.7</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h4">3.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="avg">4.4</td></tr>
-        <tr data-group="mm"><td>Cache-DiT</td><td class="heat h3">3.0</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h3">3.0</td><td class="heat h2">2.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">3.2</td></tr>
-        <tr data-group="mm"><td>LightX2V</td><td class="heat h2">1.5</td><td class="heat h2">2.25</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h3">2.5</td><td class="heat h1">1.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.7</td></tr>
-        <tr data-group="mm"><td>FastVideo</td><td class="heat h4">4.25</td><td class="heat h4">4.25</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h3">2.5</td><td class="avg">3.8</td></tr>
-        <tr data-group="mm"><td>DiffSynth-Studio</td><td class="heat h2">1.5</td><td class="heat h3">2.75</td><td class="heat h4">4.0</td><td class="heat h3">3.0</td><td class="heat h2">1.5</td><td class="heat h1">1.0</td><td class="heat h5">4.5</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.5</td></tr>
+      <div class="table-wrap"><table id="score-table"><thead><tr><th>项目</th><th>测试/CI-CD/质量</th><th>构建与发布</th><th>文档/DX</th><th>性能</th><th>机器人</th><th>兼容性</th><th>治理</th><th>运营</th><th>均分</th></tr></thead><tbody>
+        <tr class="target-row" data-group="target"><td>MindIE-SD · 09-21</td><td class="heat h4">3.5</td><td class="heat h3">3.25</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h4">3.5</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h3">3.0</td><td class="avg">3.6</td></tr>
+        <tr data-group="engine"><td>vLLM</td><td class="heat h5">4.75</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="avg">4.5</td></tr>
+        <tr data-group="engine"><td>vllm-ascend</td><td class="heat h5">4.65</td><td class="heat h5">4.5</td><td class="heat h4">4.3</td><td class="heat h5">4.5</td><td class="heat h5">4.8</td><td class="heat h5">5.0</td><td class="heat h4">4.0</td><td class="heat h4">3.7</td><td class="avg">4.4</td></tr>
+        <tr data-group="engine"><td>SGLang</td><td class="heat h5">4.75</td><td class="heat h5">4.75</td><td class="heat h4">4.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="avg">4.5</td></tr>
+        <tr data-group="engine"><td>TensorRT-LLM</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">4.5</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h3">3.0</td><td class="avg">4.5</td></tr>
+        <tr data-group="mm"><td>vLLM-Omni</td><td class="heat h5">4.65</td><td class="heat h5">4.65</td><td class="heat h5">4.7</td><td class="heat h5">5.0</td><td class="heat h4">3.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="avg">4.4</td></tr>
+        <tr data-group="mm"><td>Cache-DiT</td><td class="heat h3">3.0</td><td class="heat h4">3.5</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h2">2.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">3.2</td></tr>
+        <tr data-group="mm"><td>LightX2V</td><td class="heat h2">2.0</td><td class="heat h2">2.25</td><td class="heat h4">4.0</td><td class="heat h5">4.5</td><td class="heat h1">1.0</td><td class="heat h4">4.0</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.8</td></tr>
+        <tr data-group="mm"><td>FastVideo</td><td class="heat h4">4.13</td><td class="heat h4">4.25</td><td class="heat h5">4.5</td><td class="heat h5">4.5</td><td class="heat h4">4.0</td><td class="heat h4">4.0</td><td class="heat h3">2.5</td><td class="heat h3">2.5</td><td class="avg">3.8</td></tr>
+        <tr data-group="mm"><td>DiffSynth-Studio</td><td class="heat h2">1.5</td><td class="heat h3">2.75</td><td class="heat h4">4.0</td><td class="heat h3">3.0</td><td class="heat h1">1.0</td><td class="heat h5">4.5</td><td class="heat h2">1.5</td><td class="heat h3">3.0</td><td class="avg">2.7</td></tr>
       </tbody></table></div>
-      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">MindIE-SD：九个维度逐项为什么这样打</h3>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">MindIE-SD：八个维度逐项为什么这样打</h3>
       <div class="table-wrap"><table><thead><tr><th>维度</th><th>分数</th><th>已观察到的得分依据</th><th>未到下一档的原因</th></tr></thead><tbody>
-        <tr><td><b>测试与 CI/CD</b></td><td class="heat h4">3.5</td><td>CPU/NPU 入口、增量发现；pytest-infra 有 SD 模型 E2E 与性能断言。<br>12 个启用 webhook、PR 阶段回传、组织合入标签规则、外部手动/定时测试。</td><td>外部调度已知；近期覆盖、长稳和最新 SD SHA 绑定待运行报告核验。<br>各 webhook 与具体任务的完整映射、夜间版本与公开结果入口待补。</td></tr>
+        <tr><td><b>测试 / CI-CD / 质量</b></td><td class="heat h4">3.5</td><td>CPU/NPU 入口、增量发现；pytest-infra 有 SD 模型 E2E 与性能断言。<br>12 个启用 webhook、PR 阶段回传、组织合入标签规则、外部手动/定时测试。<br>Ruff、Pylint、Bandit、拼写、C/C++ 工具、SCA/恶意扫描；覆盖率脚本与报告。</td><td>外部调度已知；近期覆盖、长稳和最新 SD SHA 绑定待运行报告核验。<br>各 webhook 与具体任务的完整映射、夜间版本与公开结果入口待补。<br>覆盖率脚本（行 60%/分支 30%）确实存在，但全仓检索仅文档提及、无任何 workflow 或脚本调用，未接入 PR 流水线；UT 以删去脚本末行（pytest 阶段）后 <code>grep OK</code> 判定，存在误判风险。</td></tr>
         <tr><td><b>构建与发布</b></td><td class="heat h4">3.25</td><td>PR lane、SWR 镜像、ccache 下载/统计/OBS 上传；MindIE-CI 有 SD 构建及产物路径。<br>4 tags / 3 releases；MindIE-CI 有构建、OBS 路径与打包资产。</td><td>复用 job 已核实固定 <code>arm</code> 标签、<code>runs_on_arch</code> 未参与调度，x86 lane 名与实际架构需按运行记录核对；时长分布与命中率未统计。<br>正式发布由谁触发、是否晋升同一产物、签名/回滚与日历仍未核验。</td></tr>
         <tr><td><b>文档 / DX</b></td><td class="heat h4">4.0</td><td>人工双语、组织格式/链检、Sphinx/RTD 成功构建、latest/stable。</td><td>PR 构建门禁和编号版本发布尚待完善。</td></tr>
         
         <tr><td><b>性能</b></td><td class="heat h4">4.0</td><td>pytest-infra 有基线与阈值断言；远端 perf-gate 有同窗 A/B 和噪声判据。</td><td>不能据脚本推断 nightly 持续通过；跨版本趋势和环境指纹覆盖未核验。</td></tr>
-        <tr><td><b>质量</b></td><td class="heat h4">3.5</td><td>Ruff、Pylint、Bandit、拼写、C/C++ 工具、SCA/恶意扫描；覆盖率脚本与报告。</td><td>覆盖率脚本（行 60%/分支 30%）确实存在，但全仓检索仅文档提及、无任何 workflow 或脚本调用，未接入 PR 流水线；UT 以删去脚本末行（pytest 阶段）后 <code>grep OK</code> 判定，存在误判风险。</td></tr>
         
         <tr><td><b>机器人</b></td><td class="heat h4">3.5</td><td>欢迎、审批进度、CI 状态/标签、合入规则；CI 仓有授权与停止旧任务脚本。</td><td>脚本的具体生产接线与命令支持范围待核验；统一失败历史未汇总。</td></tr>
         <tr><td><b>兼容性</b></td><td class="heat h4">3.5</td><td>支持矩阵及模型/硬件测试选择已有，pytest-infra 按 P0 与环境模板选测。</td><td>文档每项声明与用例、运行版本、最近通过记录的映射待建立或公开。</td></tr>
         <tr><td><b>治理</b></td><td class="heat h4">4.0</td><td>contributing.md 已规定 dev、PR 行数、评审闭环，引用晋升/退出规则。</td><td>规则执行历史与细粒度模块职责需量化；不能再说没有成长路径。</td></tr>
         <tr><td><b>运营</b></td><td class="heat h4">3.0</td><td>公开 Issue/SIG 入口、组织 triage/owner 流程，原窗口闭环样本可参考。</td><td>首响、留存、分诊覆盖与轮值执行尚未统计，不能用旧窗口说明当下速度。</td></tr>
       </tbody></table></div>
-      <div class="matrix-note"><b>九项指标：</b>测试与 CI/CD → 第 02 章；构建与发布 → 第 03 章；文档/DX → 第 04 章；性能 → 第 05 章；质量 → 第 06 章；机器人 → 第 07 章；兼容性 → 第 08 章；治理 → 第 09 章；运营 → 第 10 章。口径、评分、规模、汇总路线与来源统一放在第 01 章总览。</div>
+      <div class="matrix-note"><b>八项指标：</b>测试/CI-CD/质量 → 第 02 章；构建与发布 → 第 03 章；文档/DX → 第 04 章；性能 → 第 05 章；机器人 → 第 06 章；兼容性 → 第 07 章；治理 → 第 08 章；运营 → 第 09 章。口径、评分、规模、汇总路线与来源统一放在第 01 章总览。</div>
       <div class="legend"><span class="h5">4.5–5 领先</span><span class="h4">3.5–4.4 成熟</span><span class="h3">2.5–3.4 成型</span><span class="h2">1.5–2.4 初级</span><span class="h1">0.5–1.4 零散</span></div>
       <div class="callout light"><strong>对标选择：</strong>测试与硬件治理优先学 SGLang / vllm-ascend / TensorRT-LLM；多模态分层和性能/质量分离优先学 vLLM-Omni；轻量发布与文档体验可参考 Cache-DiT；FastVideo 说明专业多模态社区也能建立较完整 CI，而不是只有通用引擎才做得到。</div>
     </div>
 <div id="landscape" class="dimension-part">
       <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">历史规模与协作节奏</h3><p class="lead">先打分，再回看规模与节奏：Star、fork 和关闭速度只描述社区负载，不解释机制好坏，因此放在评分之后作为背景。下表统一使用 n=50，并同时给出 p50/p90；大项目的长尾和小项目的分钟级合入都需要结合开放积压、作者类型与自动化程度解释。</p>
-      <div class="metrics"><div class="metric"><b>3.6</b><small>9 项指标等权均分<br>32.25 ÷ 9 ≈ 3.583</small></div><div class="metric"><b>50+50</b><small>Issue / PR 滚动样本<br>同时报告 p50 与 p90</small></div><div class="metric"><b>3</b><small>公开 GitCode workflow<br>PR 主流程 + 构建复用 + UT 复用</small></div><div class="metric"><b>84</b><small>原审计 test-like 文件<br>历史计数，非当前用例数</small></div><div class="metric"><b>132</b><small>open issues + PRs<br>2026-09-04 公开快照</small></div></div>
+      <div class="metrics"><div class="metric"><b>3.6</b><small>8 项指标等权均分<br>28.75 ÷ 8 ≈ 3.594</small></div><div class="metric"><b>50+50</b><small>Issue / PR 滚动样本<br>同时报告 p50 与 p90</small></div><div class="metric"><b>3</b><small>公开 GitCode workflow<br>PR 主流程 + 构建复用 + UT 复用</small></div><div class="metric"><b>84</b><small>原审计 test-like 文件<br>历史计数，非当前用例数</small></div><div class="metric"><b>132</b><small>open issues + PRs<br>2026-09-04 公开快照</small></div></div>
       <div class="table-wrap"><table><thead><tr><th>项目</th><th>类型</th><th>Stars</th><th>Forks</th><th>Open issue+PR</th><th>Issue 关闭 p50 / p90</th><th>PR 合入 p50 / p90</th><th>样本</th></tr></thead><tbody>
         <tr class="target-row" data-group="target"><td>MindIE-SD</td><td>NPU 多模态后端</td><td>87</td><td>136</td><td>132（111+21）</td><td>1.32 / 27.55 天</td><td>1.79 / 10.52 天</td><td>GitCode 50 / 50</td></tr>        <tr data-group="engine"><td>vLLM</td><td>通用引擎</td><td>90,931</td><td>21,676</td><td>7,500</td><td>37.04 / 186.47 天</td><td>1.80 / 23.54 天</td><td>GitHub 50 / 50</td></tr>
         <tr data-group="engine"><td>vllm-ascend</td><td>NPU 插件</td><td>2,753</td><td>2,191</td><td>2,941</td><td>13.31 / 37.60 天</td><td>0.50 / 7.45 天</td><td>GitHub 50 / 50</td></tr>
@@ -277,7 +276,7 @@
         <article class="phase"><span class="week">WEEK 0–2 / INVENTORY</span><h3>把存量变成资产</h3><ul><li>盘点已有 marker/环境模板，补硬件、模型、层级与预计耗时映射</li><li>优先验证 UT 退出码、覆盖率接线、构建架构；补阶段 duration</li><li>建立 skipped/flaky/compatibility 债务表</li><li>为 ops/compile/quant/cache/docs 划 owner</li></ul><span class="exit">EXIT → 可回答“跑什么、在哪跑、多久、谁负责”</span></article>
         <article class="phase"><span class="week">WEEK 3–5 / CLOSE THE LOOP</span><h3>核验现有 merge/nightly 并补结果索引</h3><ul><li>merge smoke：单 NPU + 减层模型</li><li>nightly：功能、精度、性能三条流</li><li>artifact 复用与 diff-aware 路由</li><li>失败自动建/关联 Issue，禁止裸 skip</li></ul><span class="exit">EXIT → 每个支持矩阵 ✅ 有 last-green</span></article>
         <article class="phase"><span class="week">WEEK 6–8 / RELEASE</span><h3>版本成为可重复事件</h3><ul><li>发布 checklist、RC 窗口与 release team</li><li>同一 artifact 提升到 PyPI/镜像</li><li>SBOM、签名、provenance、回滚演练</li><li>兼容窗口与弃用政策</li></ul><span class="exit">EXIT → 从 tag 到可验证产物 ≤ 60m</span></article>
-        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>先核验已有补跑、取消与标签服务，再补缺少的分层入口及 nightly Issue 关联</li><li>核验既有 welcome；按政策补 stale/backport（第 07 章命令面）</li><li>落实既有晋升机制 + 按模块细化组织职责</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日；分诊覆盖 ≥90%</span></article>
+        <article class="phase"><span class="week">WEEK 9–12 / COMMUNITY</span><h3>把维护者从人工路由中释放</h3><ul><li>先核验已有补跑、取消与标签服务，再补缺少的分层入口及 nightly Issue 关联</li><li>核验既有 welcome；按政策补 stale/backport（第 06 章命令面）</li><li>落实既有晋升机制 + 按模块细化组织职责</li><li>每周 triage + 月度公开健康报告</li><li>微信群决策/FAQ 回流公共渠道</li></ul><span class="exit">EXIT → 外部 PR 首 review p90 ≤ 2 工作日；分诊覆盖 ≥90%</span></article>
       </div>
       <div class="callout light"><strong>指标承接：</strong>本路线的 Owner、目标与报警条件已统一前置到第 01 章指标表；这里仅保留实施顺序和每阶段退出条件，避免路线图再定义一套口径。</div>
       <div class="callout"><strong>优先级排序：</strong>P0 是确认 webhook→任务映射、修复 UT 退出码、验证架构路由、覆盖率拦截及 nightly 版本/报告索引；P1 是在现有缓存、发布脚本、分诊和审批服务上补运行观测、失败处理与模块责任；P2 再按需求扩展 backport、发布晋升和成本治理。已有 SIG 与晋升制度继续沿用。</div>
@@ -285,7 +284,7 @@
 <div id="books" class="dimension-part">
       <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">治理框架与汇总验收标准</h3><p class="lead">经典开源治理不是写一份章程，而是稳定地执行公开 triage、贡献者晋升、模块 ownership、发布轮值、决策留痕和健康度复盘。本章沿用第 01 章的统一指标，只解释各框架要求什么机制以及 MindIE-SD 的现实缺口。</p>
       <div class="classic-summary">
-        <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>社区 SIG 配置给出 Reviewer / Committer / Branch keeper 角色与受保护分支（角色名单与职责由在线社区 SIG 与组织机器人配置维护，见第 07/09 章）；贡献指南、PR 模板和 CPU UT 路径齐备。</small></div>
+        <div class="classic-stat"><b>已建立 / FACT</b><strong>角色与入口可见</strong><small>社区 SIG 配置给出 Reviewer / Committer / Branch keeper 角色与受保护分支（角色名单与职责由在线社区 SIG 与组织机器人配置维护，见第 06/08 章）；贡献指南、PR 模板和 CPU UT 路径齐备。</small></div>
         <div class="classic-stat"><b>统一样本 / SAMPLE</b><strong>典型值快，长尾可见</strong><small>截至 2026-09-04，Issue 关闭 p50/p90 为 1.32/27.55 天；PR 合入为 1.79/10.52 天；两者均 n=50。</small></div>
         <div class="classic-stat"><b>关键未知 / NOT OBSERVED</b><strong>响应与可持续性不可见</strong><small>首次人工响应、外部 PR 首 review、积压年龄 p90、reviewer 集中度、贡献者留存和晋升数据未公开。</small></div>
         <div class="classic-stat"><b>90 天目标 / TARGET</b><strong>从“名单”走向“运行系统”</strong><small>固定运营节奏、分目录 OWNERS、贡献者阶梯、月度健康看板、公开 RFC/发布记录和可追责指标。</small></div>
@@ -311,7 +310,7 @@
       <div class="book"><div class="book-index">07 / TODO Group<br>OSPO</div><div><h3>衡量“上游影响”，而不只衡量下游代码量</h3><span class="lens">Outbound OSS</span><span class="lens">Upstream first</span><span class="lens">维护成本</span><p>MindIE-SD 的生态价值应包括：向 vLLM-Omni、Cache-DiT、LightX2V 等上游合入的 NPU 能力、被接受的接口设计、减少的 downstream patch、版本同步时延和跨社区维护者数量。OSPO 应帮助团队获得跨项目贡献时间和晋升认可，而不是只要求仓库内 commit。</p></div></div>
     </div>
 <div id="sources" class="dimension-part">
-      <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">来源、快照与证据边界</h3><p class="lead">原技术证据核验于 2026-08-29，规模与节奏刷新于 2026-09-04，其他社区机器人资产快照为 2026-09-11；SD 已于 2026-09-21 复核；测试与 CI/CD 维度的 E2E/nightly、Ascend 同平台源码与 GitCode 平台差异补查于 2026-09-20，并修正第 07 章的兼容性判断；同日另补查 nightly 的开发者可感知链路（pytest-infra 测试基建、GitCode 运行结果入口、Actions 触发与回写 API）。新增证据直接链接在测试与 CI/CD 维度各行；分支链接可能继续变化。SD 于 2026-09-21 另读取认证 webhook、跨仓脚本和 PR 回传；未执行真实 NPU 测试或核验全部外部日志，不把仓内配置等同于持续成功运行。</p>
+      <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">来源、快照与证据边界</h3><p class="lead">原技术证据核验于 2026-08-29，规模与节奏刷新于 2026-09-04，其他社区机器人资产快照为 2026-09-11；SD 已于 2026-09-21 复核；测试与 CI/CD 维度的 E2E/nightly、Ascend 同平台源码与 GitCode 平台差异补查于 2026-09-20，并修正第 06 章的兼容性判断；同日另补查 nightly 的开发者可感知链路（pytest-infra 测试基建、GitCode 运行结果入口、Actions 触发与回写 API）。新增证据直接链接在测试与 CI/CD 维度各行；分支链接可能继续变化。SD 于 2026-09-21 另读取认证 webhook、跨仓脚本和 PR 回传；未执行真实 NPU 测试或核验全部外部日志，不把仓内配置等同于持续成功运行。</p>
       <div class="callout light"><strong>本次审计边界与快照：</strong>2026-09-21 在线读取 GitCode 并按最新提交复核，SD 默认 dev：<code>3bde8c32b472ca5bf7701fafe1e3747e4c6c39cc</code>；MindIE-CI master：<code>49b23f22acd5073d224cbde078ada6ff7d32e4bb</code>（未变）；pytest-infra main：<code>2e829c3933d239c6b83b7e84d77158a5aa51f9a9</code>。核验源码、认证配置及样本回传，未实际执行 NPU 用例、修改 webhook 或触发流水线。下方分支链接会变化，可用这些 SHA 定位本次版本。认证可读内容不自动等于匿名公开可读。</div>
 <h3>MindIE-SD 一手证据</h3>
       <div class="source-grid">
@@ -410,7 +409,7 @@
     </div>
 </section>
 
-<section id="testing-cicd" class="reveal"><div class="section-head"><div class="secno">02 / DIMENSION 01</div><div><span class="kicker">指标 01 / 09</span><h2>测试与 CI/CD</h2><p class="lead">从用例分层、E2E 与性能断言，到机器、webhook、流水线调度、nightly 回传和失败处理，统一检查测试是否形成可靠闭环。</p></div></div>
+<section id="testing-cicd" class="reveal"><div class="section-head"><div class="secno">02 / DIMENSION 01</div><div><span class="kicker">指标 01 / 08</span><h2>测试、CI/CD 与质量</h2><p class="lead">从用例分层、E2E 与性能断言，到机器、webhook、流水线调度、nightly 回传与失败处理，再到静态检查、覆盖率门禁、失败分类和豁免债务，统一检查测试与质量是否形成可靠闭环。</p></div></div>
 <div id="testing" class="dimension-part">
       <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">测试资产跨产品仓与测试仓，需核验执行覆盖和判定可靠性</h3><p class="lead">最新 SD 仓有 CPU/NPU 分类、UT/算子测试与增量发现；pytest-infra 的 testcase/mindie/sd 已含 Flux、HunyuanVideo、OpenSora、Qwen-Image-Edit、Wan2.2。用户确认由外部平台手动/定时执行；不能将这些用例遗漏，也不能由用例存在推断全部模型、版本与 nightly 已持续通过。下方 L0–L4 是报告建议分层，Omni L1–L5 是另一套对标语义。</p>
       <div class="pipeline"><div class="stage"><i>L0 / CPU</i><b>逻辑 UT</b><span>配置、工具、编译逻辑；硬件 mock；每 PR 必跑。</span></div><div class="stage"><i>L1 / 1 NPU</i><b>算子/组件</b><span>真实 NPU 算子，小输入，不起完整模型服务。</span></div><div class="stage"><i>L2 / 1 NPU</i><b>模型 E2E</b><span>减层/随机权重；单模型基本推理、API、输出结构。</span></div><div class="stage"><i>L3 / 2–8 NPU</i><b>集成/兼容</b><span>并行、量化、缓存、编译、框架组合，merge 后运行。</span></div><div class="stage"><i>L4 / POOL</i><b>精度/性能/长稳</b><span>真实权重，nightly/weekly/release；基线与方差带。</span></div></div>
@@ -623,12 +622,28 @@
       </tbody></table></div>
       <div class="grid3" style="margin-top:16px"><article class="card good"><span class="tag target">第一步 / 平台验收</span><h3>用便宜的任务验证语义</h3><p>先确认 PR 更新、主干 push、cron 时区与 ref、workflow_call、artifact 往返和失败收尾；以受控失败验证服务端拦截。记录真实运行链接，再开放 NPU 池。</p></article><article class="card warn"><span class="tag target">第二步 / E2E 最小闭环</span><h3>一个真实链路先稳定</h3><p>选支持矩阵中的一个代表模型和一组硬件，统一 run_e2e 入口、manifest 和报告契约。注入一个必然失败的断言，验证失败能传到最终检查，杜绝日志报错但流水线绿灯。</p></article><article class="card risk"><span class="tag target">第三步 / Nightly 扩面</span><h3>覆盖可计数，红灯有归属</h3><p>采用固定分片起步；增加实际用例后再扩容。记录 scheduled/executed/passed/failed/skipped/missing、队列与执行时长、环境版本和 owner。未建立稳定性能基线前，性能先报告再设阻断阈值。</p></article></div>
       <div class="callout"><strong>可执行的选择：</strong>测试策略优先参考 vllm-ascend / vLLM-Omni，GitCode 编排优先参考 op-plugin / Ascend/pytorch，NPU 模型系统测试入口参考 MindSpeed / MindSpeed-MM。最先完成的是“盘点现有调用链 + 失败判定验收 + nightly 版本/报告索引”，而不是先引入完整 GitHub 机器人体系。</div>
-      <div class="callout light"><strong>与治理章的衔接：</strong>CI/CD 提供能力，<strong>分支保护与合入契约</strong>才决定这些能力是否真的拦得住代码——具体门禁规则（目标分支、有效变更量、评审闭环、必需检查）见第 09 章“外部贡献要求：把它写成可验证的合入契约”。</div>
+      <div class="callout light"><strong>与治理章的衔接：</strong>CI/CD 提供能力，<strong>分支保护与合入契约</strong>才决定这些能力是否真的拦得住代码——具体门禁规则（目标分支、有效变更量、评审闭环、必需检查）见第 08 章“外部贡献要求：把它写成可验证的合入契约”。</div>
     <div class="matrix-note"><b>2026-09-21 · SD 远端复核：</b>当前优先方案是保留 pytest-infra、MindIE-CI、现有机器与平台调度，补任务清单、精确 SD/test/CI SHA 和报告索引。迁入本仓 schedule 是可选方案，不是开发者看见结果的必要条件。</div>
+      <h3 id="quality" style="font:700 2rem/1.1 var(--serif);margin-top:48px">质量：静态检查之外的覆盖率、失败分类与豁免债务</h3>
+      <p class="lead">最新配置含 Ruff、Pylint、Bandit、codespell/typos、C/C++ 格式检查、gitleaks 及组织文档检查；跨仓 CI 有 CodeCheck、SCA 和恶意代码扫描。覆盖率工具与 60% 行/30% 分支阈值脚本存在，但不能仅凭脚本存在宣称必需门禁已启用。全局失败分类、豁免台账和趋势是否由外部平台提供，本次未证实。</p>
+      <div class="grid3">
+        <article class="card good"><span class="tag fact">QUALITY / 3.5</span><h3>增量覆盖脚本存在，未接入流水线</h3><p><code>tests/scripts/check_coverage.py</code> 定义新增文件 60% 行覆盖与 30% 分支覆盖，<code>docs/zh/developer_guide/test.md</code> 称其“用于在 CI 中校验”；但按 dev 最新提交全仓检索（1655 个文件）仅这两处文档提及，3 个 workflow 与 UT/增量测试脚本均未调用它，<code>.coveragerc</code> 也没有 <code>fail_under</code>。结论：报告生成与阈值脚本都存在，合入拦截未接线。</p></article>
+        <article class="card warn"><span class="tag fact">分类 / 待核验</span><h3>统一失败分类覆盖待核验</h3><p>环境失败、用例 flaky、真回归在日志里长得不一样，外部平台的归类与关联规则尚未取得，不应断言所有失败均无分类。</p></article>
+        <article class="card risk"><span class="tag fact">债务 / 待核验</span><h3>核对豁免与责任人覆盖</h3><p>skip、xfail、waive 一旦没有 owner、Issue 与到期日，就会永久沉积。TensorRT-LLM 的“waive 必带 bug 链接”是可直接抄的最小制度。</p></article>
+      </div>
+      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：静态检查之外的四种能力</h3>
+      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend / SGLang</th><th>PyTorch</th><th>Kubernetes</th></tr></thead><tbody>
+        <tr class="target-row"><td>静态检查与格式</td><td class="yes">Ruff / Pylint / Bandit / 拼写 / clang / markdownlint / gitleaks / pre-commit</td><td class="yes">同等工具链 + pre-commit 缓存</td><td class="yes">Lint 作为合入必需检查</td><td class="yes">verify / golint 类检查</td></tr>
+        <tr class="target-row"><td>覆盖率策略</td><td>生成 coverage 报告；新增文件 60%/30% 阈值脚本存在，但无任何调用链，未强制</td><td class="yes">SGLang <code>ci-coverage-overview.yml</code> 覆盖概览</td><td class="partial">有覆盖率工具，无硬门槛</td><td class="partial">覆盖率不作门禁</td></tr>
+        <tr class="target-row"><td>失败分类与 flaky</td><td>跨仓检查有状态查询/报告；统一 flaky 分类与台账待核验</td><td class="yes">vllm-ascend <code>matchers/</code>；SGLang failure monitor + auto bisect</td><td class="yes">Dr. CI 评论 + HUD 日志分类 + 按历史 flaky 数据限流重跑</td><td class="yes">零 flake 政策 + quarantine（<code>[Flaky]</code> 命名 + <code>kind/flake</code> 标签）</td></tr>
+        <tr class="target-row"><td>豁免与债务治理</td><td>本次未取得统一台账，不能推断外部平台没有</td><td class="partial">以标签与 issue 记录</td><td class="yes">禁用测试必须带 Issue，未授权请求会被自动关闭</td><td class="yes">quarantine 用例必须挂 Issue 与 frozen 标签</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>这个维度的下一档不是“更多检查”，而是“更可信的红灯”。</strong>先做两件小事：给测试文件加 <code>owner</code> 与 <code>disabled_issue</code> 字段（skip 必须有债主），再落一个日志 matcher 把环境失败、flaky 与真回归分开。等这两件事稳定，覆盖率趋势与复杂度看板才有意义——否则只是又多了一块没人看的仪表盘。</div>
+    <div class="matrix-note"><b>2026-09-21 · SD 远端复核：</b><a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/.gitcode/workflows/ut_job.yml">UT job</a>删去 run_UT_test.sh 最后一行后执行，并用 grep OK 判断；<a href="https://gitcode.com/Ascend/MindIE-CI/blob/master/build/DT/mindie_sd_dt.sh">跨仓 SD DT</a>也有类似逻辑。<a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/tests/run_UT_test.sh">被调脚本</a>使用 tee 且未设置 pipefail。存在上游失败被掩盖或日志片段误判的风险，尚未通过故障注入验证；建议透传测试退出码、保留完整 pytest 阶段，并验证阈值失败确实阻止合入。</div>
     </div>
 </section>
 
-<section id="build-release" class="reveal"><div class="section-head"><div class="secno">03 / DIMENSION 02</div><div><span class="kicker">指标 02 / 09</span><h2>构建与发布</h2><p class="lead">从编译、缓存、架构路由和构建产物，到版本发布、产物晋升与回滚，统一审视软件交付链路。</p></div></div>
+<section id="build-release" class="reveal"><div class="section-head"><div class="secno">03 / DIMENSION 02</div><div><span class="kicker">指标 02 / 08</span><h2>构建与发布</h2><p class="lead">从编译、缓存、架构路由和构建产物，到版本发布、产物晋升与回滚，统一审视软件交付链路。</p></div></div>
 <div id="build" class="dimension-part">
       <h3 style="font:700 2rem/1.2 var(--serif);margin-top:36px">构建已有 ccache 与跨仓产物管理，需核对架构路由和运行数据</h3><p class="lead">最新 build_job.yml 已配置 ccache、远端缓存下载、源码变更判断、缓存统计和 OBS 上传；MindIE-CI 也有 SD 编译及按 PR/ABI/架构组织的 wheel 路径。原“没有缓存、只验证 wheel 存在”结论不成立。另需注意：主流程虽命名 x86/ARM 三条 lane，最新 build_job 与 ut_job 的 runs-on 均固定为 self-hosted/default/arm/cpu=30；仅凭 lane 名不能宣称实际 x86 构建已成功。</p>
       <div class="scoreboard"><div class="score-panel"><div class="n">N/A</div><h3 style="color:#fff">公开可验证的完整构建时长</h3><p>仓库与公开页面没有给出可复用的 p50/p95 构建时长；本地非 CANN/NPU Windows 环境也不能等价复现。这里明确标记未知，不用一次非同构机器的测速冒充 CI 基线。</p><span class="tag target">必须补观测</span></div><div class="gaps"><div class="gap"><b>已具备</b><span>3 个命名 lane、固定 Python 镜像、docs-only skip、ccache/OBS；lane 名与实际硬件需核对。</span></div><div class="gap"><b>缺观测</b><span>阶段耗时、队列时间、冷/热构建、缓存命中、产物大小、失败归因、NPU·小时/runner·分钟。</span></div><div class="gap"><b>缺加速</b><span>已见 ccache 与 OBS 缓存；缓存命中率、失效策略效果和跨任务复用范围需读取运行记录。</span></div><div class="gap"><b>缺发布链</b><span>已有 wheel/缓存产物处理；正式发布、签名及回滚的完整执行链待核验。</span></div></div></div>
@@ -676,7 +691,7 @@
 </section>
 
 <section id="docs" class="reveal">
-      <div class="section-head"><div class="secno">04 / DIMENSION 03</div><div><span class="kicker">指标 03 / 09</span><h2>文档与开发者体验</h2><p class="lead">MindIE-SD 已接入组织级格式、标签闭合、链接有效性与资源存在性检查；人工维护中英文有利于准确表达术语、参数和限制条件，是质量优势。文档构建也已存在：仓内 Sphinx/ReadTheDocs 配置与平台成功记录均可核验。需要补证或完善的是 <b>PR 构建门禁、示例执行、站点更新时效及按发行版本长期保留文档</b>，不能再写成“没有文档 CI”或“没有文档构建”。</p></div></div>
+      <div class="section-head"><div class="secno">04 / DIMENSION 03</div><div><span class="kicker">指标 03 / 08</span><h2>文档与开发者体验</h2><p class="lead">MindIE-SD 已接入组织级格式、标签闭合、链接有效性与资源存在性检查；人工维护中英文有利于准确表达术语、参数和限制条件，是质量优势。文档构建也已存在：仓内 Sphinx/ReadTheDocs 配置与平台成功记录均可核验。需要补证或完善的是 <b>PR 构建门禁、示例执行、站点更新时效及按发行版本长期保留文档</b>，不能再写成“没有文档 CI”或“没有文档构建”。</p></div></div>
       <div class="grid4">
         <article class="card good"><span class="tag fact">DOCS / 4.0</span><h3>人工双语保障表达准确</h3><p>中英文分别维护和人工审校，便于核对技术语义、限制条件与示例。评价重点是准确性和同步性，不因未使用自动翻译扣分；自动化宜用于提醒漏同步、检查结构和链接。</p></article>
         <article class="card good"><span class="tag fact">DEV ENV / 3.5</span><h3>开发环境开箱可用</h3><p><code>.devcontainer/</code>、固定 CANN/Torch 版本镜像、A2/A3 说明与支持矩阵，让外部开发者能在无 NPU 环境先跑通 CPU 路径。</p></article>
@@ -703,7 +718,7 @@
     </section>
 
 <section id="performance" class="reveal">
-      <div class="section-head"><div class="secno">05 / DIMENSION 04</div><div><span class="kicker">指标 04 / 09</span><h2>性能</h2><p class="lead">SD 的性能能力包括算子 benchmark、生成质量 evals、远端 perf-gate 的同窗 A/B 与噪声判据，以及 pytest-infra 的模型性能阈值断言。原“没有基线、没有方差判据、没有任何性能门禁”错误。应区分开发期验收、自动化用例和实际夜间运行；尚未取得覆盖全部支持组合的历史曲线及固定 SD 版本的运行报告。</p></div></div>
+      <div class="section-head"><div class="secno">05 / DIMENSION 04</div><div><span class="kicker">指标 04 / 08</span><h2>性能</h2><p class="lead">SD 的性能能力包括算子 benchmark、生成质量 evals、远端 perf-gate 的同窗 A/B 与噪声判据，以及 pytest-infra 的模型性能阈值断言。原“没有基线、没有方差判据、没有任何性能门禁”错误。应区分开发期验收、自动化用例和实际夜间运行；尚未取得覆盖全部支持组合的历史曲线及固定 SD 版本的运行报告。</p></div></div>
       <div class="grid4">
         <article class="card good"><span class="tag fact">PERF / 4.0</span><h3>优化能力是强项</h3><p>算子与模型级加速资产、量化与缓存路径、profiling 指南齐备，说明团队具备把性能做上去的能力。</p></article>
         <article class="card warn"><span class="tag fact">观测 / 待核验</span><h3>历史曲线入口待核验</h3><p>本次未取得按 SD 提交汇总的吞吐/时延历史入口；外部平台是否已经留存及如何开放，需要读取报告目录与任务配置。</p></article>
@@ -722,26 +737,9 @@
     <div class="matrix-note"><b>2026-09-21 · SD 远端复核：</b><a href="https://gitcode.com/AscendTest/pytest-infra/blob/main/lib/mindie/service/mindie_sd_deployer.py">verify_results</a>断言 result ≤ metric × threshold，默认 1.05；已读 Flux/Wan 用例显式传 1.0，不能统一写成允许退化 5%。<a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/.agents/skills/perf-gate/SKILL.md">perf-gate</a>是开发期验收规范，不是平台定时任务；<a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/evals/README.md">evals</a>已有质量门与基线指针约定，不等于每次运行产物公开入库。</div>
     </section>
 
-<section id="quality" class="reveal">
-      <div class="section-head"><div class="secno">06 / DIMENSION 05</div><div><span class="kicker">指标 05 / 09</span><h2>质量</h2><p class="lead">最新配置含 Ruff、Pylint、Bandit、codespell/typos、C/C++ 格式检查、gitleaks 及组织文档检查；跨仓 CI 有 CodeCheck、SCA 和恶意代码扫描。覆盖率工具与 60% 行/30% 分支阈值脚本存在，但不能仅凭脚本存在宣称必需门禁已启用。全局失败分类、豁免台账和趋势是否由外部平台提供，本次未证实。</p></div></div>
-      <div class="grid3">
-        <article class="card good"><span class="tag fact">QUALITY / 3.5</span><h3>增量覆盖脚本存在，未接入流水线</h3><p><code>tests/scripts/check_coverage.py</code> 定义新增文件 60% 行覆盖与 30% 分支覆盖，<code>docs/zh/developer_guide/test.md</code> 称其“用于在 CI 中校验”；但按 dev 最新提交全仓检索（1655 个文件）仅这两处文档提及，3 个 workflow 与 UT/增量测试脚本均未调用它，<code>.coveragerc</code> 也没有 <code>fail_under</code>。结论：报告生成与阈值脚本都存在，合入拦截未接线。</p></article>
-        <article class="card warn"><span class="tag fact">分类 / 待核验</span><h3>统一失败分类覆盖待核验</h3><p>环境失败、用例 flaky、真回归在日志里长得不一样，外部平台的归类与关联规则尚未取得，不应断言所有失败均无分类。</p></article>
-        <article class="card risk"><span class="tag fact">债务 / 待核验</span><h3>核对豁免与责任人覆盖</h3><p>skip、xfail、waive 一旦没有 owner、Issue 与到期日，就会永久沉积。TensorRT-LLM 的“waive 必带 bug 链接”是可直接抄的最小制度。</p></article>
-      </div>
-      <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">横向对比：静态检查之外的四种能力</h3>
-      <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend / SGLang</th><th>PyTorch</th><th>Kubernetes</th></tr></thead><tbody>
-        <tr class="target-row"><td>静态检查与格式</td><td class="yes">Ruff / Pylint / Bandit / 拼写 / clang / markdownlint / gitleaks / pre-commit</td><td class="yes">同等工具链 + pre-commit 缓存</td><td class="yes">Lint 作为合入必需检查</td><td class="yes">verify / golint 类检查</td></tr>
-        <tr class="target-row"><td>覆盖率策略</td><td>生成 coverage 报告；新增文件 60%/30% 阈值脚本存在，但无任何调用链，未强制</td><td class="yes">SGLang <code>ci-coverage-overview.yml</code> 覆盖概览</td><td class="partial">有覆盖率工具，无硬门槛</td><td class="partial">覆盖率不作门禁</td></tr>
-        <tr class="target-row"><td>失败分类与 flaky</td><td>跨仓检查有状态查询/报告；统一 flaky 分类与台账待核验</td><td class="yes">vllm-ascend <code>matchers/</code>；SGLang failure monitor + auto bisect</td><td class="yes">Dr. CI 评论 + HUD 日志分类 + 按历史 flaky 数据限流重跑</td><td class="yes">零 flake 政策 + quarantine（<code>[Flaky]</code> 命名 + <code>kind/flake</code> 标签）</td></tr>
-        <tr class="target-row"><td>豁免与债务治理</td><td>本次未取得统一台账，不能推断外部平台没有</td><td class="partial">以标签与 issue 记录</td><td class="yes">禁用测试必须带 Issue，未授权请求会被自动关闭</td><td class="yes">quarantine 用例必须挂 Issue 与 frozen 标签</td></tr>
-      </tbody></table></div>
-      <div class="callout"><strong>这个维度的下一档不是“更多检查”，而是“更可信的红灯”。</strong>先做两件小事：给测试文件加 <code>owner</code> 与 <code>disabled_issue</code> 字段（skip 必须有债主），再落一个日志 matcher 把环境失败、flaky 与真回归分开。等这两件事稳定，覆盖率趋势与复杂度看板才有意义——否则只是又多了一块没人看的仪表盘。</div>
-    <div class="matrix-note"><b>2026-09-21 · SD 远端复核：</b><a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/.gitcode/workflows/ut_job.yml">UT job</a>删去 run_UT_test.sh 最后一行后执行，并用 grep OK 判断；<a href="https://gitcode.com/Ascend/MindIE-CI/blob/master/build/DT/mindie_sd_dt.sh">跨仓 SD DT</a>也有类似逻辑。<a href="https://gitcode.com/Ascend/MindIE-SD/blob/dev/tests/run_UT_test.sh">被调脚本</a>使用 tee 且未设置 pipefail。存在上游失败被掩盖或日志片段误判的风险，尚未通过故障注入验证；建议透传测试退出码、保留完整 pytest 阶段，并验证阈值失败确实阻止合入。</div>
-    </section>
 
 <section id="bots" class="reveal">
-      <div class="section-head"><div class="secno">07 / DIMENSION 06</div><div><span class="kicker">指标 06 / 09</span><h2>机器人与自动化</h2><p class="lead">最新审计加入组织 webhook、Ascend/infrastructure 的 SD 合入配置、公开 PR 评论及 MindIE-CI 脚本。旧“只有一条命令、零分诊、仅两项能力”和 1.5 分结论撤回。机器人可由组织服务提供，不要求全部代码放在 SD 仓；实际命令、授权范围与持续运行仍需逐项验证。</p></div></div>
+      <div class="section-head"><div class="secno">06 / DIMENSION 05</div><div><span class="kicker">指标 05 / 08</span><h2>机器人与自动化</h2><p class="lead">最新审计加入组织 webhook、Ascend/infrastructure 的 SD 合入配置、公开 PR 评论及 MindIE-CI 脚本。旧“只有一条命令、零分诊、仅两项能力”和 1.5 分结论撤回。机器人可由组织服务提供，不要求全部代码放在 SD 仓；实际命令、授权范围与持续运行仍需逐项验证。</p></div></div>
 
       <div class="callout"><strong>能力与兼容性分开看：</strong>GitCode 官方文档列出了 PR/评论/push/schedule 等触发、stage/needs、matrix、artifact 和自托管 runner；Ascend 同平台仓库已有 NPU 测试与 nightly 编排。但 vllm-ascend 的机器人运行在 GitHub，不能作为 GitCode API 或第三方 action 可用性的证明。这里的命令与治理机制是迁移目标；具体事件名、权限、分片、抢占和定时时区按<a href="#gitcode-portability" style="color:var(--lime)">第 02 章迁移检查</a>验证。</div>
 
@@ -772,7 +770,7 @@
         <tr class="target-row"><td><code>.gitcode/</code> 目录</td><td>只有 <code>workflows/</code> 与 <code>PULL_REQUEST_TEMPLATE.md</code>。</td><td class="no">—</td><td>本目录未内置这些服务；欢迎与审批实际由组织配置和机器人提供。</td></tr>
         <tr class="target-row"><td><code>AGENTS.md</code> / <code>CLAUDE.md</code> / <code>GEMINI.md</code> / <code>.agents/</code></td><td>面向 AI 编码代理的说明与技能资产（<code>skills/</code>、<code>scripts/</code>）。</td><td><span class="tag infer">开发期资产</span>提升的是写代码效率，不是社区运营。</td><td>开发期验收与工具资产，不自动等于平台机器人；其中部分自测已挂 pre-commit，应按具体调用链判断。</td></tr>
       </tbody></table></div>
-      <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 09 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
+      <div class="callout light"><strong>交叉复核提示：</strong>本次核验在 <code>dev</code> 分支根目录未观察到 <code>OWNERS</code>（GitCode 接口返回 404），而 <code>contributing.md</code> 把 Reviewer / Committer / Branch keeper 名单外链到 <code>gitcode.com/Ascend/community</code> 的 SIG 配置。若第 08 章的 OWNERS 结论基于更早快照，建议重新确认。对机器人维度结论无影响：名单外置意味着平台无法据此自动指派 reviewer。</div>
 
       <h3 style="font:700 2rem/1.1 var(--serif);margin-top:34px">能力矩阵：区分已接入、脚本已有与尚未核验</h3>
       <div class="table-wrap"><table><thead><tr><th>能力</th><th>MindIE-SD</th><th>vllm-ascend（同源昇腾）</th><th>SGLang</th><th>参考实现</th></tr></thead><tbody>
@@ -852,7 +850,7 @@
     </section>
 
 <section id="compatibility" class="reveal">
-      <div class="section-head"><div class="secno">08 / DIMENSION 07</div><div><span class="kicker">指标 07 / 09</span><h2>兼容性</h2><p class="lead">SD 公开支持矩阵，README 也已出现 A5 相关适配信息；pytest-infra 按产品目录、P0 与硬件环境模板选择用例，不能说没有抽样或优先级机制。下一步应核对每个受支持组合关联的 test_id、被测版本、结果时间和责任人；本次未取得完整映射与夜间报告。</p></div></div>
+      <div class="section-head"><div class="secno">07 / DIMENSION 06</div><div><span class="kicker">指标 06 / 08</span><h2>兼容性</h2><p class="lead">SD 公开支持矩阵，README 也已出现 A5 相关适配信息；pytest-infra 按产品目录、P0 与硬件环境模板选择用例，不能说没有抽样或优先级机制。下一步应核对每个受支持组合关联的 test_id、被测版本、结果时间和责任人；本次未取得完整映射与夜间报告。</p></div></div>
       <div class="grid4">
         <article class="card good"><span class="tag fact">COMPAT / 3.5</span><h3>边界写得清楚</h3><p>平台版本、硬件型号与特性组合都有文档，用户能在选型阶段判断能不能用，而不是装完才知道。</p></article>
         <article class="card warn"><span class="tag fact">验证 / 待核验</span><h3>last-green 的公开映射待核验</h3><p>已读支持矩阵主要呈现声明，未见逐项链接的运行证据；外部平台是否保存最近通过记录需另查。</p></article>
@@ -872,7 +870,7 @@
     </section>
 
 <section id="governance" class="reveal">
-      <div class="section-head"><div class="secno">09 / DIMENSION 08</div><div><span class="kicker">指标 08 / 09</span><h2>治理与合入契约</h2><p class="lead">最新远端 contributing.md 已统一双语贡献流程，旧中英文页面重定向到该入口；外部 PR 以 dev 为目标、1000 有效行、零未解决会话、最新提交的有效批准及适用 CI 均已写明。晋升、投票、辅导和退出沿用已链接的 Ascend 公共机制。旧“main 分支错配、行数只约束 commit、无评审闭环、无晋升退出规则”已不适用。</p></div></div>
+      <div class="section-head"><div class="secno">08 / DIMENSION 07</div><div><span class="kicker">指标 07 / 08</span><h2>治理与合入契约</h2><p class="lead">最新远端 contributing.md 已统一双语贡献流程，旧中英文页面重定向到该入口；外部 PR 以 dev 为目标、1000 有效行、零未解决会话、最新提交的有效批准及适用 CI 均已写明。晋升、投票、辅导和退出沿用已链接的 Ascend 公共机制。旧“main 分支错配、行数只约束 commit、无评审闭环、无晋升退出规则”已不适用。</p></div></div>
       <div class="grid3"><article class="card good"><h3>可见的责任链</h3><p>PR 模板要求 Issue、Purpose、Test Plan、Test Report；contributing.md 要求 reviewer 评审、committer 确认、branch keeper 合入。角色与受保护分支责任相匹配。</p></article><article class="card warn"><h3>核验组织配置的模块粒度</h3><p>职责在社区 SIG 与组织机器人配置维护，不要求存在根 OWNERS 文件。当前需验证 ops、compilation、quantization、cache、docs 等领域是否有足够细的路由与责任覆盖。</p></article><article class="card risk"><h3>公开沟通存在“双轨”</h3><p>Issue 是正式入口，微信群是快速入口。若 RFC、故障决策和路线优先发生在群内，外部贡献者无法检索上下文，也难以靠公开贡献积累 merit。</p></article></div>
       <div class="bar-chart" aria-label="最近 50 个关闭 Issue 的关闭周期 p50"><div class="bar-row"><b>MindIE-SD</b><div class="bar-track"><div class="bar issue" style="width:.34%"></div></div><span class="bar-value">1.32d / n50</span></div><div class="bar-row"><b>vLLM-Omni</b><div class="bar-track"><div class="bar issue" style="width:.45%"></div></div><span class="bar-value">1.77d / n50</span></div><div class="bar-row"><b>vllm-ascend</b><div class="bar-track"><div class="bar issue" style="width:3.4%"></div></div><span class="bar-value">13.31d / n50</span></div><div class="bar-row"><b>vLLM</b><div class="bar-track"><div class="bar issue" style="width:9.5%"></div></div><span class="bar-value">37.04d / n50</span></div><div class="bar-row"><b>FastVideo</b><div class="bar-track"><div class="bar issue" style="width:48.5%"></div></div><span class="bar-value">189.85d / n50</span></div><div class="bar-row"><b>TensorRT-LLM</b><div class="bar-track"><div class="bar issue" style="width:100%"></div></div><span class="bar-value">391.21d / n50</span></div></div>
       <div class="callout light"><strong>滚动样本的积极信号：</strong>MindIE-SD 最近公开样本闭环很快，说明维护团队当前响应积极；但它不足以证明长期可持续。真正要看的是首次人工响应、未关闭项年龄分布、外部贡献 PR 首 review、reviewer 负载、reopen、无响应率和贡献者留存。</div>
@@ -925,7 +923,7 @@
     </section>
 
 <section id="operations" class="reveal">
-      <div class="section-head"><div class="secno">10 / DIMENSION 09</div><div><span class="kicker">指标 09 / 09</span><h2>社区运营</h2><p class="lead">SD 的 contributing.md 已引用组织 Issue 处理流程，包含 triage review、triaged、归属模块、跟踪人和 resolved 等状态。README 提供公开 Issue 与 SIG 会议入口，微信群是补充渠道。第 01 章保留 2026-09-04 的 50+50 历史样本，不能用其证明当前速度；首响、轮值、分诊覆盖、留存和健康看板本次未重新统计。</p></div></div>
+      <div class="section-head"><div class="secno">09 / DIMENSION 08</div><div><span class="kicker">指标 08 / 08</span><h2>社区运营</h2><p class="lead">SD 的 contributing.md 已引用组织 Issue 处理流程，包含 triage review、triaged、归属模块、跟踪人和 resolved 等状态。README 提供公开 Issue 与 SIG 会议入口，微信群是补充渠道。第 01 章保留 2026-09-04 的 50+50 历史样本，不能用其证明当前速度；首响、轮值、分诊覆盖、留存和健康看板本次未重新统计。</p></div></div>
       <div class="grid4">
         <article class="card good"><span class="tag fact">OPS / 3.0</span><h3>当前响应积极</h3><p>历史样本显示当时闭环较快；当前投入、处理质量与可持续性仍需最新数据验证。</p></article>
         <article class="card warn"><span class="tag fact">未知 / NOT OBSERVED</span><h3>首次响应不可见</h3><p>关闭快可能来自维护者自合并、机器人或批量清理；真正影响外部体验的是“第一个非作者回复等了多久”，本次尚未汇总该指标；评论时间戳可作为后续统计来源。</p></article>
