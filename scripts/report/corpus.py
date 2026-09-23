@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""L2 语料层：去重、打分排序、主题聚类、竞品与能力矩阵。
+"""L2 语料层：去重、中文过滤、排序、主题聚类、周边团队矩阵。
 
-“本周新增”不依赖任何持久化文件：条目的发布时间落在本周窗口内即视为新增，
-因此同一份快照无论何时重跑，结果都完全一致（可复现）。
+设计要点：
+  · **不打分**：条目顺序一律按发布时间，收录与否只由 ScopeGate 的闸门决定。
+  · **只出中文**：报告正文只保留已补中文说明（config/curated_zh.json）的条目；
+    未补中文的条目不进正文，计入 stats["pendingZh"]，并写到采集缓存的 pending_zh.json
+    作为待补清单（周报流程 = 先采集 → 补中文 → 再离线渲染）。
+  · “本周新增”不依赖任何持久化文件：发布时间落在窗口内即视为新增，
+    因此同一份快照无论何时重跑，结果都完全一致（可复现）。
 """
 
 from __future__ import annotations
@@ -12,7 +17,7 @@ from datetime import datetime, timedelta
 from typing import Any, Iterable, Optional
 
 from report.collect import repo_index  # noqa: F401 - 对外统一出口
-from report.lib.relevance import Scorer, cluster_repo_activity, dedupe
+from report.lib.relevance import TagExtractor, cluster_repo_activity, dedupe
 from report.lib.util import (
     day,
     dedupe_preserve,
@@ -25,9 +30,9 @@ from report.lib.util import (
 GROUP_LABELS = {
     "papers": "论文与研究",
     "teams": "技术团队与媒体",
-    "repos": "仓库更新细则",
+    "repos": "多模态仓库更新",
     "wechat": "公众号 / 中文媒体",
-    "competitors": "竞品发版观测",
+    "peers": "周边团队工作",
 }
 
 KIND_LABELS = {
@@ -39,7 +44,7 @@ KIND_LABELS = {
     "repo-pr": "Pull Request",
     "wechat-article": "公众号文章",
     "media-article": "媒体文章",
-    "competitor-release": "竞品发版",
+    "peer-release": "周边团队发版",
 }
 
 
@@ -52,10 +57,9 @@ class Corpus:
     items: list[dict[str, Any]]
     stats: dict[str, Any]
     repo_clusters: list[dict[str, Any]]
-    competitor_matrix: dict[str, Any]
-    capability_matrix: dict[str, Any]
+    peer_matrix: dict[str, Any]
     themes: list[dict[str, Any]]
-    mindie: dict[str, Any] = field(default_factory=dict)
+    pending_zh: list[dict[str, Any]] = field(default_factory=list)
 
 
 def build_corpus(
@@ -65,15 +69,11 @@ def build_corpus(
     run_id: str,
     week: str,
     reference: Optional[datetime] = None,
-    min_score: Optional[float] = None,
     freshness_days: Optional[int] = None,
     release_history: Optional[dict[str, list[dict[str, Any]]]] = None,
 ) -> Corpus:
     reference = reference or now_utc()
-    defaults = config.get("defaults") or {}
     scoring = config.get("scoring") or {}
-    if min_score is None:
-        min_score = float(defaults.get("minScore", 0.0))
     if freshness_days is None:
         freshness_days = int(scoring.get("lookbackDays", 7))
     fresh_cutoff = reference - timedelta(days=freshness_days)
@@ -84,18 +84,23 @@ def build_corpus(
         item["sourceLabels"] = dedupe_preserve(
             list(item.get("sourceLabels") or []) + [item.get("sourceLabel", "")]
         )
-
-    scorer = Scorer(config)
-    for item in merged:
-        item["score"] = scorer.score(item, reference)
         published = parse_datetime(item.get("published"))
         # 本周新增：发布时间落在 lookbackDays 窗口内（无时间信息者保守视为非新增）
         item["isNew"] = bool(published and published >= fresh_cutoff)
 
-    kept = [item for item in merged if float(item.get("score") or 0) >= min_score]
-    kept.sort(key=lambda entry: (entry.get("score", 0), entry.get("published", "")), reverse=True)
+    chinese_only = bool((config.get("report") or {}).get("chineseOnly", False))
+    if chinese_only:
+        kept = [item for item in merged if bool(item.get("zhCurated"))]
+        pending = [item for item in merged if not bool(item.get("zhCurated"))]
+    else:
+        kept = list(merged)
+        pending = []
+    # 排序：新增优先 → 发布时间倒序（无分数）
+    kept.sort(key=lambda entry: (1 if entry.get("isNew") else 0, str(entry.get("published") or "")), reverse=True)
 
     stats = corpus_stats(kept, raw_items)
+    stats["pendingZh"] = len(pending)
+    stats["chineseOnly"] = chinese_only
     clusters = cluster_repo_activity([item for item in kept if item.get("repo")])
     for cluster in clusters:
         cluster["label"] = cluster["repo"]
@@ -108,10 +113,19 @@ def build_corpus(
         items=kept,
         stats=stats,
         repo_clusters=clusters,
-        competitor_matrix=build_competitor_matrix(kept, config, reference, release_history or {}),
-        capability_matrix=build_capability_matrix(kept, config),
+        peer_matrix=build_peer_matrix(kept, config, reference, release_history or {}),
         themes=build_themes(kept, config),
-        mindie=build_mindie_section(kept, config, reference, release_history or {}),
+        pending_zh=[
+            {
+                "stableId": item.get("stableId"),
+                "group": item.get("group"),
+                "kind": item.get("kind"),
+                "title": item.get("title"),
+                "day": item.get("day"),
+                "url": item.get("url"),
+            }
+            for item in sorted(pending, key=lambda entry: (str(entry.get("group")), str(entry.get("published"))))
+        ],
     )
 
 
@@ -150,144 +164,149 @@ def _items_for_repo(items: Iterable[dict[str, Any]], repo: str) -> list[dict[str
     return [item for item in items if str(item.get("repo") or "").lower() == target]
 
 
-def build_competitor_matrix(
+def _by_published_desc(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(items, key=lambda entry: str(entry.get("published") or ""), reverse=True)
+
+
+# --------------------------------------------------------------------------
+# 维度 E · 周边团队工作
+# --------------------------------------------------------------------------
+
+
+def build_peer_matrix(
     items: list[dict[str, Any]],
     config: dict[str, Any],
     reference: datetime,
     release_history: Optional[dict[str, list[dict[str, Any]]]] = None,
 ) -> dict[str, Any]:
-    competitors = config.get("competitors") or {}
-    engines = competitors.get("engines") or []
-    focus = set(competitors.get("focus") or [])
+    """周边团队的版本特性（按引擎）+ 团队动态雷达（按团队名录反查语料）。"""
+    peers = config.get("peers") or {}
+    engines = peers.get("engines") or []
+    chinese_only = bool((config.get("report") or {}).get("chineseOnly", False))
     history = {str(repo).lower(): list(releases) for repo, releases in (release_history or {}).items()}
+    # 条目级中文说明（config/curated_zh.json）优先：repo+tag → 中文说明
+    curated_digest: dict[tuple[str, str], str] = {}
+    for item in items:
+        if not item.get("zhCurated"):
+            continue
+        repo = str(item.get("repo") or "").lower()
+        tag = str((item.get("signals") or {}).get("tag") or "")
+        if repo and tag and item.get("digest"):
+            curated_digest.setdefault((repo, tag), str(item["digest"]))
+    highlights = int(peers.get("releaseHighlightsPerEngine", 3))
     rows: list[dict[str, Any]] = []
     for engine in engines:
         repo = str(engine.get("repo") or "")
         engine_items = _items_for_repo(items, repo)
         releases = [item for item in engine_items if item.get("repoActivity") == "release"]
-        commits = [item for item in engine_items if item.get("repoActivity") == "commit"]
-        pulls = [item for item in engine_items if item.get("repoActivity") == "pr"]
-        releases_sorted = sorted(releases, key=lambda entry: entry.get("published", ""), reverse=True)
-        history_sorted = sorted(
-            history.get(repo.lower(), []), key=lambda entry: entry.get("published", ""), reverse=True
-        )
-        latest = releases_sorted[0] if releases_sorted else (history_sorted[0] if history_sorted else None)
-        window_1w = _count_since(engine_items, reference, days=7)
-        window_2w = _count_since(engine_items, reference, days=14)
-        # 展示用：最近几次发版的特性说明（而非发版次数）
-        recent_releases = [
-            {
-                "tag": entry.get("tag", ""),
-                "published": entry.get("published", ""),
-                "day": (entry.get("published", "") or "")[:10],
-                "digest": entry.get("digest", ""),
-                "url": entry.get("url", ""),
-                "isNew": (parse_datetime(entry.get("published")) or reference) >= reference - timedelta(days=14)
-                if entry.get("published")
-                else False,
-            }
-            for entry in history_sorted[: int(competitors.get("releaseHighlightsPerEngine", 3))]
-        ]
+        history_sorted = _by_published_desc(history.get(repo.lower(), []))
+        recent_releases: list[dict[str, Any]] = []
+        for entry in history_sorted:
+            tag = str(entry.get("tag") or "")
+            digest = curated_digest.get((repo.lower(), tag)) or str(entry.get("digest") or "")
+            has_zh = (repo.lower(), tag) in curated_digest
+            # 报告只出中文：没有中文说明的版本卡片不进正文（避免英文混排）
+            if chinese_only and not has_zh:
+                continue
+            recent_releases.append(
+                {
+                    "tag": tag,
+                    "published": entry.get("published", ""),
+                    "day": (entry.get("published", "") or "")[:10],
+                    "digest": digest,
+                    "url": entry.get("url", ""),
+                    "isNew": bool(entry.get("published"))
+                    and (parse_datetime(entry.get("published")) or reference) >= reference - timedelta(days=14),
+                }
+            )
+            if len(recent_releases) >= highlights:
+                break
         rows.append(
             {
                 "id": engine.get("id"),
                 "label": engine.get("label"),
+                "org": engine.get("org") or "",
+                "category": engine.get("category") or "",
                 "repo": repo,
                 "stack": engine.get("stack") or "",
-                "isFocus": str(engine.get("id")) in focus,
-                "total": len(engine_items),
-                "releases": len(releases) or len(history.get(repo.lower(), [])),
-                "commits": len(commits),
-                "pulls": len(pulls),
-                "window1w": window_1w,
-                "window2w": window_2w,
-                "velocity": round(window_1w / 7.0, 2),
-                "latestTag": (latest or {}).get("tag") or (latest or {}).get("signals", {}).get("tag") or "",
-                "latestRelease": (latest or {}).get("published", ""),
-                "latestDigest": (latest or {}).get("digest", ""),
-                "latestTitle": (latest or {}).get("title", ""),
+                "releaseCount": len(history.get(repo.lower(), [])) or len(releases),
+                "windowCount": len(engine_items),
+                "latestTag": (history_sorted[0].get("tag") if history_sorted else ""),
+                "latestDay": (history_sorted[0].get("published", "")[:10] if history_sorted else ""),
                 "recentReleases": recent_releases,
-                "topItems": [
-                    {
-                        "title": item.get("title"),
-                        "url": item.get("url"),
-                        "kind": item.get("kind"),
-                        "digest": item.get("digest"),
-                    }
-                    for item in sorted(engine_items, key=lambda entry: entry.get("score", 0), reverse=True)[:5]
-                ],
             }
         )
-    rows.sort(key=lambda row: (row["isFocus"], row["window1w"], row["total"]), reverse=True)
-    return {"generatedAt": iso(reference), "rows": rows, "focusIds": sorted(focus), "summary": _competitor_summary(rows)}
-
-
-def _count_since(items: Iterable[dict[str, Any]], reference: datetime, days: int) -> int:
-    cutoff = reference - timedelta(days=days)
-    count = 0
-    for item in items:
-        published = parse_datetime(item.get("published"))
-        if published and published >= cutoff:
-            count += 1
-    return count
-
-
-def _competitor_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    def total(prefix: str) -> int:
-        return sum(row["window1w"] for row in rows if str(row["id"]).startswith(prefix))
-
-    ascend = sum(row["window1w"] for row in rows if row.get("isFocus"))
-    others = sum(row["window1w"] for row in rows if not row.get("isFocus"))
+    rows.sort(key=lambda row: (str(row.get("category") or ""), str(row.get("label") or "")))
     return {
-        "ascendWeeklySignals": ascend,
-        "nonAscendWeeklySignals": others,
-        "ratio": round(ascend / others, 3) if others else None,
-        "vllmWeekly": total("vllm"),
-        "sglangWeekly": total("sglang"),
-        "nvidiaWeekly": total("tensorrt") + total("dynamo"),
+        "generatedAt": iso(reference),
+        "rows": rows,
+        "radar": build_peer_radar(items, config),
+        "categories": sorted({str(row.get("category") or "") for row in rows if row.get("category")}),
     }
 
 
-def build_capability_matrix(items: list[dict[str, Any]], config: dict[str, Any]) -> dict[str, Any]:
-    probes = (config.get("mindie") or {}).get("capabilityProbes") or []
+def build_peer_radar(items: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
+    """按 teams(peers.roster) 名录反查本周语料：谁这周有动静、动静是什么。"""
+    roster = (config.get("peers") or {}).get("roster") or []
+    alias_owner: dict[str, dict[str, Any]] = {}
+    aliases: list[str] = []
+    for team in roster:
+        for alias in team.get("aliases") or []:
+            alias = str(alias).strip()
+            if alias and alias not in alias_owner:
+                alias_owner[alias] = team
+                aliases.append(alias)
+    if not aliases:
+        return []
+    extractor = TagExtractor({"peers": aliases})
+    matched: dict[str, list[tuple[dict[str, Any], list[str]]]] = {}
+    for item in items:
+        haystack = f"{item.get('title','')} {item.get('digest','')} {item.get('summary','')}"
+        hits = [alias for alias in aliases if extractor.matches(alias, haystack)]
+        for alias in hits:
+            team = alias_owner[alias]
+            matched.setdefault(str(team.get("id")), []).append((item, hits))
     rows: list[dict[str, Any]] = []
-    for probe in probes:
-        terms = [str(term) for term in probe.get("terms") or []]
-        matched: list[tuple[dict[str, Any], list[str]]] = []
-        for item in items:
-            haystack = f"{item.get('title', '')} {item.get('summary', '')}".lower()
-            hit = keywords_in(haystack, terms)
-            if hit:
-                matched.append((item, hit))
-        matched.sort(key=lambda pair: pair[0].get("score", 0), reverse=True)
-        evidence = [
-            {
-                "title": item.get("title"),
-                "url": item.get("url"),
-                "day": item.get("day"),
-                "isNew": item.get("isNew"),
-                "group": item.get("group"),
-                "matched": hit[:4],
-            }
-            for item, hit in matched[:6]
-        ]
+    for team in roster:
+        team_id = str(team.get("id"))
+        pairs = matched.get(team_id, [])
+        seen: set[str] = set()
+        unique: list[tuple[dict[str, Any], list[str]]] = []
+        for item, hits in pairs:
+            key = str(item.get("stableId") or item.get("url") or item.get("title"))
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append((item, hits))
+        unique.sort(key=lambda pair: str(pair[0].get("published") or ""), reverse=True)
         rows.append(
             {
-                "id": probe.get("id"),
-                "label": probe.get("label"),
-                "terms": terms,
-                "matches": len(matched),
-                "newMatches": sum(1 for item, _ in matched if item.get("isNew")),
-                "evidence": evidence,
-                "coverage": "有活跃信号" if len(matched) >= 3 else ("信号稀少" if matched else "本周无信号"),
+                "id": team_id,
+                "label": team.get("label"),
+                "category": team.get("category") or "",
+                "aliases": list(team.get("aliases") or []),
+                "matches": len(unique),
+                "newMatches": sum(1 for item, _ in unique if item.get("isNew")),
+                "evidence": [
+                    {
+                        "title": item.get("title"),
+                        "url": item.get("url"),
+                        "day": item.get("day"),
+                        "group": item.get("group"),
+                        "kind": item.get("kind"),
+                        "isNew": item.get("isNew"),
+                        "matched": hits[:4],
+                    }
+                    for item, hits in unique[:4]
+                ],
             }
         )
-    gap = [row["label"] for row in rows if row["newMatches"] == 0]
-    active = [row["label"] for row in rows if row["newMatches"] >= 3]
-    return {"rows": rows, "gap": gap, "active": active}
+    rows.sort(key=lambda row: (row["newMatches"], row["matches"]), reverse=True)
+    return rows
 
 
 def build_themes(items: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
+    """主题聚类：按 config.keywords 的关键词组统计命中条目（不打分，按时间取代表条目）。"""
     themes: list[dict[str, Any]] = []
     for theme, terms in (config.get("keywords") or {}).items():
         matched: list[tuple[dict[str, Any], list[str]]] = []
@@ -298,7 +317,7 @@ def build_themes(items: list[dict[str, Any]], config: dict[str, Any]) -> list[di
                 matched.append((item, hits))
         if not matched:
             continue
-        matched.sort(key=lambda pair: pair[0].get("score", 0), reverse=True)
+        matched.sort(key=lambda pair: str(pair[0].get("published") or ""), reverse=True)
         themes.append(
             {
                 "theme": theme,
@@ -310,7 +329,6 @@ def build_themes(items: list[dict[str, Any]], config: dict[str, Any]) -> list[di
                         "url": item.get("url"),
                         "day": item.get("day"),
                         "group": item.get("group"),
-                        "score": item.get("score"),
                         "isNew": item.get("isNew"),
                     }
                     for item, _ in matched[:6]
@@ -319,88 +337,3 @@ def build_themes(items: list[dict[str, Any]], config: dict[str, Any]) -> list[di
         )
     themes.sort(key=lambda entry: (entry["newCount"], entry["count"]), reverse=True)
     return themes
-
-
-def build_mindie_section(
-    items: list[dict[str, Any]],
-    config: dict[str, Any],
-    reference: datetime,
-    release_history: Optional[dict[str, list[dict[str, Any]]]] = None,
-) -> dict[str, Any]:
-    owned = (config.get("mindie") or {}).get("ownedRepos") or []
-    labels = {str(entry.get("repo", "")).lower(): entry.get("label") for entry in owned}
-    history = {str(repo).lower(): list(rows) for repo, rows in (release_history or {}).items()}
-    sections: list[dict[str, Any]] = []
-    for repo, label in labels.items():
-        repo_items = _items_for_repo(items, repo)
-        repo_items.sort(key=lambda entry: entry.get("published", ""), reverse=True)
-        # 发版特性：窗口内 may 无发版，回退到不受窗口限制的发版历史
-        releases = [item for item in repo_items if item.get("kind") == "repo-release"]
-        latest_release: dict[str, Any] = {}
-        if releases:
-            latest_release = {
-                "tag": (releases[0].get("signals") or {}).get("tag", ""),
-                "published": releases[0].get("published", ""),
-                "day": releases[0].get("day", ""),
-                "digest": releases[0].get("digest", ""),
-                "url": releases[0].get("url", ""),
-                "inWindow": True,
-            }
-        else:
-            rows = sorted(history.get(repo, []), key=lambda entry: entry.get("published", ""), reverse=True)
-            if rows:
-                latest_release = {
-                    "tag": rows[0].get("tag", ""),
-                    "published": rows[0].get("published", ""),
-                    "day": (rows[0].get("published", "") or "")[:10],
-                    "digest": rows[0].get("digest", ""),
-                    "url": rows[0].get("url", ""),
-                    "inWindow": False,
-                }
-        sections.append(
-            {
-                "repo": repo,
-                "label": label,
-                "count": len(repo_items),
-                "newCount": sum(1 for item in repo_items if item.get("isNew")),
-                "latest": repo_items[0].get("published", "") if repo_items else "",
-                "latestRelease": latest_release,
-                "releaseCount": len(history.get(repo, [])),
-                "items": [
-                    {
-                        "title": item.get("title"),
-                        "url": item.get("url"),
-                        "day": item.get("day"),
-                        "kind": item.get("kind"),
-                        "isNew": item.get("isNew"),
-                        "score": item.get("score"),
-                        "digest": item.get("digest"),
-                        "tag": (item.get("signals") or {}).get("tag", ""),
-                    }
-                    for item in repo_items[:8]
-                ],
-            }
-        )
-    topic_hits = []
-    for item in items:
-        haystack = f"{item.get('title','')} {item.get('summary','')}".lower()
-        if "ascend" in haystack or "mindie" in haystack or "昇腾" in haystack:
-            topic_hits.append(item)
-    topic_hits.sort(key=lambda entry: entry.get("score", 0), reverse=True)
-    return {
-        "repos": sections,
-        "ascendTopicCount": len(topic_hits),
-        "ascendTopicNew": sum(1 for item in topic_hits if item.get("isNew")),
-        "topicTop": [
-            {
-                "title": item.get("title"),
-                "url": item.get("url"),
-                "day": item.get("day"),
-                "group": item.get("group"),
-                "isNew": item.get("isNew"),
-                "digest": item.get("digest"),
-                "kind": item.get("kind"),
-            }
-            for item in topic_hits[:12]
-        ],
-    }

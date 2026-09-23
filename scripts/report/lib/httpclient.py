@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from .util import UTC, dump_json, file_hash, iso, now_utc, text_hash
 
@@ -198,11 +198,14 @@ class HttpClient:
         cache_key: Optional[str] = None,
         accept: str = "*/*",
         use_cache: bool = True,
+        cache_when: Optional[Callable[[str], bool]] = None,
     ) -> FetchResult:
         """抓取 URL。
 
         cache_key 允许把多个不同 header 的同一 URL 区分缓存；
         use_cache=False 用于一次性/带签名的跳转链接（缓存会导致过期结果被复用）。
+        cache_when 是「这个响应值不值得落快照」的判定：反爬/人机校验页虽然返回 200，
+        但缓存下来会让后续 --offline 复现永远拿到空结果，因此要显式拒绝落盘。
         """
         effective_url = cache_key or url
         if use_cache and not self.refresh:
@@ -236,7 +239,7 @@ class HttpClient:
                     body = self._decode(raw, dict(response.headers))
                     status = int(getattr(response, "status", 200) or 200)
                     content_type = response.headers.get("Content-Type", "")
-                    if use_cache:
+                    if use_cache and (cache_when is None or cache_when(body)):
                         snapshot = self.cache.store(effective_url, status, body, content_type)
                     else:
                         snapshot = None

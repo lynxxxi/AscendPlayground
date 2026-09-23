@@ -76,10 +76,16 @@ class CuratedDescriptions:
                     }
 
     def apply(self, item: dict[str, Any]) -> bool:
-        """就地写入中文标题/说明；返回是否命中。"""
+        """就地写入中文标题/说明；返回是否命中。
+
+        只有「中文标题 + 中文说明」都齐备时才标记 `zhCurated=True`——
+        报告正文只渲染中文条目（config 的 report.chineseOnly），
+        只补了一半的条目仍算待补，避免英文混进正文。
+        """
         stable_id = str(item.get("stableId") or "")
         curated = self.entries.get(stable_id)
         if not curated:
+            item.setdefault("zhCurated", False)
             return False
         self.used.add(stable_id)
         original_title = str(item.get("title") or "")
@@ -91,6 +97,7 @@ class CuratedDescriptions:
         if curated.get("digest"):
             item["digest"] = curated["digest"]
             item["digestSource"] = "curated"
+        item["zhCurated"] = bool(curated.get("title")) and bool(curated.get("digest"))
         return True
 
     def stats(self, items: list[dict[str, Any]]) -> dict[str, Any]:

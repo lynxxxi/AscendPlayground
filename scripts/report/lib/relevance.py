@@ -1,22 +1,17 @@
 #!/usr/bin/env python3
-"""相关性关键词抽取 + 打分 + 跨源去重。
+"""关键词抽取 + 入库闸门 + 跨源去重。
 
-打分模型（可在 config 的 scoring 段调参）：
-    score = (1 + 关键词加权命中，上限 maxKeywordBoost)
-            × 源权重 weight
-            × 时效因子 recency
-            × 新条目加成 newItemBoost
-
-其中 recency 在 lookbackDays 内为 1.0，之后线性衰减到 minRecencyFactor。
+本模块**不打分**：报告按发布时间排序，是否收录由 `ScopeGate` 的三道闸门决定
+（排除法 → infra 证据 → 主题），词表都在 config/sources.json 里。
 """
 
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Iterable, Optional
 
-from .util import dedupe_preserve, now_utc, parse_datetime, title_key
+from .util import dedupe_preserve, parse_datetime, title_key
 
 # 中文/日文/韩文表意文字：直接子串匹配
 _CJK_RE = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -142,31 +137,19 @@ def _as_datetime(value: Any) -> Optional[datetime]:
     return parse_datetime(value)
 
 
-class Scorer:
+class ScopeGate:
+    """入库闸门：只判断「收 / 不收」，不做任何打分与排序（排序一律按发布时间）。
+
+    两道范围闸门 + 一道主题闸门，词表全部在 config/sources.json：
+      ① 排除法 scope.exclude        → 明确非 infra 议题直接丢
+      ② infra 证据 scope.infraEvidence → 必须出现系统工程/降本增效证据词（默认只看标题）
+      ③ 主题闸门 relevance.requireAnyOf → 必须属于多模态/生成式方向
+    """
+
     def __init__(self, config: dict[str, Any]) -> None:
-        scoring = dict(config.get("scoring") or {})
         relevance = dict(config.get("relevance") or {})
-        defaults = dict(config.get("defaults") or {})
-        self.title_weight = float(scoring.get("titleWeight", 3.0))
-        self.summary_weight = float(scoring.get("summaryWeight", 1.0))
-        self.max_boost = float(scoring.get("maxKeywordBoost", 12.0))
-        self.lookback_days = float(scoring.get("lookbackDays", 7))
-        self.min_recency = float(scoring.get("minRecencyFactor", 0.35))
-        self.new_boost = float(scoring.get("newItemBoost", 1.0))
-        self.min_score = float(defaults.get("minScore", 0.0))
-        table: dict[str, float] = {}
-        for term in relevance.get("heavy", []):
-            table[str(term).lower()] = 3.0
-        for term in relevance.get("medium", []):
-            table[str(term).lower()] = 1.5
-        for term in relevance.get("requireAnyOf", []):
-            table.setdefault(str(term).lower(), 2.0)
-        self.weights = table
         self.require_any = [str(term) for term in relevance.get("requireAnyOf", [])]
 
-        # ---- 调研范围（scope）----
-        # 两道闸门：① 排除法（明确非 infra 议题）② 必须出现 infra 证据词。
-        # 词表在 config/sources.json 的 scope 段，改配置即可收放，无需改代码。
         scope = dict(config.get("scope") or {})
         self.scope = scope
         self.infra_terms = [str(term) for term in scope.get("infraEvidence", []) if str(term).strip()]
@@ -174,6 +157,7 @@ class Scorer:
         self._infra_matcher = TagExtractor({"infra": self.infra_terms}) if self.infra_terms else None
         self._exclude_matcher = TagExtractor({"exclude": self.exclude_terms}) if self.exclude_terms else None
         self.require_infra_groups = {str(group) for group in scope.get("requireInfraEvidenceGroups", [])}
+        self.require_infra_kinds = {str(kind) for kind in scope.get("requireInfraEvidenceKinds", [])}
         self.exclude_groups = {str(group) for group in scope.get("excludeGroups", [])}
         # 证据词只看标题：摘要里 throughput / latency / kernel 之类的词人人都写，不足以判定 infra
         self.evidence_in_title = bool(scope.get("evidenceInTitle", False))
@@ -208,10 +192,15 @@ class Scorer:
                 return term
         return ""
 
-    def requires_infra_evidence(self, group: str, source: Optional[dict[str, Any]] = None) -> bool:
+    def requires_infra_evidence(
+        self, group: str, source: Optional[dict[str, Any]] = None, kind: str = ""
+    ) -> bool:
+        """分组或条目类型任一要求 infra 证据即可（博客/媒体文章也要，避免混进纯资讯）。"""
         source = source or {}
         if "requireInfraEvidence" in source:
             return bool(source.get("requireInfraEvidence"))
+        if str(kind or "") in self.require_infra_kinds:
+            return True
         return str(group or "") in self.require_infra_groups
 
     def should_check_exclude(self, group: str, source: Optional[dict[str, Any]] = None) -> bool:
@@ -219,37 +208,6 @@ class Scorer:
         if "skipScopeExclude" in source:
             return not bool(source.get("skipScopeExclude"))
         return str(group or "") in self.exclude_groups
-
-    def score(self, item: dict[str, Any], reference: Optional[datetime] = None) -> float:
-        title = item.get("title") or ""
-        summary = item.get("summary") or ""
-        weight = float(item.get("weight") or 1.0)
-
-        boost = 0.0
-        text = f"{title} {summary}".lower()
-        for term, value in self.weights.items():
-            if term in text:
-                boost += value * weight
-        boost = min(boost, self.max_boost)
-
-        recency = self.recency_factor(_as_datetime(item.get("published")), reference)
-        raw = (1.0 + boost) * weight * recency
-        if item.get("isNew", True):
-            raw *= self.new_boost
-        return round(raw, 4)
-
-    def recency_factor(self, published: Optional[datetime], reference: Optional[datetime] = None) -> float:
-        if published is None:
-            return self.min_recency
-        reference = reference or now_utc()
-        if published.tzinfo is None:
-            published = published.replace(tzinfo=reference.tzinfo)
-        age_days = max(0.0, (reference - published).total_seconds() / 86400.0)
-        if age_days <= self.lookback_days:
-            return 1.0
-        span = max(1.0, self.lookback_days)
-        decay = 1.0 - ((age_days - self.lookback_days) / (span * 4.0))
-        return max(self.min_recency, min(1.0, decay))
 
 
 def dedupe(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -315,7 +273,10 @@ def _merge_into(target: dict[str, Any], incoming: dict[str, Any]) -> None:
 
 
 def cluster_repo_activity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """把仓库动态按 repo 聚合，输出每仓的 release/commit/PR 计数与时间跨度。"""
+    """把仓库动态按 repo 聚合，输出每仓的 release/commit/PR 计数与时间跨度。
+
+    无打分：活跃度按「条目数 + 最近动态时间」排序。
+    """
     buckets: dict[str, dict[str, Any]] = {}
     for item in items:
         repo = item.get("repo")
@@ -329,7 +290,6 @@ def cluster_repo_activity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "group": item.get("repoGroup") or "",
                 "note": item.get("repoNote") or "",
                 "stars": item.get("stars") or 0,
-                "combinedScore": 0.0,
                 "counts": {"release": 0, "commit": 0, "pr": 0, "issue": 0},
                 "latest": None,
                 "items": [],
@@ -339,7 +299,6 @@ def cluster_repo_activity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         kind = item.get("repoActivity")
         if kind in counts:
             counts[kind] += 1
-        bucket["combinedScore"] = round(bucket["combinedScore"] + float(item.get("score") or 0), 3)
         bucket["stars"] = max(bucket["stars"], int(item.get("stars") or 0))
         published = parse_datetime(item.get("published"))
         if published and (bucket["latest"] is None or published > bucket["latest"]):
@@ -348,9 +307,9 @@ def cluster_repo_activity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     out: list[dict[str, Any]] = []
     for bucket in buckets.values():
-        bucket["items"].sort(key=lambda entry: entry.get("score", 0), reverse=True)
+        bucket["items"].sort(key=lambda entry: str(entry.get("published") or ""), reverse=True)
         bucket["total"] = sum(bucket["counts"].values())
         bucket["latestIso"] = bucket["latest"].strftime("%Y-%m-%d %H:%MZ") if bucket["latest"] else ""
         out.append(bucket)
-    out.sort(key=lambda entry: (entry["total"], entry["combinedScore"]), reverse=True)
+    out.sort(key=lambda entry: (entry["total"], entry["latestIso"]), reverse=True)
     return out

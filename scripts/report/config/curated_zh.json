@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-09-16",
-    "note": "人工撰写的中文标题与说明。按 stableId 精确匹配，未命中的条目回退到自动抽取的原文说明。",
-    "scope": "人工撰写的中文标题与说明。按 stableId 精确匹配，未命中的条目回退到自动抽取的原文说明。当前覆盖：论文、团队动态、仓库更新、公众号；共 168 条。"
+    "updatedAt": "2026-09-23",
+    "note": "人工（或由代理撰写）中文标题与说明，按 stableId 精确匹配；报告只收录本文件命中的条目（report.chineseOnly）。",
+    "scope": "中文标题与说明，按 stableId 精确匹配。报告正文只渲染本文件命中的条目；未命中的条目只进 scripts/report/.cache/pending_zh.json 待补清单。当前覆盖：论文、团队动态、周边团队、仓库更新、公众号；共 376 条。"
   },
   "papers": {
     "arxiv:9d1abf296e07": {
@@ -501,6 +501,70 @@
     "arxiv:f5ed7cc62a32": {
       "title": "面向边缘视觉语言模型的跨模态对齐量化感知蒸馏",
       "digest": "用量化感知蒸馏配合跨模态对齐，把 VLM 压缩到边缘设备可用规模。"
+    },
+    "arxiv:7ffec04806e7": {
+      "title": "vidax：面向加速器网格的视频生成统一 JAX 推理框架",
+      "digest": "开源视频生成模型几乎只提供 PyTorch/CUDA 参考实现，vidax 补上 JAX/Flax 推理引擎与零拷贝的 PyTorch 到 JAX 权重转换，覆盖 Diffusion Transformer、3D VAE、文本编码器与原生采样器。它在单个 JAX sharding mesh 上统一 1D 张量并行与 DeepSpeed-Ulysses 序列并行，集成 TPU flash-attention kernel 并支持逐层权重卸载，用于长序列时空注意力的视频生成推理。"
+    },
+    "arxiv:cfcbb95bca7a": {
+      "title": "PixelFlow：面向分布式 DiT 服务的 Token 级负载管理",
+      "digest": "针对请求级批处理难以控制批大小、批过小无法打满 GPU 而批过大又违反延迟 SLO 的问题，PixelFlow 改用图像 token 作为划分与批处理负载的粒度，让每张 GPU 在延迟约束下多承担一部分工作。通过把这些负载分片分散到各 GPU，系统容纳更多并发请求并降低排队延迟，属于 DiT 在线图像生成的服务调度与利用率优化。"
+    },
+    "arxiv:97b64d623cc5": {
+      "title": "MiX：面向端到端低位 VLM 加速的微缩放反转量化格式",
+      "digest": "边缘设备上 VLM 受显存带宽限制需要亚 8bit 量化，但多模态 token 之间极大的动态范围差会让共享指数被单个离群值劫持，出现微缩放崩塌并破坏注意力图。MiX 把微缩放范式反转：不再用共享指数统管多个尾数，而是让多个私有逐元素指数共用一个共享尾数，并以自适应双格式推理框架通过代数分解让算子映射为移位器，属于低位 VLM 的端到端加速方案。"
+    },
+    "arxiv:d98594828e5c": {
+      "title": "DeepSeek-V4.1-Flash：把 KV Cache 压缩推到极限",
+      "digest": "面向输入密集的长程智能体负载，该多模态 MoE 模型拥有 552B 骨干参数并支持百万 token 上下文，其 Causal Encoder-Decoder 架构在 decode 时每 token 激活 16B 参数、prefill 时仅 8B，以降低推理成本。它把 Compressed Sparse Attention 2 的跨层 KV 复用与 FP4 KV 缓存结合，使常驻 HBM 的全局 KV 占用降到每 token 890 字节，约为 DeepSeek-V4-Flash 对应占用的四分之一。"
+    },
+    "huggingface-papers:7ba18d50b37f": {
+      "title": "Cellpose-SAM 训练后量化：以模态分层保留准则评估压缩",
+      "digest": "面向实验室 CPU 与边缘硬件上的干细胞显微图像分割基础模型部署，按预先设定的保留准则（各成像模态的均值变化 95% 聚类自助区间需保持在固定容差之上）评估压缩方案。在覆盖三种数据集的 176 个视野面板上，仅权重量化 W8A16 各模态均保持 instance F1；敏感度引导的 W4/W8 混合方案用四个 INT8 例外减少 6.76 倍权重存储且未出现灾难性失败，而三值量化虽有 12.08 倍压缩却在 169/176 个视野上失败，属于压缩模型的可靠性审计协议。"
+    },
+    "arxiv:c4f053602830": {
+      "title": "语义-几何解耦路由的免训练块稀疏注意力",
+      "digest": "长上下文推理中稠密注意力随序列长度二次增长，而块稀疏注意力依赖的免训练块路由仍不准确：现有路由器常在 RoPE 之后的表示上池化，把语义聚合与 RoPE 引入的几何纠缠在一起，并通过高频相位抵消削弱局部位置线索。该方法把语义聚合移到 RoPE 之前，并用离线结构先验与相对块距离重建几何偏置，得到显式闭式的块路由分数，无需 token 级搜索或后校准；在文本与视频长上下文任务上接近全注意力精度，属于长序列注意力的推理加速。"
+    },
+    "arxiv:fcfc4bacd2dd": {
+      "title": "无人机 VLM 部署画像：端侧、云端与切分计算对比",
+      "digest": "无人机等边缘设备上 VLM 的端侧推理受算力、显存与能耗限制，云端推理则带来通信延迟、带宽开销与网络依赖，切分计算是折中方案但三者取舍缺乏系统测量。本文以 SmolVLM-256M 为代表，在不同图像分辨率与网络条件下量化三种部署范式的推理延迟、资源利用、通信开销与能耗，结论是没有一种策略在所有条件下最优，属于轻量 VLM 边缘部署的选型依据。"
+    },
+    "arxiv:800c90c271d3": {
+      "title": "VPRune：面向 LLM 之前的免训练视觉 Token 剪枝",
+      "digest": "针对激进视觉 token 压缩导致 LVLM 性能明显下降的问题，作者归因为文本引导的选择偏置、被丢弃 token 的信息损失以及序列压缩带来的位置失真三点，并提出在进入 LLM 之前完成的免训练剪枝框架，由仅视觉的多样性选择、相似度引导的 token 回收与位置保持复原组成。在 FastVLM-1.5B 的多项视觉语言基准以及边缘设备上，它在激进压缩下取得更好的精度与压缩折中并降低端到端延迟。"
+    },
+    "arxiv:cecc2c36acce": {
+      "title": "H-Spec：无需草稿侧 KV Cache 的并行投机解码",
+      "digest": "块扩散草稿器能并行预测多个 token，但现有做法要为每个输入位置把目标隐藏状态投影进独立的草稿侧 KV cache，带来随并发增长的每请求显存与 KV 写入开销，而直接原地复用目标 KV 又难以在整块内维持草稿质量。H-Spec 采用混合目标上下文注入，仅在最后一个输入位置补充目标隐藏状态，其余直接复用目标 KV；草稿器融合 Mamba 与注意力模块分别消费两类上下文，并借 Mamba 并行扫描保持块并行草稿，属于投机解码的显存与延迟优化。"
+    },
+    "arxiv:e166ad288827": {
+      "title": "RGSQ：面向大型视觉语言模型的黎曼几何敏感量化",
+      "digest": "多数训练后量化方法是为单模态 LLM 设计的，把量化误差当作欧氏假设下的各向同性扰动，对 VLM 中最敏感的方向指引不足，直接套用或仅做模态特定缩放会导致位宽分布不均与低位设置下性能不稳。RGSQ 在统一的 Fisher-Riemannian 度量下把量化写成重构问题，用按模态划分的经验 Fisher 因子构造模态感知的 Kronecker 结构度量来定位敏感方向，再以几何对齐旋转和白化变换把低位扰动导向损失不敏感轴，属于 VLM 的低位量化方法。"
+    },
+    "arxiv:bce6429653a6": {
+      "title": "SPHQuant：面向 VLM 的极低位仅权重量化",
+      "digest": "原生多模态 VLM 的语言骨干显存占用大且自回归解码受显存带宽限制，边缘部署需要极低位权重量化，但 2-3bit 下免旋转方法受离群值影响、基于旋转的方法又以额外运行时开销换取精度。SPHQuant 采用免旋转的球面权重表示，把每个 8D 权重向量分解为坐标符号、半径与正单位方向，将离群幅度隔离进半径并为其分配额外精度，同时使用紧凑的正方向码本并按角度参数微调码本项，属于 VLM 仅权重量化方向的工作。"
+    },
+    "arxiv:44a43f95adfc": {
+      "title": "GravityOCR：扩散草稿加自回归验证的文档 OCR 加速",
+      "digest": "自回归 OCR 视觉语言模型每个输出 token 需要一次串行解码，限制了推理速度，而 OCR 输出强依赖于输入图像，适合扩散式并行生成；但一步扩散同时预测的多个 token 彼此未知，直接提交会引入错误。GravityOCR 是参数共享的自回归块扩散模型，联合训练并行草稿与因果 AR 验证，先验证再提交即可每轮提交多个 token 且不需要独立草稿网络，因果 AR 路径还支持带 OCR 序列与结构奖励的 GRPO；在 OmniDocBench v1.6 上 AR 路径 GRPO 把 Overall 从 94.92 提升到 95.16，并在 SGLang 服务部署中验证。"
+    },
+    "arxiv:aef7c3bf7d9a": {
+      "title": "Flash-dLLM：面向扩散 LLM 的 IO 感知 KV 缓存与并行解码",
+      "digest": "扩散 LLM 通过非自回归生成提供了一条替代自回归的路线，但缺少有效的 KV 缓存与可扩展的并行解码机制，已有加速方法又通常把两者分开研究，忽略了缓存复用与并行 token 验证联合使用时出现的 I/O 瓶颈。Flash-dLLM 先把 GPU 显存 I/O 认定为开启 KV 缓存后的主要瓶颈，用 I/O 感知的融合 KV cache kernel 减少冗余搬运，再据此提出 KV 缓存驱动的 draft-and-verify 解码策略，让模型自身兼任草稿器与验证器而无需辅助模型，属于免训练的 dLLM 推理加速。"
+    },
+    "arxiv:2a8924423ac1": {
+      "title": "Tessera：把逻辑掩码与 GPU 执行解耦的动态块稀疏注意力运行时",
+      "digest": "针对视频扩散 Transformer 迭代去噪中注意力开销过大的问题，Tessera 在运行时把逻辑注意力块映射为适配不同掩码形状与 GPU 架构的物理 tile，并通过分组调度复用数据、把数据搬运与计算重叠。执行计划由离线 profiling 得到的查找表选出，以避免运行时 kernel 特化带来的准备开销。"
+    },
+    "huggingface-papers:9b5220f57ff4": {
+      "title": "StableVQ：稳定向量量化视觉 Tokenizer 的训练方法",
+      "digest": "指出 VQ 视觉 tokenizer 训练不稳定的根源在于编码器-解码器与码本两个子系统的训练目标相互纠缠，提出 Dynamic STE 修正编码器的学习目标、Region VQ Loss 重设码本的学习目标，使二者能各自独立地完成职责。关系到自回归与掩码图像生成模型所依赖的离散视觉 token 质量。"
+    },
+    "huggingface-papers:50e6cf13fe3a": {
+      "title": "Flash-dLLM：面向扩散 LLM 的 IO 感知 KV 缓存与并行解码",
+      "digest": "指出扩散 LLM 推理中 GPU 显存 IO 是 KV 缓存与并行 token 验证联合使用时的主要瓶颈，提出 IO 感知的融合 KV 缓存 kernel 以减少冗余显存搬运。其 KV 缓存驱动的 draft-and-verify 解码让模型自身同时充当起草者与验证者，无需辅助模型，属于免训练推理加速方案。"
     }
   },
   "teams": {
@@ -611,6 +675,134 @@
     "hf-models:f7075e2de141": {
       "title": "新模型发布：tsinghua-ee/video-SALMONN-2-Pro-32B",
       "digest": "清华团队发布 video-SALMONN 2 Pro 32B，属大规模视频理解模型的新版本。"
+    },
+    "openai-news:973a91148c50": {
+      "title": "Hex 借助 GPT-6 Astra 把复杂分析变成可视化报告",
+      "digest": "Hex 的数据 agent 使用 GPT-6 Astra 将分析结论转化为可交互的可视化报告。展示了多模态生成能力在数据产品中的落地方式：由模型直接产出图表与展示层内容。"
+    },
+    "openai-news:71646fffd914": {
+      "title": "OpenAI 经济研究：员工如何把 AI 用于新工作方式",
+      "digest": "OpenAI 经济研究梳理了员工在传统岗位职责之外使用 AI 的方式，以及哪些新活动逐渐成为其工作中的常规环节。属于对 AI 使用形态的调研性内容，与推理 infra 无直接关系。"
+    },
+    "nv-developer-blog:6919dca54789": {
+      "title": "用 NVIDIA Earth-2 把最新观测转成及时的天气决策",
+      "digest": "面向天气敏感行业，介绍如何把更早、更本地化的观测数据接入 NVIDIA Earth-2 以支持天气决策。属于地球科学领域模型的应用侧介绍，涉及观测数据的处理与时效性。"
+    },
+    "openai-news:d37f5b2c5927": {
+      "title": "Higgsfield AI 用 GPT-6 Astra 一天内上线新视频功能",
+      "digest": "Higgsfield AI 基于 GPT-6 Astra 降低小企业的视频广告制作门槛，并更快地把新的创作工具推向市场。反映生成式模型在视频创作产品中的集成与迭代速度。"
+    },
+    "hf-models:036cae41a70f": {
+      "title": "新模型发布：Qwen/Qwen-Image-2.1",
+      "digest": "Qwen 发布图像生成与编辑模型 Qwen-Image-2.1，提供 diffusers 格式权重与 QwenImage21Pipeline，标签涵盖文生图、图像编辑与 rgba 输出。为图像生成/编辑流水线提供了新的可选底座模型。"
+    },
+    "hf-models:0a3d9318c0ea": {
+      "title": "新模型发布：Lightricks/LTX-2.5-22b-LoRA-Slow-Motion-Control",
+      "digest": "Lightricks 在 LTX-2.5 视频基座之上放出慢动作控制 LoRA，从标签看面向图生视频的速度控制场景，属于在既有视频生成底座上用轻量适配器扩展可控性的做法。"
+    },
+    "hf-models:68bbfb42bf5e": {
+      "title": "新模型发布：Comfy-Org/Qwen-Image-2.1",
+      "digest": "Comfy-Org 发布 Qwen-Image-2.1 的单文件 diffusion 权重，用于 ComfyUI 直接加载，方便把该图像生成模型接入本地推理工作流。"
+    },
+    "hf-models:bbb8ca014ab7": {
+      "title": "新模型发布：nvidia/DeepSeek-V4.1-Flash-NVFP4",
+      "digest": "NVIDIA 用 ModelOpt 把 DeepSeek-V4.1-Flash 量化为 NVFP4 权重并标注 image-text-to-text，属于面向多模态理解模型的低比特量化部署工作，目的是降低显存占用与推理成本。"
+    },
+    "hf-models:ba665ebf32d2": {
+      "title": "新模型发布：JackAgentLead/Jack-3.8-27B-V2-VL-16GB-VRAM",
+      "digest": "发布面向 llama.cpp 的 GGUF 多模态模型，主打视觉、长上下文与 agentic 推理并标称可在 16GB 显存运行，属于把 VLM 能力压到消费级显卡的端侧部署方向。"
+    },
+    "hf-models:51942ce98dd1": {
+      "title": "新模型发布：llm-semantic-router/Vela-1.0-Omni-Mini",
+      "digest": "Vela-1.0-Omni-Mini 是一个 PyTorch 多模态检索与特征提取模型，覆盖图文和音文检索，可作为语义路由与检索侧的共享表征骨干。"
+    },
+    "hf-models:b06e5be07766": {
+      "title": "新模型发布：videorebirth/hyperflow",
+      "digest": "hyperflow 基于 minimax-h3 以 LoRA 形式提供音视频联合生成能力，覆盖文生视频、图生视频及带参考音的多种输入组合，采用 flow matching，属于音视频一体化生成 infra 的适配权重。"
+    },
+    "hf-models:842861c902a2": {
+      "title": "新模型发布：robbyant/lingbot-video-moe-dmd-30b-a3b",
+      "digest": "发布 30B 总参、3B 激活的 MoE 视频生成模型权重，并提供 diffusers 的 LingBotVideoPipeline，稀疏激活与蒸馏式命名指向降低视频生成推理开销的方向。"
+    },
+    "hf-models:c11803cedbe8": {
+      "title": "新模型发布：inclusionAI/Ming-Image-0.1-Design",
+      "digest": "inclusionAI 发布面向平面设计的文生图模型，重点在图形设计与文字渲染并支持 RGBA 输出，便于直接产出可合成到设计流程的透明图层。"
+    },
+    "hf-models:1b8ad8688607": {
+      "title": "新模型发布：inclusionAI/Ming-Image-0.1-Design-Layer",
+      "digest": "Ming-Image-0.1-Design 的图层分解版本，输入图文生成可分离图层并输出 RGBA，为设计类图像生成提供结构化、可后续编辑的结果形式。"
+    },
+    "hf-models:b8ef6471c244": {
+      "title": "新模型发布：Qwen/Qwen-Image-2.1-PE-I2I",
+      "digest": "Qwen-Image-2.1 的提示词增强图像编辑版本，标签显示结合 prompt rewriting 做图到图编辑，属于在生成前置阶段用模型改写提示以提升编辑可控性的思路。"
+    },
+    "hf-models:c4aa5eba4aeb": {
+      "title": "新模型发布：Qwen/Qwen-Image-2.1-PE-T2I",
+      "digest": "Qwen-Image-2.1 的提示词增强文生图版本，标签显示加入 prompt rewriting，属于把提示优化并入图像生成链路以改善出图质量的一类做法。"
+    },
+    "hf-models:20dfe2f585ca": {
+      "title": "新模型发布：akhilaaa3/Jev-Omni",
+      "digest": "在 google/gemma-4-12B-it 基础上合并微调得到的多模态模型，权重以 transformers 格式发布并标注 endpoints_compatible，便于直接接入推理端点。"
+    },
+    "hf-models:061e7377ccb7": {
+      "title": "新模型发布：ATH-MaaS/Ovis-Omni-Embedding-3B",
+      "digest": "Ovis-Omni-Embedding-3B 是 3B 规模的多模态嵌入模型，标签覆盖文本、图像、视频与音频的检索与特征提取，用于统一跨模态表征与召回场景。"
+    },
+    "hf-models:69acf97f25eb": {
+      "title": "新模型发布：abenzerps/Qwen-Image-2.1-Uncensored-GGUF",
+      "digest": "基于 Qwen-Image-2.1 的 GGUF 量化版本，并在其基础上做了去审查处理，提供 ComfyUI 可直接加载的文生图权重。GGUF 量化降低显存占用，便于在本地以较低成本跑图像生成，属于扩散模型侧的量化和分发工作。"
+    },
+    "hf-models:4090ef6db140": {
+      "title": "新模型发布：pottokao/Qwen-Image-2.1-Text-Encoder-Heretic-GGUF",
+      "digest": "把 Qwen-Image-2.1 配套文本编码器的 Heretic 版本转成 GGUF，并给出 fp8 等量化选项，面向 ComfyUI 工作流发布。文本编码器量化是图像生成流水线里常被忽略却直接影响提示词处理开销的一环。"
+    },
+    "hf-models:c7bf98547587": {
+      "title": "新模型发布：Abiray/Qwen-Image-2.1-GGUF",
+      "digest": "Qwen-Image-2.1 的通用 GGUF 量化权重，支持文生图与图生图，可在 ComfyUI 中直接使用。量化后的权重让这款图像生成模型更容易在显存受限的本地环境部署与推理。"
+    },
+    "hf-models:d7d074715b13": {
+      "title": "新模型发布：KasugaiSakura/Qwen-Image-2.1-Uncensored-Abenzerps-GGUF",
+      "digest": "在 abenzerps 去审查版本之上再分发的 Qwen-Image-2.1 GGUF 量化权重，标签与前者一致，均为文生图与 ComfyUI 推理。属于社区侧的量化再托管，方便用户换用不同仓库的同类产物。"
+    },
+    "hf-models:a5664c1b6193": {
+      "title": "新模型发布：WarmBloodAban/Qwen-Image-2.1-LoRAs",
+      "digest": "面向 Qwen-Image-2.1 的 LoRA 适配权重，以 diffusers 格式发布，走 diffusion-lora 模板。LoRA 形式的轻量适配让生成风格或能力的调整不必重训底模，降低了微调与集成的成本。"
+    },
+    "hf-models:c9430454f375": {
+      "title": "新模型发布：pottokao/Qwen-Image-2.1-Text-Encoder-Heretic",
+      "digest": "Qwen-Image-2.1 所用文本编码器的 safetensors 完整版本，基于 Qwen3-VL-8B-Instruct 做 finetune 并经 abliterated 处理。提供未经二次量化的原始权重，便于自行导出 GGUF 或做其他格式转换。"
+    },
+    "hf-models:6c9be3231f35": {
+      "title": "新模型发布：0xSojalSec/Qwen-Image-2.1-Uncensored-GGUF",
+      "digest": "又一个 Qwen-Image-2.1 去审查版本的 GGUF 量化仓库，标签与同类产物相同，面向 ComfyUI 的文生图使用。属于同一底模的社区量化再分发，多仓库并存主要是为了容错和备选下载源。"
+    },
+    "hf-models:81bf246a0a8f": {
+      "title": "新模型发布：realrebelai/Qwen-Image-2.1_GGUFs",
+      "digest": "Qwen-Image-2.1 的 GGUF 量化集合，支持文生图与图生图，可在 ComfyUI 中加载运行。以量化换取更低的显存和内存需求，方便在消费级设备上做图像生成推理。"
+    },
+    "hf-models:def0ff66dcb7": {
+      "title": "新模型发布：unsloth/Qwen-Image-2.1-GGUF",
+      "digest": "unsloth 发布的 Qwen-Image-2.1 GGUF 量化权重，涵盖文生图任务并标注支持中英文。由较成熟的量化团队出品，通常意味着量化流程和格式兼容性更有保证，便于部署到本地推理栈。"
+    },
+    "hf-models:1685f8d5a8ae": {
+      "title": "新模型发布：ATH-MaaS/Ovis-VL-Embedding-2B",
+      "digest": "Ovis 系列的多模态嵌入模型 2B 版本，可对文本、图像、视频以及视觉文档做表征抽取与检索。多模态嵌入是跨模态检索和向量索引的底座组件，这类模型的发布直接影响 RAG 与检索侧的多模态能力。"
+    },
+    "hf-models:e66c5f7775ff": {
+      "title": "新模型发布：ATH-MaaS/Ovis-VL-Embedding-9B",
+      "digest": "Ovis 多模态嵌入模型的 9B 版本，与 2B 版本同属一条工作线，支持文本、图像、视频和视觉文档的嵌入与检索。提供大小两档尺寸便于在精度与推理开销之间取舍。"
+    },
+    "hf-models:724901aa1689": {
+      "title": "新模型发布：Viggle/Qwen-Image-2.1-viggle-turbo",
+      "digest": "面向 Qwen-Image-2.1 的 diffusers LoRA，采用 DMD 蒸馏做少步加速，覆盖文生图、图生图与图像编辑。少步蒸馏直接压缩采样步数，是降低扩散模型生成延迟的常见加速路径。"
+    },
+    "hf-models:6eda9e0258be": {
+      "title": "新模型发布：e-n-v-y/Qwen-Image-2.1-Fix",
+      "digest": "针对 Qwen-Image-2.1 的 diffusers LoRA 适配权重，定位偏修复用途。仓库信息有限，可确认的是以 LoRA 形式发布、可直接叠加在底模上使用，属于社区侧的轻量修正产物。"
+    },
+    "hf-models:fac8e8d0f02f": {
+      "title": "新模型发布：Kijai/Ming-Image-ComfyUI",
+      "digest": "社区作者把 Ming-Image 适配到 ComfyUI 的权重仓库，属图像生成模型的社区落地版本（仓库未提供更多说明）。"
     }
   },
   "wechat": {
@@ -633,6 +825,14 @@
     "sogou-wechat:15b2dbb4ca56": {
       "title": "视觉 Token 剪枝、扩散加速与 Agent 执行结构：多模态与推理前沿突破",
       "digest": "公众号综述近期多模态与推理方向进展：3D 推理效率、视频生成加速、LLM 推理压缩、机器人控制等，并提到用多模态 LLM 做语义条件控制、VAE 处理声学条件的混合结构。"
+    },
+    "sogou-wechat:6253b0d6b6d5": {
+      "title": "用昇腾跑 DeepSeek 现在到底行不行",
+      "digest": "实测对比昇腾软件栈当前跑 DeepSeek 的可用性，提到算子插件活跃度与原生多模态表现，属国产算力落地的现状观察。"
+    },
+    "sogou-wechat:850a5cf5f479": {
+      "title": "中科大 SPIDER：中层语义剪 Token + 子层动态跳过，多模态大模型推理再加速",
+      "digest": "针对高分辨率视觉输入带来的显存与计算开销，用中层语义剪 Token 配合子层动态跳过压缩算力，论文称 FLOPs 降约 79% 仍保留 96% 性能。"
     }
   },
   "repos": {
@@ -971,6 +1171,352 @@
     "github-repos:3bee057496c3": {
       "title": "SGLang：修复 Alpha 通道图像与工具结果媒体排序",
       "digest": "处理带 Alpha 通道图像以及工具调用结果中的媒体顺序问题，属多模态输入健壮性修复。"
+    },
+    "github-repos:61735d8df9a5": {
+      "title": "vLLM：用 UUID 恢复被缓存的多模态音频输入",
+      "digest": "修复多模态音频输入缓存的恢复逻辑，改用 UUID 来正确还原缓存中的音频输入。针对的是多模态请求在复用缓存音频时可能取错条目的问题，保证音频侧输入缓存与请求一一对应。"
+    },
+    "github-repos:f334ec5bd0cb": {
+      "title": "vLLM：AudioResampler 新增 torchaudio 后端",
+      "digest": "为多模态音频重采样器 AudioResampler 增加 torchaudio 后端，作为既有实现之外的另一条音频重采样路径，影响音频输入进入模型前的预处理依赖与开销。"
+    },
+    "github-repos:402507372302": {
+      "title": "vLLM：EPD encoder-only 实例改用 GPU NVDEC 做视频 IO",
+      "digest": "在 EPD 分离部署的 encoder-only 实例上，把视频媒体 IO 的解码改为走 GPU NVDEC，将视频解码从 CPU 侧转移到 GPU，缓解编码器实例的 CPU 预处理瓶颈。"
+    },
+    "github-repos:2eb375f024a7": {
+      "title": "vLLM：修复解码后视频帧列表被拆成多段视频",
+      "digest": "修复多模态视频解析逻辑，把已解码的帧列表当作单个视频处理，避免帧序列被误识别为多个视频而破坏时间维度与占位符的对齐关系。"
+    },
+    "github-repos:a866245751bd": {
+      "title": "vLLM：修复 dummy video profiling 输入中高宽颠倒",
+      "digest": "修正多模态 dummy 视频 profiling 输入里高与宽写反的问题，使显存与算力 profiling 基于正确的视频尺寸，避免由此得到的调度与资源预算出现偏差。"
+    },
+    "github-repos:f3d1ae33c8c9": {
+      "title": "vLLM：为 Qwen-VL 视频采样参数加上上限",
+      "digest": "给 Qwen-VL 的视频采样相关参数加上取值范围上限，防止请求侧传入过大的采样配置，属于多模态输入层面的防护性改动。"
+    },
+    "github-repos:225c61a9a289": {
+      "title": "vLLM：为 base64 视频载荷补上校验",
+      "digest": "对 base64 编码的视频载荷增加校验，使其与图像、音频输入的处理方式保持一致，避免损坏或非法的视频载荷进入后续多模态预处理流程。"
+    },
+    "github-repos:1d0938029a21": {
+      "title": "SGLang：exact-token 预处理支持 tensor 形式的图像",
+      "digest": "修复多模态 exact-token 预处理对 tensor 图像的兼容问题，使图像以张量形式传入时也能被正确计入 token，保证 token 精确匹配相关推理路径的一致性。"
+    },
+    "github-repos:177985f9f8c6": {
+      "title": "SGLang：为 dsv4.1 接入 vision tower 与图像预处理",
+      "digest": "为 dsv4.1 增加 vision tower 与图像预处理实现，补齐该模型在 SGLang 中的视觉编码与图像输入链路，使其可按多模态方式推理。"
+    },
+    "github-repos:3c8036311734": {
+      "title": "xDiT：扩展 Wan 的 CFG 并行支持",
+      "digest": "扩展 Wan 系列的 CFG 并行支持：当 CFG 分散到各 rank 时关闭 DiT cache 中的独立 CFG，并支持 Wan2.2-TI2V 的 i2v 场景跳过独立 CFG 步骤，减少并行生成中的冗余计算。"
+    },
+    "github-repos:bc5e6c03ec83": {
+      "title": "xDiT：量化路径跳过 torchao 已量化的线性权重",
+      "digest": "在量化处理路径中跳过已被 torchao 量化的线性层权重，避免对已量化权重重复处理，保证量化后的 DiT 模型能够正常加载与推理。"
+    },
+    "github-repos:69bb71e59246": {
+      "title": "xDiT：修复 Minimax-H3 上的重复编译",
+      "digest": "修复 Minimax-H3 推理时的重复编译问题，同时修正 num_inference_steps 的处理并补充 timestep 触发重编译的说明，以减少编译带来的额外开销。"
+    },
+    "github-repos:a983d85098df": {
+      "title": "xDiT：扩展 FP8 通信支持",
+      "digest": "扩展 FP8 通信能力：启用 FlyDSL FP8 的 Ulysses 通信并在 USP 内统一解析相关状态，同时把 FP8 通信接入 Flux、Qwen、SD3、Z-Image 等模型，以降低分布式生成中的通信开销。"
+    },
+    "github-repos:4109617ed5fe": {
+      "title": "xDiT：新增 MXFP6 GEMM 与统一 GEMM 配置",
+      "digest": "新增 MXFP6 GEMM 支持并引入统一的 GEMM 配置入口，为 DiT 推理提供更低精度的矩阵乘选项和集中化的 GEMM 选择方式。"
+    },
+    "github-repos:d4b6110fe0ab": {
+      "title": "vllm：按模态区分多模态 dummy 输入选项的类型",
+      "digest": "把多模态推理中用于占位的 dummy 选项按模态分别做类型化定义，替代此前共用的宽松配置，避免不同模态的占位输入在形状与类型上互相混淆导致的运行错误。"
+    },
+    "github-repos:86b91bc7131c": {
+      "title": "xDiT：新增 FastH3 V2 runner 与 V1 权重变体别名",
+      "digest": "在 xDiT 并行推理框架中为 FastH3 加入 V2 runner，并为 V1 权重提供模型 ID 变体别名，同时把 FastH3 模型 ID 的引用从列表下标改为常量，便于同一套代码路径切换不同版本权重。"
+    },
+    "github-repos:09db2a6603b4": {
+      "title": "cache-dit：修复 GQA 下 KV 序列复制的静默错误并消除 graph break",
+      "digest": "修复 replicate_kv_sequence 在 GQA 下的静默结果错误；同时把 enable_gqa 支持性的签名探测从每次 attention 调用改为导入时探测一次，避免在 torch.compile 区域内反复触发 graph break（报告称该路径的 graph break 由 56 降到 0）。"
+    },
+    "github-repos:335e4f006f4e": {
+      "title": "LightX2V：支持 qwen-image-2.1",
+      "digest": "在 LightX2V 推理框架中接入 Qwen-Image-2.1，使该图像生成模型可以走 LightX2V 的加速推理路径。"
+    },
+    "github-repos:0a41db558e46": {
+      "title": "LightX2V：为多个图像与视频模型族加入 host/NUMA 共享 CPU block offload",
+      "digest": "为 Hunyuan Image 3.0、MiniMax-H3、Qwen-Image-2512 和 Wan 2.1 接入共享 CPU block offload，支持 host/NUMA 权重共享，并简化启动脚本、增加 CLI 范围选择与中英双语使用说明，用于在显存受限时把权重卸载到主机侧。"
+    },
+    "github-repos:9d847185b752": {
+      "title": "vllm：为多模态 hash 摘要输入补上分隔处理",
+      "digest": "修复多模态 hash 摘要计算时输入字段未做分隔（framing）的问题，避免不同模态或不同字段直接拼接后在哈希上产生歧义，影响多模态缓存与去重的正确性。"
+    },
+    "github-repos:7218f28d26ec": {
+      "title": "sglang：VLM 在非 CUDA 平台上不再强制使用 CUDA 放置",
+      "digest": "调整 VLM 路径的设备放置逻辑，在非 CUDA 平台上不再尝试把张量放到 CUDA 设备，避免在该类平台上初始化或运行时报错。"
+    },
+    "github-repos:ded00dc56cdb": {
+      "title": "DiffSynth-Studio：更新 Qwen-Image-2.1 示例",
+      "digest": "更新 Qwen-Image-2.1 的示例脚本与用法说明，使其与当前模型接口和行为保持一致，降低按示例复现图像生成流程的门槛。"
+    },
+    "github-repos:0f202456020c": {
+      "title": "DiffSynth-Studio：对齐 qwen-image-2.1 的最新行为",
+      "digest": "跟进 qwen-image-2.1 的最新行为，修正 scheduler、重命名模型 id、复用 qwen-image 的 scheduler，并更新 LoRA target modules 与文本编码器相关处理，另加兼容补丁以兼容已有用法。"
+    },
+    "github-repos:ca0822aacf30": {
+      "title": "DiffSynth-Studio：支持 Qwen-Image-2.1",
+      "digest": "在 DiffSynth-Studio 中新增 Qwen-Image-2.1 支持，把该图像生成模型纳入其训练与推理管线。"
+    },
+    "github-repos:da52e160c07d": {
+      "title": "LightX2V：为 qwen-image-2.1 增加 RTX 5090 FP8 推理优化",
+      "digest": "面向 RTX 5090 增加 Qwen-Image-2.1 的文生图与图生图优化路径，包括 stage 级 condition-encoder CPU offload 以在 DiT 去噪前释放显存、FP8 DiT linear 推理（fp8-sgl 与 SM120 FP16 累加两种后端）及配套量化 profile，并采用 dense SageAttention2 推荐配置，附成对的 T2I/I2I 配置、启动脚本和实测性能文档。"
+    },
+    "github-repos:ab10a549bcd1": {
+      "title": "LightX2V：qwen-image-2.1 改用 OpenCV 保存结果",
+      "digest": "把 qwen-image-2.1 的结果写出改为使用 OpenCV，统一图像保存实现，减少因图像编码路径差异造成的保存失败或格式不一致。"
+    },
+    "github-repos:ddfc29511cc3": {
+      "title": "LightX2V：为 qwen-image-2.1 增加 warmup 支持",
+      "digest": "为 qwen-image-2.1 推理流程加入 warmup，在正式生成前完成预热，减少首次请求因初始化与编译带来的额外延迟。"
+    },
+    "github-repos:17705e7e09b6": {
+      "title": "LightX2V：对齐 qwen-image-2.1 的输出尺寸与 diffusers",
+      "digest": "把 qwen-image-2.1 推理分支的输出尺寸处理改成与 diffusers 一致，避免同一模型在 LightX2V 与 diffusers 下得到不同分辨率的结果，属于图像生成部署链路的对齐性修复。"
+    },
+    "github-repos:181e3f85a541": {
+      "title": "LightX2V：更新 qwen-image-2.1 文档",
+      "digest": "更新 qwen-image-2.1 的 README 说明，输入信息仅表明是文档变更，不涉及推理逻辑或性能改动。"
+    },
+    "github-repos:81a2334cdc8c": {
+      "title": "LightX2V：再次更新 qwen-image-2.1 文档",
+      "digest": "继续修订 qwen-image-2.1 的 README 说明，输入信息仅表明是文档变更，未涉及代码或推理路径调整。"
+    },
+    "github-repos:661b36bda88d": {
+      "title": "LightX2V：优化 qwen-image-2.1 推理",
+      "digest": "对 qwen-image-2.1 做推理侧优化。提交摘要只给出优化这一结论，未说明具体手段与收益，因此不对优化范围作进一步推断。"
+    },
+    "github-repos:c2c679dac16d": {
+      "title": "sglang-omni：用 Triton 融合 MOSS-TTS 自回归解码，降低解码开销",
+      "digest": "把 MOSS-TTS-Local 自回归解码的 token 行构造与 radix 哈希融合成 Triton kernel，并在整批同帧时复用行、embedding 与步进，同步解码路径直接读取已提交的步计数器、token 回读走 pinned host 暂存；整数哈希公式、EOS id 与 Torch 回退路径保持不变。Seed-TTS-Eval EN 并发 16 五轮均值下流式吞吐 13.10 提升到 14.05 请求/秒、非流式 15.63 提升到 16.68 请求/秒，首音频延迟、播放连续性、WER、说话人相似度与 UTMOS 未有确认变化。"
+    },
+    "github-repos:069f40ce212e": {
+      "title": "sglang-omni：新增 omni-gpu-deep-dive 性能归因分析技能",
+      "digest": "新增分析技能，把 omni 阶段内的 GPU 耗时归因到 sglang_omni 的 Python 源码行。做法是包装 vendored 的 llm-torch-profiler-analysis 后端并用 shim 提升 omni 栈帧在两个排序梯级中的优先级，同时修正归因器把兄弟 checkout 重写成虚构 python/sglang/ 路径的裸 sglang/ 回退逻辑，所有补丁以包装形式实现，不修改上游仓库。"
+    },
+    "github-repos:0a5b5e456bb1": {
+      "title": "sglang-omni：修复 OmniTyper 误报终端粘贴被忽略",
+      "digest": "ignored-paste 判定原先比较字符数并在缺失时回退到 AXValue 长度，而 cmux 等终端暴露的 AXTextArea 既无 AXNumberOfCharacters 又 AXValue 为空，导致成功粘贴被判为 sys.pasteIgnored 并抢焦点。改为只信任 AXNumberOfCharacters，计数未知时视为无证据，并把判定抽成带测试的 pasteWasIgnored。"
+    },
+    "github-repos:8a49c857b019": {
+      "title": "sglang-omni：融合 DiT 块并用 CUDA graph 重放整个 Euler 步",
+      "digest": "针对 DiT 步进受启动开销限制的问题（batch size 1 时启动间隔决定步时，更大 batch 下 57-71% 的 kernel 时间落在 elementwise 上），提供两个开关：enable_dit_torch_compile 按块类型编译无绑定块前向并把调制、门控与归一化链折进 matmul 流，enable_dit_cuda_graph 捕获一个 Euler 步并在每个 NFE 步重放，因为同一轨迹内只有 latent 与 timestep 变化。捕获需要有界形状空间，帧、参考帧与文本 token 向上取整到 16/16/8 行，attention bias、卷积位置嵌入的掩码与真实长度 rope 位置也随之处理。"
+    },
+    "github-repos:f9b01a20b6b5": {
+      "title": "sglang-omni：撤回 OmniTyper 无法兑现的复制承诺并修复 ASR 卸载",
+      "digest": "无法捕获当前输入框时会提示结果可复制，但该提示在管线运行前就设置，语音编辑无可读选区、请求校验失败、worker 准备失败三条路径都会在产生转写前结束会话，用户只拿到错误横幅和粘贴空剪贴板的指引；本次撤回该承诺、在 Settings 中显示准备进度、指明 verbatim 设置位置，并修复 Unload ASR 造成的语音服务孤儿问题。"
+    },
+    "github-repos:505b33f61be5": {
+      "title": "mstar：接入 OmniVoice 掩码扩散 TTS 并以 Walk Graph 提供服务",
+      "digest": "OmniVoice（k2-fsa/OmniVoice）是非自回归 TTS：Qwen3-0.6B 主干在固定长度画布上双向运行 8 行 codebook，按置信度用若干步揭晓单元格，再由 Higgs-Audio-v2 编解码器把完成的画布还原为波形。由于没有 KV cache、每步重写画布且前缀注意力会落到被改动的区域，step k 的计算在 step k+1 不再有效，故 get_node_resources() 明确声明不保留资源；图结构为 ref_encoder（仅 clone，持久化）→ Loop(backbone) → code2wav，每步把所有请求的两份 CFG 文档拼接成一条 ragged 行并跑参考实现自带的融合 kernel 前向。"
+    },
+    "github-repos:8b3c3de4074c": {
+      "title": "mstar：进程死亡时退出不再挂起，并让种子图像编辑可复现",
+      "digest": "worker 或 conductor 死亡时服务改为直接退出而不是挂住，API server 停止时丢弃在途请求的输入信号；健康检查在检测到 conductor 下线时返回 503，dynamo 集成 API server 同样检查死掉的 conductor，并在 conductor 上加入类似 worker→conductor 的 watchdog 线程检查 API server 健康。另把 VAE 编码器的后验采样改为由请求 seed 驱动，使带种子的图像编辑可复现。"
+    },
+    "github-repos:1d7dbf77506c": {
+      "title": "vllm：把 supports_multimodal_inputs 及缓存移出模型注册表",
+      "digest": "把多模态支持能力的判定函数 supports_multimodal_inputs 及其缓存从模型注册表移到其他位置，属于 reasoning 侧接口整理，会改变多模态模型能力查询的调用与缓存归属。"
+    },
+    "github-repos:4bf8d519fc49": {
+      "title": "vllm：多模态载荷安全修复，优先使用新载荷而非过期接收端缓存",
+      "digest": "针对多模态请求处理中的接收端缓存做安全加固，让新到的多模态载荷优先于陈旧缓存被使用，避免复用过期数据；提交摘要未给出漏洞细节或影响范围。"
+    },
+    "github-repos:48d0e4856d43": {
+      "title": "xDiT：按 tile 体量均衡 decode 各 rank 负载",
+      "digest": "在 DiT 并行推理的 decode 阶段，改为依据每个 tile 的实际体量来划分和解码任务分配，缓解不同 rank 之间负载不均导致的等待。属于分布式扩散 Transformer 推理的负载均衡优化。"
+    },
+    "github-repos:195ac7c90981": {
+      "title": "xDiT：为 Qwen Image Edit 支持 CFG 并行",
+      "digest": "为 Qwen Image Edit 这类图像编辑模型加入 CFG 并行能力，把正负分支的推理拆分到不同设备上执行。降低单卡显存与算力压力，是扩散图像编辑模型分布式推理的并行策略扩展。"
+    },
+    "github-repos:5a14be140a0a": {
+      "title": "xDiT：接入 Lumina-Image-2.0，优化 GQA 下 Ulysses 通信",
+      "digest": "新增 Lumina-Image-2.0 模型运行器与 CFG、Ulysses 序列并行支持，同时针对 GQA（分组查询注意力）优化 Ulysses 通信并重构相关参数校验。属于扩散图像生成模型在序列并行框架下的适配与通信开销优化。"
+    },
+    "github-repos:630beb4148a5": {
+      "title": "xDiT：MiniMax-H3 解码视频改为设备侧量化",
+      "digest": "此前 runner 以 output_type=\"np\" 取输出，导致整段 float 视频被拷回主机并在 NumPy 里单线程完成转置与堆叠，之后又要在主机上重新换算成 uint8；现在改为请求 pt 输出，把缩放、取整、截断、类型转换和转置都放到设备上完成。这条提交给出的计时显示，定时管线内该段耗时从 206 ms 降到 33 ms，说明它削减的是解码后处理中不必要的设备-主机往返开销。"
+    },
+    "github-repos:eca0e4b069df": {
+      "title": "DiffSynth-Studio：重构 qwen-image-2.1 的注意力路由",
+      "digest": "重构 qwen-image-2.1 的注意力路由实现并附带一处小修。属于扩散图像模型推理路径的整理，便于后续接入不同的注意力后端。"
+    },
+    "github-repos:b6aad98935dd": {
+      "title": "LightX2V：更新 qwen-image-21 的 RTX 5090 镜像文档",
+      "digest": "更新了 qwen-image-21 在 RTX 5090 上使用的 Docker 镜像说明。属于文档层面的环境配置同步，方便在该硬件上复现推理环境。"
+    },
+    "github-repos:e4287a1c9af0": {
+      "title": "vllm-omni：修复 Qwen3-TTS 内联 Base 克隆误用音色标签",
+      "digest": "修复 Qwen3-TTS 在内联 Base 音色克隆时未忽略 voice 标签的问题。属于语音合成服务正确性修复，避免克隆请求被错误的音色标识干扰。"
+    },
+    "github-repos:f202ee08d623": {
+      "title": "vllm-omni：修复上下文并行下 FP8 Quack 内核",
+      "digest": "修复在 Context Parallelism 开启时 FP8 Quack 内核出错的问题，同时减少内核重编译次数。涉及多模态推理中长上下文并行的数值内核正确性与编译开销。"
+    },
+    "github-repos:ee9b35a1aab8": {
+      "title": "vllm-omni：为 Wan 2.2 增加 VAE 解码优化",
+      "digest": "针对 Wan 2.2 视频生成模型补充 VAE 解码阶段的优化。属于视频生成推理链路中解码环节的性能改进。"
+    },
+    "github-repos:74eebe436745": {
+      "title": "vllm-omni：Ascend 新增可选切块抗混叠 FIR 上采样",
+      "digest": "在昇腾硬件路径上加入可选的切块（chunked）抗混叠 FIR 上采样实现，需显式开启。属于音频/视频生成后处理在国产加速器上的算子适配，兼顾质量与显存占用。"
+    },
+    "github-repos:40108986ad70": {
+      "title": "vllm-omni：把音频输出并入匹配的文本 choice",
+      "digest": "修复音频最终输出未正确并入匹配文本 choice 的问题。属于多模态服务端响应组装修复，保证返回结果中文本与音频的对应关系正确。"
+    },
+    "github-repos:eac8dc59ccd8": {
+      "title": "vllm-omni：修复视频流音频增量被丢弃的问题",
+      "digest": "修复处理视频流时部分音频 delta 未被保留的问题，改为保留全部音频增量。属于流式多模态输出完整性的修复。"
+    },
+    "github-repos:438c517a0078": {
+      "title": "vllm-omni：图像编辑 benchmark 中流式错误标记为失败",
+      "digest": "让图像编辑 benchmark 在遇到流式（stream）错误时将其标记为失败，而不是静默通过。属于评测流程的可靠性修复，避免错误运行被计入有效结果。"
+    },
+    "github-repos:4fe22c263f2a": {
+      "title": "vllm-omni：修复 GLM-Image 在 set_timesteps 后被改写的 timesteps",
+      "digest": "修复 GLM-Image 图像生成中重设 timesteps 之后未平移的 timestep 被覆盖的问题，恢复原有时间步设置。时间步调度直接决定扩散采样的轨迹，属于图像生成推理正确性的一类修复。"
+    },
+    "github-repos:bbd1700dd7a9": {
+      "title": "vllm-omni：Omni chat 压测中带 error 事件的流标记为失败",
+      "digest": "Omni chat 基准测试的流式响应里若出现 error 事件，现在会被计入失败而非当作正常完成。避免多模态服务端点在流式出错时仍报出好看的吞吐与成功率数字。"
+    },
+    "github-repos:f836cdd6e3d2": {
+      "title": "sglang-omni：Qwen3-TTS 运行上界提到 64，graph ladder 随之调整",
+      "digest": "把 Qwen3-TTS 的运行并发上界从原值提高到 64，并让用于 CUDA graph 的 ladder 配置跟随该上界，同时同步更新准入默认值的文档与示例。影响 TTS 推理的批处理规模与图捕获档位配置。"
+    },
+    "github-repos:5f1acece8825": {
+      "title": "sglang-omni：ROCm SGLang 基础镜像升级到 v0.5.20",
+      "digest": "将 ROCm 平台上的 SGLang 基础镜像更新到 v0.5.20，使多模态推理在 AMD 环境下的底座与主线版本对齐。属于构建与依赖层面的维护性变更。"
+    },
+    "github-repos:adc65aeb5f41": {
+      "title": "sglang-omni：vocoder 的 flow 与 hift 放到独立 CUDA stream",
+      "digest": "性能优化，把 vocoder 中的 flow 与 hift 计算挪到各自的 CUDA stream 上执行。减少与同一进程内其他算子（如解码模块）的串行等待，提升语音生成侧的硬件利用率。"
+    },
+    "github-repos:970538ac70f4": {
+      "title": "sglang-omni：SGLang 依赖版本升到 0.5.20",
+      "digest": "将所依赖的 SGLang 升级到 0.5.20，跟随上游推理引擎的版本更新。属于多模态服务栈的依赖维护，为后续功能与修复提供对应底座。"
+    },
+    "github-repos:2dda6b4eb555": {
+      "title": "sglang-omni：新增 Ascend NPU 固定版本 Docker 镜像与发布流程",
+      "digest": "为 Ascend NPU 增加固定版本的 Docker 镜像及其构建发布工作流，覆盖 A2 机型，并统一镜像版本管理、依赖一致性检查与安装文档。让多模态推理在昇腾上的部署从源码安装转向可复现的镜像交付。"
+    },
+    "github-repos:eee77073603a": {
+      "title": "sglang-omni：xpu 补齐 AuK 运行时依赖",
+      "digest": "修复 xpu 构建中缺少 AuK 运行时依赖的问题，使相关算子能在 xpu 环境下正常加载。同时移除了针对依赖清单的测试检查。"
+    },
+    "github-repos:cef82112eb4f": {
+      "title": "xDiT：更新 CODEOWNERS 列表",
+      "digest": "更新仓库的 CODEOWNERS 列表，调整各路径的代码负责人归属。属于项目协作与维护层面的变更，不涉及并行扩散推理逻辑本身。"
+    },
+    "github-repos:f79f9d2998c2": {
+      "title": "vllm-omni：支持新图像模型 inclusionAI/Ming-Image-0.1-Design",
+      "digest": "在 vllm-omni 中接入 inclusionAI 的 Ming-Image-0.1-Design 图像模型，使其可被该推理框架直接加载与服务。属于扩展可服务模型范围的模型接入工作。"
+    },
+    "github-repos:b2c28b93b07b": {
+      "title": "vllm-omni：AR 到 diffusion 的中间数据改用 NIXL 传输",
+      "digest": "新增特性，把自回归阶段传给扩散阶段的中间载荷改为通过 NIXL 传输。面向 AR 加扩散的多阶段生成流水线，改善两个阶段之间数据搬运的路径与开销。"
+    },
+    "github-repos:932ba0104045": {
+      "title": "vllm-omni：修复 Qwen3-TTS 在 MRv2 runner 上的 prefill 探测",
+      "digest": "修复 Qwen3-TTS 在 MRv2 runner 环境下 prefill 探测失败的问题。prefill 探测影响服务启动时对模型与资源的判定，属于语音生成服务可用性修复。"
+    },
+    "github-repos:d95db14a38d3": {
+      "title": "vllm-omni：把 Wan 的 RMSNorm patch 限定在 NPU 生效",
+      "digest": "把针对 Wan 扩散模型的 RMSNorm 补丁作用范围收窄到 Ascend NPU，避免该改动影响其他后端。属于防止平台专属修复外溢到通用推理路径的修复。"
+    },
+    "github-repos:50c8e4631279": {
+      "title": "vllm-omni：恢复离线 Qwen3-TTS 的 MRV2 全载荷传输",
+      "digest": "修复离线 Qwen3-TTS 场景下 MRV2 传输丢失全载荷的问题，重新恢复完整载荷通路。属于多模态语音生成服务链路上的回归修复，保证 TTS 请求数据在引擎间被完整搬运。"
+    },
+    "github-repos:4c28675c89f9": {
+      "title": "sglang-omni：补充 MUSA 安装指南与 Dockerfile",
+      "digest": "为 MUSA 平台新增安装文档与 Dockerfile，并固定 SGLang 版本、镜像标签及 silero-vad 等依赖。目的是让多模态推理服务能在该加速后端上按可复现的环境完成部署。"
+    },
+    "github-repos:7ac04a6adfbc": {
+      "title": "sglang-omni：为 Omni pipeline 引入会话生命周期",
+      "digest": "在 Omni pipeline 中加入 session 生命周期管理。多模态与全双工推理需要跨请求维持会话状态，这一改动为会话的创建、复用与释放提供了统一入口。"
+    },
+    "github-repos:d355ac176979": {
+      "title": "vllm：EPD 支持仅含元数据的音频输入",
+      "digest": "让 EPD 路径接受只带元数据、不带实际音频载荷的输入。这样在多模态服务中可以先行传递音频占位信息、后续再补齐数据，便于解耦调度与传输。"
+    },
+    "github-repos:e549df563585": {
+      "title": "sglang：dLLM 支持 DiffusionGemma 推理服务",
+      "digest": "为 sglang 的 dLLM 分支加入 DiffusionGemma 的服务化支持。把扩散式语言模型纳入统一推理框架，属于扩展生成式模型服务范围的一类改动。"
+    },
+    "github-repos:9f1d1edb4d47": {
+      "title": "xDiT：FastH3 让 VSA-H3 注意力更快且可编译",
+      "digest": "针对 VSA-H3 稀疏注意力路径中显存与开销过大的问题，改为直接生成 FlexAttention 的 KV 索引列表，并按字节预算分块计算分数、top-k 直接产出 int32 索引，避免物化 fp32 分数矩阵、密集掩码与逐元素排序。此前该稀疏路径在 768x1344x124、Ulysses 8 下反而慢于稠密注意力，此次优化旨在让稀疏方案真正兑现其计算量优势。"
+    },
+    "github-repos:8593f9633374": {
+      "title": "sglang-omni v0.1.6：统一 stage 设备契约并扩充 ASR/TTS 与 NPU 支持",
+      "digest": "该版本统一了各模型 stage factory 的 device/gpu_id 契约，新增 Qwen3-ASR 实时转写基准与 Nemotron Voicechat 离线支持，并为 Ming-Omni、Qwen3-ASR 等加入 Ascend NPU 支持与 torch NPU profiler。同时包含调度器空闲时阻塞收件箱而非轮询、Ming-TTS 使用联合 RoPE、higgs-tts 采样器行重置融合等性能修复，服务于多模态语音与全双工推理的吞吐和稳定性。"
+    },
+    "github-repos:513dffb63448": {
+      "title": "vllm-omni v0.30.0rc1：统一全双工框架并扩展视频生成与模型覆盖",
+      "digest": "该候选版包含 262 项合并改动，重点是把全双工执行统一到引擎自持的 session 上（含 duplex 编排、进程内客户端与 AURA 接入 Realtime API），并增强交互式与流式视频生成，加入 LingBot World 实时镜头控制、worker 侧 MP4 编码、异步分块传输以及 MiniMax-H3 潜变量编辑与长视频续写。模型覆盖扩展到 Tencent AuK/AuK-Flash、Breeze-TTS-2、Anima、π0.5 等，并基于 vLLM 0.30.0 推进流式执行与量化、显存效率优化。"
+    },
+    "github-repos:3ad7c9d44566": {
+      "title": "vLLM-Omni：NPU 侧升级到 v0.30.0",
+      "digest": "把昇腾 NPU 分支的 vLLM-Omni 版本对齐到 v0.30.0，属于昇腾后端对上游版本的跟进。"
+    },
+    "github-repos:4f933c7b95da": {
+      "title": "vLLM-Omni：修复原生 Mooncake 跨阶段 KV 布局不匹配",
+      "digest": "修复原生 Mooncake 传输在多阶段流水线中 KV 布局不一致的问题，属于分离式推理链路的正确性修复。"
+    },
+    "github-repos:f666f27fd5ec": {
+      "title": "SGLang-Omni：MiniCPM-o 图像编码器改用平台分布式后端，支持 Intel XPU",
+      "digest": "把 MiniCPM-o 图像编码器里写死的 NCCL 后端改为按平台选择，把多模态编码支持扩展到 Intel GPU（XPU）。"
+    }
+  },
+  "peers": {
+    "peer-releases:99ba08156767": {
+      "title": "Dynamo v1.5.0-kimi-k3-dev.1：在 vLLM 与 SGLang 后端上早期支持 Kimi-K3",
+      "digest": "基于 vLLM v0.28.0 与 SGLang v0.5.17 的 Day-0 栈加入 Kimi-K3 推理支持，补丁集包含 MoonViT 在 SM100 上的 cuDNN 崩溃修复；SGLang 侧还带文本加图像的前后端多模态预处理。Kubernetes recipe 覆盖 H200、GB200、GB300 的聚合部署与 GB300 的 1P1D 分离部署，属于面向多模态服务的早期可评估快照。"
+    },
+    "peer-releases:87a094ca6e54": {
+      "title": "vLLM-Omni v0.29.0rc1：扩散批处理与全双工实时语音服务推进",
+      "digest": "本版在 vLLM 0.29.0 上重建，扩展了扩散执行与部署选项，包括 BAGEL 连续批处理、Boogu-Image 请求批处理、SANA-Video 的张量/序列/CFG 并行以及 DiT 与文本编码器的选择性 offload。MiniCPM-o 4.5 与 PersonaPlex 的全双工服务从实验状态转正并加入服务端 VAD，同时新增 MAGI-2、Audio8 TTS、SenseNova-U1.5 蒸馏 LoRA 等图像、音视频与语音模型支持。"
+    },
+    "peer-releases:2fbc73a3678a": {
+      "title": "sglang-omni v0.1.5：Qwen3-TTS 与 Qwen3-Omni 的显存和 CUDA Graph 优化",
+      "digest": "本版加入可中断 Prefill CUDA Graph 支持与流式 vocoder 解码 CUDA graph 的扩展，并按 talker 的 20 层而非 thinker 的 48 层来设定 talker KV pool 大小，同时引入按阶段划分的绝对 KV cache 字节预算。此外打通了 Intel CPU 平台、以健康感知做同构路由，是面向多模态与语音 serving 的一轮性能与平台扩展。"
+    },
+    "peer-releases:58607c4b94be": {
+      "title": "Dynamo v1.4.1-a.x-k2-post.1：在 B200 上通过 vLLM 支持 A.X-K2-NVFP4",
+      "digest": "基于 Dynamo vLLM 0.26.0 加入 A.X-K2 的模型与配置注册、DSpark 兼容的投机解码行为，以及针对稀疏 MLA 目标配滑动窗口 draft 模型的 KV-cache 支持。Kubernetes recipe 提供 8 卡聚合与 12 卡 2P1D 分离两种部署，使用 TP4、NVFP4 权重、FP8 KV cache 与固定 revision 的 EAGLE3 投机解码。"
+    },
+    "peer-releases:c282e232fbbb": {
+      "title": "mstar v0.2.1：首次发布到 PyPI，并加入共享内存张量传输",
+      "digest": "首个 PyPI 发布版本，加入以 Rust 共享内存 arena 实现的 SHM tensor transport 以及内置 Rust 传输的 RustZMQCommunicator，并修复了 Conductor 的 SIGINT、分段 KV 捕获与打包输出子模块的 KeyError 等问题。同时新增 whisper-large-v3 与 higgs-audio-v3-stt 语音识别模型支持，涉及多模态/语音推理链路的通信与执行恢复。"
+    },
+    "peer-releases:8593f9633374": {
+      "title": "sglang-omni v0.1.6：为 Ming-Omni 等模型加入 Ascend NPU 支持",
+      "digest": "为 Ming-Omni 增加 Ascend NPU 支持并补充 torch NPU profiler，同时给 Qwen3-ASR encoder 分配独立 device stream、新增 Qwen3-ASR 实时转写 benchmark 并重构 ASR 流式路径（第一阶段）。此外 AuK 的 DiT 改用 bf16 存储并每步只构建一次 attention bias，属于多模态与语音服务在 NPU 平台的落地与性能打磨。"
+    },
+    "peer-releases:00caa7a120bd": {
+      "title": "SGLang v0.5.20：新增 GLM-5.3-Flash 等模型并改造统一 radix tree",
+      "digest": "本版合入 713 个 PR，新增 GLM-5.3-Flash、Hy4-Preview、K2 Horizon 等自回归模型以及 SenseNova-U1.5-8B-MoT、FastH3、VDN-H3 等扩散模型（多为 MiniMax-H3 蒸馏或混合注意力变体）。基础设施方面引入统一 radix tree，为 SWA 组件做分支点缓存以保留滑动窗口状态，并让采样掩码在 overlap 调度下执行以提升解码吞吐。"
+    },
+    "peer-releases:778279a7becb": {
+      "title": "Dynamo v1.5.0：Router 自定义选择策略与分层 KV 索引",
+      "digest": "第 18 个功能版本，把 Router 的 worker 选择开放为可插拔的 scorer/picker 策略，并将 KV 索引扩展到 Mooncake 与磁盘层，同时弃用 KVBM 并计划在 v1.6.0 移除。对多模态推理而言，前端默认流式输出 guided tool calls、可在首个 token 前拒绝超上下文请求，encode-prefill-decode 部署可在 Frontend 只解码一次图像。"
+    },
+    "peer-releases:513dffb63448": {
+      "title": "vLLM-Omni v0.30.0rc1：统一全双工框架与交互式视频生成",
+      "digest": "本版在 vLLM 0.30.0 上重建，以 engine 持有的 session 统一全双工执行，引入专用双工编排、进程内 client 以及通过共享 Realtime API 接入 AURA。交互与流式视频生成方面新增 LingBot World 实时摄像头控制、worker 侧 MP4 编码、异步 chunk 传输与 MiniMax-H3 潜空间编辑和长视频续写，并扩展了 Tencent AuK/AuK-Flash、Breeze-TTS-2、Anima、π0.5 等模型支持。"
     }
   }
 }

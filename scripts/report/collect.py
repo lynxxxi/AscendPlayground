@@ -18,7 +18,7 @@ from typing import Any, Callable, Iterable, Optional
 
 from report.lib.feed import Feed, FeedEntry, parse_feed
 from report.lib.httpclient import DEFAULT_USER_AGENT, FetchError, HttpClient, SnapshotCache
-from report.lib.relevance import Scorer, TagExtractor
+from report.lib.relevance import ScopeGate, TagExtractor
 from report.zh import CuratedDescriptions, CuratedReleases
 from report.lib.util import (
     UTC,
@@ -157,7 +157,7 @@ class Collector:
         self.github_budget = int((config.get("repos") or {}).get("requestBudget", 45))
         self.user_agent = str(defaults.get("userAgent", "")) or None  # type: ignore[assignment]
         self.extractor = TagExtractor(config.get("keywords") or {})
-        self.scorer = Scorer(config)
+        self.gate = ScopeGate(config)
         self.reference = now_utc()
         self.reports: list[SourceReport] = []
         self.items: list[dict[str, Any]] = []
@@ -226,8 +226,8 @@ class Collector:
         # 逐源设置，避免污染其它信息源
         require_scope_title = bool(source.get("requireScopeInTitle", False))
         # 调研范围闸门（config 的 scope 段）：先排除非 infra 议题，再要求 infra 证据词
-        check_exclude = self.scorer.should_check_exclude(report.group, source)
-        require_infra = self.scorer.requires_infra_evidence(report.group, source)
+        check_exclude = self.gate.should_check_exclude(report.group, source)
+        require_infra_default = self.gate.requires_infra_evidence(report.group, source)
         for item in raw_items:
             title = clean_title(item.get("title"))
             if not title:
@@ -246,13 +246,17 @@ class Collector:
             item["title"] = title
             item["published"] = iso(published) if published else ""
             text = f"{title} {item.get('summary') or ''}"
+            # 条目级类型也要过 infra 证据闸门（博客 / 媒体文章）
+            require_infra = require_infra_default or self.gate.requires_infra_evidence(
+                report.group, source, str(item.get("kind") or report.kind)
+            )
             if check_exclude:
-                reason = self.scorer.out_of_scope_reason(text)
+                reason = self.gate.out_of_scope_reason(text)
                 if reason:
                     report.droppedOutOfScope += 1
                     report.filtered += 1
                     continue
-            if not self.scorer.passes_gate(text, require_infra=require_infra, title=title):
+            if not self.gate.passes_gate(text, require_infra=require_infra, title=title):
                 report.droppedOffTopic += 1
                 report.filtered += 1
                 continue
@@ -269,14 +273,14 @@ class Collector:
                     report.filtered += 1
                     continue
             # 可选：要求标题本身落在多模态 infra 范围内（用于 OpenAlex 这类全文检索源）
-            if require_scope_title and not self.scorer.passes_gate(title):
+            if require_scope_title and not self.gate.passes_gate(title):
                 report.droppedOffTopic += 1
                 report.filtered += 1
                 continue
             # 每条都生成一句到两句的说明，报告里可直接阅读，不必点进原文
             item["digest"] = item.get("digest") or _build_digest(item)
-            # 发版条目：优先用人工撰写的中文发版说明（与竞品卡片口径一致）
-            if item.get("kind") in {"repo-release", "competitor-release"} and self.curated_releases:
+            # 发版条目：优先用人工撰写的中文发版说明（与周边团队卡片口径一致）
+            if item.get("kind") in {"repo-release", "peer-release"} and self.curated_releases:
                 curated_release = self.curated_releases.lookup(
                     str(item.get("repo") or ""), str((item.get("signals") or {}).get("tag") or "")
                 )
@@ -291,10 +295,11 @@ class Collector:
                 report.filtered += 1
                 continue
             seen.add(item["stableId"])
-            # 若已有中文说明（config/curated_zh.json），覆盖为中文标题与说明
+            # 若已有中文说明（config/curated_zh.json），覆盖为中文标题与说明；未命中则标记待补
             if self.curated is not None:
                 self.curated.apply(item)
-            item["score"] = self.scorer.score(item, self.reference)
+            else:
+                item.setdefault("zhCurated", False)
             item["day"] = day(published)
             item["isNew"] = True
             kept.append(item)
@@ -898,10 +903,38 @@ class Collector:
     # ------------------------------------------------------------------
     # 微信公众号（搜狗微信检索）
     # ------------------------------------------------------------------
+    def wechat_searches(self) -> list[dict[str, Any]]:
+        """公众号检索词 = 常规关键词 + 明星大V / 关键员工渠道（wechat.kolChannels）。
+
+        kolChannels 里每条只需要 {name, org, query}，query 会被当作一组检索词，
+        并把 name/org/category 带进条目 signals，报告里就能标出「这是谁家的渠道」。
+        """
+        searches: list[dict[str, Any]] = []
+        for search in self.config.get("wechat", {}).get("searches", []) or []:
+            entry = dict(search)
+            entry.setdefault("id", f"wx-{len(searches)}")
+            searches.append(entry)
+        for index, channel in enumerate(self.config.get("wechat", {}).get("kolChannels", []) or []):
+            query = str(channel.get("query") or "").strip()
+            if not query:
+                continue
+            searches.append(
+                {
+                    "id": f"wx-kol-{index}",
+                    "query": query,
+                    "kol": str(channel.get("name") or ""),
+                    "kolOrg": str(channel.get("org") or ""),
+                    "kolCategory": str(channel.get("category") or ""),
+                }
+            )
+        return searches
+
     def _collect_sogou_wechat(self, source: dict[str, Any]) -> list[dict[str, Any]]:
         endpoint = source["endpoint"]
         search_type = str(source.get("type", 2))
         delay = float(source.get("politeDelaySeconds", 0) or 0)
+        if getattr(self.client, "offline", False):
+            delay = 0.0  # 离线复现只读快照，不需要礼貌间隔
         resolve = bool(source.get("resolveLinks", True))
         max_resolve = int(source.get("maxResolvePerQuery", 20))
         # 搜狗必须先建立 cookie 会话，否则跳转请求会被反爬页拦截
@@ -909,7 +942,7 @@ class Collector:
         entries: list[dict[str, Any]] = []
         consecutive_bot = 0
         bot_backoff = float(source.get("botBackoffSeconds", 20) or 0)
-        for index, search in enumerate(self.config.get("wechat", {}).get("searches", []) or []):
+        for index, search in enumerate(self.wechat_searches()):
             query = str(search.get("query") or "").strip()
             if not query:
                 continue
@@ -923,8 +956,10 @@ class Collector:
                     url,
                     headers={"Referer": "https://weixin.sogou.com/"},
                     accept="text/html,application/xhtml+xml",
-                    # 搜索结果里的跳转链接与会话 cookie 绑定，复用旧快照会导致解析失败
-                    use_cache=False,
+                    # 搜索页本身可缓存（--offline 才能复现公众号维度）；
+                    # 只有下面的跳转链接解析必须走 use_cache=False（链接带会话与时效签名）。
+                    # 人机校验页虽然返回 200 也不落快照，否则离线复现会永远拿到空结果。
+                    cache_when=lambda body: not is_sogou_bot_page(body),
                 )
             except FetchError as error:
                 self.log(f"    x {error}")
@@ -965,6 +1000,9 @@ class Collector:
                             "query": query,
                             "engine": "sogou-wechat",
                             "account": hit.get("account", ""),
+                            "kol": search.get("kol", ""),
+                            "kolOrg": search.get("kolOrg", ""),
+                            "kolCategory": search.get("kolCategory", ""),
                             "searchUrl": url,
                             "linkResolved": article_url != hit["url"],
                         },
@@ -1010,7 +1048,7 @@ class Collector:
         site_filter = source.get("siteFilter")
         engine_id = str(source.get("id") or "")
         parser = self._parse_bing if "bing" in engine_id else self._parse_duckduckgo
-        for search in self.config.get("wechat", {}).get("searches", []) or []:
+        for search in self.wechat_searches():
             query = str(search.get("query") or "").strip()
             if not query:
                 continue
@@ -1081,9 +1119,9 @@ class Collector:
         return hits
 
     # ------------------------------------------------------------------
-    # 竞品发版观测（只取 release tag 与时间，用于版本节奏矩阵）
+    # 周边团队发版观测（只取 release tag 与时间，用于版本特性矩阵）
     # ------------------------------------------------------------------
-    def _collect_competitor_releases(self, source: dict[str, Any]) -> list[dict[str, Any]]:
+    def _collect_peer_releases(self, source: dict[str, Any]) -> list[dict[str, Any]]:
         channel = str((self.config.get("repos") or {}).get("channel") or "atom").lower()
         entries: list[dict[str, Any]] = []
         failures: list[str] = []
@@ -1124,7 +1162,7 @@ class Collector:
                             url=release.link,
                             published=release.published,
                             native_id=release.guid or release.link,
-                            kind="competitor-release",
+                            kind="peer-release",
                             signals={"repo": repo, "tag": tag, "author": release.author},
                             extra={"repo": repo, "repoActivity": "release"},
                         )
@@ -1162,7 +1200,7 @@ class Collector:
                         url=release.get("html_url") or f"https://github.com/{repo}/releases",
                         published=release.get("published_at") or release.get("created_at"),
                         native_id=f"{repo}@{release.get('id')}",
-                        kind="competitor-release",
+                        kind="peer-release",
                         signals={"repo": repo, "tag": tag, "prerelease": bool(release.get("prerelease"))},
                         extra={"repo": repo, "repoActivity": "release"},
                     )
@@ -1215,7 +1253,7 @@ def _build_digest(item: dict[str, Any]) -> str:
     title = str(item.get("title") or "")
     if kind == "paper":
         return summarise_abstract(summary)
-    if kind in {"repo-release", "competitor-release"}:
+    if kind in {"repo-release", "peer-release"}:
         return digest(summary, limit=360, prefer_bullets=True)
     if kind == "repo-commit":
         return commit_digest(item.get("signals", {}).get("subject") or title, summary)
@@ -1385,19 +1423,19 @@ def build_sources(config: dict[str, Any]) -> list[dict[str, Any]]:
             sources.append(entry)
 
     repos = config.get("repos") or {}
-    competitors_cfg = config.get("competitors") or {}
-    # 竞品发版观测只需要少量请求，先跑以保证维度 E 的数据完整性；
+    peers_cfg = config.get("peers") or {}
+    # 周边团队的发版观测只需要少量请求，先跑以保证维度 E 的数据完整性；
     # 仓库细则随后使用剩余预算。
-    if competitors_cfg.get("releaseWatch"):
+    if peers_cfg.get("releaseWatch"):
         sources.append(
             {
-                "id": "competitor-releases",
-                "kind": "competitor-releases",
-                "label": f"竞品发版观测（{len(competitors_cfg['releaseWatch'])} 个引擎）",
-                "group": "competitors",
+                "id": "peer-releases",
+                "kind": "peer-releases",
+                "label": f"周边团队发版观测（{len(peers_cfg['releaseWatch'])} 个引擎）",
+                "group": "peers",
                 "weight": 1.3,
-                "enabled": bool(competitors_cfg.get("enabled", True)),
-                "releaseWatch": competitors_cfg["releaseWatch"],
+                "enabled": bool(peers_cfg.get("enabled", True)),
+                "releaseWatch": peers_cfg["releaseWatch"],
             }
         )
     if repos.get("watch"):
@@ -1452,7 +1490,7 @@ def collect_all(
         "hf-models": collector._collect_hf_models,
         "github": collector._collect_github,
         "github-org": collector._collect_github,
-        "competitor-releases": collector._collect_competitor_releases,
+        "peer-releases": collector._collect_peer_releases,
         "sogou-wechat": collector._collect_sogou_wechat,
         "web-search": collector._collect_web_search,
     }

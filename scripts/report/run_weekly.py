@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """AscendPlayground 多模态 Infra 周报 · 一键入口。
 
+周报是**两步**流程（报告只出中文，未补中文的条目不进正文）：
+
+    1) 采集：python scripts/report/run_weekly.py            # 联网抓取 + 生成待补中文清单
+       清单写在 scripts/report/.cache/pending_zh.json
+    2) 补中文：把 {stableId: {title, digest}} 写进 config/curated_zh.json
+    3) 渲染：python scripts/report/run_weekly.py --offline  # 只读快照，产出全中文报告
+
 用法：
     python scripts/report/run_weekly.py                    # 联网采集并生成本周报告
     python scripts/report/run_weekly.py --refresh           # 忽略快照，强制重新抓取
@@ -15,6 +22,7 @@
 
 采集缓存（非产物，可安全删除；仅用于 --offline 复现）：
     scripts/report/.cache/snapshots/
+    scripts/report/.cache/pending_zh.json   待补中文清单
 """
 
 from __future__ import annotations
@@ -65,7 +73,6 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--offline", action="store_true", help="只用快照离线复现，绝不联网")
     parser.add_argument("--refresh", action="store_true", help="忽略已有快照，强制重新抓取")
     parser.add_argument("--max-age-days", type=int, default=None, help="采集时间窗口（天）")
-    parser.add_argument("--min-score", type=float, default=None, help="相关性打分下限")
     parser.add_argument("--top", type=int, default=None, help="每个维度最多列出多少条")
     parser.add_argument("--only", default="", help="只采集指定 source id（逗号分隔）")
     parser.add_argument("--skip", default="", help="跳过指定 source id（逗号分隔）")
@@ -113,8 +120,6 @@ def main(argv: Optional[list[str]] = None) -> int:
     defaults = config.get("defaults") or {}
     if args.max_age_days is not None:
         defaults["maxAgeDays"] = args.max_age_days
-    if args.min_score is not None:
-        defaults["minScore"] = args.min_score
     config["defaults"] = defaults
     max_age_days = int(defaults.get("maxAgeDays", 14))
     top_per_section = int(args.top if args.top is not None else defaults.get("topPerSection", 25))
@@ -156,8 +161,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         extra_flags.append("--refresh")
     if args.max_age_days is not None:
         extra_flags.extend(["--max-age-days", str(args.max_age_days)])
-    if args.min_score is not None:
-        extra_flags.extend(["--min-score", str(args.min_score)])
     if args.only:
         extra_flags.extend(["--only", args.only])
     if args.generated_at:
@@ -185,7 +188,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         run_id=run_id,
         week=week,
         reference=reference,
-        min_score=float(defaults.get("minScore", 0.0)),
         release_history=release_history,
     )
 
@@ -193,6 +195,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     log(
         f"语料：原始 {corpus.stats['raw']} → 归一化 {corpus.stats['total']} 条"
         f"（本周新增 {corpus.stats['new']}，跨源合并 {corpus.stats['multiSource']}）"
+        + (
+            f" | 待补中文 {corpus.stats.get('pendingZh', 0)} 条（未进正文）"
+            if corpus.stats.get("chineseOnly")
+            else ""
+        )
     )
     log(f"仓库：{len(corpus.repo_clusters)} 个活跃 | 主题：{len(corpus.themes)} 个")
     failed = [report for report in reports if report.errors]
@@ -211,8 +218,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if corpus.stats["total"] == 0:
         log("")
-        log("!! 归一化后条目为 0。常见原因：网络不可达、匿名 API 限流、或相关性闸门过严。")
-        log("!! 可尝试 --max-age-days 30 或 --min-score 0.8；快照内容见采集缓存目录。")
+        log("!! 正文条目为 0。常见原因：网络不可达、匿名 API 限流、范围闸门过严，")
+        log("!! 或者（更常见）本轮新条目还没补中文——报告只出中文条目。")
+        log("!! 先看 scripts/report/.cache/pending_zh.json，把中文补进 config/curated_zh.json 后 --offline 重跑。")
 
     if args.dry_run:
         log("dry-run：不写入任何文件。")
@@ -231,23 +239,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     html_path = report_dir / f"{week}.html"
     html_path.write_text(report_html, encoding="utf-8")
 
-    # 中文说明覆盖情况：列出仍缺中文标题/说明的条目，便于后续补写。
-    # 这是工作清单而非报告产物，因此写入采集缓存目录（report/ 只放 HTML）。
-    pending = [
-        {
-            "stableId": item.get("stableId"),
-            "group": item.get("group"),
-            "kind": item.get("kind"),
-            "title": item.get("title"),
-            "day": item.get("day"),
-            "url": item.get("url"),
-        }
-        for item in corpus.items
-        if item.get("digestSource") != "curated"
-    ]
-    pending.sort(key=lambda row: (str(row.get("group")), str(row.get("stableId"))))
+    # 待补中文清单（工作清单，不是报告产物）：报告正文只收已补中文的条目，
+    # 未补的条目在这里列出来，补进 config/curated_zh.json 后离线重跑即可进正文。
     pending_path = snapshot_dir.parent / "pending_zh.json"
-    dump_json(pending_path, pending)
+    dump_json(pending_path, corpus.pending_zh)
 
     log("")
     log("产出：")

@@ -7,23 +7,24 @@
     "retries": 3,
     "retryBackoffSeconds": 1.6,
     "maxAgeDays": 14,
-    "minScore": 1.2,
     "topPerSection": 25,
     "requireDate": false,
     "userAgent": "AscendPlayground-ReportBot/1.0 (+https://github.com/lynxxxi/AscendPlayground; research digest)"
   },
-  "scoring": {
-    "titleWeight": 3.0,
-    "summaryWeight": 1.0,
-    "maxKeywordBoost": 12.0,
-    "lookbackDays": 7,
-    "minRecencyFactor": 0.35,
-    "newItemBoost": 1.35
+  "report": {
+    "chineseOnly": true,
+    "note": "报告正文只保留已补中文说明的条目（config/curated_zh.json 命中 title+digest）；未补中文的条目不进正文，只在附录给出数量，并写入 scripts/report/.cache/pending_zh.json 作为待补清单。周报流程：先跑一次采集 → 补中文 → 再离线渲染。"
   },
   "scope": {
     "statement": "只收录「多模态 / 生成式模型的推理与服务系统工程」（AI Infra）：把模型跑得更快更省的引擎、算子、并行、缓存、量化、硬件适配与部署评测。不收录模型能力、算法创新、应用落地与仿脑/具身等非 infra 议题。",
     "requireInfraEvidenceGroups": [
-      "papers"
+      "papers",
+      "wechat"
+    ],
+    "requireInfraEvidenceKinds": [
+      "paper",
+      "blog",
+      "media-article"
     ],
     "evidenceInTitle": true,
     "excludeGroups": [
@@ -238,81 +239,7 @@
       "文生图",
       "图文"
     ],
-    "heavy": [
-      "inference",
-      "serving",
-      "throughput",
-      "latency",
-      "kv cache",
-      "prefill",
-      "decode",
-      "parallelism",
-      "tensor parallel",
-      "sequence parallel",
-      "context parallel",
-      "expert parallel",
-      "quantization",
-      "quantized",
-      "fp8",
-      "int4",
-      "w8a8",
-      "sparse attention",
-      "attention kernel",
-      "flash attention",
-      "caching",
-      "cache reuse",
-      "scheduler",
-      "batching",
-      "continuous batching",
-      "disaggregated",
-      "moe",
-      "operator",
-      "kernel fusion",
-      "compilation",
-      "graph mode",
-      "ascend",
-      "npu",
-      "cann",
-      "mindie",
-      "torch_npu",
-      "推理",
-      "加速",
-      "吞吐",
-      "时延",
-      "量化",
-      "算子",
-      "并行",
-      "昇腾",
-      "缓存",
-      "显存"
-    ],
-    "medium": [
-      "benchmark",
-      "evaluation",
-      "deployment",
-      "distributed",
-      "memory",
-      "efficiency",
-      "optimization",
-      "scaling",
-      "long context",
-      "long video",
-      "resolution",
-      "streaming",
-      "real-time",
-      "alignment",
-      "preference",
-      "agent",
-      "vla",
-      "embodied",
-      "evaluation suite",
-      "性能",
-      "部署",
-      "显存优化",
-      "长视频",
-      "流式",
-      "评测"
-    ]
+    "note": "只做主题闸门（是否属于多模态/生成式方向）。系统已取消打分与分数阈值，排序一律按发布时间。"
   },
   "keywords": {
     "multimodal-serving": [
@@ -645,19 +572,12 @@
       "releaseWatchReleases": 8
     },
     "groups": {
-      "serving": "推理 / 服务框架",
-      "generation": "生成与加速",
-      "models": "多模态模型与训练",
-      "benchmark": "竞品基准",
-      "ascend": "昇腾 / MindIE 侧"
+      "serving": "多模态推理 / 服务框架",
+      "generation": "多模态生成与加速",
+      "models": "多模态模型",
+      "ascend": "昇腾多模态侧"
     },
     "watch": [
-      {
-        "repo": "Ascend/MindIE-LLM",
-        "group": "ascend",
-        "lang": "C++",
-        "note": "昇腾 LLM 推理引擎"
-      },
       {
         "repo": "Ascend/MindIE-SD",
         "group": "ascend",
@@ -665,36 +585,10 @@
         "note": "昇腾多模态加速套件"
       },
       {
-        "repo": "vllm-project/vllm-ascend",
-        "group": "ascend",
-        "lang": "Python",
-        "note": "vLLM 昇腾后端"
-      },
-      {
-        "repo": "Ascend/cann",
-        "group": "ascend",
-        "lang": "C++",
-        "note": "CANN 软件栈｜GitHub 上无 releases/commits Atom feed（404），且通常镜像在 GitCode",
-        "enabled": false
-      },
-      {
-        "repo": "Ascend/ops-nn",
-        "group": "ascend",
-        "lang": "C++",
-        "note": "NN 算子库｜GitHub 上无 releases/commits Atom feed（404），且通常镜像在 GitCode",
-        "enabled": false
-      },
-      {
-        "repo": "Ascend/op-plugin",
-        "group": "ascend",
-        "lang": "C++",
-        "note": "PyTorch 算子插件"
-      },
-      {
         "repo": "vllm-project/vllm-omni",
         "group": "serving",
         "lang": "Python",
-        "note": "多模态/omni 推理"
+        "note": "多模态 / omni 推理"
       },
       {
         "repo": "sgl-project/sglang-omni",
@@ -706,19 +600,19 @@
         "repo": "mstar-project/mstar",
         "group": "serving",
         "lang": "Python",
-        "note": "any-to-any 通用服务框架"
+        "note": "any-to-any 多模态服务框架"
       },
       {
         "repo": "vllm-project/vllm",
+        "id": "vllm-mm",
         "group": "serving",
         "lang": "Python",
-        "note": "通用推理引擎"
-      },
-      {
-        "repo": "sgl-project/sglang",
-        "group": "serving",
-        "lang": "Python",
-        "note": "结构化生成运行时"
+        "note": "主仓多模态子系统",
+        "channelNote": "仅跟踪 vllm/multimodal 下的多模态改动（通用 LLM 改动不收）",
+        "includeReleases": false,
+        "pathFilter": [
+          "vllm/multimodal"
+        ]
       },
       {
         "repo": "sgl-project/sglang",
@@ -748,7 +642,7 @@
         "repo": "modelscope/DiffSynth-Studio",
         "group": "generation",
         "lang": "Python",
-        "note": "扩散模型训练/推理套件"
+        "note": "扩散模型推理套件"
       },
       {
         "repo": "ModelTC/LightX2V",
@@ -809,40 +703,10 @@
         "group": "models",
         "lang": "Python",
         "note": "DeepSeek 多模态"
-      },
-      {
-        "repo": "modelscope/ms-swift",
-        "group": "models",
-        "lang": "Python",
-        "note": "多模态微调/部署"
-      },
-      {
-        "repo": "hiyouga/LLaMA-Factory",
-        "group": "models",
-        "lang": "Python",
-        "note": "微调框架"
-      },
-      {
-        "repo": "NVIDIA/TensorRT-LLM",
-        "group": "benchmark",
-        "lang": "C++",
-        "note": "NVIDIA 推理栈（对标基线）"
-      },
-      {
-        "repo": "ai-dynamo/dynamo",
-        "group": "benchmark",
-        "lang": "Rust",
-        "note": "NVIDIA 分布式推理框架"
-      },
-      {
-        "repo": "NVIDIA/Megatron-LM",
-        "group": "benchmark",
-        "lang": "Python",
-        "note": "大规模训练/并行（对标）"
       }
     ],
     "channel": "atom",
-    "channelNote": "atom = github.com/<repo>/releases.atom 与 commits.atom（无限流，推荐）；api = REST API（匿名 60 次/小时，仅作回退）。"
+    "channelNote": "atom = github.com/<repo>/releases.atom 与 commits.atom（无限流，推荐）；api = REST API（匿名 60 次/小时，仅作回退）。只监控多模态相关仓库；通用 LLM 主仓（vllm / sglang）只取其多模态子系统目录，训练框架与通用算子仓不收。"
   },
   "wechat": {
     "enabled": true,
@@ -998,9 +862,106 @@
         "channel": "rss",
         "mirror": "https://www.leiphone.com/feed, https://www.tmtpost.com/rss.xml"
       }
-    ]
+    ],
+    "kolChannels": [
+      {
+        "name": "生数科技 / Vidu",
+        "org": "生数科技",
+        "category": "初创公司",
+        "channel": "sogou-wechat",
+        "query": "生数科技 Vidu 视频生成"
+      },
+      {
+        "name": "爱诗科技 / PixVerse",
+        "org": "爱诗科技",
+        "category": "初创公司",
+        "channel": "sogou-wechat",
+        "query": "爱诗科技 PixVerse 视频生成"
+      },
+      {
+        "name": "无问芯穹",
+        "org": "无问芯穹",
+        "category": "初创公司",
+        "channel": "sogou-wechat",
+        "query": "无问芯穹 推理 加速"
+      },
+      {
+        "name": "潞晨科技 / 尤洋",
+        "org": "潞晨科技",
+        "category": "初创公司",
+        "channel": "sogou-wechat",
+        "query": "潞晨科技 尤洋 视频生成 加速"
+      },
+      {
+        "name": "硅基流动",
+        "org": "硅基流动",
+        "category": "初创公司",
+        "channel": "sogou-wechat",
+        "query": "硅基流动 多模态 推理 部署"
+      },
+      {
+        "name": "唐家渝（生数科技）",
+        "org": "生数科技",
+        "category": "关键员工",
+        "channel": "sogou-wechat",
+        "query": "唐家渝 生数科技 Vidu"
+      },
+      {
+        "name": "朱军（清华 / 生数科技）",
+        "org": "生数科技",
+        "category": "关键员工",
+        "channel": "sogou-wechat",
+        "query": "朱军 生数科技 扩散模型"
+      },
+      {
+        "name": "夏立雪（无问芯穹）",
+        "org": "无问芯穹",
+        "category": "关键员工",
+        "channel": "sogou-wechat",
+        "query": "夏立雪 无问芯穹 推理"
+      },
+      {
+        "name": "李rumor",
+        "org": "个人技术号",
+        "category": "明星大V",
+        "channel": "sogou-wechat",
+        "query": "李rumor 多模态 推理 加速"
+      },
+      {
+        "name": "吃果冻不吐果冻皮",
+        "org": "个人技术号",
+        "category": "明星大V",
+        "channel": "sogou-wechat",
+        "query": "吃果冻不吐果冻皮 推理 加速"
+      },
+      {
+        "name": "极市平台",
+        "org": "个人/社区号",
+        "category": "明星大V",
+        "channel": "sogou-wechat",
+        "query": "极市平台 多模态 部署 推理"
+      },
+      {
+        "name": "AIWalker",
+        "org": "个人技术号",
+        "category": "明星大V",
+        "channel": "sogou-wechat",
+        "query": "AIWalker 多模态 推理 加速"
+      },
+      {
+        "name": "昇腾AI开发者",
+        "org": "华为昇腾",
+        "category": "官方渠道",
+        "channel": "sogou-wechat",
+        "query": "昇腾AI开发者 MindIE 多模态"
+      }
+    ],
+    "kolNote": "明星大V / 关键员工的宣传渠道统一并入本维度：新增姓名或账号时，在 kolChannels 里加一条 {name, org, category, query} 即可，query 会作为一组搜狗微信检索词参与采集。"
   },
-  "competitors": {
+  "peers": {
+    "enabled": true,
+    "label": "周边团队工作",
+    "note": "周边团队 = 芯片厂商 / 互联网厂商 / 有影响力的初创公司 / 周边推理框架。本维度只列多模态相关的版本特性与本周动态，与维度 C（多模态仓库更新细则）分开呈现。",
     "releaseWatch": [
       "vllm-project/vllm",
       "vllm-project/vllm-omni",
@@ -1009,186 +970,360 @@
       "mstar-project/mstar",
       "NVIDIA/TensorRT-LLM",
       "ai-dynamo/dynamo",
-      "Ascend/MindIE-LLM",
       "Ascend/MindIE-SD",
-      "vllm-project/vllm-ascend"
+      "xdit-project/xDiT"
     ],
+    "releaseHighlightsPerEngine": 3,
     "engines": [
-      {
-        "id": "vllm",
-        "label": "vLLM",
-        "repo": "vllm-project/vllm",
-        "stack": "通用"
-      },
       {
         "id": "vllm-omni",
         "label": "vLLM-Omni",
+        "org": "vLLM 社区",
+        "category": "周边框架",
         "repo": "vllm-project/vllm-omni",
-        "stack": "多模态"
-      },
-      {
-        "id": "sglang",
-        "label": "SGLang",
-        "repo": "sgl-project/sglang",
-        "stack": "通用"
+        "stack": "多模态 / omni"
       },
       {
         "id": "sglang-omni",
         "label": "SGLang-Omni",
+        "org": "SGLang 社区",
+        "category": "周边框架",
         "repo": "sgl-project/sglang-omni",
-        "stack": "多模态"
+        "stack": "多模态 / omni"
       },
       {
         "id": "mstar",
         "label": "M*",
+        "org": "mstar-project",
+        "category": "周边框架",
         "repo": "mstar-project/mstar",
         "stack": "any-to-any"
       },
       {
+        "id": "xdit",
+        "label": "xDiT",
+        "org": "xDiT 社区",
+        "category": "周边框架",
+        "repo": "xdit-project/xDiT",
+        "stack": "DiT 并行"
+      },
+      {
+        "id": "vllm",
+        "label": "vLLM",
+        "org": "vLLM 社区",
+        "category": "周边框架",
+        "repo": "vllm-project/vllm",
+        "stack": "通用（看多模态相关版本特性）"
+      },
+      {
+        "id": "sglang",
+        "label": "SGLang",
+        "org": "SGLang 社区",
+        "category": "周边框架",
+        "repo": "sgl-project/sglang",
+        "stack": "通用（看多模态相关版本特性）"
+      },
+      {
         "id": "tensorrt-llm",
         "label": "TensorRT-LLM",
+        "org": "NVIDIA",
+        "category": "芯片厂商",
         "repo": "NVIDIA/TensorRT-LLM",
-        "stack": "通用"
+        "stack": "通用 / 多模态"
       },
       {
         "id": "dynamo",
-        "label": "NVIDIA Dynamo",
+        "label": "Dynamo",
+        "org": "NVIDIA",
+        "category": "芯片厂商",
         "repo": "ai-dynamo/dynamo",
-        "stack": "分布式"
-      },
-      {
-        "id": "mindie-llm",
-        "label": "MindIE-LLM",
-        "repo": "Ascend/MindIE-LLM",
-        "stack": "昇腾"
+        "stack": "分布式推理"
       },
       {
         "id": "mindie-sd",
         "label": "MindIE-SD",
+        "org": "华为昇腾",
+        "category": "芯片厂商",
         "repo": "Ascend/MindIE-SD",
         "stack": "昇腾多模态"
-      },
-      {
-        "id": "vllm-ascend",
-        "label": "vLLM-Ascend",
-        "repo": "vllm-project/vllm-ascend",
-        "stack": "昇腾"
       }
     ],
-    "focus": [
-      "mindie-llm",
-      "mindie-sd",
-      "vllm-ascend"
-    ]
-  },
-  "mindie": {
-    "ownedRepos": [
+    "roster": [
       {
-        "repo": "Ascend/MindIE-LLM",
-        "label": "MindIE-LLM"
-      },
-      {
-        "repo": "Ascend/MindIE-SD",
-        "label": "MindIE-SD"
-      },
-      {
-        "repo": "vllm-project/vllm-ascend",
-        "label": "vLLM-Ascend"
-      },
-      {
-        "repo": "Ascend/cann",
-        "label": "CANN"
-      },
-      {
-        "repo": "Ascend/ops-nn",
-        "label": "ops-nn"
-      },
-      {
-        "repo": "Ascend/op-plugin",
-        "label": "op-plugin"
-      }
-    ],
-    "capabilityProbes": [
-      {
-        "id": "qwen-vl",
-        "label": "Qwen-VL 系列",
-        "terms": [
-          "qwen-vl",
-          "qwen2.5-vl",
-          "qwen3-vl",
-          "qwen vl"
+        "id": "nvidia",
+        "label": "NVIDIA（含 Sol-Engine）",
+        "category": "芯片厂商",
+        "aliases": [
+          "nvidia",
+          "tensorrt",
+          "dynamo",
+          "sol-engine",
+          "sol engine",
+          "cuda",
+          "blackwell"
         ]
       },
       {
-        "id": "internvl",
-        "label": "InternVL 系列",
-        "terms": [
-          "internvl"
+        "id": "amd",
+        "label": "AMD",
+        "category": "芯片厂商",
+        "aliases": [
+          "amd",
+          "rocm",
+          "mi300",
+          "mi325",
+          "mi355",
+          "instinct"
         ]
       },
       {
-        "id": "video-gen",
-        "label": "视频生成（DiT/Wan/Hunyuan）",
-        "terms": [
-          "wan2",
-          "wan 2",
-          "hunyuanvideo",
-          "hunyuan video",
+        "id": "intel",
+        "label": "Intel",
+        "category": "芯片厂商",
+        "aliases": [
+          "intel",
+          "gaudi",
+          "openvino",
+          "xeon"
+        ]
+      },
+      {
+        "id": "ascend",
+        "label": "华为昇腾 / CANN",
+        "category": "芯片厂商",
+        "aliases": [
+          "ascend",
+          "昇腾",
+          "cann",
+          "mindie",
+          "torch_npu",
+          "atlas"
+        ]
+      },
+      {
+        "id": "cambricon",
+        "label": "寒武纪",
+        "category": "芯片厂商",
+        "aliases": [
+          "cambricon",
+          "寒武纪",
+          "mlu"
+        ]
+      },
+      {
+        "id": "moore-threads",
+        "label": "摩尔线程",
+        "category": "芯片厂商",
+        "aliases": [
+          "moore threads",
+          "摩尔线程",
+          "musa",
+          "mt-",
+          "夸娥"
+        ]
+      },
+      {
+        "id": "enflame",
+        "label": "燧原科技",
+        "category": "芯片厂商",
+        "aliases": [
+          "enflame",
+          "燧原",
+          "suiyuan",
+          "邃思"
+        ]
+      },
+      {
+        "id": "biren",
+        "label": "壁仞科技",
+        "category": "芯片厂商",
+        "aliases": [
+          "biren",
+          "壁仞",
+          "br100",
+          "br104"
+        ]
+      },
+      {
+        "id": "metax",
+        "label": "沐曦",
+        "category": "芯片厂商",
+        "aliases": [
+          "metax",
+          "沐曦",
+          "曦云"
+        ]
+      },
+      {
+        "id": "kunlun",
+        "label": "昆仑芯",
+        "category": "芯片厂商",
+        "aliases": [
+          "kunlun",
+          "昆仑芯",
+          "kunlunxin",
+          "p800"
+        ]
+      },
+      {
+        "id": "bytedance",
+        "label": "字节跳动 / Seed / 火山引擎",
+        "category": "互联网厂商",
+        "aliases": [
+          "bytedance",
+          "byte dance",
+          "seed",
+          "豆包",
+          "doubao",
+          "火山引擎",
+          "volcengine",
+          "即梦",
+          "jimeng",
+          "seedance",
+          "seedream"
+        ]
+      },
+      {
+        "id": "alibaba",
+        "label": "阿里巴巴 / 通义",
+        "category": "互联网厂商",
+        "aliases": [
+          "alibaba",
+          "阿里",
+          "通义",
+          "qwen",
+          "wan",
+          "魔搭",
+          "modelscope"
+        ]
+      },
+      {
+        "id": "tencent",
+        "label": "腾讯 / 混元",
+        "category": "互联网厂商",
+        "aliases": [
+          "tencent",
+          "腾讯",
+          "混元",
+          "hunyuan"
+        ]
+      },
+      {
+        "id": "baidu",
+        "label": "百度 / 文心",
+        "category": "互联网厂商",
+        "aliases": [
+          "baidu",
+          "百度",
+          "ernie",
+          "文心"
+        ]
+      },
+      {
+        "id": "kuaishou",
+        "label": "快手 / 可灵",
+        "category": "互联网厂商",
+        "aliases": [
+          "kuaishou",
+          "快手",
+          "kling",
+          "可灵",
+          "kolors"
+        ]
+      },
+      {
+        "id": "shengshu",
+        "label": "生数科技 / Vidu",
+        "category": "初创公司",
+        "aliases": [
+          "shengshu",
+          "生数",
+          "vidu",
+          "vidu"
+        ]
+      },
+      {
+        "id": "aishi",
+        "label": "爱诗科技 / PixVerse",
+        "category": "初创公司",
+        "aliases": [
+          "aishi",
+          "爱诗",
+          "pixverse"
+        ]
+      },
+      {
+        "id": "minimax",
+        "label": "MiniMax / 海螺",
+        "category": "初创公司",
+        "aliases": [
+          "minimax",
+          "海螺",
+          "hailuo"
+        ]
+      },
+      {
+        "id": "zhipu",
+        "label": "智谱",
+        "category": "初创公司",
+        "aliases": [
+          "zhipu",
+          "智谱",
+          "glm",
+          "chatglm",
           "cogvideo",
-          "ltx-video",
-          "video generation"
+          "cogview"
         ]
       },
       {
-        "id": "diffusion-accel",
-        "label": "扩散加速（缓存/蒸馏）",
-        "terms": [
-          "cache-dit",
-          "cache dit",
-          "step distillation",
-          "few-step",
-          "lightx2v",
-          "diffusion cache"
+        "id": "moonshot",
+        "label": "月之暗面",
+        "category": "初创公司",
+        "aliases": [
+          "moonshot",
+          "月之暗面",
+          "kimi"
         ]
       },
       {
-        "id": "sparse-attention",
-        "label": "稀疏/量化注意力",
-        "terms": [
-          "sparse attention",
-          "block sparse",
-          "quantized attention",
-          "quant flash"
+        "id": "infinigence",
+        "label": "无问芯穹",
+        "category": "初创公司",
+        "aliases": [
+          "infinigence",
+          "无问芯穹"
         ]
       },
       {
-        "id": "omni-serving",
-        "label": "Omni / any-to-any 服务",
-        "terms": [
-          "vllm-omni",
-          "sglang-omni",
-          "omni serving",
-          "any-to-any"
+        "id": "hpc-ai",
+        "label": "潞晨科技",
+        "category": "初创公司",
+        "aliases": [
+          "hpc-ai",
+          "潞晨",
+          "colossalai",
+          "open-sora",
+          "videocomposer"
         ]
       },
       {
-        "id": "moe-inference",
-        "label": "MoE 推理优化",
-        "terms": [
-          "moe inference",
-          "expert parallel",
-          "moe serving"
+        "id": "siliconflow",
+        "label": "硅基流动",
+        "category": "初创公司",
+        "aliases": [
+          "siliconflow",
+          "硅基流动"
         ]
       },
       {
-        "id": "quantization",
-        "label": "量化（W8A8/FP8/INT4）",
-        "terms": [
-          "w8a8",
-          "fp8",
-          "int4",
-          "quantization",
-          "量化"
+        "id": "stepfun",
+        "label": "阶跃星辰",
+        "category": "初创公司",
+        "aliases": [
+          "stepfun",
+          "阶跃",
+          "step-",
+          "stepaudio"
         ]
       }
     ]

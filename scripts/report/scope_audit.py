@@ -27,7 +27,7 @@ if str(SCRIPTS_ROOT) not in sys.path:
 
 from report.collect import collect_all, load_config  # noqa: E402
 from report.lib.httpclient import DEFAULT_USER_AGENT, HttpClient, SnapshotCache  # noqa: E402
-from report.lib.relevance import Scorer  # noqa: E402
+from report.lib.relevance import ScopeGate  # noqa: E402
 
 DEFAULT_CONFIG = SCRIPT_DIR / "config" / "sources.json"
 DEFAULT_CACHE_DIR = SCRIPT_DIR / ".cache"
@@ -39,25 +39,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
     parser.add_argument("--offline", action="store_true", help="只读快照，不联网")
     parser.add_argument("--only", default="", help="只审计指定 source id（逗号分隔）")
-    parser.add_argument("--group", default="", help="只列出指定维度（papers / repos / teams / wechat / competitors）")
+    parser.add_argument("--group", default="", help="只列出指定维度（papers / repos / teams / wechat / peers）")
     parser.add_argument("--limit", type=int, default=0, help="每类最多列出多少条（0 = 不限制）")
     return parser.parse_args(argv)
 
 
-def _classify(scorer: Scorer, items: list[dict[str, Any]]) -> tuple[list[dict], list[tuple[str, dict]], list[dict]]:
+def _classify(gate: ScopeGate, items: list[dict[str, Any]]) -> tuple[list[dict], list[tuple[str, dict]], list[dict]]:
     kept: list[dict] = []
     blocked_exclude: list[tuple[str, dict]] = []
     blocked_infra: list[dict] = []
     for item in items:
         title = str(item.get("title") or "")
         text = f"{title} {item.get('summary') or ''}"
-        require_infra = scorer.requires_infra_evidence(str(item.get("group") or ""))
-        if scorer.should_check_exclude(str(item.get("group") or "")):
-            reason = scorer.out_of_scope_reason(text)
+        require_infra = gate.requires_infra_evidence(str(item.get("group") or ""))
+        if gate.should_check_exclude(str(item.get("group") or "")):
+            reason = gate.out_of_scope_reason(text)
             if reason:
                 blocked_exclude.append((reason, item))
                 continue
-        if not scorer.passes_gate(text, require_infra=require_infra, title=title):
+        if not gate.passes_gate(text, require_infra=require_infra, title=title):
             blocked_infra.append(item)
             continue
         kept.append(item)
@@ -81,8 +81,8 @@ def main(argv: list[str] | None = None) -> int:
     only = [token.strip() for token in args.only.split(",") if token.strip()]
     items, reports, _ = collect_all(baseline, client, logger=quiet, only=only or None)
 
-    scorer = Scorer(config)
-    kept, blocked_exclude, blocked_infra = _classify(scorer, items)
+    gate = ScopeGate(config)
+    kept, blocked_exclude, blocked_infra = _classify(gate, items)
 
     def show(rows: list[dict], mapper) -> None:
         limited = rows if args.limit <= 0 else rows[: args.limit]

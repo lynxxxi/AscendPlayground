@@ -25,9 +25,9 @@ from report.collect import (  # noqa: E402
     parse_sogou_wechat,
     repo_index,
 )
-from report.corpus import build_capability_matrix, build_corpus  # noqa: E402
+from report.corpus import build_corpus  # noqa: E402
 from report.lib.feed import parse_feed  # noqa: E402
-from report.lib.relevance import Scorer, TagExtractor, dedupe  # noqa: E402
+from report.lib.relevance import ScopeGate, TagExtractor, dedupe  # noqa: E402
 from report.lib.util import (  # noqa: E402
     clean_title,
     iso,
@@ -107,6 +107,7 @@ def sample_item(**overrides):
         "weight": 1.35,
         "stableId": "arxiv:sample-1",
         "signals": {},
+        "zhCurated": True,  # 报告只出中文条目，测试样本默认视为已补中文
     }
     item.update(overrides)
     return item
@@ -151,7 +152,7 @@ def test_feed() -> None:
 
 
 def test_relevance(config: dict) -> None:
-    print("\n[3/6] 关键词抽取与打分")
+    print("\n[3/6] 关键词抽取与入库闸门")
     extractor = TagExtractor(config.get("keywords") or {})
     hits = extractor.extract("multimodal serving with kv cache compression and quantization vlm inference")
     check("关键词命中", len(hits) >= 3, str(hits[:4]))
@@ -159,17 +160,10 @@ def test_relevance(config: dict) -> None:
     check("中文关键词", bool(extractor.extract("昇腾 多模态 推理加速")))
     check("无命中返回空", extractor.extract("completely unrelated text about gardening") == [])
 
-    scorer = Scorer(config)
-    strong = scorer.score(
-        sample_item(summary="multimodal inference serving kv cache quantization throughput fp8"),
-    )
-    weak = scorer.score(sample_item(title="A gentle introduction", summary="a story about cats"))
-    check("强相关得分更高", strong > weak, f"{strong} vs {weak}")
-    check("相关性闸门放行", scorer.passes_gate("multimodal serving framework"))
-    check("相关性闸门拦截", not scorer.passes_gate("gardening tips for spring"))
-
-    old = sample_item(published=iso(now_utc() - timedelta(days=365)))
-    check("时效衰减生效", scorer.score(old) < scorer.score(sample_item()))
+    gate = ScopeGate(config)
+    check("主题闸门放行", gate.passes_gate("multimodal serving framework"))
+    check("主题闸门拦截", not gate.passes_gate("gardening tips for spring"))
+    check("系统不再提供打分方法", not hasattr(gate, "score"))
 
 
 # 2026-W38 报告中出现过的真实标题，用于锁定「调研范围」边界：
@@ -226,40 +220,44 @@ SCOPE_SAMPLES: list[tuple[str, str, bool]] = [
 
 def test_scope(config: dict) -> None:
     print("\n[+] 调研范围（scope）闸门")
-    scorer = Scorer(config)
-    check("论文维度要求 infra 证据", scorer.requires_infra_evidence("papers"))
-    check("仓库维度不要求 infra 证据", not scorer.requires_infra_evidence("repos"))
-    check("论文维度启用排除法", scorer.should_check_exclude("papers"))
-    check("仓库维度不受排除法影响", not scorer.should_check_exclude("repos"))
+    gate = ScopeGate(config)
+    check("论文维度要求 infra 证据", gate.requires_infra_evidence("papers"))
+    check("公众号维度要求 infra 证据", gate.requires_infra_evidence("wechat"))
+    check("仓库维度不要求 infra 证据", not gate.requires_infra_evidence("repos"))
+    check("博客类条目要求 infra 证据", gate.requires_infra_evidence("teams", None, "blog"))
+    check("媒体文章要求 infra 证据", gate.requires_infra_evidence("teams", None, "media-article"))
+    check("模型发布不要求 infra 证据", not gate.requires_infra_evidence("teams", None, "model-release"))
+    check("论文维度启用排除法", gate.should_check_exclude("papers"))
+    check("仓库维度不受排除法影响", not gate.should_check_exclude("repos"))
     check(
         "逐源开关可覆盖分组默认值",
-        scorer.requires_infra_evidence("papers", {"requireInfraEvidence": False}) is False,
+        gate.requires_infra_evidence("papers", {"requireInfraEvidence": False}) is False,
     )
-    check("scope 词表非空", bool(scorer.infra_terms) and bool(scorer.exclude_terms))
+    check("scope 词表非空", bool(gate.infra_terms) and bool(gate.exclude_terms))
 
     for title, summary, expected in SCOPE_SAMPLES:
         text = f"{title} {summary}"
-        reason = scorer.out_of_scope_reason(text)
-        passed = scorer.passes_gate(text, require_infra=True, title=title) and not reason
+        reason = gate.out_of_scope_reason(text)
+        passed = gate.passes_gate(text, require_infra=True, title=title) and not reason
         label = "收录" if expected else "拦截"
         detail = f"reason={reason or '-'}"
         check(f"scope {label}：{title[:42]}", passed == expected, detail)
 
     check(
         "排除法先于 infra 证据（脑电命中排除词）",
-        scorer.out_of_scope_reason(SCOPE_SAMPLES[4][0] + " " + SCOPE_SAMPLES[4][1]) == "eeg",
+        gate.out_of_scope_reason(SCOPE_SAMPLES[4][0] + " " + SCOPE_SAMPLES[4][1]) == "eeg",
     )
     check(
         "中文排除词生效（公众号维度）",
-        scorer.out_of_scope_reason("具身机器人大模型推理加速实践") in {"机器人", "具身"},
+        gate.out_of_scope_reason("具身机器人大模型推理加速实践") in {"机器人", "具身"},
     )
     check(
         "纯算法论文缺 infra 证据被拦",
-        not scorer.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=True),
+        not gate.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=True),
     )
     check(
         "不要求 infra 证据时仍按主题放行",
-        scorer.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=False),
+        gate.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=False),
     )
     # 摘要里 throughput / latency / kernel 这类词人人都写，只有标题才算 infra 证据
     summary_only = (
@@ -268,13 +266,13 @@ def test_scope(config: dict) -> None:
     )
     check(
         "证据只在摘要里不算 infra（标题收紧）",
-        not scorer.passes_gate(
+        not gate.passes_gate(
             f"{summary_only[0]} {summary_only[1]}", require_infra=True, title=summary_only[0]
         ),
     )
     check(
         "证据里出现 infra 关键词即放行（标题命中）",
-        scorer.passes_gate(
+        gate.passes_gate(
             "PixelFlow: Token-Level Workload Management for Efficient Distributed DiT Serving",
             require_infra=True,
             title="PixelFlow: Token-Level Workload Management for Efficient Distributed DiT Serving",
@@ -368,8 +366,16 @@ def test_corpus(config: dict) -> None:
     check("窗口内全部为新增", corpus.stats["new"] == 4, str(corpus.stats["new"]))
     check("分组统计", corpus.stats["byGroup"].get("repos") == 1, str(corpus.stats["byGroup"]))
     check("仓库聚类", len(corpus.repo_clusters) == 1, str(len(corpus.repo_clusters)))
-    check("竞品矩阵有行", len(corpus.competitor_matrix["rows"]) > 0)
-    check("能力矩阵结构", len(build_capability_matrix(corpus.items, config)["rows"]) > 0)
+    check("周边团队矩阵有行", len(corpus.peer_matrix["rows"]) > 0)
+    check("周边团队雷达结构", isinstance(corpus.peer_matrix.get("radar"), list))
+    check("主题聚类可用", isinstance(corpus.themes, list))
+    check("条目不含分数字段", all("score" not in item for item in corpus.items))
+
+    # 中文约束：未补中文的条目进不了正文，只进待补清单
+    uncurated = sample_item(stableId="p:2", title="An English-only paper", zhCurated=False)
+    mixed = build_corpus([items[0], uncurated], config=config, run_id="test-run-zh", week="2026-W38", reference=now)
+    check("未补中文的条目不进正文", mixed.stats["total"] == 1, str(mixed.stats["total"]))
+    check("未补中文计入待补清单", mixed.stats["pendingZh"] == 1 and len(mixed.pending_zh) == 1)
 
     repeat = build_corpus(items, config=config, run_id="test-run-2", week="2026-W38", reference=now)
     check("重跑结果一致（可复现）", repeat.stats == corpus.stats)
@@ -382,8 +388,23 @@ def test_corpus(config: dict) -> None:
 def test_render(config: dict, source_reports: list[dict]) -> None:
     print("\n[6/6] 渲染")
     items = [
-        sample_item(stableId=f"x:{index}", title=f"Multimodal Inference Paper {index}") for index in range(6)
+        sample_item(stableId=f"x:{index}", title=f"多模态推理论文 {index}") for index in range(6)
     ]
+    items.append(
+        sample_item(
+            stableId="w:kol",
+            title="大V渠道文章：多模态推理加速实践",
+            kind="wechat-article",
+            group="wechat",
+            sourceId="sogou-wechat",
+            sourceLabel="搜狗微信 · 公众号检索",
+            signals={"kol": "某明星大V", "kolCategory": "明星大V"},
+        )
+    )
+    # 未补中文的条目必须不出现在正文（中文约束的端到端断言）
+    items.append(
+        sample_item(stableId="en:1", title="English Only Leaked Title", zhCurated=False, group="papers")
+    )
     corpus = build_corpus(items, config=config, run_id="render-run", week="2026-W38")
     window = {"since": "2026-09-02", "until": "2026-09-16", "maxAgeDays": 14}
     html = render_html(
@@ -394,6 +415,8 @@ def test_render(config: dict, source_reports: list[dict]) -> None:
         run_id="render-run",
         generate_command="python scripts/report/run_weekly.py",
     )
+    check("未补中文的条目不进正文", "English Only Leaked Title" not in html)
+    check("公众号维度标注大V渠道", "某明星大V" in html)
     for token in (
         "<!doctype html>",
         "rp-section",
@@ -402,13 +425,16 @@ def test_render(config: dict, source_reports: list[dict]) -> None:
         'id="teams"',
         'id="repos"',
         'id="wechat"',
-        'id="competitors"',
-        'id="mindie"',
+        'id="peers"',
         'id="appendix"',
         "rpSearch",
         "维度",
     ):
         check(f"HTML 含 {token}", token in html)
+    check("不再有竞品/昇腾竞争力章节", "竞品" not in html and "昇腾竞争力" not in html)
+    check("不再有高分条目", "高分条目" not in html)
+    check("不再有按检索词分布", "按检索词分布" not in html)
+    check("不再输出分数列", ">分<" not in html)
     check("HTML 尺寸合理", 8000 < len(html) < 8_000_000, str(len(html)))
     check("HTML 无外部依赖", "http://cdn" not in html and "https://cdn" not in html)
     check("HTML 自包含（无外部资源引用）", not re.search(r'(?:src|@import)\s*=?\s*["\(]https?://', html))
@@ -436,6 +462,26 @@ def test_config(config: dict) -> None:
     check("commit 信号保留", is_interesting_commit("feat: add multimodal video generation support"))
     check("Atom 提交前缀保留", is_interesting_commit("[Perf][CosyVoice3] bounded-window streaming vocoder"))
     check("GitHub 通道为 atom", str(config["repos"].get("channel")) == "atom")
+    check("报告启用中文约束", bool(config["report"]["chineseOnly"]))
+    check("配置不再有打分参数", "scoring" not in config and "minScore" not in config["defaults"])
+    check(
+        "仓库维度只看多模态",
+        not {
+            "hiyouga/LLaMA-Factory",
+            "modelscope/ms-swift",
+            "NVIDIA/Megatron-LM",
+            "Ascend/MindIE-LLM",
+        }
+        & {entry["repo"] for entry in config["repos"]["watch"]},
+    )
+    check("通用主仓只保留多模态子系统通道", {"vllm-mm", "sglang-mm"} <= {entry.get("id") for entry in config["repos"]["watch"]})
+    check("周边团队配置存在", bool(config["peers"]["engines"]) and bool(config["peers"]["roster"]))
+    check("不再有昇腾竞争力配置", "mindie" not in config)
+    check("大V渠道并入公众号维度", len(config["wechat"]["kolChannels"]) >= 8)
+    check(
+        "大V渠道都带检索词",
+        all(str(channel.get("query") or "").strip() for channel in config["wechat"]["kolChannels"]),
+    )
     try:
         json.dumps(config, ensure_ascii=False)
         check("配置可序列化", True)
@@ -458,6 +504,24 @@ SOGOU_SAMPLE = """
 </li>
 </ul>
 """
+
+
+def test_wechat_channels(config: dict) -> None:
+    print("\n[+] 公众号检索词与大V渠道")
+    from report.collect import Collector
+    from report.lib.httpclient import HttpClient, SnapshotCache
+
+    # 不写系统临时目录（受限环境下清理会失败），用脚本目录下的缓存子目录
+    cache_root = SCRIPT_DIR / ".cache" / "_selftest_snapshots"
+    client = HttpClient(SnapshotCache(cache_root), offline=True, logger=lambda message: None)
+    collector = Collector(config, client, logger=lambda message: None)
+    searches = collector.wechat_searches()
+    kol = [search for search in searches if search.get("kol")]
+    check("检索词含常规关键词", len(searches) >= 20, str(len(searches)))
+    check("检索词含大V渠道", len(kol) >= 8, str(len(kol)))
+    check("大V渠道带检索词与归属", all(search["query"] and search["kol"] for search in kol))
+    check("检索词 id 唯一", len({search["id"] for search in searches}) == len(searches))
+    check("HTTP 客户端支持拒绝落快照", "cache_when" in HttpClient.get.__code__.co_varnames)
 
 
 def test_sogou(config: dict) -> None:
@@ -510,6 +574,7 @@ def main() -> int:
     test_corpus(config)
     test_render(config, source_reports)
     test_config(config)
+    test_wechat_channels(config)
     test_sogou(config)
 
     print("\n" + "=" * 68)
