@@ -27,11 +27,29 @@ def _is_ascii_token(term: str) -> bool:
 
 
 def _ascii_pattern(term: str) -> str:
-    escaped = re.escape(term.strip())
-    # 空格与连字符允许彼此互换，命中 "kv cache" / "kv-cache"
-    escaped = escaped.replace(r"\ ", r"[\s\-]+").replace(r"\-", r"[\s\-]*")
-    # 正向词首锚定：单词必须从词首开始，避免 "npu" 命中 "Input"、"dit" 命中 "audit"
-    return r"\b" + escaped
+    """把配置里的英文关键词翻成正则。
+
+    - 词内空格 → `[\\s\\-]+`（`kv cache` 也命中 `kv-cache`）
+    - 词内连字符 → `[\\s\\-]*`（`multi-gpu` 也命中 `multi gpu` / `multigpu`）
+    - 词首锚定 → 避免 `npu` 命中 `Input`、`dit` 命中 `audit`
+
+    注意：这里必须一次拼装完成。早先的写法是「先 replace 空格、再 replace 连字符」，
+    第二次替换会把第一次插入的 `[\\s\\-]+` 再改写一遍，产出
+    `[\\s[\\s\\-]*]+` 这种要求字面 `]` 的必失配模式（实测 `kv cache` / `sparse attention`
+    / `world action model` 全部静默失配，多词短语退化成邻域兜底匹配）。
+    """
+    parts = re.split(r"(\s+|-)", term.strip())
+    out: list[str] = []
+    for part in parts:
+        if not part:
+            continue
+        if part == "-":
+            out.append(r"[\s\-]*")
+        elif part.isspace():
+            out.append(r"[\s\-]+")
+        else:
+            out.append(re.escape(part))
+    return r"\b" + "".join(out)
 
 
 class TagExtractor:

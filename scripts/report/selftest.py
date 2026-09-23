@@ -282,6 +282,33 @@ def test_scope(config: dict) -> None:
     )
 
 
+def test_extractor_phrases(config: dict) -> None:
+    print("\n[+] 关键词匹配器（短语/锚定）")
+    extractor = TagExtractor(
+        {
+            "t": [
+                "kv cache",
+                "sparse attention",
+                "multi-gpu",
+                "npu",
+                "graph mode",
+                "world action model",
+            ]
+        }
+    )
+    check("多词短语精确命中", extractor.matches("kv cache", "Flash-dLLM: IO-Aware KV Cache and Parallel Decoding"))
+    check("短语允许连字符", extractor.matches("kv cache", "a kv-cache aware scheduler"))
+    check("短语允许单词共现兜底", extractor.matches("kv cache", "KV reuse and cache eviction policy"))
+    check("连字符词允许空格写法", extractor.matches("multi-gpu", "scaling multi gpu inference"))
+    check("连字符词允许连写", extractor.matches("multi-gpu", "multigpu serving"))
+    check("短语命中真短语", extractor.matches("sparse attention", "block-sparse attention kernels"))
+    check("短语不因词序/词形误命中", not extractor.matches("graph mode", "Graph-Guided Diffusion Language Models"))
+    check("排除短语命中真短语", extractor.matches("world action model", "Degradation for World Action Models"))
+    check("单词词首锚定（npu 不命中 Input）", not extractor.matches("npu", "Input Transformations and Confidence Routing"))
+    check("单词词首锚定（npu 命中 NPU）", extractor.matches("npu", "Ascend NPU inference"))
+    check("空文本安全", not extractor.matches("kv cache", ""))
+
+
 def test_dedupe(config: dict) -> None:
     print("\n[4/6] 去重")
     first = sample_item(stableId="s:1", sourceId="arxiv", sourceLabel="arXiv", sources=["arxiv"], sourceLabels=["arXiv"])
@@ -478,6 +505,7 @@ def main() -> int:
     test_feed()
     test_relevance(config)
     test_scope(config)
+    test_extractor_phrases(config)
     test_dedupe(config)
     test_corpus(config)
     test_render(config, source_reports)

@@ -22,7 +22,7 @@ python scripts/report/run_weekly.py
 # 离线复现（只读快照，完全不联网）
 python scripts/report/run_weekly.py --offline
 
-# 离线自检（101 项断言，不联网）
+# 离线自检（112 项断言，不联网）
 python scripts/report/selftest.py
 
 # 查看当前配置里的全部信息源
@@ -60,7 +60,7 @@ python scripts/report/run_weekly.py --list-sources
 > 摘要里 `throughput` / `latency` / `kernel` / `deployment` 这类词人人都写——推荐系统、等离子体仿真、
 > 密码学论文都会写。实测（2026-W39 同一份 arXiv 快照，150 条抓取）：
 > 只看正文证据 ⇒ 保留 42 条，仍混入推荐、仿真、材料等非 infra 工作；
-> 只看标题证据 ⇒ 保留 16~20 条，剩下的基本是投机解码、KV cache、视觉 token 剪枝、
+> 只看标题证据 ⇒ 保留 15 条左右，剩下的基本是投机解码、KV cache、视觉 token 剪枝、
 > 稀疏注意力算子、DiT serving、低比特量化这类真 infra 工作。
 
 **收录（in scope）**：多模态 / 生成式模型的**推理与服务的系统工程** ——
@@ -217,7 +217,7 @@ scripts/report/
 ├── corpus.py              语料层：去重、打分、主题聚类、竞品与能力矩阵
 ├── render.py              渲染层：自包含 HTML 报告
 ├── zh.py                  中文说明层：按 stableId / repo+tag 套用人工撰写的中文
-├── selftest.py            离线自检（101 项断言，含调研范围边界回归）
+├── selftest.py            离线自检（112 项断言，含调研范围边界回归）
 ├── scope_audit.py         调研范围审计：列出被 scope 拦下的条目与命中词（调边界用）
 ├── config/
 │   ├── sources.json           信息源注册表（改这里就能增删源）
@@ -317,3 +317,9 @@ python scripts/build_site.py                            # 更新站点（含周�
 9. **关键词匹配按词首锚定**：`npu` 不会命中 `Input`、`dit` 不会命中 `audit`、`mode` 不会命中
    `Models`（`lib/relevance.py` 的 `_ascii_pattern` / `_tokens_nearby`）。改动词表时若发现
    命中异常，先确认是不是锚定规则导致的漏配。
+10. **多词短语按「精确短语 + 整词邻域兜底」匹配**，不做词形还原：`kv cache` 命中
+    `KV Cache` / `kv-cache`，但不命中 `KV Caching`（`cache` ≠ `caching`）。
+    需要覆盖词形变化时，在词表里补一条变体（如再加 `kv caching`）即可。
+    另注：`_ascii_pattern` 早期版本用「两次 `str.replace`」拼接，会把第一次插入的
+    `[\s\-]+` 再次改写，产出必然失配的模式（多词短语因此静默退化成子串共现），
+    现已改为按分隔符一次拼装，并加了回归断言。
