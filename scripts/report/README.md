@@ -22,7 +22,7 @@ python scripts/report/run_weekly.py
 # 离线复现（只读快照，完全不联网）
 python scripts/report/run_weekly.py --offline
 
-# 离线自检（78 项断言，不联网）
+# 离线自检（101 项断言，不联网）
 python scripts/report/selftest.py
 
 # 查看当前配置里的全部信息源
@@ -46,7 +46,60 @@ python scripts/report/run_weekly.py --list-sources
 
 ---
 
-## 2. 常用参数
+## 2. 调研范围（Scope）：只收「多模态 infra」
+
+主题边界由 `config/sources.json` 的 `scope` 段**硬约束**，不靠人工挑选、也不靠源自身可靠：
+每条新增条目入库前必须过两道闸门（`lib/relevance.py` 的 `Scorer`，由 `collect.py::_finalize` 调用）。
+
+| 闸门 | 作用对象 | 规则 | 命中后 |
+|------|----------|------|--------|
+| ① 排除法 `scope.exclude` | `scope.excludeGroups`（默认 `papers` / `wechat` / `teams`） | 标题+摘要命中任一排除词即出局：脑电/脑机/认知启发、医疗临床、教育、遥感农业、机器人具身、可信与幻觉、数据标注与仿真环境 | 丢弃，计入附录「范围拦截」 |
+| ② infra 证据 `scope.infraEvidence` | `scope.requireInfraEvidenceGroups`（默认 `papers`） | **标题**必须出现任一「系统工程 / 降本增效」证据词：服务引擎、调度与批处理、prefill/decode、算子与 kernel、KV cache 与显存、量化压缩、并行分布式、昇腾/NPU 适配、部署与评测工具 | 丢弃，计入附录「范围拦截」 |
+
+> 为什么证据词只看标题（`scope.evidenceInTitle`，默认 `true`）：
+> 摘要里 `throughput` / `latency` / `kernel` / `deployment` 这类词人人都写——推荐系统、等离子体仿真、
+> 密码学论文都会写。实测（2026-W39 同一份 arXiv 快照，150 条抓取）：
+> 只看正文证据 ⇒ 保留 42 条，仍混入推荐、仿真、材料等非 infra 工作；
+> 只看标题证据 ⇒ 保留 16~20 条，剩下的基本是投机解码、KV cache、视觉 token 剪枝、
+> 稀疏注意力算子、DiT serving、低比特量化这类真 infra 工作。
+
+**收录（in scope）**：多模态 / 生成式模型的**推理与服务的系统工程** ——
+服务引擎（vLLM / SGLang / M\* / TensorRT-LLM / Dynamo / MindIE 等）、调度与 continuous batching、
+prefill-decode 与 EPD 分离、KV cache 与显存管理、视觉 token 压缩、算子与 kernel、编译与图模式、
+并行（TP/SP/CP/EP）、量化与低比特部署、硬件与 NPU 适配、扩散/视频生成的推理加速
+（步数蒸馏、缓存复用、VAE 并行）、系统级评测与 profiling。
+
+**不收录（out of scope）**：模型能力与算法创新（新架构、新目标函数、能力基准）、
+应用落地（医疗、教育、遥感、工业质检）、仿脑与脑信号（EEG / fMRI / BCI）、
+具身与机器人（VLA 策略、操作、导航、数据与仿真工厂）、可信与对齐（幻觉缓解、公平性、可解释性）、
+纯训练方法（除非本身是系统工作：并行、显存、算子）。
+
+> 边界示例（已固化为 `selftest.py` 断言，回归即报警）：
+>
+> - ❌ `BrainFocus: EEG-Guided ROI Selection for Efficient Vision-Language Models` —— 仿脑降算力，视觉侧算法，不是 infra；
+> - ✅ `StackTok: Budget-Adaptive Visual Token Selection to Accelerate VLM Inference` —— 推理侧 token 压缩；
+> - ❌ `TEMPO: Temporal Context Learning for Dynamic Robot Manipulation` —— 具身策略；
+> - ✅ `OmniKVQuant: KV Cache Quantization for Omni-LLMs` —— 显存与吞吐优化。
+
+**收放办法（改配置，不改代码）**：
+
+- 想把具身/机器人也一起收：从 `scope.exclude` 删掉 `robot` / `robotic` / `embodied` / `机器人` / `具身`；
+- 想让论文维度更宽：从 `scope.requireInfraEvidenceGroups` 删掉 `papers`（则只做排除法），
+  或把 `scope.evidenceInTitle` 改成 `false`（退回「标题或摘要任一命中」）；
+- 单个源单独开关：在该源上加 `"requireInfraEvidence": false` 或 `"skipScopeExclude": true`；
+- **改完先审计再出报告**（不会写任何文件）：
+
+```bash
+# 列出被拦条目与命中词，用来判断边界是否合适
+python scripts/report/scope_audit.py --offline --only arxiv
+```
+
+`scope_audit.py` 的做法是：用**跳过 scope** 的配置采一遍，得到全量候选，再用当前 scope 规则逐条判定，
+于是「保留 / 排除法拦 / 标题缺 infra 证据拦」三类都能看到，并给出命中词。
+
+---
+
+## 3. 常用参数
 
 | 参数 | 作用 |
 |------|------|
@@ -73,7 +126,7 @@ sha256sum report/2026-W38.html                          # Linux/macOS
 
 ---
 
-## 3. 信息源方案（当前实测状态）
+## 4. 信息源方案（当前实测状态）
 
 配置集中在 `config/sources.json`，**改配置即可增删源，无需改代码**。
 
@@ -84,6 +137,10 @@ sha256sum report/2026-W38.html                          # Linux/macOS
 | arXiv | `export.arxiv.org/api/query`，15 组关键词（`all:"a" AND all:"b"`） | ✅ 主力 |
 | HuggingFace Daily Papers | `huggingface.co/api/daily_papers` | ✅ 热度交叉验证 |
 | OpenAlex | `api.openalex.org/works` | ⛔ 默认禁用（见下） |
+
+> **召回靠查询，精度靠 `scope`**：arXiv 的 AND 组合查询负责「捞全」，第 2 节的 `scope`
+> 闸门负责「收窄」——像「VLM + inference」这种只在字面命中、实质是模型能力或应用落地的论文，
+> 会被排除法或 infra 证据要求挡在报告之外（例：`BrainFocus` 这类仿脑降算力工作）。
 
 > **OpenAlex 为什么默认关闭**：它是全文检索，返回结果里大量是建筑安全、医学影像、
 > 教育等无关领域论文；而它的 metadata 又几乎不命中本项目的多模态 infra 关键词组，
@@ -151,7 +208,7 @@ sha256sum report/2026-W38.html                          # Linux/macOS
 
 ---
 
-## 4. 代码结构
+## 5. 代码结构
 
 ```
 scripts/report/
@@ -160,7 +217,8 @@ scripts/report/
 ├── corpus.py              语料层：去重、打分、主题聚类、竞品与能力矩阵
 ├── render.py              渲染层：自包含 HTML 报告
 ├── zh.py                  中文说明层：按 stableId / repo+tag 套用人工撰写的中文
-├── selftest.py            离线自检（78 项断言）
+├── selftest.py            离线自检（101 项断言，含调研范围边界回归）
+├── scope_audit.py         调研范围审计：列出被 scope 拦下的条目与命中词（调边界用）
 ├── config/
 │   ├── sources.json           信息源注册表（改这里就能增删源）
 │   ├── curated_zh.json        人工撰写的中文标题与说明（按 stableId 匹配）
@@ -189,9 +247,12 @@ scripts/report/
 ### 4.2 处理链路
 
 ```
-信息源 (config) → 抓取 + 快照落盘 → 归一化条目 + 抽取说明 → 相关性闸门 → 打分
-   → 跨源去重 → 套用中文说明层 → 分类聚合（维度 A–F）→ HTML 渲染
+信息源 (config) → 抓取 + 快照落盘 → 归一化条目 + 抽取说明 → 主题闸门 → 范围闸门（排除法 + infra 证据）
+   → 相关性打分 → 跨源去重 → 套用中文说明层 → 分类聚合（维度 A–F）→ HTML 渲染
 ```
+
+**范围闸门**（见第 2 节）：先按 `scope.exclude` 排掉非 infra 议题，再按 `scope.infraEvidence`
+要求论文维度给出「系统工程 / 降本增效」证据；被拦条目数量在报告附录 G 与运行日志中可见。
 
 **打分模型**（`config.scoring` 可调参）：
 
@@ -208,7 +269,7 @@ score = (1 + 加权关键词命中，上限 12) × 源权重 × 时效因子 × 
 
 ---
 
-## 5. weekly 工作流建议
+## 6. weekly 工作流建议
 
 每周固定执行：
 
@@ -221,6 +282,8 @@ python scripts/build_site.py                            # 更新站点（含周�
 调研时的实用技巧：
 
 - **想看得更全**：`--max-age-days 30 --min-score 0.8`（首次建基线时推荐）。
+- **觉得范围收得不合适**：先跑 `python scripts/report/scope_audit.py --offline`，按拦截清单调
+  `config/sources.json` 的 `scope`，再出报告（第 2 节）。
 - **某一维度为空**：看报告附录 G 的源状态；若显示 403/429 即为限流，非代码问题。
 - **离线交付/复现**：把 `scripts/report/.cache/` 一起带上，对方执行 `--offline` 即可得到一致结果。
 - **新增公众号关键词**：编辑 `config/sources.json` 的 `wechat.searches`。
@@ -228,7 +291,7 @@ python scripts/build_site.py                            # 更新站点（含周�
 
 ---
 
-## 6. 已知限制与诚实说明
+## 7. 已知限制与诚实说明
 
 1. **GitHub 通道**：默认 Atom feed 已无限流问题；若切回 `channel: "api"`，匿名限额 60 次/小时，
    27 个仓库 + 10 个竞品引擎单轮无法全覆盖，系统会明确报告未覆盖的仓库而非静默丢数据。
@@ -246,3 +309,11 @@ python scripts/build_site.py                            # 更新站点（含周�
    因此完全确定、可复现；极少数条目正文为空时会显示「—」。
 7. **跨源去重**：当前快照窗口内 arXiv 与 HuggingFace Daily Papers 尚未出现重复条目
    （报告显示"跨源去重合并 0"），去重逻辑本身有单元测试覆盖。
+8. **范围闸门是关键词规则而非语义判断**：它按「标题里的证据词 + 排除词表」工作，因此
+   - 仍会有边界样本漏过（例：能力基准标题里写了 `Inference`、具身工作标题写了 `Quantization`）；
+   - 也会误杀（例：标题只写 `Accelerating Diffusion Sampling` 而没写具体手段的加速论文）。
+   两种情况都能用 `scope` 词表 + `scope_audit.py` 收敛；这是**可解释、可复现、零依赖**的取舍，
+   换来的是每周结果稳定、不依赖任何 LLM 调用。**不要**把它当成语义分类器。
+9. **关键词匹配按词首锚定**：`npu` 不会命中 `Input`、`dit` 不会命中 `audit`、`mode` 不会命中
+   `Models`（`lib/relevance.py` 的 `_ascii_pattern` / `_tokens_nearby`）。改动词表时若发现
+   命中异常，先确认是不是锚定规则导致的漏配。

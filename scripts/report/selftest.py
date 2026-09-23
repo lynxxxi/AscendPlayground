@@ -172,6 +172,116 @@ def test_relevance(config: dict) -> None:
     check("时效衰减生效", scorer.score(old) < scorer.score(sample_item()))
 
 
+# 2026-W38 报告中出现过的真实标题，用于锁定「调研范围」边界：
+# 前四条属多模态 infra（系统工程 / 降本增效），后四条不属 infra（仿脑、具身、能力评测、算法创新）。
+SCOPE_SAMPLES: list[tuple[str, str, bool]] = [
+    (
+        "StackTok: Budget-Adaptive Visual Token Selection to Accelerate VLM Inference",
+        "We select visual tokens adaptively under a compute budget, cutting the number of tokens the "
+        "vision encoder feeds to the language model and speeding up multimodal inference with minimal accuracy loss.",
+        True,
+    ),
+    (
+        "OmniKVQuant: KV Cache Quantization for Omni-LLMs",
+        "We apply post-training quantization to the KV cache of an omni-modal LLM to reduce peak memory "
+        "and raise serving throughput on long-context multimodal workloads.",
+        True,
+    ),
+    (
+        "VC-Attention: Numerical Smoothing and Softmax Promotion for Low-Bit Attention",
+        "Low-bit attention kernels in multimodal inference engines suffer from overflow; we stabilise them "
+        "numerically and report throughput gains for quantized operators.",
+        True,
+    ),
+    (
+        "Efficient Multimodal Serving with Encoder Disaggregation",
+        "We disaggregate the vision encoder from the prefill stage of a multimodal inference engine to "
+        "improve end-to-end latency and GPU utilisation.",
+        True,
+    ),
+    (
+        "BrainFocus: EEG-Guided ROI Selection for Efficient Vision-Language Models",
+        "Electroencephalogram (EEG) signals guide region-of-interest selection so that the VLM only "
+        "processes part of the image, reducing its visual-side inference cost. A brain-inspired approach.",
+        False,
+    ),
+    (
+        "TEMPO: Temporal Context Learning for Dynamic Robot Manipulation",
+        "We let a robot manipulation policy learn temporal context to improve decision making in dynamic tasks.",
+        False,
+    ),
+    (
+        "What Do Hallucinations Reveal About Multimodal Reasoning? Probing Visual Grounding Failures",
+        "We use contrastive decoding probes to localise visual grounding failures in multimodal models.",
+        False,
+    ),
+    (
+        "Sparse MLLM Anchors with Dense Adaptation: Breaking the Self-Reference Loop",
+        "We propose sparse anchors plus dense adaptation to stabilise online test-time adaptation of a "
+        "multimodal large language model.",
+        False,
+    ),
+]
+
+
+def test_scope(config: dict) -> None:
+    print("\n[+] 调研范围（scope）闸门")
+    scorer = Scorer(config)
+    check("论文维度要求 infra 证据", scorer.requires_infra_evidence("papers"))
+    check("仓库维度不要求 infra 证据", not scorer.requires_infra_evidence("repos"))
+    check("论文维度启用排除法", scorer.should_check_exclude("papers"))
+    check("仓库维度不受排除法影响", not scorer.should_check_exclude("repos"))
+    check(
+        "逐源开关可覆盖分组默认值",
+        scorer.requires_infra_evidence("papers", {"requireInfraEvidence": False}) is False,
+    )
+    check("scope 词表非空", bool(scorer.infra_terms) and bool(scorer.exclude_terms))
+
+    for title, summary, expected in SCOPE_SAMPLES:
+        text = f"{title} {summary}"
+        reason = scorer.out_of_scope_reason(text)
+        passed = scorer.passes_gate(text, require_infra=True, title=title) and not reason
+        label = "收录" if expected else "拦截"
+        detail = f"reason={reason or '-'}"
+        check(f"scope {label}：{title[:42]}", passed == expected, detail)
+
+    check(
+        "排除法先于 infra 证据（脑电命中排除词）",
+        scorer.out_of_scope_reason(SCOPE_SAMPLES[4][0] + " " + SCOPE_SAMPLES[4][1]) == "eeg",
+    )
+    check(
+        "中文排除词生效（公众号维度）",
+        scorer.out_of_scope_reason("具身机器人大模型推理加速实践") in {"机器人", "具身"},
+    )
+    check(
+        "纯算法论文缺 infra 证据被拦",
+        not scorer.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=True),
+    )
+    check(
+        "不要求 infra 证据时仍按主题放行",
+        scorer.passes_gate(SCOPE_SAMPLES[7][0] + " " + SCOPE_SAMPLES[7][1], require_infra=False),
+    )
+    # 摘要里 throughput / latency / kernel 这类词人人都写，只有标题才算 infra 证据
+    summary_only = (
+        "MuSeR: Scalable Long-sequence Recommendation with Multi-interest Modeling",
+        "We serve a multimodal recommender with high throughput, low latency and custom GPU kernels.",
+    )
+    check(
+        "证据只在摘要里不算 infra（标题收紧）",
+        not scorer.passes_gate(
+            f"{summary_only[0]} {summary_only[1]}", require_infra=True, title=summary_only[0]
+        ),
+    )
+    check(
+        "证据里出现 infra 关键词即放行（标题命中）",
+        scorer.passes_gate(
+            "PixelFlow: Token-Level Workload Management for Efficient Distributed DiT Serving",
+            require_infra=True,
+            title="PixelFlow: Token-Level Workload Management for Efficient Distributed DiT Serving",
+        ),
+    )
+
+
 def test_dedupe(config: dict) -> None:
     print("\n[4/6] 去重")
     first = sample_item(stableId="s:1", sourceId="arxiv", sourceLabel="arXiv", sources=["arxiv"], sourceLabels=["arXiv"])
@@ -277,6 +387,9 @@ def test_render(config: dict, source_reports: list[dict]) -> None:
     check("HTML 自包含（无外部资源引用）", not re.search(r'(?:src|@import)\s*=?\s*["\(]https?://', html))
     check("HTML 无未转义模板残留", "{" not in html.split("<style>")[0].replace("{{", ""))
     check("报告指向仓库而非存档页", "../" not in html.split("<body>")[1][:400])
+    check("报告写明收录范围", "收录范围" in html and "不属多模态 infra" in html)
+    check("附录含范围拦截列", "范围拦截" in html)
+    check("首页含收录边界说明", "收录边界" in html)
 
 
 def test_config(config: dict) -> None:
@@ -364,6 +477,7 @@ def main() -> int:
     test_util()
     test_feed()
     test_relevance(config)
+    test_scope(config)
     test_dedupe(config)
     test_corpus(config)
     test_render(config, source_reports)

@@ -200,6 +200,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         f"信息源：正常 {len([r for r in reports if not r.errors and r.enabled])} / "
         f"降级 {len(failed)} / 禁用 {len([r for r in reports if not r.enabled])}"
     )
+    scope_blocked = sum(
+        int(report.droppedOutOfScope or 0) + int(report.droppedOffTopic or 0) for report in reports
+    )
+    if scope_blocked:
+        log(
+            f"范围拦截：{scope_blocked} 条（不属多模态 infra：非系统工程/降本增效议题，或命中排除项；"
+            "规则见 config/sources.json 的 scope 段）"
+        )
 
     if corpus.stats["total"] == 0:
         log("")

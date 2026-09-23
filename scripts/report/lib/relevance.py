@@ -30,7 +30,8 @@ def _ascii_pattern(term: str) -> str:
     escaped = re.escape(term.strip())
     # 空格与连字符允许彼此互换，命中 "kv cache" / "kv-cache"
     escaped = escaped.replace(r"\ ", r"[\s\-]+").replace(r"\-", r"[\s\-]*")
-    return escaped
+    # 正向词首锚定：单词必须从词首开始，避免 "npu" 命中 "Input"、"dit" 命中 "audit"
+    return r"\b" + escaped
 
 
 class TagExtractor:
@@ -81,15 +82,15 @@ class TagExtractor:
         return False
 
     def _tokens_nearby(self, tokens: list[str], text: str) -> bool:
-        """所有词元是否在 NEIGHBORHOOD 字符窗口内共现。"""
+        """所有词元是否在 NEIGHBORHOOD 字符窗口内按整词共现（"mode" 不应命中 "Models"）。"""
         lowered = text.lower()
-        for token in tokens:
-            if token not in lowered:
-                return False
+        patterns = {token: re.compile(r"\b" + re.escape(token) + r"\b") for token in tokens}
+        if any(not patterns[token].search(lowered) for token in tokens):
+            return False
         first = tokens[0]
-        for match in re.finditer(re.escape(first), lowered):
+        for match in patterns[first].finditer(lowered):
             window = lowered[match.start() : match.start() + self.NEIGHBORHOOD]
-            if all(token in window for token in tokens[1:]):
+            if all(patterns[token].search(window) for token in tokens[1:]):
                 return True
         return False
 
@@ -145,11 +146,61 @@ class Scorer:
         self.weights = table
         self.require_any = [str(term) for term in relevance.get("requireAnyOf", [])]
 
-    def passes_gate(self, text: str) -> bool:
-        if not self.require_any:
+        # ---- 调研范围（scope）----
+        # 两道闸门：① 排除法（明确非 infra 议题）② 必须出现 infra 证据词。
+        # 词表在 config/sources.json 的 scope 段，改配置即可收放，无需改代码。
+        scope = dict(config.get("scope") or {})
+        self.scope = scope
+        self.infra_terms = [str(term) for term in scope.get("infraEvidence", []) if str(term).strip()]
+        self.exclude_terms = [str(term) for term in scope.get("exclude", []) if str(term).strip()]
+        self._infra_matcher = TagExtractor({"infra": self.infra_terms}) if self.infra_terms else None
+        self._exclude_matcher = TagExtractor({"exclude": self.exclude_terms}) if self.exclude_terms else None
+        self.require_infra_groups = {str(group) for group in scope.get("requireInfraEvidenceGroups", [])}
+        self.exclude_groups = {str(group) for group in scope.get("excludeGroups", [])}
+        # 证据词只看标题：摘要里 throughput / latency / kernel 之类的词人人都写，不足以判定 infra
+        self.evidence_in_title = bool(scope.get("evidenceInTitle", False))
+
+    def passes_gate(self, text: str, *, require_infra: bool = False, title: str = "") -> bool:
+        """主题闸门：先要求命中多模态主题词，可选再要求 infra 证据词。
+
+        `title` 非空且 `scope.evidenceInTitle=true` 时，infra 证据只在标题里找。
+        """
+        if self.require_any:
+            lowered = (text or "").lower()
+            if not any(term.lower() in lowered for term in self.require_any):
+                return False
+        if require_infra:
+            haystack = title if (self.evidence_in_title and title) else text
+            if not self.has_infra_evidence(haystack):
+                return False
+        return True
+
+    def has_infra_evidence(self, text: str) -> bool:
+        """正文里是否出现「系统工程 / 降本增效」类证据词（scope.infraEvidence）。"""
+        if self._infra_matcher is None:
             return True
-        lowered = (text or "").lower()
-        return any(term.lower() in lowered for term in self.require_any)
+        return any(self._infra_matcher.matches(term, text) for term in self.infra_terms)
+
+    def out_of_scope_reason(self, text: str) -> str:
+        """命中排除词则返回该词（用于日志/统计），否则返回空串。"""
+        if self._exclude_matcher is None:
+            return ""
+        for term in self.exclude_terms:
+            if self._exclude_matcher.matches(term, text):
+                return term
+        return ""
+
+    def requires_infra_evidence(self, group: str, source: Optional[dict[str, Any]] = None) -> bool:
+        source = source or {}
+        if "requireInfraEvidence" in source:
+            return bool(source.get("requireInfraEvidence"))
+        return str(group or "") in self.require_infra_groups
+
+    def should_check_exclude(self, group: str, source: Optional[dict[str, Any]] = None) -> bool:
+        source = source or {}
+        if "skipScopeExclude" in source:
+            return not bool(source.get("skipScopeExclude"))
+        return str(group or "") in self.exclude_groups
 
     def score(self, item: dict[str, Any], reference: Optional[datetime] = None) -> float:
         title = item.get("title") or ""

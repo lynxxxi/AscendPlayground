@@ -52,6 +52,7 @@ class SourceReport:
     droppedNoDate: int = 0
     droppedByDate: int = 0
     droppedOffTopic: int = 0
+    droppedOutOfScope: int = 0
     errors: list[str] = field(default_factory=list)
     snapshots: list[str] = field(default_factory=list)
 
@@ -69,6 +70,7 @@ class SourceReport:
             "droppedNoDate": self.droppedNoDate,
             "droppedByDate": self.droppedByDate,
             "droppedOffTopic": self.droppedOffTopic,
+            "droppedOutOfScope": self.droppedOutOfScope,
             "errors": self.errors,
             "snapshots": self.snapshots,
         }
@@ -223,6 +225,9 @@ class Collector:
         min_hits = int(source.get("minKeywordHits", 0) or 0)
         # 逐源设置，避免污染其它信息源
         require_scope_title = bool(source.get("requireScopeInTitle", False))
+        # 调研范围闸门（config 的 scope 段）：先排除非 infra 议题，再要求 infra 证据词
+        check_exclude = self.scorer.should_check_exclude(report.group, source)
+        require_infra = self.scorer.requires_infra_evidence(report.group, source)
         for item in raw_items:
             title = clean_title(item.get("title"))
             if not title:
@@ -241,7 +246,14 @@ class Collector:
             item["title"] = title
             item["published"] = iso(published) if published else ""
             text = f"{title} {item.get('summary') or ''}"
-            if not self.scorer.passes_gate(text):
+            if check_exclude:
+                reason = self.scorer.out_of_scope_reason(text)
+                if reason:
+                    report.droppedOutOfScope += 1
+                    report.filtered += 1
+                    continue
+            if not self.scorer.passes_gate(text, require_infra=require_infra, title=title):
+                report.droppedOffTopic += 1
                 report.filtered += 1
                 continue
             item.setdefault("sourceId", report.id)

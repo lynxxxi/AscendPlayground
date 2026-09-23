@@ -133,6 +133,7 @@ CSS = """
 .rp-overline:before{content:"";width:48px;height:3px;background:var(--coral)}
 .rp-hero h1{margin:16px 0 16px;font:900 clamp(2.4rem,6vw,4.6rem)/.95 var(--serif);letter-spacing:-.05em}
 .rp-hero p{margin:0;color:#bed0d5;max-width:820px;font-size:.94rem;line-height:1.7}
+.rp-hero .rp-scope{margin-top:10px;padding-left:12px;border-left:3px solid var(--coral);color:#9fb6bc;font-size:.84rem;line-height:1.6}
 .rp-meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
 .rp-chip{padding:7px 10px;border:1px solid rgba(255,255,255,.22);color:#cfe0e3;font:700 .63rem/1 var(--mono)}
 .rp-stats{position:relative;z-index:3;display:grid;grid-template-columns:repeat(5,1fr);gap:1px;max-width:1240px;margin:-46px auto 0;background:var(--line);box-shadow:var(--shadow)}
@@ -697,6 +698,7 @@ def render_html(
                 f'<span class="mono">{_esc(report.get("kind",""))}</span>',
                 f'<span class="num">{report.get("fetched",0)}</span>',
                 f'<span class="num">{report.get("kept",0)}</span>',
+                f'<span class="num">{int(report.get("droppedOutOfScope",0) or 0) + int(report.get("droppedOffTopic",0) or 0)}</span>',
                 (
                     '<span class="badge old">禁用</span>'
                     if not report.get("enabled", True)
@@ -711,9 +713,19 @@ def render_html(
         )
         for report in source_reports
     ]
+    scope = config.get("scope") or {}
+    scope_statement = str(scope.get("statement") or "")
+    scope_line = f"<b>收录范围：</b>{_esc(scope_statement)}<br>" if scope_statement else ""
+    scope_blocked = sum(
+        int(report.get("droppedOutOfScope", 0) or 0) + int(report.get("droppedOffTopic", 0) or 0)
+        for report in source_reports
+    )
     appendix = (
-        table(["信息源", "类型", "抓取", "保留", "状态"], source_rows)
-        + f'<div class="rp-note"><b>Run ID：</b><code>{_esc(run_id)}</code> · '
+        table(["信息源", "类型", "抓取", "保留", "范围拦截", "状态"], source_rows)
+        + f'<div class="rp-note">{scope_line}'
+        f"<b>范围拦截：</b>本轮因不属多模态 infra（非系统工程/降本增效议题，或命中排除项）丢弃 {scope_blocked} 条；"
+        f"范围规则见 <code>scripts/report/config/sources.json</code> 的 <code>scope</code> 段。<br>"
+        f'<b>Run ID：</b><code>{_esc(run_id)}</code> · '
         f'<b>采集窗口：</b>{_esc(window.get("since",""))} ~ {_esc(window.get("until",""))}'
         f'（{_esc(window.get("maxAgeDays"))} 天）<br>'
         f"<b>复现命令：</b><code>{_esc(generate_command)}</code>；离线复现加 <code>--offline</code>（只读 <code>report/snapshots/</code>）。<br>"
@@ -741,6 +753,7 @@ def render_html(
     <div class="rp-overline">WEEKLY INTELLIGENCE REPORT</div>
     <h1>多模态 Infra 周报<br>{_esc(corpus.week)}</h1>
     <p>覆盖多模态 infra 论文、主要技术团队动态、核心仓库更新细则、公众号与中文媒体，以及 vLLM / SGLang / M* / TensorRT-LLM 与昇腾 MindIE 的工程节奏对照。</p>
+    <p class="rp-scope">收录边界：论文维度只收「推理与服务的系统工程」（引擎 / 算子 / 并行 / 缓存与显存 / 量化压缩 / 硬件适配 / 部署评测）；模型能力、算法创新、应用落地、仿脑与具身机器人等非 infra 议题一律不收。</p>
     <div class="rp-meta">
       <span class="rp-chip">生成 {_esc(corpus.generated_at)}</span>
       <span class="rp-chip">窗口 {_esc(window.get("since",""))} → {_esc(window.get("until",""))}</span>
