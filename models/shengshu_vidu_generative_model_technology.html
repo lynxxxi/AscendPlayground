@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="从 U-ViT / UniDiffuser 学术谱系到 Vidu Q3 / S2 产品落地，拆解生数科技的扩散 Transformer 基座、参考生视频、流式实时交互与实时编辑、推理加速与服务栈；全部结论标注一手论文、官方渠道、公众号与社区来源，并明确区分官宣、第三方与未公开项。">
+<meta name="theme-color" content="#0b0d0c">
+<title>生数科技 Vidu 生成模型技术全解：从 U-ViT 到实时交互视频</title>
+<style>
+  :root{
+    --bg:#0b0d0c;--panel:#111512;--panel2:#171c18;--ink:#edf1e5;--muted:#9ba69b;
+    --line:#313a32;--lime:#d7ff63;--mint:#67e0ae;--amber:#ffae57;--red:#ff6f61;--cyan:#75d9e8;
+    --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;
+    --sans:"Aptos","Noto Sans SC","Microsoft YaHei UI",sans-serif;
+    --mono:"Cascadia Mono","IBM Plex Mono",Consolas,monospace;--max:1280px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;color:var(--ink);background:var(--bg);font:16px/1.75 var(--sans)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;background:linear-gradient(rgba(215,255,99,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(215,255,99,.025) 1px,transparent 1px);background-size:38px 38px}
+  a{color:var(--mint);text-underline-offset:4px}
+  a:hover{color:var(--lime)}
+  code{font:.86em var(--mono);color:var(--lime);background:#1f2820;padding:.12em .38em;border-radius:3px;overflow-wrap:anywhere}
+  .wrap{width:min(var(--max),100%);margin:auto;padding:0 34px}
+  .top{position:sticky;top:0;z-index:30;background:rgba(11,13,12,.9);border-bottom:1px solid var(--line);backdrop-filter:blur(18px)}
+  .top .wrap{min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:22px}
+  .brand{font:700 .68rem var(--mono);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap}
+  .brand i{display:inline-block;width:8px;height:8px;margin-right:9px;background:var(--lime);box-shadow:0 0 16px var(--lime)}
+  .top nav{display:flex;gap:16px;overflow:auto;scrollbar-width:none}
+  .top nav a{color:var(--muted);font:.66rem var(--mono);text-decoration:none;white-space:nowrap}
+  .top nav a:hover{color:var(--lime)}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);padding:74px 0 58px;background:radial-gradient(circle at 84% 18%,rgba(103,224,174,.13),transparent 30rem)}
+  .hero::after{content:"VIDU";position:absolute;right:-1vw;bottom:-4.4rem;color:transparent;-webkit-text-stroke:1px rgba(215,255,99,.13);font:900 clamp(6rem,17vw,16rem)/1 var(--mono);letter-spacing:-.09em;pointer-events:none}
+  .eyebrow{display:flex;align-items:center;gap:12px;color:var(--lime);font:700 .68rem var(--mono);letter-spacing:.15em;text-transform:uppercase}
+  .eyebrow::before{content:"";width:44px;height:2px;background:var(--lime)}
+  h1{position:relative;z-index:1;max-width:20ch;margin:22px 0 20px;font:800 clamp(2.4rem,5.6vw,4.6rem)/1.06 var(--serif);letter-spacing:-.045em}
+  h1 em{color:var(--lime);font-style:normal}
+  .dek{position:relative;z-index:1;max-width:76ch;color:#cad2c8;font:1.06rem/1.8 var(--serif)}
+  .meta{display:flex;flex-wrap:wrap;gap:7px;margin:28px 0 0}
+  .pill{padding:6px 10px;border:1px solid var(--line);color:var(--muted);font:.64rem var(--mono)}
+  .pill b{color:var(--lime);font-weight:700}
+  .verdict{position:relative;z-index:1;display:grid;grid-template-columns:1.5fr .5fr;max-width:1000px;margin-top:36px;background:var(--lime);color:#11150f}
+  .verdict>div{padding:22px 26px}
+  .verdict b{font:700 1.06rem var(--serif)}
+  .verdict p{margin:6px 0 0;font-size:.88rem}
+  .verdict .number{border-left:1px solid rgba(0,0,0,.2)}
+  .number strong{display:block;font:900 2.3rem/1 var(--mono)}
+  .number small{font-size:.7rem}
+  main section{padding:66px 0;border-bottom:1px solid var(--line);scroll-margin-top:62px}
+  .head{display:grid;grid-template-columns:82px minmax(0,1fr);gap:24px;margin-bottom:32px}
+  .secno{padding-top:14px;color:var(--lime);font:.72rem var(--mono)}
+  h2{margin:0;font:750 clamp(1.7rem,3.4vw,2.9rem)/1.15 var(--serif);letter-spacing:-.035em}
+  h3{margin:38px 0 14px;font:700 1.24rem/1.35 var(--serif);color:#fff}
+  h4{margin:24px 0 10px;font:700 1rem/1.4 var(--sans);color:var(--lime)}
+  .lead{max-width:88ch;margin:14px 0 0;color:var(--muted);font-size:1rem}
+  p{margin:.85em 0}
+  ul,ol{margin:.8em 0;padding-left:1.35em}
+  li{margin:.4em 0}
+  .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .card{padding:20px 22px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--mint)}
+  .card.amber{border-top-color:var(--amber)}
+  .card.red{border-top-color:var(--red)}
+  .card.cyan{border-top-color:var(--cyan)}
+  .card h4{margin:0 0 8px;color:var(--ink)}
+  .card p{margin:.4em 0;font-size:.9rem;color:#c3ccc1}
+  .card .small{font-size:.78rem;color:var(--muted)}
+  .tag{display:inline-block;padding:2px 7px;margin:0 4px 4px 0;font:700 .6rem var(--mono);letter-spacing:.06em;border-radius:2px;vertical-align:middle}
+  .t-primary{background:rgba(103,224,174,.16);color:var(--mint);border:1px solid rgba(103,224,174,.42)}
+  .t-official{background:rgba(215,255,99,.14);color:var(--lime);border:1px solid rgba(215,255,99,.4)}
+  .t-media{background:rgba(117,217,232,.14);color:var(--cyan);border:1px solid rgba(117,217,232,.4)}
+  .t-community{background:rgba(255,174,87,.14);color:var(--amber);border:1px solid rgba(255,174,87,.42)}
+  .t-gap{background:rgba(255,111,97,.14);color:var(--red);border:1px solid rgba(255,111,97,.42)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem}
+  .scroll{overflow-x:auto;border:1px solid var(--line)}
+  th{padding:11px 13px;background:var(--panel2);color:var(--lime);font:700 .68rem var(--mono);text-align:left;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--line)}
+  td{padding:11px 13px;border-bottom:1px solid #232a24;vertical-align:top;color:#cbd4c9}
+  tbody tr:last-child td{border-bottom:0}
+  td b{color:var(--ink)}
+  .num{font:.8rem var(--mono);color:var(--lime);white-space:nowrap}
+  blockquote{margin:20px 0;padding:14px 20px;background:var(--panel);border-left:4px solid var(--cyan);color:#c8d2c7;font-size:.92rem}
+  blockquote p{margin:.3em 0}
+  .callout{margin:22px 0;padding:18px 22px;background:linear-gradient(90deg,rgba(255,111,97,.09),transparent);border:1px solid rgba(255,111,97,.32);border-left:4px solid var(--red)}
+  .callout b{color:#ffd0ca}
+  .callout.ok{background:linear-gradient(90deg,rgba(103,224,174,.09),transparent);border-color:rgba(103,224,174,.3);border-left-color:var(--mint)}
+  .callout.ok b{color:#bff3de}
+  .formula{padding:14px 18px;margin:16px 0;background:#0e1210;border:1px dashed #3c4740;font:.86rem/1.9 var(--mono);color:#dbe6d6;overflow-x:auto}
+  .steps{counter-reset:s;display:grid;gap:10px;margin:18px 0}
+  .step{position:relative;padding:16px 20px 16px 60px;background:var(--panel);border:1px solid var(--line)}
+  .step::before{counter-increment:s;content:counter(s,decimal-leading-zero);position:absolute;left:18px;top:16px;color:var(--lime);font:900 1rem var(--mono)}
+  .step b{display:block;font-size:.95rem}
+  .step span{font-size:.86rem;color:#c0c9be}
+  .src{font:.74rem var(--mono);color:var(--muted)}
+  .src a{color:var(--cyan);text-decoration:none;border-bottom:1px dotted rgba(117,217,232,.5)}
+  .src a:hover{color:var(--lime);border-bottom-color:var(--lime)}
+  .legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+  .legend div{padding:11px 14px;background:var(--panel);border:1px solid var(--line);font-size:.82rem;color:#c3ccc1}
+  footer{padding:52px 0 70px;color:var(--muted)}
+  footer .wrap{display:grid;gap:14px}
+  .back{font:.7rem var(--mono);color:var(--lime);text-decoration:none}
+  @media(max-width:900px){.two,.three{grid-template-columns:1fr}.verdict{grid-template-columns:1fr}.verdict .number{border-left:0;border-top:1px solid rgba(0,0,0,.2)}.head{grid-template-columns:1fr;gap:6px}.secno{padding-top:0}}
+  @media(max-width:620px){.wrap{padding:0 18px}.hero{padding:52px 0 44px}.legend{grid-template-columns:1fr}table{font-size:.78rem}}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><i></i>ASCEND PLAYGROUND / MODEL RESEARCH</div>
+    <nav>
+      <a href="#summary">摘要</a>
+      <a href="#company">公司与团队</a>
+      <a href="#lineage">技术谱系</a>
+      <a href="#timeline">产品时间线</a>
+      <a href="#core">核心技术</a>
+      <a href="#stream">流式交互</a>
+      <a href="#r2v">参考生视频</a>
+      <a href="#infra">推理与工程</a>
+      <a href="#evidence">来源分层</a>
+      <a href="#gaps">未公开项</a>
+      <a href="#ascend">昇腾视角</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">生数科技 · Shengshu Technology · Vidu</div>
+    <h1>把视频生成从<em>离线抽卡</em><br>改造成实时系统</h1>
+    <p class="dek">本报告综合生数科技官方渠道、微信公众号原文、团队 arXiv 技术报告、权威中文媒体与第三方社区实测，拆解其生成模型技术体系。所有技术结论均标注来源等级；官方未披露的参数量、文本编码器、VAE 结构与训练数据规模，在第九节集中列为「未公开项」，不做推测填充。</p>
+    <div class="meta">
+      <span class="pill">报告类型 <b>技术综述 / 证据核查</b></span>
+      <span class="pill">覆盖版本 <b>Vidu 1.0 → Q3 / S2</b></span>
+      <span class="pill">一手来源 <b>arXiv + 官网 + 公众号</b></span>
+      <span class="pill">完成日期 <b>2026-10-07</b></span>
+    </div>
+    <div class="verdict">
+      <div>
+        <b>一句话结论</b>
+        <p>生数最可核查的技术内核是一条完整工程闭环：<strong>自研 U-ViT 基座 → 参考图作为条件 token 进入同一 DiT → 块级因果掩码把双向模型流式化 → Self-Replay Forcing / DMD 少步蒸馏把延迟压进实时区间 → 注意力稀疏化 + INT8 + 服务调度把成本打到可商用</strong>。真正稀缺的不是某一个模型，而是这条「论文—产品」同步迭代的链路。</p>
+      </div>
+      <div class="number">
+        <strong>720p</strong>
+        <small>@25–42 FPS 实时输出<br>消费级 GPU（S2-Avatar）</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+<section id="summary">
+  <div class="head">
+    <div class="secno">01 / 摘要</div>
+    <div>
+      <h2>五个判断，先给结论</h2>
+      <p class="lead">这一节是可以脱离全文单独阅读的部分。每条判断后面标注了它在正文中的展开位置，以及支撑它的最强证据等级。</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <b>基座自研且时间线早于主流：U-ViT 提出于 2022 年 9 月，团队自述比 OpenAI 的 DiT 早三个月 <span class="tag t-official">官方口径</span></b>
+      <span>核心技术是「把时间、条件、图像 patch 一律当 token，并在浅层与深层之间加长跳连接」的 ViT 扩散主干。这条线后来延伸为 UniDiffuser 的统一多模态建模，再落到 Vidu。详见第 03 节。</span>
+    </div>
+    <div class="step">
+      <b>真正的技术差异化在「参考生视频」与「流式化」两件事，而不在画质军备竞赛 <span class="tag t-primary">论文</span></b>
+      <span>参考图不是经过文本编码器改写的语义条件，而是作为条件张量 <code>r</code> 与噪声隐变量一起进入同一个 DiT，并在块级因果掩码中成为唯一对全部历史段开放的条件。详见第 06 节。</span>
+    </div>
+    <div class="step">
+      <b>实时性是「训练算法 + 推理系统」的组合结果，模型只是其中一环 <span class="tag t-primary">论文</span></b>
+      <span>Self-Replay Forcing（on-policy DMD）、单步 latent 超分 Refiner、分层混合注意力、W8A8、共享时间线多 GPU 调度、TurboServe 会话迁移调度，缺一环就到不了 720p@25–42 FPS。详见第 07、08 节。</span>
+    </div>
+    <div class="step">
+      <b>「上下文记忆涌现」「万物可参考」「空间视频」三个传播概念，与可核查的技术实体均存在落差 <span class="tag t-gap">核查结论</span></b>
+      <span>它们分别对应 persistent reference context / sink block、多模态参考输入扩展、双目立体转换。第 09 节逐条给出落差的具体位置与证据。</span>
+    </div>
+    <div class="step">
+      <b>国产算力侧：合作真实且有官方背书，但深度停在「云服务 + 商业上架」这一层 <span class="tag t-official">官方</span> <span class="tag t-gap">证据缺口</span></b>
+      <span>可核实的三件事：华为云官方案例页明确写「昇腾云服务……<strong>有力支持了生数科技的模型训练</strong>」（2024 年加入华为云初创计划）；Vidu Q3 全系以预置服务形式上架华为云 MaaS；生数官方称 SageAttention「完成在华为昇腾……的部署与落地」。但反向证据同样明确：<strong>Vidu 不在昇腾 MindIE SD 的官方适配矩阵中</strong>，且 Vidu 论文披露的加速栈几乎全部绑定 CUDA 生态。详见第 11 节。</span>
+    </div>
+  </div>
+
+  <h3>证据等级图例</h3>
+  <p>全文使用同一套标注体系。任何一条结论都可以按标注回溯到原始出处；标为「未公开」的项目表示官方渠道与论文均未披露，本报告不做补全。</p>
+  <div class="legend">
+    <div><span class="tag t-primary">论文</span> 团队 arXiv 技术报告或同行评审论文，机制描述可逐句核对。</div>
+    <div><span class="tag t-official">官方</span> 公司官网、官方产品页、官方新闻稿、官方 API 文档、官方公众号原文。</div>
+    <div><span class="tag t-media">媒体</span> 权威中文媒体或机构报道（清华官网、中国新闻网、证券时报、量子位等），含其现场实测观察。</div>
+    <div><span class="tag t-community">社区</span> 第三方测评、教程与行业博客，用于交叉验证「用起来是什么样」。</div>
+    <div><span class="tag t-gap">未公开</span> 官方与论文均无披露；或传播口径与技术口径存在落差。</div>
+    <div><span class="tag t-official">官方口径</span> 公司自述但缺少第三方复现的数字，引用时需要打折扣。</div>
+  </div>
+
+  <div class="callout ok">
+    <b>阅读建议</b>：如果你只关心「昇腾要复现什么」，直接读第 07 节（流式交互链路）与第 08 节（推理与工程栈）——这两节列出的每一项都是可移植性要逐个过的关；第 11 节给出迁移判断。
+  </div>
+</section>
+
+<section id="company">
+  <div class="head">
+    <div class="secno">02 / 公司与团队</div>
+    <div>
+      <h2>清华 TSAIL 的产业化出口</h2>
+      <p class="lead">理解生数的技术选择，必须先理解它的组织来源：核心团队出自清华大学机器学习与贝叶斯推理实验室（TSAIL），学术路线直接决定了公司的架构偏好。</p>
+    </div>
+  </div>
+
+  <div class="three">
+    <div class="card">
+      <h4>成立与定位</h4>
+      <p>2023 年 3 月成立，官方自我定位为「全球首个实现数字世界和物理世界统一的通用世界模型公司」，底层是基座世界模型（Foundation World Model），向上分叉为面向数字世界的<strong>世界生成模型 WGM</strong>与面向物理世界的<strong>世界动作模型 WAM</strong>。</p>
+      <p class="src"><a href="https://www.shengshu.com/zh/about/" target="_blank" rel="noopener">生数科技官网 · 公司介绍</a> <span class="tag t-official">官方</span></p>
+    </div>
+    <div class="card">
+      <h4>关键人物</h4>
+      <p><strong>朱军</strong>：清华大学人工智能研究院副院长、生数科技首席科学家、创始人，公司对外技术表述的主要出口。<strong>鲍凡、陈键飞、邓志杰</strong>等清华教师出现在 Vidu S1/S2 论文的 advisor 署名中。<strong>张金涛</strong>：朱军指导的博士生，生数科技流式视频生成与推理负责人，S1/S2 全链路研发负责人。<strong>骆怡航</strong>（原字节跳动）于 2025 年 3 月出任 CEO。</p>
+      <p class="src"><a href="https://www.tsinghua.edu.cn/info/1182/111163.htm" target="_blank" rel="noopener">清华大学官网 · 国内首个纯自研视频大模型发布</a> <span class="tag t-media">媒体</span> · <a href="https://www.thepaper.cn/detail/30374233" target="_blank" rel="noopener">澎湃新闻 · 骆怡航担任 CEO</a> <span class="tag t-media">媒体</span></p>
+    </div>
+    <div class="card">
+      <h4>融资节奏</h4>
+      <p>2025-09 A 轮数亿元 → 2026-02 A+ 轮超 6 亿元 → 2026-04 B 轮<strong>近 20 亿元</strong>，由阿里云领投，中网投、九安海棠、好未来、光合创投战略投资，星连资本、达泰资本、建发新兴投资、BV 百度风投、卓源亚洲等老股东追加。</p>
+      <p class="src"><a href="https://www.shengshu.com/zh/news/series-b-funding/" target="_blank" rel="noopener">生数科技官方 · 完成近 20 亿元 B 轮融资</a> <span class="tag t-official">官方</span></p>
+    </div>
+  </div>
+
+  <h3>为什么「清华系」这件事对技术判断重要</h3>
+  <p>生数的架构选择不是产品倒推出来的，而是实验室路线的延续。三个可核查的线索：</p>
+  <ul>
+    <li><strong>架构自研的时间早于产品需要。</strong>U-ViT 论文发布于 2022 年 9 月，公司 2023 年 3 月才成立。也就是说基座架构先于公司存在，公司是拿现成架构去找产品场景，而不是先定产品再选架构。</li>
+    <li><strong>组织命名直接沿用学术概念。</strong>官网的「基座世界模型 / 世界生成模型 / 世界动作模型」三分法，与其论文线（Vidu 系列 / Motus 系列）一一对应，说明技术叙事由研究团队主导。</li>
+    <li><strong>论文与产品的时间差极短。</strong>Vidu S1 于 2026-07-03 上线并同步挂出 arXiv:2607.03118；Vidu S2 于 2026-09 发布，技术报告 arXiv:2609.11638 在 9 月 10 日提交。这种同步节奏在视频生成公司中并不常见，意味着研究与工程是同一批人在推。</li>
+  </ul>
+  <p class="src">来源：<a href="https://arxiv.org/abs/2607.03118" target="_blank" rel="noopener">arXiv:2607.03118 Vidu S1</a> · <a href="https://arxiv.org/abs/2609.11638" target="_blank" rel="noopener">arXiv:2609.11638 Vidu S2</a> · <a href="https://www.shengshu.com/zh/research/" target="_blank" rel="noopener">生数官网研究页</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>业务面的宽度：不只是视频生成</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>板块</th><th>模型</th><th>定位</th><th>可核查进展</th></tr></thead>
+      <tbody>
+        <tr><td><b>数字世界生成</b></td><td>Vidu Q 系列（Q1/Q2/Q3）</td><td>离线高质量视频与音视频生成，面向影视、动画、广告</td><td>Q3 官方定位「全球首个原生 16 秒音视频生成模型」，支持中/英/日文原生文字渲染与多镜头叙事</td></tr>
+        <tr><td><b>数字世界实时交互</b></td><td>Vidu S 系列（S1/S2）</td><td>流式实时数字人与实时视频编辑</td><td>S2 实现 720p@25–42 FPS，支持流中动态参考图与视频流实时编辑</td></tr>
+        <tr><td><b>物理世界动作</b></td><td>Motus / Motus2 / Motubrain</td><td>具身智能「通用大脑」，语言—视频—动作统一表达</td><td>2025-12 开源 Motus（基于 UniDiffuser 统一建模框架）；官方称多任务成功率较 Pi0.5 提升约 40%，并称首次验证具身基础模型的 Scaling law</td></tr>
+        <tr><td><b>服务形态</b></td><td>Vidu AaaS / MaaS / Claw / API</td><td>Agent 服务、模型即服务、开放 API</td><td>已上线阿里云百炼平台；Vidu Q3 于 2026-06-22 上线华为云 MaaS</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://www.shengshu.com/en/vidu-q3/" target="_blank" rel="noopener">生数官网 Vidu Q3 页</a> · <a href="https://www.shengshu.com/zh/news/series-b-funding/" target="_blank" rel="noopener">B 轮融资公告</a> · <a href="https://www.stcn.com/article/detail/3972985.html" target="_blank" rel="noopener">证券时报 · Vidu Q3 上线华为云</a> <span class="tag t-official">官方</span> <span class="tag t-media">媒体</span></p>
+
+  <div class="callout">
+    <b>注意口径来源</b>：「成功率较 Pi0.5 提升 40%」「首次验证具身 Scaling law」「全球首个/全球第一」这类表述全部来自公司自述或官方转载。本报告保留原文，但不将其等同于第三方评测结论。
+  </div>
+</section>
+
+<section id="lineage">
+  <div class="head">
+    <div class="secno">03 / 技术谱系</div>
+    <div>
+      <h2>从 U-ViT 到 Vidu：一条没有换过底座的路线</h2>
+      <p class="lead">生数的论文线是连续可查的：Analytic-DPM（2022-01）→ U-ViT（2022-09）→ UniDiffuser（2023-03）→ Vidu 1.0（2024-04）→ TurboDiffusion / SageAttention / SLA → Vidu S1（2026-07）→ Vidu S2（2026-09）。下面只讲对理解 Vidu 当前形态有用的三块基石。</p>
+    </div>
+  </div>
+
+  <h3>3.1 U-ViT：把「所有输入都是 token」这件事做彻底</h3>
+  <div class="two">
+    <div class="card">
+      <h4>与 DiT 的实质差异</h4>
+      <p>U-ViT 的两个设计选择构成了它的身份：<strong>其一，把时间步 token、条件 token、图像 patch 一律按 token 处理</strong>，不做特殊分支；<strong>其二，在浅层与深层之间使用长跳连接（long skip connection）</strong>。论文的消融结论是：长跳连接是关键，而 U-Net 式的下采样/上采样算子并非必需。</p>
+      <p class="small">这解释了为什么后来 Vidu 能自然地把「参考图」也当作一路条件 token 塞进同一个主干——因为从 U-ViT 开始，主干就没有为任何单一模态设过专用通道。</p>
+    </div>
+    <div class="card">
+      <h4>可核查成绩</h4>
+      <p>潜空间扩散设定下，ImageNet 256×256 类条件生成 <strong>FID 2.29</strong>；MS-COCO 文生图 <strong>FID 5.48</strong>。论文强调这两个数字是在不使用大型外部数据集的条件下取得的当时最优。</p>
+      <p class="src"><a href="https://arxiv.org/abs/2209.12152" target="_blank" rel="noopener">arXiv:2209.12152 · All are Worth Words: A ViT Backbone for Diffusion Models</a>（CVPR 2023）<span class="tag t-primary">论文</span></p>
+    </div>
+  </div>
+
+  <h3>3.2 UniDiffuser：统一建模的理论来源</h3>
+  <p>UniDiffuser 解决的是「一个模型如何同时表达边缘分布、条件分布与联合分布」。做法是把所有模态都加噪，<strong>并且给不同模态分别输入各自的时间步</strong>，让网络预测所有模态的噪声。训练完成后，只要设置合适的时间步组合，同一个模型就能做图像生成、文本生成、文生图、图生文和图文对生成。</p>
+  <blockquote>
+    <p>这条思路直接对应生数后来对外的三条表述：「统一问题形式、统一架构、压缩即智能」，以及「不再需要 LoRA 微调」的产品主张。</p>
+  </blockquote>
+  <p class="src"><a href="https://arxiv.org/abs/2303.06555" target="_blank" rel="noopener">arXiv:2303.06555 · One Transformer Fits All Distributions in Multi-Modal Diffusion at Scale</a>（ICML 2023）<span class="tag t-primary">论文</span></p>
+
+  <h3>3.3 这条谱系在 Vidu 上留下什么痕迹</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>学术成果</th><th>时间</th><th>在 Vidu 中的可观察痕迹</th><th>证据强度</th></tr></thead>
+      <tbody>
+        <tr><td>Analytic-DPM</td><td class="num">2022-01</td><td>扩散模型反向方差解析估计，属采样加速的理论积累</td><td>思想来源</td></tr>
+        <tr><td>U-ViT</td><td class="num">2022-09</td><td>基座主干；「一切都是 token」使参考图可作为条件 token 注入</td><td><b>强</b>（官方明确称核心架构）</td></tr>
+        <tr><td>UniDiffuser</td><td class="num">2023-03</td><td>统一建模框架；被 2025-12 开源的 Motus 明确沿用为底座</td><td><b>强</b></td></tr>
+        <tr><td>SageAttention</td><td class="num">2024-10</td><td>8-bit 注意力，S2 推理栈中「分层混合注意力」的候选之一</td><td><b>强</b>（S2 论文点名）</td></tr>
+        <tr><td>SLA（稀疏—线性注意力）</td><td class="num">2025-09</td><td>TurboDiffusion 与 S2 的稀疏注意力组件</td><td><b>强</b>（S2 论文点名）</td></tr>
+        <tr><td>TurboDiffusion</td><td class="num">2025-12</td><td>S1 的加速基座，官方称 100–200× 端到端加速</td><td><b>强</b>（S1 论文称为构建基础）</td></tr>
+        <tr><td>TurboServe</td><td class="num">2026-06</td><td>流式生成服务系统，S1/S2 的线上调度层</td><td><b>强</b></td></tr>
+        <tr><td>Vidu S1 / S2</td><td class="num">2026-07 / 09</td><td>实时交互与实时编辑产品化</td><td><b>强</b>（技术报告）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://www.shengshu.com/zh/research/" target="_blank" rel="noopener">生数官网研究页（论文与开源清单）</a> <span class="tag t-official">官方</span>，机制细节以各篇 arXiv 原文为准。</p>
+
+  <div class="callout ok">
+    <b>一个值得注意的事实</b>：生数把加速与注意力机制当成独立学术课题发表（SageAttention、SLA、TurboDiffusion、TurboServe 均为可查论文或开源项目），而不是埋在产品里。对本报告读者而言这是好消息——这些正是昇腾迁移时最需要逐项对照的组件。
+  </div>
+</section>
+
+<section id="timeline">
+  <div class="head">
+    <div class="secno">04 / 产品时间线</div>
+    <div>
+      <h2>两年半，从对标 Sora 到实时交互</h2>
+      <p class="lead">生数的产品节奏可以清晰分成三段：<strong>对标期</strong>（2024，把 Sora 的能力做出来）、<strong>可控期</strong>（2025，解决多主体一致性与成本）、<strong>实时期</strong>（2026，把生成从离线推向流式与交互）。</p>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>时间</th><th>版本 / 事件</th><th>核心能力</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr><td class="num">2022-09</td><td><b>U-ViT 架构提出</b></td><td>团队自研的 Diffusion + Transformer 融合骨干，成为后续一切产品的基座</td><td>官方；arXiv:2209.12152</td></tr>
+        <tr><td class="num">2023-03</td><td><b>公司成立</b></td><td>清华 TSAIL 团队产业化，同年获蚂蚁集团领投天使轮</td><td>官方 / 媒体</td></tr>
+        <tr><td class="num">2024-04-27</td><td><b>Vidu 1.0 首次亮相</b></td><td>2024 中关村论坛发布，联合清华大学，称「中国首个长时长、高一致性、高动态性视频大模型」，现场演示 16 秒 1080P</td><td>清华官网 / 中国新闻网</td></tr>
+        <tr><td class="num">2024-07</td><td><b>Vidu 全球上线</b></td><td>文生视频 / 图生视频，4s / 8s，最高 1080P，加入角色一致性与动漫风格</td><td>官方 / 新华网</td></tr>
+        <tr><td class="num">2024-11</td><td><b>Vidu 1.5</b></td><td>首发「多主体一致性」与多图参考，对外提出「视觉上下文学习」「不再需要 LoRA」</td><td>智东西 / 站长之家</td></tr>
+        <tr><td class="num">2025-01</td><td><b>Vidu 2.0</b></td><td>4s 512P 生成进入 10 秒内（较前代快约 3 倍）；720P 定价 0.258 元/秒，并推出错峰模式</td><td>智东西 / C114</td></tr>
+        <tr><td class="num">2025-03 起</td><td><b>管理层调整</b></td><td>原字节跳动火山引擎 AI 应用产品线负责人骆怡航出任 CEO；唐家渝转任总裁</td><td>澎湃 / 品玩</td></tr>
+        <tr><td class="num">2025-04</td><td><b>Vidu Q1</b></td><td>主打「高可控」：位置、运动布局、音频可控；官方称 VBench-1.0 / 2.0 双榜第一</td><td>清华官网 / 第三方报道</td></tr>
+        <tr><td class="num">2025-10</td><td><b>Vidu Q2 参考生</b></td><td>参考生能力升级，推理速度较 Q1 参考生提升近 3 倍；加入视频延长功能</td><td>新浪科技</td></tr>
+        <tr><td class="num">2025-12</td><td><b>开源 TurboDiffusion + Motus</b></td><td>TurboDiffusion 加速框架开源（官方称 100–200×）；Motus 世界动作模型开源，剑指具身智能</td><td>官方研究页 / 证券时报</td></tr>
+        <tr><td class="num">2026-01/02</td><td><b>Vidu Q3</b></td><td>「为剧而生」：原生 16 秒声画同出、多镜头切换、中/英/日文原生文字渲染</td><td>官方 <span class="tag t-gap">发布月份存在口径冲突</span></td></tr>
+        <tr><td class="num">2026-04-10</td><td><b>B 轮近 20 亿元</b></td><td>阿里云领投；发布「通用世界模型」战略，明确 WGM + WAM 双轨</td><td>官方</td></tr>
+        <tr><td class="num">2026-06-22</td><td><b>Vidu Q3 上线华为云 MaaS</b></td><td>以预置服务形式上架华为云模型即服务，面向企业营销、内容制作等场景</td><td>证券时报 / 人民财讯</td></tr>
+        <tr><td class="num">2026-07-03</td><td><b>Vidu S1</b></td><td>实时交互模型：语音指令可随时改变生成内容，无限时长连续生成，540p 最高 42 FPS</td><td>官方；arXiv:2607.03118</td></tr>
+        <tr><td class="num">2026-09-16</td><td><b>Vidu S2</b></td><td>S2-Avatar 实时数字人提升至 720p 并支持流中动态参考图；S2-Editing 实现视频流实时编辑；探索实时空间视频</td><td>公众号原文；arXiv:2609.11638</td></tr>
+        <tr><td class="num">2026-10-08</td><td><b>Vidu Q4 Preview</b></td><td>官方称支持最多 15 张参考图 + 3 段参考音频，2K / 4K 输出，首发优惠价 0.09 元/秒起</td><td>北京市科委转载 / 官方定价页 <span class="tag t-media">媒体</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">主表来源：<a href="https://www.shengshu.com/zh/news/" target="_blank" rel="noopener">生数官网新闻动态</a> · <a href="https://www.tsinghua.edu.cn/info/1182/111163.htm" target="_blank" rel="noopener">清华大学官网</a> · <a href="https://www.chinanews.com/cj/2024/04-27/10207442.shtml" target="_blank" rel="noopener">中国新闻网</a> · <a href="https://www.stcn.com/article/detail/3972985.html" target="_blank" rel="noopener">证券时报</a> · <a href="https://platform.vidu.com/docs/pricing.md" target="_blank" rel="noopener">Vidu 官方定价文档</a>。</p>
+
+  <h3>三段式演进的工程含义</h3>
+  <div class="three">
+    <div class="card">
+      <h4>2024 · 对标期</h4>
+      <p>解决的是「能不能做出来」。技术重点是长视频表示与时空一致性。Vidu 1.0 技术报告（arXiv:2405.04233）以定性对比为主，把 Sora 公开示例的 prompt 直接喂给 Vidu 做并排展示，<strong>没有给出任何量化评测</strong>。</p>
+      <p class="small">这意味着评估 2024 年那批宣称时，缺少可对比的数字基线。</p>
+    </div>
+    <div class="card amber">
+      <h4>2025 · 可控期</h4>
+      <p>解决的是「能不能商用」。两条线并行：能力侧转向多主体一致性（参考生视频），成本侧把单价从行业均价约 0.6 元/秒压到 0.258 元/秒量级，并推出错峰模式。</p>
+      <p class="small">价格是可公开验证的成本侧证据：单价的持续下探说明推理成本在真实下降。</p>
+    </div>
+    <div class="card cyan">
+      <h4>2026 · 实时期</h4>
+      <p>解决的是「能不能交互」。S 系列把范式从「离线一次性去噪」改成「分块自回归流式生成」，并为此重做了数据、训练算法、推理栈与服务调度四层。</p>
+      <p class="small">这是本报告技术密度最高的部分，见第 06–08 节。</p>
+    </div>
+  </div>
+</section>
+
+<section id="core">
+  <div class="head">
+    <div class="secno">05 / 核心技术</div>
+    <div>
+      <h2>一张图看懂 Vidu 的技术分层</h2>
+      <p class="lead">把散落在论文与公众号里的细节收拢成五层。越靠下的层越稳定（很少变），越靠上的层迭代越快。</p>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>层级</th><th>组件</th><th>生数的做法</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>L1 基座</b></td>
+          <td>U-ViT 主干</td>
+          <td>时间步、条件、噪声 patch 一律 token 化；浅层↔深层长跳连接（拼接后线性投影）；潜空间 patch 化；1D 可学习位置编码；末端可选 3×3 卷积抑制 transformer 伪影</td>
+          <td><span class="tag t-primary">论文</span> arXiv:2209.12152</td>
+        </tr>
+        <tr>
+          <td><b>L2 条件</b></td>
+          <td>参考图 / 文本 / 语音 / 音频</td>
+          <td>参考图作为条件张量 <code>r</code> 与噪声隐变量、时间步、逐段文本条件一起送入同一 DiT；音频与视频隐变量沿模态维拼接为联合状态 <code>x₀=[v₀;a₀]</code></td>
+          <td><span class="tag t-primary">论文</span> arXiv:2607.03118 / 2609.11638</td>
+        </tr>
+        <tr>
+          <td><b>L3 流式化</b></td>
+          <td>块级因果注意力 + 滑窗 KV</td>
+          <td>双向时序注意力替换为块级因果掩码；参考图为唯一全局可见条件；滑窗 = 持久参考上下文（sink）+ 窗口内历史缓存 + 当前去噪状态，使单步延迟与序列长度解耦</td>
+          <td><span class="tag t-primary">论文</span> 同上</td>
+        </tr>
+        <tr>
+          <td><b>L4 少步化</b></td>
+          <td>DMD / SRF / Causal Forcing</td>
+          <td>三阶段：双向教师 → 因果教师（Teacher / Diffusion Forcing 混合）→ 少步蒸馏；S2 提出 Self-Replay Forcing 做 on-policy DMD；另有 Causal Forcing++ 探索帧级 2 步自回归</td>
+          <td><span class="tag t-primary">论文</span> arXiv:2607.03118 / 2609.11638 / 2605.15141</td>
+        </tr>
+        <tr>
+          <td><b>L5 系统工程</b></td>
+          <td>注意力 / 量化 / 调度</td>
+          <td>分层混合注意力（SageAttention + SpargeAttention + SLA）、per-block W8A8 INT8 GEMM、kernel fusion + CUDA Graph、共享时间线多 GPU 并行、TurboServe 会话迁移与弹性扩缩</td>
+          <td><span class="tag t-primary">论文</span> arXiv:2609.11638 / 2606.19271</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout ok">
+    <b>迁移视角的关键判断</b>：L1 与 L2 是模型结构，相对容易等价实现；<strong>L3 到 L5 才是真正的工程量与性能战场</strong>——它们由 Sliding Window KV Cache、RoPE 重定位、双缓存调度、INT8 分块量化、多 GPU 通信与在线调度共同构成，且每一项都与具体硬件后端强耦合。
+  </div>
+</section>
+
+<section id="stream">
+  <div class="head">
+    <div class="secno">06 / 流式交互</div>
+    <div>
+      <h2>Vidu S 系列：把去噪过程变成一场接力</h2>
+      <p class="lead">离线扩散模型一次性对整个视频去噪，用户只能等。流式生成则要求「生成速度跑赢播放速度」，逐段产出、边产边播。难点不在单段质量，而在误差跨段累积——前一段的小偏差会被当成后一段的历史条件，最终表现为身份漂移、动作断裂或背景突变。</p>
+    </div>
+  </div>
+
+  <h3>6.1 三步走：从双向模型到流式模型</h3>
+  <div class="steps">
+    <div class="step">
+      <b>第一步 · 双向预训练</b>
+      <span>先在 I2V（首帧作参考）与 R2V（参考图作条件）两个任务上联合训练一个双向模型。关键设计是<strong>逐段条件监督</strong>——每个时间片段配自己的条件描述，而不是整条序列共用一个 prompt，这显著改善了指令遵循。</span>
+    </div>
+    <div class="step">
+      <b>第二步 · 因果适配（Hybrid Teacher + Diffusion Forcing）</b>
+      <span>把双向时序注意力替换为<strong>块级因果注意力掩码</strong>，每段只能看到参考图、本段条件与有效历史状态。历史状态以一定概率注入噪声（Diffusion Forcing），让模型学会在「历史本身也不干净」的条件下继续生成。</span>
+    </div>
+    <div class="step">
+      <b>第三步 · Self-Replay Forcing（S2 的核心贡献）</b>
+      <span>先让学生模型按真实推理方式自回归 rollout 一长段（梯度与 KV 缓存全部 detach），再对这条自生成轨迹<strong>按块重新加噪</strong>，然后做一次<strong>开启梯度的因果重放</strong>。由于重放段在同一计算图内相连，后段的损失可以回传到前段表示，但不必为整条长轨迹保留计算图。</span>
+    </div>
+  </div>
+
+  <div class="formula">
+    L<sub>SRF</sub> = L<sub>DMD</sub>( f<sub>θ</sub><sup>causal</sup>(x<sub>t</sub><sup>1:N</sup>, t, r, c<sup>1:N</sup>) ) + L<sub>perc</sub>( · )<br>
+    <span style="color:#9ba69b">// 参考图 r 对所有段共享；感知损失用于抑制模式崩溃、保持生成多样性</span>
+  </div>
+
+  <p>这条路线并非 Vidu 独创的起点：Self-Forcing 已经建立了「用模型自己生成的历史做条件」的正确设定。S2 指出的两个遗留问题是——自生成历史被<strong>干净地</strong>喂入（而非加噪），且被<strong>从计算图中 detach</strong>（没有梯度流过）。SRF 正是针对这两点的修补。</p>
+  <p class="src">来源：<a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2 技术报告</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>6.2 双缓存与滑窗：让延迟不随视频变长而上升</h3>
+  <div class="two">
+    <div class="card">
+      <h4>TwinCache：阶段感知的双缓存</h4>
+      <p>每个历史状态同时维护一份 <strong>noisy cache</strong>（取自预设的中间去噪步）与一份 <strong>clean cache</strong>（最终去噪步的输出）。中间步用 noisy cache——论文指出残留噪声构成了一种「隐式低通先验」，有利于粗粒度时序传播、抑制高频伪影累积；最后一步切换到 clean cache 以恢复细节与身份一致性。</p>
+    </div>
+    <div class="card">
+      <h4>RoPE Repositioning：缓存未施加位置编码的 KV</h4>
+      <p>KV 特征在<strong>应用 RoPE 之前</strong>被缓存；窗口滑动时，按更新后的相对位置重新施加位置编码。这样既避免重算历史特征，又能保证可见位置始终落在训练时见过的位置范围内。</p>
+    </div>
+    <div class="card cyan">
+      <h4>非对称噪声缓存（S2 新增）</h4>
+      <p>主干关注<strong>高噪声</strong>缓存以传播粗运动与长程时序结构（τ<sub>B</sub> 较大，对高频伪影不敏感）；Refiner 关注<strong>低噪声高分辨率</strong>缓存以保留局部外观与身份线索（τ<sub>R</sub> 较小，且 τ<sub>B</sub> &gt; τ<sub>R</sub>）。两者分工明确：时序传播与细节恢复被解耦。</p>
+    </div>
+    <div class="card cyan">
+      <h4>Backbone–Refiner 两阶段 + 异步流水线</h4>
+      <p>主干在低分辨率下生成主体结构、运动与语义，轻量单步 Refiner 在潜空间完成超分。官方与媒体口径一致的关键点是：两者<strong>不等彼此</strong>——细节重建与后续内容生成并行推进，使 720p 输出下不掉帧。</p>
+    </div>
+  </div>
+  <p class="src">来源：<a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1</a> · <a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2</a> · <a href="https://mp.weixin.qq.com/s/f2uewxWhxWlq_JOQqFvmiw" target="_blank" rel="noopener">生数科技公众号《Vidu S2 技术解析》</a> <span class="tag t-primary">论文</span> <span class="tag t-official">官方</span></p>
+
+  <h3>6.3 推理栈：为什么「实时」是系统问题</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>环节</th><th>具体做法</th><th>目的</th></tr></thead>
+      <tbody>
+        <tr><td><b>注意力</b></td><td>逐层混合策略：在 SageAttention / SpargeAttention / Sparse-Linear Attention 之间按层选择</td><td>不同层对降精度与近似计算的敏感度不同，统一方案会在某些层掉画质</td></tr>
+        <tr><td><b>线性层</b></td><td>per-block W8A8 INT8 GEMM（自研 CUDA kernel）</td><td>官方指出 per-tensor 与 per-channel 量化对离群值脆弱，分块量化兼顾精度与加速</td></tr>
+        <tr><td><b>算子与启动</b></td><td>Triton / CUDA kernel fusion（如 RMSNorm 融合）、CUDA Graph、启动优化</td><td>减少 kernel 启动、同步开销与中间张量搬运</td></tr>
+        <tr><td><b>多 GPU</b></td><td>Ulysses 风格上下文并行 + 量化跨 GPU 张量传输</td><td>单卡放不下或跑不动时横向扩展</td></tr>
+        <tr><td><b>调度</b></td><td>共享时间线：VAE 编码器、主干、Refiner、VAE 解码器在同一时间线上动态共享 GPU</td><td>某模块空闲时另一个立即复用，减少资源闲置</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2 技术报告 §2.3 Inference Infrastructure</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>6.4 实时编辑：帧对齐注意力</h3>
+  <p>S2-Editing 的设计目标与生成不同：编辑结果必须<strong>完全保留源视频的运动与时序</strong>，只替换外观。核心机制是 <strong>frame-aligned attention</strong>——每个目标帧只读取<strong>同一时间步</strong>的源帧，从而保证运动与节奏严格一致；同时参考图对所有帧可见，使新外观贯穿全片。流式运行时，源帧在与对应目标帧一起被消费后<strong>不进入缓存</strong>，以节省显存。</p>
+  <p>四类任务：风格迁移（官方称覆盖 50+ 种风格，并对表面法线做条件建模以先捕获源视频的空间结构与运动）、虚拟试穿、人物替换、背景替换。</p>
+  <p class="src">来源：<a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2</a> · <a href="https://www.shengshu.com/en/vidu-s2/" target="_blank" rel="noopener">生数官网 Vidu S2 页</a> · <a href="https://mp.weixin.qq.com/s/f2uewxWhxWlq_JOQqFvmiw" target="_blank" rel="noopener">公众号原文</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>6.5 效果与实测</h3>
+  <div class="two">
+    <div class="card">
+      <h4>官方与论文口径</h4>
+      <ul>
+        <li>S2-Avatar：在 StreamAV-Bench 报告的<strong>9 项指标上全部最优</strong>，覆盖视觉与音频质量、音画对齐与同步、音频指令满足度、主体与背景一致性。</li>
+        <li>S2-Editing：OpenVE 与 RefVIE 联合评测总分 <strong>4.26</strong>，高于论文中得分最高的离线对比模型 Bernini-R 14B（3.92）；Sparkle-Bench 总分 <strong>3.74</strong>，表内各项指标最优。</li>
+        <li>S2-Editing 虚拟试穿：ViViD 测试集 VFID<sub>I</sub> = 9.9515、CatV2TON = 19.5131（越低越好）。</li>
+        <li>内部编辑评测（150 组成对案例、专业评测员盲评）：S2-Editing 平均一致性得分 <strong>3.56</strong>，Decart-Lucy 2.5 为 2.59，XMax-X2.0 为 1.67。</li>
+      </ul>
+      <p class="src"><a href="https://mp.weixin.qq.com/s/f2uewxWhxWlq_JOQqFvmiw" target="_blank" rel="noopener">生数科技公众号原文</a> <span class="tag t-official">官方</span></p>
+    </div>
+    <div class="card amber">
+      <h4>第三方媒体实测（量子位）</h4>
+      <p>量子位在 S2 发布当天做了上手实测，给出的正面观察是：换装时服装随动作的形变自然，驼色大衣袖口半遮首饰的处理真实；人物替换后与办公室环境的透视、遮挡关系挑不出毛病；风格迁移全程画面一致性好。</p>
+      <p><strong>同时明确记录了不足</strong>：第二套衣服在呈现色块时仍有涂抹感；人物佩戴帽子时头发仍有穿模。团队亦坦承头显对分辨率与延迟要求极苛刻，画面模糊会晕、延迟高会导致转头与画面「打架」，这块仍在优化中。</p>
+      <p class="src"><a href="https://www.qbitai.com/2026/09/490109.html" target="_blank" rel="noopener">量子位 · 实时互动、实时改视频、探索空间视频，Vidu S2 一次放了三个大招</a> <span class="tag t-media">媒体</span></p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>评测独立性提示</b>：上述论文得分均为作者自报，且包含模型化评测器与内部商用模型对比，<strong>无第三方复现</strong>。Vidu S2 权重未公开，服务条款禁止逆向工程，因此这些数字目前无法独立验证。
+  </div>
+</section>
+
+<section id="r2v">
+  <div class="head">
+    <div class="secno">07 / 参考生视频</div>
+    <div>
+      <h2>参考生视频：生数最像「护城河」的一块</h2>
+      <p class="lead">「参考生视频」（Reference-to-Video, R2V）指用户给出参考图（乃至视频），模型据此生成保持该主体外观一致性的视频。生数自称全球首创该技术，并在多轮融资稿中把它作为解决「商业场景多主体连续一致性」痛点的核心卖点。</p>
+    </div>
+  </div>
+
+  <h3>7.1 参考图到底是怎么注入的</h3>
+  <p>这是一个容易被传播话术覆盖的技术问题。论文给出的答案比常见说法更朴素：</p>
+  <div class="formula">
+    x̂<sub>0</sub><sup>1:N</sup> = f<sub>θ</sub><sup>bi</sup>( x<sub>t</sub><sup>1:N</sup>, t, <b>r</b>, c<sup>1:N</sup> )
+  </div>
+  <ul>
+    <li><strong>参考图 <code>r</code> 是与噪声隐变量、时间步、逐段文本条件并列的输入</strong>，进入同一个 DiT，没有独立的参考编码器分支。原文：「The reference image is shared across all segments to maintain appearance and identity.」</li>
+    <li>这在机制上属于<strong>序列拼接式的 in-context 条件注入</strong>，与 UniDiffuser「所有模态都加噪、各自输入时间步」的思路同源；既不是经文本编码器做语义改写，也不是加性位置编码偏置。</li>
+    <li>在转为流式后，块级因果掩码对历史严格，<strong>但参考图是例外</strong>：「each video-audio segment can only attend to the reference image, the current segment condition, and its valid historical states.」参考图对全部段落无条件开放。</li>
+    <li>Vidu S1 进一步把参考上下文类比为 LLM 中的 <strong>sink token</strong>，全程固定不变，并与 clean cache 一起参与细节与身份一致性的恢复。</li>
+  </ul>
+  <p class="src">来源：<a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2</a> · <a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>7.2 「上下文记忆涌现」：传播概念与技术实体之间的落差</h3>
+  <blockquote>
+    <p>2024 年 11 月 Vidu 1.5 发布时，官方与媒体口径是「视频模型拥有记忆了」「视觉模型迎来智能涌现」「不再需要 LoRA」。官方给出的解释是三条与 LLM 对齐的设计哲学：统一问题形式（视觉输入→视觉输出）、统一架构（单个网络建模变长输入输出）、压缩即智能。</p>
+  </blockquote>
+  <p>三点核查结论：</p>
+  <ol>
+    <li><strong>Vidu 1.5 没有 arXiv 技术报告。</strong>上述主张缺少可复现的量化定义——没有一致性指标、没有参考图数量上限、没有消融实验。</li>
+    <li><strong>「上下文记忆」在 S1 / S2 论文中并不作为术语出现。</strong>论文里对应的技术实体是 persistent reference context、sink block 与滑动窗口上下文。</li>
+    <li><strong>该主张在后续论文中获得间接支持。</strong>「单个 Transformer + 参考图作为序列 token 参与注意力」确实是 S1/S2 的落地方式，因此 in-context conditioning 的解释并非纯 PR 措辞，但它是被后来的工程实现追认的，而非当时就有机制公开。</li>
+  </ol>
+  <p class="src">来源：<a href="https://www.163.com/dy/article/JH1F0OT30511AQHO.html" target="_blank" rel="noopener">机器之心解读（网易转载）</a> · <a href="https://www.chinaz.com/ainews/13199.shtml" target="_blank" rel="noopener">站长之家 · Vidu 1.5 发布</a> <span class="tag t-media">媒体</span> <span class="tag t-gap">概念落差</span></p>
+
+  <h3>7.3 版本演进与 API 层的硬约束</h3>
+  <p>跨版本比较时，最可核查的不是宣传语，而是官方 API 文档里的参数约束——它们是无法含糊的产品事实。</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>维度</th><th>Vidu 1.5（2024-11）</th><th>Vidu Q2 参考生 Pro（2025-10）</th><th>Vidu Q3 / Q4 Preview</th></tr></thead>
+      <tbody>
+        <tr><td>官方能力表述</td><td>复杂主体精准控制、面部与表情一致、多主体一致性</td><td>「万物可参考」，万能格式刷 + 视频魔术刷</td><td>Q3 主打「为剧而生」多镜头叙事；Q4 Preview 官方称最多 15 张参考图 + 3 段参考音频</td></tr>
+        <tr><td>参考输入</td><td>多图参考</td><td>官方称 2 个视频 + 4 张图片</td><td>Q4 Preview：最多 15 张参考图</td></tr>
+        <tr><td>API 主体数量约束</td><td>未披露</td><td colspan="2"><b>官方文档</b>：q3/q2/q1/2.0 模型下图片或文字主体合计<strong>不超过 7 个</strong>；每个临时主体最多 3 张图</td></tr>
+        <tr><td>视频主体</td><td>不支持</td><td colspan="2"><b>官方文档</b>：仅参考生 <code>viduq2-pro</code> 模型支持视频主体，最多 1 个 5 秒视频</td></tr>
+        <tr><td>提示词语法</td><td>—</td><td colspan="2"><code>[@name]</code> 引用主体，如 <code>[@1]和[@2]在[@3]一起吃火锅</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://platform.vidu.cn/docs/reference-to-video.md" target="_blank" rel="noopener">Vidu 官方参考生视频 API 文档</a> · <a href="https://www.shengshu.com/en/vidu-q3/" target="_blank" rel="noopener">官方 Q3 页</a> <span class="tag t-official">官方</span></p>
+
+  <div class="callout">
+    <b>核查结论</b>：从 1.5 到 Q2 的可核查升级集中在<strong>输入模态扩展</strong>（图片 → 图片 + 视频）与<strong>功能面扩展</strong>（生成 → 生成 + 编辑），以及主体数量的 API 硬约束；<strong>没有任何公开材料说明一致性机制本身被替换或改进</strong>。Q3 在 SuperCLUE-R2V 上「主体一致性 100 分」是基准分数（且 Q2 同为满分），属于评测结果而非机制证据。
+  </div>
+
+  <h3>7.4 音视频联合生成</h3>
+  <p>Vidu 的音视频能力是<strong>原生联合建模</strong>而非后配音，这一点有明确机制证据：S1 定义干净联合状态为 <code>x₀ⁱ = [v₀ⁱ; a₀ⁱ]</code>，即视频与音频隐变量<strong>沿模态维拼接</strong>后进入同一个 DiT；条件接口 <code>c</code> 同时包含语音、文本提示与参考图。官方把这条路径区别于传统的「语音→唇同步」管线，描述为「Voice Input → Intent Understanding → Real-Time Behavioral Generation」，由语音同时驱动表情、眼动、手势、姿态与全身动作。S2 延续 AV 联合 DiT，文本表述为 noisy <em>joint video–audio latents</em>。</p>
+  <p>Q3 的官方定位是全球首个原生 16 秒音视频生成模型，支持中/英/日文原生文字渲染、多角色对话与同步语音。API 侧提供 <code>voice_id</code> 与声音复刻能力。</p>
+  <p class="src">来源：<a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1</a> · <a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2</a> · <a href="https://www.shengshu.com/en/vidu-q3/" target="_blank" rel="noopener">官方 Q3 页</a> <span class="tag t-primary">论文</span></p>
+</section>
+
+<section id="infra">
+  <div class="head">
+    <div class="secno">08 / 推理与工程</div>
+    <div>
+      <h2>加速不是一招，是四招叠加</h2>
+      <p class="lead">生数的加速能力最集中地体现在 2025-12 开源的 TurboDiffusion 框架上。它的价值不仅是倍数，而是把「低比特注意力 + 稀疏注意力 + 步数蒸馏 + 线性层量化」四件正交的事组合进一个模型。</p>
+    </div>
+  </div>
+
+  <h3>8.1 TurboDiffusion 的四项技术</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>技术</th><th>做法</th><th>与其它技术的关系</th></tr></thead>
+      <tbody>
+        <tr><td><b>SageAttention2++</b></td><td>低比特量化注意力</td><td>基础加速层；官方称是首个实现注意力低比特加速的方法，已在工业界大规模部署</td></tr>
+        <tr><td><b>SLA</b>（Sparse-Linear Attention）</td><td>稀疏—线性注意力</td><td>稀疏计算与低比特 Tensor Core <strong>正交</strong>，可叠加在 SageAttention 之上再获数倍加速</td></tr>
+        <tr><td><b>rCM</b></td><td>步数蒸馏（一致性模型类）</td><td>把采样步数从约 100 步压到 3–4 步；官方推荐 Top-K ∈ [0.1, 0.15] 配合 4 步以稳定取得最佳画质</td></tr>
+        <tr><td><b>W8A8 量化</b></td><td>INT8、block-wise，块粒度 128×128</td><td>作用于线性层，走 INT8 Tensor Core；官方称模型体积约压缩一半</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>训练侧的做法值得单独注意：先用 SLA 替换全注意力并微调以适配稀疏性（与 rCM 蒸馏并行进行），随后<strong>把两条路线的权重更新合并进单一模型</strong>。推理侧则把 SLA 实现在 SageAttention 之上（SageSLA）。</p>
+  <p class="src">来源：<a href="https://arxiv.org/html/2512.16093" target="_blank" rel="noopener">TurboDiffusion 论文</a> · <a href="https://www.shengshu.com/zh/research/turbodiffusion-accelerating-video-diffusion-models-by-100-200-times/" target="_blank" rel="noopener">生数官方研究页</a> <span class="tag t-primary">论文</span> <span class="tag t-official">官方</span></p>
+
+  <h3>8.2 实测数字（注意实验条件）</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>被测对象</th><th>优化前</th><th>优化后</th><th>加速比</th><th>硬件</th></tr></thead>
+      <tbody>
+        <tr><td>Wan2.1-T2V-1.3B-480P</td><td class="num">184 s</td><td class="num">1.9 s</td><td class="num">≈97×</td><td>单张 RTX 5090</td></tr>
+        <tr><td>Wan2.1-T2V-14B-720P</td><td class="num">约 4767 s</td><td class="num">约 24 s</td><td class="num">≈200×</td><td>单张 RTX 5090</td></tr>
+        <tr><td>Wan2.2-I2V-A14B-720P</td><td class="num">4549 s</td><td class="num">38 s</td><td class="num">≈120×</td><td>单张 RTX 5090（含高低噪模型切换开销，故低于理论上限）</td></tr>
+        <tr><td><b>Vidu 产品（1080P / 8 秒）</b></td><td class="num">900 s</td><td class="num">8 s</td><td class="num">≈112×</td><td>官方口径，无第三方复现</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <b>引用这些数字时必须带上条件</b>：100–200× 是在 <strong>Wan 系列开源模型 + 单张 RTX 5090</strong>上测得，且不含文本编码与 VAE 解码阶段；「900 秒 → 8 秒」是生数在自家 Vidu 产品上的自述数字。二者都不是 Vidu 本体的第三方基准。
+  </div>
+
+  <h3>8.3 服务层：TurboServe</h3>
+  <p>实时交互产品的成本结构里，服务调度与模型推理同样重要。TurboServe 被官方描述为<strong>首个专为流式视频生成设计的服务系统</strong>，把 serving 建模为在线调度问题，联合优化两件事：<strong>会话放置</strong>（跨 GPU 重平衡会话以压低最大 per-chunk 延迟）与 <strong>GPU 供给</strong>（负载驱动的自动扩缩容）。运行时依赖三件事：同 GPU 并发会话的合并处理（coalesced chunk processing）、空闲会话的 GPU–CPU offload 与恢复、基于 NCCL 的 GPU–GPU 状态迁移。</p>
+  <div class="two">
+    <div class="card">
+      <h4>实测规模与收益</h4>
+      <p>基于生数科技<strong>真实生产流量</strong>评测，集群最多 <strong>64 张 NVIDIA B300</strong>：最坏情况 per-chunk 延迟降低 <strong>37.5%</strong>，GPU 运营总成本平均降低 <strong>37.2%</strong>。</p>
+      <p class="src"><a href="https://arxiv.org/abs/2606.19271" target="_blank" rel="noopener">arXiv:2606.19271 TurboServe</a> <span class="tag t-primary">论文</span></p>
+    </div>
+    <div class="card amber">
+      <h4>不要把这两个数字混用</h4>
+      <p>TurboServe 的 37.5% / 37.2% 是<strong>服务系统级</strong>指标（调度与资源利用率），不是模型推理延迟指标。S2 论文本身也没有给出 per-chunk 的毫秒级绝对值、GPU 型号与数量、端到端 p50/p99。做容量规划时不能把两者相加或互推。</p>
+    </div>
+  </div>
+
+  <h3>8.4 训练与后训练</h3>
+  <div class="three">
+    <div class="card">
+      <h4>数据侧</h4>
+      <p>生数披露的是<strong>方法论而非规模</strong>：视频条数与小时数在三篇论文中均未公开。可核查的是清洗算子与过滤分类法——S1 的六维过滤（主体检测、画面干净度、视觉质量、内容安全、镜头稳定性、<strong>交互性</strong>），S2 新增误拒率低于 2% 的 VLM 二级切点复核、基于实测清晰度而非标称分辨率的筛选（High-Clarity Selection）、以及背景稳定化算子。</p>
+    </div>
+    <div class="card">
+      <h4>标注侧</h4>
+      <p>S1 使用结构化描述（主体、环境、运镜分字段）；S2 改为<strong>时间有序的稠密描述</strong>——按事件时序标注时间边界、构成动作与结果（例如「2.5s–3.8s 之间发生的动作及其后果」），并把分段依据从固定时长改为<strong>事件边界</strong>。标注管线采用分层多智能体：专家模型做检测与语音识别形成事实锚定层，再分派识别、描述、校验、过滤给专门 agent。</p>
+    </div>
+    <div class="card">
+      <h4>对齐侧</h4>
+      <p>没有使用经典 RLHF/PPO 表述，而是分阶段：<strong>双向阶段用 diffusion-based DPO</strong> 提升视觉保真、面部表现力、运动自然度与音画同步，论文明确指出其作用是「为后续因果适配提供更强的教师」；<strong>流式阶段用 Streaming NFT</strong>（Negative-aware Fine-Tuning）作用于因果主干，动机是让优化状态与推理时的自回归分布对齐。</p>
+    </div>
+  </div>
+  <p class="src">来源：<a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1</a> · <a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2</a> <span class="tag t-primary">论文</span></p>
+
+  <h3>8.5 成本侧的公开证据：价格曲线</h3>
+  <p>闭源模型无法直接测成本，但价目表是成本压力的公开映射。生数 API 的计价基准为 <strong>1 积分 = 0.03125 元</strong>。</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>时点</th><th>模型</th><th>分辨率</th><th>单价</th></tr></thead>
+      <tbody>
+        <tr><td class="num">2025-01</td><td>Vidu 2.0</td><td>720P</td><td><b>0.258 元/秒</b>（官方称约为当时行业均价的 43%）</td></tr>
+        <tr><td class="num">2026</td><td>viduq3-pro</td><td>1080P</td><td>24 积分/秒 ≈ 0.75 元/秒（错峰 12 积分 ≈ 0.375 元/秒）</td></tr>
+        <tr><td class="num">2026</td><td>viduq3-turbo</td><td>1080P</td><td>13 积分/秒 ≈ 0.41 元/秒（错峰 7 积分）</td></tr>
+        <tr><td class="num">2026-10</td><td>ViduQ4-preview</td><td>540P / 1080P / 4K</td><td>9 / 24 / 78 积分每秒（≈0.28 / 0.75 / 2.44 元/秒）；官方宣传「0.09 元/秒起」为首发优惠价</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://platform.vidu.com/docs/pricing.md" target="_blank" rel="noopener">Vidu 官方定价文档</a> · <a href="https://zhidx.com/p/463243.html" target="_blank" rel="noopener">智东西</a> <span class="tag t-official">官方</span></p>
+  <div class="callout">
+    <b>口径冲突，引用需谨慎</b>：Q4 Preview 官方宣传的「0.09 元/秒起」与按官方积分单价折算出的 540P 标准价（≈0.28 元/秒）相差约 3 倍。两者都是官方口径，推测前者为限时首发优惠或特定规格/大客户价。<strong>本报告并列两个数字，不做取舍。</strong>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="head">
+    <div class="secno">09 / 来源分层</div>
+    <div>
+      <h2>证据从哪来：公众号、论文与社区实测</h2>
+      <p class="lead">本报告刻意把来源分成四类并分别说明其可信边界。同一件事在不同层级的证据里，细节丰富度与可靠性差别很大。</p>
+    </div>
+  </div>
+
+  <h3>9.1 官方微信公众号（原文直链）</h3>
+  <p>公众号是生数发布技术解释最详细的地方——比官网更细，比论文更通俗。以下为本次实际抓取到全文的篇目：</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>篇目</th><th>核心内容</th><th>原文</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>《Vidu S2 技术解析：实时编辑、实时交互、探索空间视频》</b><br><span class="small">生数科技公众号</span></td>
+          <td>本次调研信息量最大的一篇中文一手材料。逐项说明了 SRF 的动机与做法、事件边界标注、VLM 视觉反馈闭环、720P 主干的 Backbone–Refiner 分工与共享时间线调度，并给出 StreamAV-Bench 9 项指标、OpenVE/RefVIE 4.26、Sparkle-Bench 3.74、ViViD 试穿数值与内部盲评对比。文末明确写出下一步要解决的问题：头显场景下清晰度与延迟。</td>
+          <td><a href="https://mp.weixin.qq.com/s/f2uewxWhxWlq_JOQqFvmiw" target="_blank" rel="noopener">原文链接</a></td>
+        </tr>
+        <tr>
+          <td><b>《Day1 | Vidu Q2 参考生 Pro 全球上线「万物可参考」》</b><br><span class="small">Vidu AI 公众号</span></td>
+          <td>参考生 Pro 的发布与功能清单，是「万物可参考」这一传播概念的原始出处。</td>
+          <td><a href="https://mp.weixin.qq.com/s/Qq2dDGfNABHh8x_QeRt22Q" target="_blank" rel="noopener">原文链接</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <b>抓取限制，如实说明</b>：微信公众号对非微信环境的匿名访问有较强的反爬与校验机制。本次调研中，<strong>《智能涌现，Vidu 开启视觉上下文时代！》</strong>（Vidu 1.5 上下文学习主张的原始出处，<code>mp.weixin.qq.com/s/Hsuxys06l-ADoEa0NRbNGQ</code>）在多次尝试后仍返回「环境异常」验证页，正文未能获取，本报告对该篇仅采用标题与多方转载的交叉印证，未引用其正文细节。上述两篇是本次成功抓取全文的公众号原文。
+  </div>
+
+  <h3>9.2 技术团队论文与开源</h3>
+  <p>生数的技术叙事有一个稀缺优点：<strong>关键主张都能落到可查的论文上</strong>。以下为本次实际核对过编号的文献清单。</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>文献</th><th>编号 / 场合</th><th>在本报告中的作用</th></tr></thead>
+      <tbody>
+        <tr><td>Analytic-DPM</td><td class="num">arXiv:2201.06503 · ICLR 2022 Outstanding Paper</td><td>理论谱系起点</td></tr>
+        <tr><td>DPM-Solver</td><td class="num">arXiv:2206.00927 · NeurIPS 2022 Oral</td><td>快速采样基础</td></tr>
+        <tr><td><b>U-ViT: All are Worth Words</b></td><td class="num">arXiv:2209.12152 · CVPR 2023</td><td>基座主干，第 03 节</td></tr>
+        <tr><td>UniDiffuser</td><td class="num">arXiv:2303.06555 · ICML 2023</td><td>统一建模，第 03 节</td></tr>
+        <tr><td>ProlificDreamer</td><td class="num">arXiv:2305.16213 · NeurIPS 2023 Spotlight</td><td>同组文生 3D 工作，谱系外延</td></tr>
+        <tr><td>Vidu 技术报告</td><td class="num">arXiv:2405.04233</td><td>产品本体论文（arXiv preprint，未见会议收录标注）</td></tr>
+        <tr><td>SageAttention</td><td class="num">arXiv:2410.02367 · ICLR 2025</td><td>推理加速栈底层组件，第 11 节关键</td></tr>
+        <tr><td><b>TurboDiffusion</b></td><td class="num">arXiv:2512.16093</td><td>四项加速技术，第 08 节</td></tr>
+        <tr><td>Causal Forcing++</td><td class="num">arXiv:2605.15141</td><td>帧级 2 步自回归蒸馏，第 06 节背景</td></tr>
+        <tr><td>minWM</td><td class="num">arXiv:2605.30263</td><td>实时交互世界模型全栈框架</td></tr>
+        <tr><td><b>TurboServe</b></td><td class="num">arXiv:2606.19271</td><td>流式服务系统，第 08 节</td></tr>
+        <tr><td><b>Vidu S1</b></td><td class="num">arXiv:2607.03118</td><td>实时交互，第 06 节</td></tr>
+        <tr><td><b>Vidu S2</b></td><td class="num">arXiv:2609.11638</td><td>实时交互 + 实时编辑 + 空间视频，第 06 节</td></tr>
+        <tr><td>Motus</td><td class="num">arXiv:2512.13030</td><td>具身世界动作模型，沿用 UniDiffuser 式调度器</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">核对方式：逐篇访问 arXiv abs 页面确认标题、作者与提交时间；S1/S2 另对照 HTML 全文核对机制描述。开源仓库清单见第 10 节。</p>
+
+  <h3>9.3 第三方媒体与社区实测</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>来源</th><th>类型</th><th>本报告如何使用</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://www.qbitai.com/2026/09/490109.html" target="_blank" rel="noopener">量子位 · Vidu S2 实测</a></td><td>媒体实测</td><td>唯一记录了具体缺点的中文来源（衣服色块涂抹感、戴帽时头发穿模），并记录了团队对头显延迟的坦承</td></tr>
+        <tr><td><a href="https://www.tsinghua.edu.cn/info/1182/111163.htm" target="_blank" rel="noopener">清华大学官网 · 国内首个纯自研视频大模型发布</a></td><td>机构发布</td><td>2024-04 中关村论坛发布的现场记录；朱军关于 U-ViT 时间线的表述出处</td></tr>
+        <tr><td><a href="https://www.chinanews.com/cj/2024/04-27/10207442.shtml" target="_blank" rel="noopener">中国新闻网 · 中国首个 Sora 级视频大模型 Vidu 发布</a></td><td>权威媒体</td><td>Vidu 1.0 发布时间与定位</td></tr>
+        <tr><td><a href="https://www.stcn.com/article/detail/3972985.html" target="_blank" rel="noopener">证券时报 / 人民财讯 · Vidu Q3 上线华为云</a></td><td>财经媒体</td><td>第 11 节昇腾/华为云关联的核心证据</td></tr>
+        <tr><td><a href="https://www.thepaper.cn/detail/30374233" target="_blank" rel="noopener">澎湃新闻 · 骆怡航担任生数科技 CEO</a></td><td>权威媒体</td><td>管理层变更与公司规模口径</td></tr>
+        <tr><td><a href="https://zhidx.com/p/455006.html" target="_blank" rel="noopener">智东西 · Vidu 1.5 发布报道</a></td><td>技术媒体</td><td>多主体一致性与上下文记忆主张的媒体侧记录</td></tr>
+        <tr><td><a href="https://www.163.com/dy/article/JH1F0OT30511AQHO.html" target="_blank" rel="noopener">机器之心 · 视觉模型学会 LLM 独门秘籍「上下文记忆」</a></td><td>技术媒体</td><td>「上下文记忆涌现」主张的完整表述与官方三条哲学</td></tr>
+        <tr><td><a href="https://www.uisdc.com/vidu-q2" target="_blank" rel="noopener">优设 · Vidu Q2 多图参考生视频教程</a></td><td>社区教程</td><td>创作者侧的实际用法与工作流</td></tr>
+        <tr><td><a href="https://groundtruth.day/news/vidu-s2-interactive-editable-spatial-video.html" target="_blank" rel="noopener">Ground Truth · S2 独立核查</a></td><td>独立核查博客</td><td>指出论文自认全景与自由视角属未来工作，并确认 S2 无可下载权重</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <b>关于社交平台内容的说明</b>：本次尝试检索小红书等社区的 Vidu 技术向讨论，公开可检索的落地页以测评笔记为主，缺少可稳定引用、可长期回溯的结构化内容；同时本环境的浏览器自动化通道因沙箱限制不可用（详见第 12 节方法说明）。因此本报告<strong>未引用任何无法核验的社区帖文</strong>，社区侧证据以可公开访问的测评媒体与教程站点为准。若需要补充社区口碑，建议以人工浏览方式采集后再并入。
+  </div>
+</section>
+
+<section id="gaps">
+  <div class="head">
+    <div class="secno">10 / 未公开项</div>
+    <div>
+      <h2>官方没说的事，本报告也不替它说</h2>
+      <p class="lead">这一节列出的每一项都是「已经找过、确实没有」。做技术评估时，知道边界在哪里与知道能力在哪里同等重要。</p>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>项目</th><th>状态</th><th>说明与影响</th></tr></thead>
+      <tbody>
+        <tr><td><b>Vidu 基座参数量</b></td><td><span class="tag t-gap">未公开</span></td><td>S1 / S2 论文与官方页均未给出。无法估算显存与算力需求，也无法与竞品做规模对比</td></tr>
+        <tr><td><b>文本编码器</b></td><td><span class="tag t-gap">未公开</span></td><td>论文只写条件 <code>c</code> 含 caption，未指明 T5 / CLIP 或自研编码器 —— 这是迁移与复现时首先要确认的接口</td></tr>
+        <tr><td><b>VAE 结构</b></td><td><span class="tag t-gap">未公开</span></td><td>仅知存在 VAE encoder / decoder 并参与共享时间线调度；有无 3D VAE、时空压缩率多少均未披露</td></tr>
+        <tr><td><b>patch 化方式与时空注意力分解形式</b></td><td><span class="tag t-gap">部分公开</span></td><td>已知 S2 用块级因果掩码替换双向时序注意力；但空间与时间注意力是 full 3D / factorized / window 中的哪种，未披露</td></tr>
+        <tr><td><b>训练数据规模</b></td><td><span class="tag t-gap">未公开</span></td><td>只有来源构成与清洗方法，没有条数或小时数</td></tr>
+        <tr><td><b>扩散形式化（flow matching vs DDPM）</b></td><td><span class="tag t-gap">未公开</span></td><td>论文使用 x̂₀ 预测式与「diffusion timestep t」表述，未明确声明具体形式化</td></tr>
+        <tr><td><b>模型权重</b></td><td><span class="tag t-gap">未开源</span></td><td>Vidu 全系（1.0 → Q4 Preview）均未开源权重。GitHub 组织 <code>shengshu-ai</code> 下没有可运行的 Vidu 模型代码；<code>Vidu-S</code> 仓库经核查为产品介绍页而非权重或训练代码</td></tr>
+        <tr><td><b>绝对延迟指标</b></td><td><span class="tag t-gap">未公开</span></td><td>只有 720p@25–42 FPS 与「per-step 延迟恒定」；无 per-chunk 毫秒数、无 GPU 型号与数量、无端到端 p50/p99</td></tr>
+        <tr><td><b>训练/推理用卡型号与卡数</b></td><td><span class="tag t-gap">未公开</span></td><td>公开材料止于「百度百舸万卡集群」与「阿里云全栈算力」的平台级描述，从未披露芯片型号</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>10.1 开源了什么，没开源什么</h3>
+  <div class="two">
+    <div class="card">
+      <h4>已开源（框架与工具层）</h4>
+      <ul>
+        <li><code>shengshu-ai/TurboServe</code> — 流式视频生成服务系统</li>
+        <li><code>shengshu-ai/minWM</code> — 实时交互视频世界模型全栈框架</li>
+        <li><code>shengshu-ai/Motus2</code> / <code>Motubrain</code> — 世界动作模型</li>
+        <li><code>thu-ml/TurboDiffusion</code> — 视频扩散加速框架（Apache-2.0）</li>
+        <li><code>thu-ml/SageAttention</code> — 量化注意力（Apache-2.0）</li>
+        <li><code>thu-ml/Causal-Forcing</code>、<code>thu-ml/SLA</code>、<code>thu-ml/SpargeAttn</code></li>
+        <li><code>baofff/U-ViT</code>（MIT）与 <code>thu-ml/unidiffuser</code>（AGPL-3.0）— 图像侧可运行资产</li>
+        <li>HuggingFace：<code>thu-ml/unidiffuser-v0/v1</code>（AGPL-3.0）、<code>motus-robotics/Motus</code>（Apache-2.0）、<code>robotics-diffusion-transformer/rdt-1b</code>（MIT）</li>
+      </ul>
+    </div>
+    <div class="card red">
+      <h4>未开源（模型层）</h4>
+      <ul>
+        <li><b>Vidu 视频生成模型全部权重</b>——1.0 / 1.5 / 2.0 / Q1 / Q2 / Q3 / Q4 / S1 / S2 无一开源</li>
+        <li>U-ViT 本体的预训练权重不在 HuggingFace，而分散在 Google Drive 链接中（依赖较旧）</li>
+        <li>未找到生数在 ModelScope 的官方组织与权重</li>
+        <li>第三方图生视频/视频生成框架（DiffSynth-Studio、xDiT、FastVideo、LightX2V）<b>均不支持</b> U-ViT / Vidu 架构</li>
+      </ul>
+      <p class="small">结论：想复现 Vidu 视频能力，目前没有可运行的公开路径；能跑的只有图像侧的 U-ViT 与 UniDiffuser 参考实现。</p>
+    </div>
+  </div>
+
+  <h3>10.2 官方承认的能力边界</h3>
+  <ul>
+    <li><strong>Vidu 1.0 报告（2024-05）</strong>：「细节偶发瑕疵，视频中不同主体之间的交互有时违反物理规律」，并把解决方案押注于 scaling。</li>
+    <li><strong>Vidu S1 报告（2026-07）</strong>：行业层面承认长时程视频生成的误差累积会导致漂移、不稳定乃至视觉崩塌；自身在训练层面承认纯 DMD 目标「频繁出现模式崩溃，表现为镜头漂移、内容退化与时序不一致」，因此引入 PCM 感知特征距离作为正则。</li>
+    <li><strong>S2 团队口径</strong>：头显对分辨率与延迟要求极苛刻，画面模糊会晕、延迟高会导致转头与画面「打架」，仍在持续优化；未来计划从固定视角扩展到全景空间视频。</li>
+  </ul>
+  <p class="src">来源：<a href="https://arxiv.org/html/2405.04233" target="_blank" rel="noopener">Vidu 技术报告</a> · <a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1</a> · <a href="https://www.qbitai.com/2026/09/490109.html" target="_blank" rel="noopener">量子位</a></p>
+
+  <h3>10.3 三处「能指与所指的落差」</h3>
+  <div class="three">
+    <div class="card red">
+      <h4>「上下文记忆涌现」</h4>
+      <p><b>传播概念</b>：视频模型拥有记忆、迎来智能涌现、不再需要 LoRA。</p>
+      <p><b>技术实体</b>：persistent reference context / sink block / 滑动窗口上下文。</p>
+      <p><b>落差位置</b>：该主张出自无技术报告的 Vidu 1.5，缺少量化定义与消融；术语在 S1/S2 论文中不出现。</p>
+    </div>
+    <div class="card red">
+      <h4>「空间视频」</h4>
+      <p><b>传播概念</b>：常被读者理解为可漫游的 3D 世界模型。</p>
+      <p><b>技术实体</b>：深度估计 + 双目立体转换（view warping、空洞填补、时序稳定），把单目流转为同步左右眼视图。</p>
+      <p><b>落差位置</b>：论文自己把全景与自由转向视角列为未来工作。准确的表述是 spatial video，不是 world model。</p>
+    </div>
+    <div class="card red">
+      <h4>「万物可参考」的一致性问题</h4>
+      <p><b>传播概念</b>：任意主体、任意参考都能稳定复刻。</p>
+      <p><b>技术实体</b>：参考图作为条件 token 参与注意力 + 因果掩码中的全局可见例外 + 主体数量硬约束。</p>
+      <p><b>落差位置</b>：API 明确限制主体数量（合计不超过 7 个、每主体最多 3 张图、视频主体仅一个模型支持且限 1 段 5 秒）；一致性机制本身从 1.5 到 Q2 未见公开的替换或改进证据。</p>
+    </div>
+  </div>
+</section>
+
+<section id="ascend">
+  <div class="head">
+    <div class="secno">11 / 昇腾视角</div>
+    <div>
+      <h2>Vidu 与国产算力：合作是真的，深度是有限的</h2>
+      <p class="lead">这一节回答一个具体问题：如果要在昇腾上复现或部署 Vidu 这类模型，目前有哪些真实的适配证据，边界在哪里。结论是——<strong>华为云与生数的官方合作是确凿的，且官方口径明确覆盖到「模型训练」；但技术适配停在上层（云服务与商业上架），Vidu 本体没有进入昇腾的框架级适配矩阵</strong>。</p>
+    </div>
+  </div>
+
+  <h3>11.1 四个可核查的官方事实</h3>
+  <div class="steps">
+    <div class="step">
+      <b>华为云官方案例页：昇腾云服务支持了生数科技的模型训练 <span class="tag t-official">华为云官方</span></b>
+      <span>华为云客户案例页《生数科技》给出的是本次调研中最有分量的一条证据。原文（解决方案节）：「<strong>昇腾云服务</strong>为生数科技提供了高性价比的 AI 算力，同时基于 <strong>ModelArts</strong> 平台，提供全链路云化工具链，硬件故障、网络故障应用无感知，作业失败率小于千分之五，训练作业故障自动恢复，非自动场景下恢复时长小于 10 分钟，<strong>有力支持了生数科技的模型训练</strong>。」<br>
+      该页「业务挑战」第一条即写着「<strong>自主可控适配需求</strong>：在基础设施建设层面需要依托自主可控的软硬件生态，以保障技术安全性、数据合规性和算力供应连续性」；「价值效益」节进一步写明「华为云昇腾云通过不断优化算法，大幅提升了训练效率和稳定性，<strong>加速了图片生成、视频生成模型的迭代与上线进程</strong>」。合作起点为 2024 年加入华为云初创计划；客户证言署名为生数科技联合创始人兼总裁唐家渝。<br>
+      <span class="small"><strong>边界</strong>：原文只说「支持了模型训练」，未提推理；全文未出现任何具体芯片型号（无 910B / 910C / 384 超节点 / Atlas 800I A2），也未出现 CANN、MindIE、MindSpore、torch_npu 等软件栈名词；无性能数字，只有可靠性指标。</span></span>
+    </div>
+    <div class="step">
+      <b>Vidu Q3 全系以预置服务形式上架华为云 MaaS <span class="tag t-official">华为云官方文档</span></b>
+      <span>华为云 MaaS 模型发布公告把 Vidu Q3 全系列入已发布模型清单：<code>ViduQ3-Pro</code>（T2V / IT2V / KF2V）、<code>ViduQ3-Turbo</code>（T2V / IT2V / KF2V / R2V）、<code>ViduQ3-Mix R2V</code>、<code>ViduQ3-AD R2V</code>，<strong>可用区域只有「西南-贵阳一」一个</strong>，且仅支持预置服务（不支持公共池 / 专属池部署）；官方规格为支持 16 秒长视频、最高 1080P、24 FPS。华为云 MaaS 的 API 文档另设有「生数模型」专章，参考生视频接口 <code>POST /v1/video/generations</code> 的 model 取值包括 <code>vidu/viduq3-turbo_reference2video</code>、<code>vidu/viduq3-mix_reference2video</code>、<code>vidu/viduq3-ad_reference2video</code>。媒体侧同源报道（证券时报 / 人民财讯，2026-06-22）称面向企业营销、内容制作、数字营销、文创等行业提供视频生成类服务。<br>
+      <span class="small">两点需要注意：① 有媒体报道称 Pro 版最高支持 4K，<strong>与华为云官方文档「最高 1080P」不一致</strong>，引用时应以官方文档为准或注明分歧；② 公告中版本号列（如 <code>20260127</code>）形似日期却被归入「2026 年 06 月」发布月，含义存疑，不宜当作上线日期引用。</span><br>
+      <span class="small">值得注意：同一张华为云 MaaS 公告表中，第三方视频模型仅有 Vidu 与 PixVerse V6，Wan、HunyuanVideo、可灵、Seedance 均不在列。这说明<strong>在「云上可售卖的第三方视频模型」这件事上，Vidu 是华为云的重要供应商之一</strong>。</span></span>
+    </div>
+    <div class="step">
+      <b>SageAttention 声称已在华为昇腾完成部署与落地 <span class="tag t-official">生数官方</span></b>
+      <span>生数科技官方研究页在 TurboDiffusion 一文中明确写道：SageAttention「已成功集成至 NVIDIA 推理引擎 TensorRT，同时完成在<strong>华为昇腾、摩尔线程 S6000</strong> 等主流 GPU 平台的部署与落地」。同段列出的采用方包括腾讯混元、字节豆包、阿里 Tora、<strong>生数 Vidu</strong>、智谱清影、百度飞桨、昆仑万维、Google Veo3、商汤与 vLLM。<br>
+      <span class="small">这是把「Vidu 的技术组件」与「昇腾」直接连起来的一条表述。逻辑链是：SageAttention 完成昇腾部署 → Vidu 使用 SageAttention → 因此 Vidu 的加速组件具备昇腾可行性。<strong>但原文并未说 Vidu 本身跑在昇腾上</strong>，且官网把昇腾与摩尔线程并称为「GPU 平台」，措辞并不严谨。</span></span>
+    </div>
+    <div class="step">
+      <b>U-ViT（Vidu 的架构基座）已移植到昇腾 NPU，并有 GPU 对比实测 <span class="tag t-primary">代码仓</span></b>
+      <span>昇腾官方模型仓 <code>Ascend/ModelZoo-PyTorch</code> 收录了 U-ViT，README 原文：「本仓库主要将 U-ViT 模型迁移到了昇腾 NPU 上」，参考实现直接指向 <code>github.com/baofff/U-ViT</code>（<code>baofff</code> 即鲍凡，U-ViT 论文作者、生数联合创始人兼 CTO）。<br>
+      性能对照（训练，ImageNet，batch 1024，fp16）：<strong>GPU 8 卡 1136.64 FPS vs Atlas 800T A2 8 卡 860.50 FPS</strong>。<br>
+      <span class="small"><strong>边界</strong>：这是<strong>图像生成版 U-ViT 的训练任务</strong>，不是 Vidu 视频模型；任务表只有 train，无推理；软件版本表四项全写「在研版本」；变更说明为「2024.05.06：U-ViT fp16 训练任务首次发布」，此后未见更新；支持规模为单机 8 卡。</span></span>
+    </div>
+  </div>
+
+  <h3>11.2 反向证据：Vidu 不在昇腾框架级适配矩阵中</h3>
+  <p>这是判断适配深度最关键的一条。MindIE SD 是昇腾官方的多模态推理加速套件（2025-12-19 开源，提供稀疏 Attention 插件、多粒度 Cache、CFG/USP 并行、量化与融合算子）。其官方支持矩阵中列出的视频生成模型包括：</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>模型</th><th>硬件</th><th>在支持矩阵中的状态</th></tr></thead>
+      <tbody>
+        <tr><td><b>Wan2.1 / Wan2.2</b></td><td>Atlas 800I A2 / A3 超节点</td><td>缓存、并行、稀疏 FA、量化、融合算子<strong>五项全支持</strong></td></tr>
+        <tr><td><b>HunyuanVideo-1.5 / HunyuanVideo / HunyuanDit</b></td><td>Atlas 800I A2 / A3 超节点</td><td>深度适配</td></tr>
+        <tr><td>CogVideoX-2B/5B、OpenSora v1.2、OpenSoraPlan v1.2/1.3</td><td>Atlas 800I A2 / A3 超节点</td><td>已支持</td></tr>
+        <tr><td>Stable Video Diffusion</td><td>Atlas 800I A2</td><td>已支持</td></tr>
+        <tr><td><b>Vidu</b></td><td>—</td><td><span class="tag t-gap">不在矩阵内</span></td></tr>
+        <tr><td>可灵、Seedance/即梦、PixVerse</td><td>—</td><td><span class="tag t-gap">亦不在矩阵内</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>同时，华为云官方的《Wan2.1/Wan2.2/HunyuanVideo/CogVideo 系列模型基于 ModelArts 适配 NPU 推理指导》给出了 DiT 视频模型在昇腾上的标准做法——序列并行 <code>--sp</code>、FSDP、VAE 加速、Attention 与 MatMul 的 A8W8 量化、RoPE 融合算子等可复现的接口级方案，<strong>适配清单里同样没有 Vidu</strong>。</p>
+  <div class="callout">
+    <b>分层结论</b>：Wan2.1/2.2 与 HunyuanVideo 属于「<strong>被昇腾框架主动适配</strong>」的对象（进支持矩阵、享受全套算子与并行优化）；<strong>Vidu 属于「在昇腾云上被商业上架」的第三方模型</strong>（进 MaaS 商品目录、进客户案例，但没进框架适配矩阵）。这两件事的价值与含义完全不同，混为一谈是本主题下最容易出现的误判。
+  </div>
+  <p class="src">来源：<a href="https://raw.githubusercontent.com/verylucky01/MindIE-SD/master/docs/en/features/supported_matrix.md" target="_blank" rel="noopener">MindIE SD 官方支持矩阵</a> · <a href="https://support.huaweicloud.com/bestpractice-modelarts/modelarts_aigc_ascendx_video_5905.html" target="_blank" rel="noopener">华为云 ModelArts NPU 推理指导</a> · <a href="https://raw.giteeusercontent.com/ascend/ModelZoo-PyTorch/raw/master/PyTorch/built-in/mm/U-ViT/README.md" target="_blank" rel="noopener">Ascend ModelZoo U-ViT README</a></p>
+
+  <h3>11.3 Vidu 本体的推理栈高度绑定 CUDA</h3>
+  <p>S1 / S2 论文披露的加速与系统栈逐项看下来，依赖关系非常集中：</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>论文披露的组件</th><th>性质</th><th>迁移到昇腾时的处理</th></tr></thead>
+      <tbody>
+        <tr><td>SageAttention / SpargeAttention / Sparse-Linear Attention</td><td>自定义注意力算子</td><td><b>已有昇腾落地记录</b>（SageAttention，生数官方口径）；其余需逐个验证</td></tr>
+        <tr><td>per-block W8A8 INT8 GEMM</td><td>自研 CUDA kernel</td><td>可对照昇腾侧 <code>--atten_a8w8</code> / <code>--matmul_a8w8</code> 方案；需重新对齐分块量化粒度与精度影响</td></tr>
+        <tr><td>kernel fusion + CUDA Graph</td><td>CUDA 运行时特性</td><td>需映射到图模式与算子融合方案</td></tr>
+        <tr><td>Triton 重写的 LayerNorm / RMSNorm</td><td>Triton kernel</td><td>可对照昇腾 RoPE / RMSNorm 融合算子（官方博客给出 RMSNorm 融合带来约 11.2% 训练提速的参照数字）</td></tr>
+        <tr><td>Ulysses 风格上下文并行 + 量化跨卡传输</td><td>分布式并行策略</td><td>可对照昇腾 USP / CFG 并行能力</td></tr>
+        <tr><td>TurboServe：NCCL 状态迁移、GPU–CPU offload、共享时间线调度</td><td>服务调度系统</td><td>通信库需换为 HCCL；调度逻辑本身与硬件无关，可移植性较好</td></tr>
+        <tr><td>论文实验硬件：RTX 5090、NVIDIA B300</td><td>论文实验平台</td><td>论文所有性能数字均为 NVIDIA 平台，昇腾侧无同口径对比数据</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://arxiv.org/html/2609.11638v1" target="_blank" rel="noopener">Vidu S2 §2.3</a> · <a href="https://arxiv.org/html/2607.03118v2" target="_blank" rel="noopener">Vidu S1 推理栈</a> · <a href="https://arxiv.org/abs/2606.19271" target="_blank" rel="noopener">TurboServe</a> <span class="tag t-primary">论文</span>；昇腾侧对照项来自华为云 ModelArts NPU 推理指导与昇腾社区技术文章。</p>
+
+  <h4>绑定程度有多深：来自代码与论文原文的直接证据</h4>
+  <ul>
+    <li><strong>TurboServe 开源仓库的安装说明要求先装 CUDA 版 PyTorch</strong>，安装命令走 <code>download.pytorch.org/whl/cu128</code>；运行要求「requires eight visible NVIDIA GPUs」；配置文件名直接包含 <code>nccl</code>（<code>configs/runtime_8gpu_process_nccl.yaml</code>）。</li>
+    <li>TurboServe 论文的生产评测环境为「up to <strong>64 NVIDIA B300 GPUs</strong>」，会话迁移机制基于 <strong>NCCL</strong>。</li>
+    <li>TurboDiffusion 的加速收益来自单张 <strong>RTX 5090</strong> 上的 INT8 Tensor Core 利用与 Triton/CUDA 重写的基础算子（LayerNorm / RMSNorm）。</li>
+    <li>Vidu S1 论文的硬件表述是「on regular consumer GPUs」，未指明厂商；<strong>S1 与 S2 的摘要中均未出现 Ascend / 昇腾 / CANN / MindIE 字样</strong>。</li>
+  </ul>
+  <p>这解释了一个关键点：<strong>TurboDiffusion / TurboServe 的加速收益主要来自算子级与通信级优化，而这恰好是 CUDA 生态绑定最深的部分</strong>。昇腾替换不是「换个后端」，而是需要重写注意力与量化算子、替换通信库（NCCL→HCCL），并对少步蒸馏后的模型重新做精度对齐——这也解释了为什么华为云 ModelArts 的官方 NPU 视频模型清单里有 Wan、HunyuanVideo、CogVideo，却没有 Vidu。</p>
+  <p class="src">来源：<a href="https://raw.githubusercontent.com/shengshu-ai/TurboServe/main/README.md" target="_blank" rel="noopener">TurboServe README</a> · <a href="https://arxiv.org/abs/2606.19271" target="_blank" rel="noopener">TurboServe 论文</a> · <a href="https://arxiv.org/abs/2512.16093" target="_blank" rel="noopener">TurboDiffusion 论文</a> <span class="tag t-primary">论文 / 代码</span></p>
+
+  <h3>11.4 算力格局：生数是多云厂商，最深的绑定不在华为</h3>
+  <div class="two">
+    <div class="card">
+      <h4>已公开的合作</h4>
+      <ul>
+        <li><strong>华为云</strong>：合作可溯至 2024 年（加入华为云初创计划；另有报道称 2024-09 瑞莱智慧、生数科技与华为云签署三方全面合作协议）；2025-12 华为云国际站云商店已上架生数专业服务类商品；昇腾云 + ModelArts + SFS Turbo 支持模型训练（官方口径）；2026-06 Vidu Q3 全系上架 MaaS。整体呈现出<strong>「商业与生态合作先行、算力适配在后」</strong>的形态。</li>
+        <li><strong>百度智能云</strong>：官方客户案例称百舸为生数提供高效稳定算力，实现万卡集群高效训练，万卡集群上模型有效训练时长占比超 98.8%。<strong>未披露芯片型号。</strong></li>
+        <li><strong>阿里云</strong>：2026-04-14 签署战略合作，提供从数据存储、模型训练到推理加速的全栈算力支持；Vidu 全线接入阿里云百炼平台。阿里云同时是 B 轮近 20 亿元融资的领投方——<strong>这是股权 + 算力 + 渠道的复合绑定，深度高于其他云厂商</strong>。</li>
+      </ul>
+    </div>
+    <div class="card red">
+      <h4>仍然空白的部分</h4>
+      <ul>
+        <li>训练与推理<strong>具体使用什么芯片、多少张卡</strong>——所有公开材料止于平台级描述，从未披露芯片型号。</li>
+        <li>Vidu 在昇腾上运行的任何吞吐 / 时延 / 显存数据。</li>
+        <li>CANN / MindIE / MindSpore / torch_npu 对 Vidu 本体的任何具体适配动作。</li>
+        <li><strong>一个容易被忽略的反向事实</strong>：生数科技官网「新闻动态」设有「战略合作」栏目，截至本次核对列出的伙伴包括阿里云、光轮智能、华策集团、星尘智能、万兴科技等，<strong>华为 / 华为云 / 昇腾并未出现在该栏目中</strong>。华为云侧把生数作为案例推广，但生数自己官网未把华为列为战略合作伙伴。</li>
+        <li>「昇腾计算产业峰会列为合作伙伴」「Vidu 在昇腾 384 超节点展示」等说法——<strong>本次调研对二者做了穷举式检索，未找到任何原始出处</strong>：2025 年昇腾 AI 产业峰会（正式名称为「昇腾 AI 人工智能产业峰会」，2025-09-17/18 于上海）的两篇官方通稿全文均未提及生数科技或 Vidu，其点名的 AIGC 实践分享方是其他企业；华为云客户案例页也未出现「超节点」或「384」。建议不要采信这两条说法。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">来源：<a href="https://www.huaweicloud.com/cases/shengshukeji.html" target="_blank" rel="noopener">华为云客户案例 · 生数科技</a> · <a href="https://cloud.baidu.com/customer/case/vidu.html" target="_blank" rel="noopener">百度智能云客户案例</a> · <a href="https://www.shengshu.com/zh/news/" target="_blank" rel="noopener">生数官网新闻动态</a> · <a href="https://www.hiascend.com/activities/dynamic-news/555" target="_blank" rel="noopener">昇腾 AI 产业峰会官方通稿</a></p>
+
+  <h3>11.5 同类模型在昇腾上的适配成熟度对照</h3>
+  <p>把同类国产视频模型放进同一张表，Vidu 的位置会更清楚。这组对照也是判断「Vidu 若做深度适配能拿到什么收益」的参照系。</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>模型</th><th>昇腾框架级适配（MindIE SD）</th><th>华为云 NPU 推理指导</th><th>可参照的实测数字</th></tr></thead>
+      <tbody>
+        <tr><td><b>Wan2.1 / Wan2.2</b>（阿里）</td><td><b>深度适配</b>：缓存 / 并行 / 稀疏 FA / 量化 / 融合算子五项全支持</td><td>有（含 ComfyUI 路径）</td><td>序列并行 <code>--sp</code>、A8W8 量化、RoPE 融合算子等标准接口</td></tr>
+        <tr><td><b>HunyuanVideo-1.5 / HunyuanVideo</b>（腾讯）</td><td><b>深度适配</b></td><td>有</td><td>—</td></tr>
+        <tr><td><b>Open-Sora Plan V1.5</b>（北大-兔展）</td><td>Modelers 上架 v1.2/v1.3</td><td>—</td><td><b>训练侧最详细的公开案例</b>：TP/SP 混合并行使内存降低约 75%，Encoder DP 提速 15%，RoPE 融合算子提速 6.2%，RMSNorm 融合算子提速 11.2%，整体 MFU 提升约 170%</td></tr>
+        <tr><td>CogVideoX（智谱）</td><td>已适配</td><td>有</td><td>—</td></tr>
+        <tr><td><b>Vidu</b>（生数）</td><td><span class="tag t-gap">不在矩阵内</span></td><td><span class="tag t-gap">不在清单内</span></td><td>无任何昇腾侧性能数字；仅有 U-ViT（图像版）训练的 GPU vs Atlas 800T A2 对照</td></tr>
+        <tr><td>可灵（快手）、Seedance/即梦（字节）</td><td><span class="tag t-gap">不在矩阵内</span></td><td><span class="tag t-gap">不在清单内</span></td><td>未找到公开适配记录</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">来源：<a href="https://raw.githubusercontent.com/verylucky01/MindIE-SD/master/docs/en/features/supported_matrix.md" target="_blank" rel="noopener">MindIE SD 官方支持矩阵</a> · <a href="https://support.huaweicloud.com/bestpractice-modelarts/modelarts_aigc_ascendx_video_5905.html" target="_blank" rel="noopener">华为云 ModelArts NPU 推理指导</a> · <a href="https://www.hiascend.com/developer/techArticles/20250605-1" target="_blank" rel="noopener">昇腾社区 · MindSpeed MM × Open-Sora Plan V1.5 训练优化</a>。表中 Open-Sora 的数字属该模型自身，<strong>不可外推为 Vidu 的预期收益</strong>。</p>
+
+  <h3>11.6 对昇腾侧工作的四条建议</h3>  <ol>
+    <li><strong>先向华为云侧求证训练口径的颗粒度。</strong>官方案例页已确认「昇腾云服务支持了模型训练」，但没有任何比例、机型或作业规模信息。这是目前性价比最高的一步：确认训练算力中昇腾的实际占比，比任何技术推演都更有价值。</li>
+    <li><strong>把 SageAttention 的昇腾实现当作算子级抓手。</strong>它同时满足三个条件：有官方背书的昇腾落地记录、是 Vidu 推理栈的底层组件、且开源可查（Apache-2.0）。先跑通并对齐精度，风险最低。</li>
+    <li><strong>以 U-ViT 的 ModelZoo 适配作为骨架迁移的起点。</strong>既然昇腾侧已经有过一次 U-ViT（图像版）的迁移与训练实测，把这条路径复现一遍可以系统性暴露 CANN 版本的算子缺口——注意它是「在研版本」且只支持训练，需要自行补齐推理链路。</li>
+    <li><strong>真正的硬骨头是流式推理的三个运行时机制：滑窗 KV Cache 管理、RoPE 重定位、双缓存调度。</strong>它们不是算子而是运行时机制，需要与推理引擎的显存管理和调度深度结合。建议按「单算子 → 单模块 → 单段流式 → 长流」四级推进，每级都建立与论文同口径的精度与延迟基线，避免到最后才发现误差累积特性与 CUDA 侧不一致。</li>
+  </ol>
+
+  <div class="callout">
+    <b>一句话总结本节</b>：<strong>华为云与生数的合作是官方确凿的，且明确覆盖到「支持模型训练」；但这条关系目前停留在云服务与商业上架层面——Vidu 本体没有进入昇腾的框架级适配矩阵（MindIE SD），也没有任何昇腾侧的性能数据公开。</strong>把「客户案例」读成「深度技术共建」，或把「MaaS 上架」读成「模型跑在昇腾 NPU 上」，都是越过证据的推论。
+  </div>
+</section>
+
+<section id="references">
+  <div class="head">
+    <div class="secno">12 / 方法说明</div>
+    <div>
+      <h2>怎么做的，以及哪些没做到</h2>
+      <p class="lead">为了让结论可复核，这里说明采集方式、可复现性边界与已知限制。</p>
+    </div>
+  </div>
+  <h3>12.1 采集与核对方式</h3>
+  <ul>
+    <li><strong>一手来源优先</strong>：论文逐篇访问 arXiv 摘要页核对标题、作者、提交时间与编号；S1 / S2 另对照 HTML 全文核对机制描述与公式；官方页面直接抓取正文文本后逐句核对。</li>
+    <li><strong>公众号原文直链解析</strong>：对 <code>mp.weixin.qq.com</code> 链接做正文抽取，成功两篇（S2 技术解析、Q2 参考生 Pro 上线）。</li>
+    <li><strong>开源资产以 API 为准</strong>：GitHub 组织与仓库信息通过官方 API 实测取得，不依赖记忆或二手转述。</li>
+    <li><strong>冲突口径并列而非取舍</strong>：凡发现两个官方口径互相矛盾（如 Q4 Preview 的单价），本报告并列呈现并标注存疑，不做单方面裁定。</li>
+  </ul>
+
+  <h3>12.2 已知限制</h3>
+  <ol>
+    <li><strong>公众号抓取受反爬限制。</strong>Vidu 1.5「视觉上下文」原始推文返回环境异常校验页，正文未能获取，相关段落仅使用标题与多方转载交叉印证。</li>
+    <li><strong>社交平台社区内容未能结构化采集。</strong>本次未能取得可稳定引用的平台内技术讨论原文，因此报告未引用任何无法核验的社区帖文；社区侧证据以公开可访问的测评与教程站点为准。</li>
+    <li><strong>闭源导致的不可复现性。</strong>Vidu 权重未公开且服务条款禁止逆向工程，论文中所有性能与评测数字目前无法被第三方独立验证。</li>
+    <li><strong>厂商自述数据占比不低。</strong>榜单排名、合作方清单、加速倍数、用户与收入规模等均由公司或其投资方口径提供，本报告已逐条标注来源性质。</li>
+    <li><strong>已剔除的不可采信来源。</strong>调研过程中出现过若干将行业传言与 Vidu 事实混写的自媒体文章（例如声称「昇腾 910B 适配使推理速度较 A100 提升 40%」「Vidu 在 VID-eval 以 91.2 分登顶」等无法溯源的数字），本报告不采用其中任何数据。</li>
+  </ol>
+
+  <h3>12.3 参考来源总表</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>类别</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr><td><b>官方渠道</b></td><td><a href="https://www.shengshu.com/zh/about/" target="_blank" rel="noopener">生数科技官网 · 公司介绍</a> · <a href="https://www.shengshu.com/zh/research/" target="_blank" rel="noopener">研究页</a> · <a href="https://www.shengshu.com/en/vidu-s2/" target="_blank" rel="noopener">Vidu S2 产品页</a> · <a href="https://www.shengshu.com/en/vidu-q3/" target="_blank" rel="noopener">Vidu Q3 产品页</a> · <a href="https://www.shengshu.com/zh/news/series-b-funding/" target="_blank" rel="noopener">B 轮融资公告</a> · <a href="https://platform.vidu.cn/docs/reference-to-video.md" target="_blank" rel="noopener">参考生视频 API 文档</a> · <a href="https://platform.vidu.com/docs/pricing.md" target="_blank" rel="noopener">定价文档</a></td></tr>
+        <tr><td><b>公众号原文</b></td><td><a href="https://mp.weixin.qq.com/s/f2uewxWhxWlq_JOQqFvmiw" target="_blank" rel="noopener">Vidu S2 技术解析：实时编辑、实时交互、探索空间视频</a> · <a href="https://mp.weixin.qq.com/s/Qq2dDGfNABHh8x_QeRt22Q" target="_blank" rel="noopener">Day1 | Vidu Q2 参考生 Pro 全球上线「万物可参考」</a></td></tr>
+        <tr><td><b>论文</b></td><td><a href="https://arxiv.org/abs/2209.12152" target="_blank" rel="noopener">U-ViT</a> · <a href="https://arxiv.org/abs/2303.06555" target="_blank" rel="noopener">UniDiffuser</a> · <a href="https://arxiv.org/abs/2405.04233" target="_blank" rel="noopener">Vidu</a> · <a href="https://arxiv.org/abs/2410.02367" target="_blank" rel="noopener">SageAttention</a> · <a href="https://arxiv.org/abs/2512.16093" target="_blank" rel="noopener">TurboDiffusion</a> · <a href="https://arxiv.org/abs/2605.15141" target="_blank" rel="noopener">Causal Forcing++</a> · <a href="https://arxiv.org/abs/2606.19271" target="_blank" rel="noopener">TurboServe</a> · <a href="https://arxiv.org/abs/2607.03118" target="_blank" rel="noopener">Vidu S1</a> · <a href="https://arxiv.org/abs/2609.11638" target="_blank" rel="noopener">Vidu S2</a> · <a href="https://arxiv.org/abs/2512.13030" target="_blank" rel="noopener">Motus</a></td></tr>
+        <tr><td><b>媒体与机构</b></td><td><a href="https://www.tsinghua.edu.cn/info/1182/111163.htm" target="_blank" rel="noopener">清华大学官网</a> · <a href="https://www.chinanews.com/cj/2024/04-27/10207442.shtml" target="_blank" rel="noopener">中国新闻网</a> · <a href="https://www.stcn.com/article/detail/3972985.html" target="_blank" rel="noopener">证券时报</a> · <a href="https://www.thepaper.cn/detail/30374233" target="_blank" rel="noopener">澎湃新闻</a> · <a href="https://www.qbitai.com/2026/09/490109.html" target="_blank" rel="noopener">量子位</a> · <a href="https://zhidx.com/p/455006.html" target="_blank" rel="noopener">智东西</a> · <a href="https://www.163.com/dy/article/JH1F0OT30511AQHO.html" target="_blank" rel="noopener">机器之心</a></td></tr>
+        <tr><td><b>算力与平台</b></td><td><a href="https://cloud.baidu.com/customer/case/vidu.html" target="_blank" rel="noopener">百度智能云客户案例</a> · <a href="https://support.huaweicloud.com/bulletin-maas/bulletin-maas-0001.md" target="_blank" rel="noopener">华为云 MaaS 模型发布公告</a> · <a href="https://gitee.com/ascend/ModelZoo-PyTorch/pulls/6372" target="_blank" rel="noopener">Ascend ModelZoo-PyTorch PR !6372（UniDiffuser 昇腾适配，已合并）</a></td></tr>
+        <tr><td><b>开源</b></td><td><a href="https://github.com/shengshu-ai" target="_blank" rel="noopener">GitHub shengshu-ai</a> · <a href="https://github.com/thu-ml" target="_blank" rel="noopener">GitHub thu-ml</a> · <a href="https://github.com/baofff/U-ViT" target="_blank" rel="noopener">baofff/U-ViT</a> · <a href="https://huggingface.co/thu-ml/unidiffuser-v1" target="_blank" rel="noopener">HF thu-ml/unidiffuser-v1</a> · <a href="https://huggingface.co/motus-robotics/Motus" target="_blank" rel="noopener">HF motus-robotics/Motus</a></td></tr>
+        <tr><td><b>第三方核查</b></td><td><a href="https://groundtruth.day/news/vidu-s2-interactive-editable-spatial-video.html" target="_blank" rel="noopener">Ground Truth · Vidu S2 独立核查</a> · <a href="https://www.uisdc.com/vidu-q2" target="_blank" rel="noopener">优设 · Vidu Q2 多图参考生视频教程</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="src">ASCENDPLAYGROUND · 模型研究分区 · 生数科技 Vidu 技术综述</div>
+    <div class="src">证据口径：一手论文 / 官方渠道 / 公众号原文 / 权威媒体 / 第三方社区，五级标注；未公开项不推测。</div>
+    <a class="back" href="./">← 返回研究目录</a>
+  </div>
+</footer>
+
+</body>
+</html>
