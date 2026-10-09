@@ -189,6 +189,7 @@
     <div class="meta">
       <span><b>重点参考</b> arXiv 2511.23113 (db-SP)</span>
       <span><b>重点参考</b> FVAttn (arXiv 2607.16190)</span>
+      <span><b>对照基线</b> OSP-Next (arXiv 2605.28691)</span>
       <span><b>算子核查</b> CANN ops-transformer</span>
       <span><b>框架核查</b> vllm-ascend / MindIE-SD</span>
       <span><b>结论强度</b> 事实 + 明确标注的推断</span>
@@ -210,7 +211,7 @@
     <li><a href="#s7"><span class="num">07</span>稀疏 × Ring：负载均衡与决策一致性</a></li>
     <li><a href="#s8"><span class="num">08</span>框架现状核查：vllm-ascend 与 MindIE-SD</a></li>
     <li><a href="#s9"><span class="num">09</span>推荐架构与分阶段方案</a></li>
-    <li><a href="#s10"><span class="num">10</span>风险、未解决问题与验证口径</a></li>
+    <li><a href="#s10"><span class="num">10</span>风险、反向结论与验证口径</a></li>
     <li><a href="#s11"><span class="num">11</span>参考文献</a></li>
   </ol>
 </nav>
@@ -226,29 +227,51 @@
       <strong>完整序列</strong>的 K/V，单层 KV 显存不随 <code class="i">P</code> 下降；Ring 路径每 rank 只持有
       <code class="i">1/P</code> 的 KV。当模型大到「权重已经吃满显存」时，AllGather 路径的直接后果是
       OOM 或被迫降低 batch/分辨率，而不是变慢。这正是本项目要换 Ring 的根本理由。</p>
-    <p><strong>2. 但 Ring 有它自己的三个致命耦合点</strong>，且昇腾栈当前<strong>只提供了其中一环</strong>：
-      算子层已有 <code class="i">RingAttentionUpdate</code> 负责跨块 softmax 合并（第 5 节），
-      而 <strong>ring 调度器、量化 scale 随 KV 块流转、稀疏块级负载均衡这三件事在
-      vllm-ascend 与 MindIE-SD 中都没有开源实现</strong>（第 8 节）。</p>
-    <p><strong>3. 量化与 Ring 的冲突是「装出来的」，靠 per-block scale 就能解开。</strong>
+    <p><strong>2. 必须先确认模型是因果还是全注意力——这决定了一半的结论。</strong>
+      <em>DiT / 视频生成用 full attention（非因果）</em>，因此 Ring 家族最有名的
+      <strong>因果三角负载不均衡（1:2:…:P）在 DiT 上根本不存在</strong>，zigzag / Striped 那套修正
+      也不需要。反之若目标是自回归 LLM 生成，因果不均衡是结构性的、必须在 P1 就处理。
+      本报告对两条路线分别标注。</p>
+    <p><strong>3. 稀疏与 Ring 的兼容性是<em>分档次</em>的，不是统一的。</strong>
+      简单的固定/块级稀疏（昇腾 SFA、PAROAttention 类）与 Ring 兼容良好，db-SP 实测其
+      ρ_s 在 1.159–1.513 之间（<a href="https://arxiv.org/abs/2511.23113">db-SP</a>）。
+      但<strong>需要全局信息的稀疏机制与 Ring 架构性冲突</strong>：社区对 NSA 的 CP 实现明确给出
+      「Ring Attention ❌ Not suitable」，理由是 NSA 的 compress/select 需要全局 K 与绝对位置
+      （见 <a href="#s7">第 7 节</a>）。<strong>选稀疏算法前必须先判定它是否需要全局视野。</strong></p>
+    <p><strong>4. 量化与 Ring 的冲突是「装出来的」，靠 per-block scale 就能解开。</strong>
       只要坚持 <strong>per-tile / per-block scale 与 payload 同块打包、随块流转</strong>，
-      量化就不需要任何跨 rank 规约；反之若用 per-tensor amax 全局 scale，就会与 KV 分片
-      在语义上直接冲突（第 6 节）。昇腾现有算子恰好都是 tile 级量化，方向是对的。</p>
-    <p><strong>4. 稀疏与 Ring 的冲突是「真冲突」，必须显式治理。</strong>
-      <a href="https://arxiv.org/abs/2511.23113">db-SP</a> 实测：块稀疏 + 序列并行的
-      稀疏不均衡比 <code class="i">ρ_s</code> 在 1.159–1.513 之间；<a href="https://arxiv.org/abs/2607.16190">FVAttn</a>
-      实测 rank 级不均衡 1.34。这意味着<strong>稀疏带来的算力节省会被最慢 rank 吃掉 20%–50%</strong>，
-      必须配套负载均衡，否则「稀疏 + Ring」可能比「稠密 + Ring」还慢。</p>
-    <p><strong>5. 推荐路线：Ring 作为显存底座，量化优先于稀疏，稀疏最后上且必须带均衡器。</strong>
-      三者叠加的收益与风险并不对称——量化几乎无额外风险（tile 内自洽），稀疏则引入跨 rank
-      的调度与数值不确定性（第 9 节分阶段方案）。</p>
+      量化就不需要任何跨 rank 规约，且 scale 的额外通信量<strong>在 FP8 + 128×128 tile 下仅约 0.8%
+      （每 token-头一行）</strong>。反之若用 per-tensor amax 全局 scale，就会与 KV 分片直接冲突——
+      因为它需要一个<strong>无法与 attention 重叠的前置 all-reduce</strong>。昇腾现有算子都是 tile 级，方向正确。</p>
+    <p><strong>5. 三轴同时叠加已有强先例，但都不是 Ring。</strong>
+      最接近本项目目标的是 <strong>OSP-Next</strong>（稀疏 Skiparse-2D + 稀疏感知序列并行 + HiF8 量化，
+      视频生成，<strong>在 Ascend 950PR 上实测 2.27×</strong>）——但它的并行是 all-to-all 类而非 ring。
+      「<strong>Ring + 量化 attention</strong>」与「<strong>Ring + 稀疏 + 量化</strong>」两者
+      <strong>在公开文献中均未检索到</strong>，属真实研究空白。</p>
+    <p><strong>6. 推荐路线：Ring 作为显存底座，量化优先于稀疏，稀疏按「是否需要全局信息」分级引入。</strong>
+      收益与风险不对称——量化几乎无额外风险（tile 内自洽），稀疏则可能引入跨 rank 的调度与
+      数值不确定性。而且<strong>量化本身对视频生成不是免费的</strong>：SageAttention 实测 FA3 的 FP8
+      在 CogVideoX 上 Fscore 从 3.768 掉到 3.394、Unidiffuser FID 从 163 恶化到 394，
+      说明低精度 attention 在生成任务上必须逐案验收。</p>
   </div>
 
   <div class="kpi">
     <div><b>1/P</b><span>Ring 下每 rank KV 显存占比<br>（对比 AllGather 的 100%）</span></div>
-    <div><b>2(P−1)/P</b><span>Ring 每层每 rank KV 通信量（相对 KV 总量）<br>与 P 解耦的仅是显存</span></div>
-    <div><b>1.159–1.513</b><span>db-SP 实测稀疏不均衡比 ρ_s<br>Wan2.1 / CogVideoX1.5</span></div>
-    <div><b>1.34 → 1.08</b><span>FVAttn RLB 修复后的<br>rank 级负载不均衡</span></div>
+    <div><b>6·b·c·h</b><span>Ring 每层显存字节数（原论文）<br>随块大小 c 线性、与序列长度无关</span></div>
+    <div><b>25%–33%</b><span>Ring P2P 的结构性冗余<br>（MagiAttention 对 causal / varlen 的定量）</span></div>
+    <div><b>2.27×</b><span>OSP-Next 稀疏+序列并行+HiF8<br>在 Ascend 950PR 单卡实测</span></div>
+  </div>
+
+  <div class="card bad">
+    <h4>三个必须前置确认的问题（否则选型会走错）</h4>
+    <ol>
+      <li><strong>模型是因果还是全注意力？</strong> DiT / 视频生成是 full attention，
+        因果不均衡不存在，zigzag/striped 不需要；自回归 LLM 则相反。</li>
+      <li><strong>要用的稀疏算法需要全局信息吗？</strong> 固定 / 纯局部块稀疏（SFA 类）与 Ring 兼容；
+        NSA 这类需要全局 K 做 compress/select 的，公开实现明确判定与 Ring 不兼容。</li>
+      <li><strong>量化是 per-tile 还是 per-tensor？</strong> per-tile 随块走、零额外同步；
+        per-tensor amax 需要一个无法与 attention 重叠的前置 all-reduce。</li>
+    </ol>
   </div>
 
   <div class="card acc">
@@ -257,6 +280,11 @@
       先跑通 <span class="pill r">Ring + FP8/INT8 tile 量化</span> 的两轴叠加并完成精度验收，
       再以「可回退开关」的形式引入 <span class="pill s">块稀疏 + 负载均衡器</span>。
       不要一开始就冲三轴同时叠加。</p>
+    <p>同时请把 <strong>OSP-Next（arXiv 2605.28691）作为最重要的对照基线</strong>——
+      它是目前唯一在视频生成上把「稀疏 + 序列并行 + 8bit 量化」跑通并给出
+      Ascend 950PR 实测的系统。它的并行是 all-to-all 类而非 ring，
+      但它证明了<strong>这条三轴路线在昇腾上是可行的</strong>，其 HiF8 方案与
+      「序列并行下稀疏掩码如何切分」的工程细节都值得直接借鉴。</p>
   </div>
 </section>
 
@@ -401,6 +429,40 @@
       <span class="pill q">量化</span> 把 <code class="i">b</code> 压下来（直接按比例降低通信与显存），
       靠 <span class="pill s">稀疏</span> 把「需要流转的块」减少（跳过不重要的块，等价降低有效 KV_total）。</p>
   </div>
+
+  <h3>3.1b 原论文的显存模型与重叠条件（已核实）</h3>
+
+  <p>Ring Attention 原论文（arXiv 2310.01889）给出的量比上面的一阶估算更精确，建议直接采用：</p>
+
+  <div class="eq">
+    <span class="cm"># 每层显存（bf16, bytes）——随块大小 c 线性，与序列长度 s 无关</span><br>
+    M_ring = <span class="hl">6·b·c·h</span>   <span class="cm">= 1 块 query + 2 块当前 K/V + 2 块接收中 K/V + 1 块输出</span><br>
+    <span class="cm"># 对照：vanilla 2·b·h·s²（随 s 平方）</span><br><br>
+    <span class="cm"># 每轮计算量与通信量</span><br>
+    compute = 4·d·c²  FLOPs      <span class="cm"># QK^T + ×V</span><br>
+    comm    = 4·c·d   bytes      <span class="cm"># K 块 + V 块</span><br><br>
+    <span class="cm"># 通信可被计算完全掩盖的条件（overlap condition）</span><br>
+    4·d·c² / F  ≥  4·c·d / B   ⟹   <span class="hl">c ≥ F / B</span>   <span class="cm">(块大小 ≥ 算力/带宽)</span>
+  </div>
+
+  <p>注意 <code class="i">6·b·c·h</code> 里那个「2 块接收中 K/V」——<strong>这就是 double buffering，
+    它是 Ring 的显存结构自带的，不是可选优化</strong>。同时也解释了为什么峰值显存比稳态高 1–2 个块。</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>平台</th><th>FLOPS</th><th>HBM</th><th>带宽</th><th>最小块大小</th><th>由此决定的最小序列</th></tr></thead>
+    <tbody>
+      <tr><td>A100 NVLink</td><td>312 TF</td><td>80 GB</td><td>300 GB/s</td><td>≈1.0 K</td><td>≈6.2 K</td></tr>
+      <tr><td>A100 InfiniBand</td><td>312 TF</td><td>80 GB</td><td>12.5 GB/s</td><td><strong>≈24.5 K</strong></td><td><strong>≈149.5 K</strong></td></tr>
+      <tr><td>TPU v4</td><td>275 TF</td><td>32 GB</td><td>268 GB/s</td><td>≈1.0 K</td><td>≈6.2 K</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">数据来自 Ring Attention 原论文 Table 2。要点：<strong>跨机（IB）场景下最小块大小被抬高一个数量级</strong>，
+    这意味着跨机部署时块不能切得太细——与本报告 10.1 节的 R6（P2P 小包开销）是同一个约束。</p>
+
+  <p>原论文在 32×A100 InfiniBand 上达到 7B 模型 <strong>4M token</strong> 上下文；
+    并明确「overlapping mechanism applies to <strong>both forward and backward passes</strong>」。</p>
 
   <h3>3.2 Blockwise attention 与环上流转</h3>
 
@@ -698,6 +760,52 @@
 
   <p class="note">说明：zigzag/striped 切分的思想来自 Striped Attention（arXiv 2311.09431）
     与各类 ring 实现中的负载均衡调度。图 3 中的「加速上限」为按块数计算的示意值，用于说明趋势，非实测数据。</p>
+
+  <div class="card ok">
+    <h4>⚠ 重要限定：如果你的模型是 DiT / 视频生成，上面整节不适用</h4>
+    <p>xDiT（arXiv 2411.01738）明确指出：<em>「TeraPipe is designed for transformers using causal
+      attention... In contrast, <strong>DiTs employ full attention</strong>, where each token attends to
+      the computation of both previous and subsequent tokens.」</em></p>
+    <p>也就是说：<strong>DiT 用全注意力，因果三角在 Ring 上根本不存在，zigzag / Striped 那套修正
+      在 DiT 上没有必要。</strong>Megatron 官方文档把 Ring 的优点之一定为
+      「avoiding extra work from lower-triangle causal masking」——非因果场景下 Ring 反而更干净。</p>
+    <p>因此本节的结论请按目标模型分流：
+      <span class="pill r">DiT / 视频生成</span> 直接跳过 4.2，把精力放在第 3、6、7 节；
+      <span class="pill q">自回归 LLM</span> 则需要把 zigzag 作为 Ring 实现的默认基线。</p>
+  </div>
+
+  <h3>4.3 Ring 的结构性通信冗余（与因果无关，DiT 也有）</h3>
+
+  <p>即使没有因果不均衡，Ring 还有一个<strong>所有场景共有</strong>的低效：
+    KV 块绕环一圈，但其中<strong>有些块根本不该被传</strong>。</p>
+
+  <p>MagiAttention（SandAI）对此做了定量：在朴素 ring 中，<code class="i">KV₀</code> 必须广播给所有设备、
+    <code class="i">dKV₀</code> 需要 all-reduce，但 <code class="i">KV₇</code> 其实只被 rank 7 本地需要，
+    却仍然绕环走了整整一圈。</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>掩码形态</th><th>Ring P2P 冗余比例</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td>简单 causal mask</td><td><strong>25%</strong></td><td>约四分之一的 KV 传输是无效的</td></tr>
+      <tr><td>不规则 mask（varlen block-causal，含最后一个 global block）</td><td><strong>&gt;33%</strong></td><td>自回归视频生成（如 Magi-1，约 4M token）的典型形态</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">MagiAttention 技术博客对 ring P2P 冗余的定量分析。注意这是<strong>工程实现的测量</strong>，
+    不是原论文结论。</p>
+
+  <div class="card acc">
+    <h4>对本项目的两个直接含义</h4>
+    <ul>
+      <li><strong>Ring 的有效通信量应当按「掩码决定的最小必要集合」来算，而不是按 KV 总量。</strong>
+        朴素实现的 25%–33% 冗余，正是「KV 块跳过」优化的收益空间——
+        而且这个优化<strong>与稀疏是同一套机制</strong>：既然稀疏已经知道哪些块重要，
+        就不该把不重要的块在环上传一遍。</li>
+      <li><strong>稀疏 + Ring 存在一个「传输跳过」的联合优化点</strong>（第 7.4 节），
+        它比「稀疏 + AllGather」更自然——因为 Ring 的块边界本来就是传输单元。</li>
+    </ul>
+  </div>
 </section>
 
 <!-- ============================================================ 5 -->
@@ -849,25 +957,65 @@
 
   <h3>6.2 scale 的通信开销到底有多大</h3>
 
-  <p>这是评审时最常被问的问题，可以直接算：</p>
+  <p>这是评审时最常被问的问题。要先区分两种 scale 粒度，它们的账完全不同：</p>
+
+  <h4>情形 A：per-tile / per-block scale（推荐，昇腾现有算子的做法）</h4>
 
   <div class="eq">
-    <span class="cm"># MX / per-block-32 场景，K 与 V 各一份 scale</span><br>
-    scale_bytes / block = (block_tokens · N_kv · D / 32) · 1 byte(E8M0)<br>
-    payload_bytes / block = block_tokens · N_kv · D · b<br><br>
-    ratio = scale/payload = 1 / (32 · b)<br>
-    <span class="cm"># b = 1 (INT8/FP8)  →  3.1%</span><br>
-    <span class="cm"># b = 0.5 (FP4)     →  6.25%</span>
+    <span class="cm"># per-token-head scale（KVQSA 的 tile_size=128 即此类），D 个量化组</span><br>
+    scale_bytes / block = block_tokens · N_kv · (D / group_size) · sizeof(scale)<br><br>
+    <span class="cm"># 典型值：N_kv=8, D=128, group/block=128, FP8 payload, scale 取 FP32</span><br>
+    payload = 128 · 8 · 128 · 1  = 131072 B<br>
+    scale   = 128 · 8 · 1 · 4    =   4096 B<br>
+    ratio   = <span class="hl">≈ 0.8%</span><br><br>
+    <span class="cm"># 若按 MX 规范用 E8M0（1 byte）做 block-32 分组：</span><br>
+    scale = 128·8·(128/32)·1 = 4096 B   ⟹ 同样 <span class="hl">≈ 0.8%</span><br><br>
+    <span class="cm"># 最坏情形：FP4 payload + 32 元素块</span><br>
+    payload = 128·8·128·0.5 = 65536 B,  scale = 4096 B  ⟹  <span class="hl">≈ 6.25%</span>
   </div>
 
-  <div class="card">
-    <h4>结论</h4>
-    <p><strong>scale 的额外通信量在 3%–7% 量级，不构成障碍。</strong>
-      真正需要关心的是<strong>打包布局</strong>：如果 scale 与 payload 分成两个 buffer、
-      走两次 P2P，就会多一次同步与小包开销。昇腾
-      <code class="i">kv_quant_sparse_flash_attention</code> 的
-      <code class="i">quant_scale_repo_mode=1</code>（combine 模式，scale 与数据混合存放）
-      正是为了解决这个问题——<strong>建议在 ring 实现中沿用 combine 布局</strong>。</p>
+  <div class="card ok">
+    <h4>结论 A：per-tile scale 的额外通信量在 1%–6% 量级，不构成障碍</h4>
+    <p>但<strong>真正的成本不在字节数，而在布局与依赖</strong>：</p>
+    <ul>
+      <li>若 scale 与 payload <strong>分成两个 buffer、走两次 P2P</strong>，就会多一次同步与小包开销——
+        这才是实际损失来源。昇腾 <code class="i">kv_quant_sparse_flash_attention</code> 的
+        <code class="i">quant_scale_repo_mode=1</code>（combine 模式，scale 与数据混合存放）
+        正是为此设计，<strong>建议在 ring 实现中沿用</strong>。</li>
+      <li>不同量化粒度（如 per-thread，见 SageAttention2）会把 scale 与线程/内存映射绑死，
+        <strong>跨 rank 传输时布局可能失真</strong>。per-tile 因为与 tile 边界对齐，反而最适合流转。</li>
+    </ul>
+  </div>
+
+  <h4>情形 B：per-tensor 全局 amax scale（不推荐用于 Ring）</h4>
+
+  <div class="card bad">
+    <p>量化前需要扫全序列求 <code class="i">max|KV|</code>。在 Ring 下每 rank 只有
+      <code class="i">1/P</code> 的 KV，<strong>必须额外做一次跨 rank all-reduce</strong>。</p>
+    <p>这个问题比「多花点通信」严重得多：<strong>all-reduce 是一个前置同步点，
+      它必须在任何量化与 attention 之前完成，因此<em>无法与 attention 计算重叠</em></strong>。
+      而「通信被计算掩盖」恰恰是 Ring 的全部卖点。换句话说，
+      <strong>per-tensor 量化会把 Ring 退化成一个带全局屏障的算法</strong>。</p>
+    <p>此外，KV 流式生成的场景下 scale 会随序列增长持续漂移，需要反复重算——开销进一步放大。</p>
+  </div>
+
+  <h3>6.2b 一个被忽略的断点：平滑统计量也需要全局视野</h3>
+
+  <div class="card warn">
+    <h4>mean(K) 的全局性问题</h4>
+    <p>SageAttention 的核心技巧之一是 <em>smooth K</em>：
+      <code class="i">γ(K) = K − mean(K)</code>，其中 <code class="i">mean(K)</code> 是
+      <strong>全序列 token 的通道均值</strong>（1×d 向量，用于消除 K 的 channel-wise outlier）。
+      SageAttention2 又把 smooth Q 引入，其 <code class="i">k̄ = mean(K)</code> 同样是
+      <strong>全张量均值</strong>。</p>
+    <p>这个统计量与 per-tensor amax 有<strong>完全相同的问题</strong>：在 Ring 下要复现相同的量化结果，
+      <code class="i">mean(K)</code> 必须先在并行组内归约。</p>
+    <p><strong>好消息</strong>：<code class="i">mean(K)</code> 只有 d 维（如 128 个 float），
+      通信量完全可以忽略，代价主要是<strong>多一个同步点</strong>，而不是带宽。
+      如果把它与 KV 块的首次量化放在同一阶段、只做一次（而不是每轮），代价可控。</p>
+    <p><strong>坏消息</strong>：<em>这个 trade-off 在公开文献中没有任何实验</em>——
+      SageAttention / SageAttention2 都是单卡 kernel 论文，未讨论 context parallel。
+      属于本报告标注的证据缺口之一。</p>
   </div>
 
   <h3>6.3 断点二：量化 P（注意力概率）与 online softmax 的相互作用</h3>
@@ -1028,6 +1176,56 @@
       这与「为了省显存才选 Ring」的动机形成了正向叠加——Ring 既省显存，又天然摊薄了头级稀疏差异。</p>
   </div>
 
+  <h3>7.1b 但并非所有稀疏都与 Ring 兼容：需要全局视野的机制会架构性冲突</h3>
+
+  <p>这是本次调研中<strong>最需要引起项目注意的反向结论</strong>。社区对 NSA（Native Sparse Attention）
+    做 context parallel 实现时，明确给出了下列兼容性判定：</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>CP 策略</th><th>与 NSA 的兼容性</th><th>关键限制</th></tr></thead>
+    <tbody>
+      <tr><td>DeepSpeed-Ulysses</td><td><span class="part">⚠ 部分兼容</span></td><td>受 KV head 数约束；NSA 通常只用 2–4 个 KV head，会产生额外通信与 topk 计算；仅适合不太长的序列（≤32K）</td></tr>
+      <tr><td><strong>Ring Attention</strong></td><td><span class="no">❌ 不适用</span></td><td><strong>位置敏感性（position sensitivity）</strong></td></tr>
+      <tr><td>All-Gather</td><td><span class="yes">✅ 最优选择</span></td><td>可扩展性最好</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>其给出的两条架构性理由是：</p>
+  <div class="card bad">
+    <ol>
+      <li><strong>NSA 的 compress / select 模块与 Ring 的根本冲突。</strong>
+        NSA 的压缩分支要产出 <code class="i">K̃_t^cmp = { φ(k_{id+1 : id+l}) }</code>，
+        选择分支的重要性分数直接复用压缩分支的注意力分数
+        <code class="i">p_t^cmp = Softmax(q_t^T K̃_t^cmp)</code>，再做<strong>全局 top-n 排序</strong>
+        <code class="i">I_t = { i | rank(p_t^slc'[i]) ≤ n }</code>，
+        并且要在 GQA 组内跨 head 求和以保证块选择一致
+        （<code class="i">p_t^slc' = Σ_h p_t^slc,(h)</code>，原文明确 "consistent block selection across
+        these heads has to be ensured"）。
+        <strong>top-n 是全局操作，而 Ring 下每个 rank 只持有一段 KV——排序无法在本地完成。</strong></li>
+      <li><strong>NSA 需要绝对位置语义</strong>，而 Ring 的块在环上流转时位置信息是间接的。</li>
+    </ol>
+    <p class="src">来源：mdy666/Scalable-Flash-Native-Sparse-Attention 的 CP 策略兼容性判定表（第三方实现，
+      基于 NSA 原论文 arXiv 2502.11089）。<strong>这是实现者的工程结论，不是 DeepSeek 官方 NSA 论文的结论</strong>，
+      但两条理由都是架构性的、可复核。</p>
+  </div>
+
+  <div class="card warn">
+    <h4>对本项目的判定清单</h4>
+    <p>上昇腾前，先用这两个问题筛掉不兼容的稀疏算法：</p>
+    <ul>
+      <li><strong>稀疏决策是否需要全局 K？</strong> 需要（全局 top-n、全局排序、跨全序列聚合）→ 与 Ring 冲突。
+        不需要（固定模式、局部窗口、块内自洽的选择）→ 与 Ring 兼容。</li>
+      <li><strong>是否需要绝对位置语义？</strong> 需要且依赖全局位置编号 → 风险高；
+        改用「全局对齐的块 ID 网格」可缓解（见 7.2）。</li>
+    </ul>
+    <p><strong>昇腾 SFA / LightningIndexer 的定位需要实测确认</strong>：
+      若 LightningIndexer 的块选择是在「每个 query 可见的 KV 范围」内做的局部选择，
+      则与 Ring 兼容；若它内部依赖跨全序列的归一化或排序，则需要按 7.2 的方案改造。
+      这一点在本报告的资料范围内<strong>无法定论，建议做一次针对性的源码/规格核实</strong>。</p>
+  </div>
+
   <h3>7.2 一个 db-SP / FVAttn 都没覆盖的昇腾特有问题：稀疏决策空间的一致性</h3>
 
   <div class="card bad">
@@ -1066,22 +1264,38 @@
 
   <h3>7.3 与因果 ring 的交互：不要重复发明负载均衡</h3>
 
-  <p>注意第 4.2 节的因果不均衡（1:2:…:P）与稀疏不均衡是两个独立来源，
-    总延迟由<strong>两者叠加后的最慢 rank</strong> 决定。落地顺序应当是：</p>
+  <p>注意第 4.2 节的因果不均衡（1:2:…:P）与稀疏不均衡是两个独立来源（<strong>仅自回归 LLM 场景</strong>；
+    DiT 只有后者），总延迟由<strong>两者叠加后的最慢 rank</strong> 决定。落地顺序应当是：</p>
 
   <ol>
-    <li>先解决因果不均衡（zigzag 切分）——这是确定性的、一次性的收益，无运行时开销。</li>
+    <li>先解决因果不均衡（zigzag 切分）——这是确定性的、一次性的收益，无运行时开销。
+      <strong>DiT 场景跳过此步。</strong></li>
     <li>再解决稀疏不均衡（RLB 或 block 级贪心）——这需要运行时机制。</li>
-    <li>最后考虑稀疏 + 量化的联合优化（SASA 式的 slack 填充可优先填「已量化、传输便宜」的块）。</li>
+    <li>最后考虑稀疏 + 量化的联合优化（见 7.4）。</li>
   </ol>
 
+  <h3>7.4 与稀疏的联合优化机会</h3>
+
+  <div class="card acc">
+    <h4>机会一：KV 块传输跳过（本项目最值得做的联合优化）</h4>
+    <p>如 4.3 节所述，朴素 Ring 有 25%–33% 的 P2P 冗余。
+      而稀疏机制<strong>本来就已经算出「哪些块重要」</strong>——
+      把这两个信息打通，就得到一个稀疏与 Ring 天然协同的优化：
+      <strong>不重要的 KV 块不参与环上流转</strong>。</p>
+    <p>这个优化的吸引力在于：它不需要新算法（稀疏已经给了决策），
+      不需要额外通信（是减少通信），且<strong>与量化正交</strong>（跳过的是块，与块内精度无关）。
+      稀疏由此从一个「让 Ring 负载不均」的负担，变成「让 Ring 传得更少」的收益来源。</p>
+    <p class="note">注意：SpargeAttn 的算法里已有 <code class="i">δ_K[j]</code> 随 KV 块加载的写法，
+      可以直接作为「块 + scale 一起沿环走」的模板参考。</p>
+  </div>
+
   <div class="card warn">
-    <h4>一个具体的联合优化机会</h4>
-    <p>SASA 的「用完 slack」逻辑与量化有一个漂亮的协同点：
+    <h4>机会二：用精度兑换 slack（本文推断，未见公开工作）</h4>
+    <p>SASA 的「用完残余 slack」逻辑与量化有一个协同点：
       <strong>在残余 slack 内追加的块，如果用低精度（FP4/FP8）计算，同样的时间预算能覆盖更多块。</strong>
-      也就是说，<em>在非关键 rank 上用更低精度换更大掩码覆盖</em>，
-      在数学上等价于「把 slack 兑换成 attention 质量」。
-      这是一个 db-SP/FVAttn 都没有提出的方向，<strong>建议作为后续工作</strong>（本文推断，未见公开工作）。</p>
+      也就是<em>在非关键 rank 上用更低精度换更大掩码覆盖</em>，
+      数学上等价于「把 slack 兑换成 attention 质量」。
+      db-SP 与 FVAttn 都没有提出这个方向，<strong>建议作为后续工作</strong>。</p>
   </div>
 </section>
 
@@ -1317,7 +1531,7 @@
 
 <!-- ============================================================ 10 -->
 <section id="s10">
-  <h2><span class="n">10</span>风险、未解决问题与验证口径</h2>
+  <h2><span class="n">10</span>风险、反向结论与验证口径</h2>
 
   <h3>10.1 已知风险清单</h3>
 
@@ -1336,25 +1550,118 @@
   </table>
   </div>
 
-  <h3>10.2 本报告未能解决的问题（明确标注）</h3>
+  <h3>10.2 本报告检索到的重要反向结论</h3>
+
+  <div class="card bad">
+    <h4>反向结论 1：Ring Attention 与 NSA 类稀疏「架构性不兼容」</h4>
+    <p>社区对 NSA 的 context parallel 实现明确判定 <strong>Ring「Not suitable」</strong>，
+      理由是 NSA 的 compress/select 需要全局 K 与绝对位置（详见 7.1b 节）。
+      <strong>这意味着「稀疏 + Ring」不是一个无条件成立的组合</strong>——
+      必须先按 7.1b 的两个问题筛掉需要全局视野的稀疏算法。</p>
+    <p>对本项目的直接影响：<strong>在上稀疏之前，必须核实 LightningIndexer 的块选择是局部的还是全局的。</strong></p>
+  </div>
 
   <div class="card warn">
-    <h4>公开证据缺口</h4>
+    <h4>反向结论 2：Ring 在 decode 阶段是负收益</h4>
+    <p>Meta 的百万 token CP 工作（MLSys 2025）实测：<strong>TTIT 随 CP 增大而上升</strong>
+      （CP=1/2/4 时为 46 / 60 / 71 ms），论文因此建议 <strong>prefill / decode 解耦（PD 分离）</strong>。
+      原因是 decode 阶段每步只有 1 个 token，通信无法被计算掩盖。</p>
+    <p>对本项目的直接影响：<strong>Ring 的收益集中在 prefill 阶段。</strong>
+      如果生成模型的推理是「长 prefill + 长 decode」（自回归视频/LLM），
+      应当把 Ring 只用于 prefill，并采用 PD 分离架构。<strong>不要指望 Ring 改善 decode 延迟。</strong></p>
+  </div>
+
+  <div class="card warn">
+    <h4>反向结论 3：低精度 attention 在视频生成上不是免费的</h4>
+    <p>SageAttention 论文的对照实验显示（CogVideoX / RTX4090）：</p>
     <ul>
-      <li><strong>「Ring + 量化 attention」的专门论文或开源实现</strong>：在调研范围内
-        <strong>未找到明确以 ring/CP 与量化 attention 叠加为主题的工作</strong>。
-        SageAttention 系列量化的是 Q/K/P/V 但目标平台是 GPU 且未针对 ring；
-        MLSys 2025 的 Context Parallelism 工作面向长序列推理但未见量化叠加。
-        这块存在<em>真实的研究空白</em>，也意味着<strong>没有现成的踩坑经验可以借鉴</strong>。</li>
-      <li><strong>「稀疏 + 量化 + 序列并行」三者同时叠加</strong>：未找到公开工作。
-        db-SP 只做稀疏 + SP，FVAttn 只做稀疏 + SP，KVQSA 只做稀疏 + 量化（无 SP）。
-        <strong>本项目的三轴叠加具有新颖性，同时也没有参照物。</strong></li>
-      <li><strong>昇腾平台上的 ring 实测数据</strong>：vllm-ascend 与 MindIE-SD 均无 ring 实现，
-        因此没有任何昇腾 ring 的性能/精度公开数据。所有性能预期只能通过 P0/P1 自测获得。</li>
+      <li>全精度：CogVideo Fscore <strong>3.768</strong>，Unidiffuser FID <strong>163.33</strong></li>
+      <li>SageAttention（smooth K + per-block INT8）：Fscore <strong>3.718</strong>，FID 166.93 —— 基本无损</li>
+      <li><strong>FlashAttention-3 的 FP8 实现：Fscore 3.394，Unidiffuser FID 恶化到 394.13</strong></li>
+      <li>不做 smooth K 的朴素量化：Fscore 崩到 <strong>1.902–2.014</strong>（画面基本损坏）</li>
+    </ul>
+    <p>对本项目的直接影响：<strong>「用 FP8 就行」是一个危险的假设。</strong>
+      昇腾 QFA 支持 FP8/HiFloat8/FP4 多种格式，但<strong>格式选择必须逐案做质量验收</strong>，
+      而平滑（smooth K/Q）这类消除 outlier 的前置步骤在生成任务上可能是必需的、
+      而非可选的优化。注意平滑统计量的全局性问题见 6.2b 节。</p>
+  </div>
+
+  <h3>10.3 公开证据缺口（已明确标注）</h3>
+
+  <div class="card">
+    <h4>三处真实空白</h4>
+    <ul>
+      <li><strong>「Ring / CP + 量化 attention 算子」：未检索到任何论文。</strong>
+        SageAttention / SageAttention2 / FA3 全部是单卡 kernel 论文；SageAttention 的 related work
+        仅用一句话提到 RingAttention，无任何结合设计或实验。最接近的工程实现是
+        <strong>DAX</strong>（SageAttention2 + sequence parallel）与
+        <strong>xDiT + AMD Quark</strong>（命令中明确同时开
+        <code class="i">--ring_degree 2 --ulysses_degree 2</code> 与 fp8 量化，
+        但<strong>量化范围是 Linear 层，不是 attention</strong>）。</li>
+      <li><strong>「Ring + 稀疏 + 量化」三者同时叠加：未检索到。</strong>
+        但找到最接近的系统 <strong>OSP-Next</strong>（见下）。</li>
+      <li><strong>昇腾平台上的 ring 实测数据：不存在公开数据。</strong>
+        vllm-ascend 与 MindIE-SD 均无 ring 实现，因此所有性能预期只能通过 P0 / P1 自测获得。</li>
     </ul>
   </div>
 
-  <h3>10.3 验证口径建议</h3>
+  <div class="card ok">
+    <h4>最重要的对照基线：OSP-Next（建议直接研究）</h4>
+    <p>Yunyang Ge 等（北京大学 PKU-YuanGroup / Open-Sora Plan 团队），
+      <strong>arXiv 2605.28691</strong>，2026-05-27。
+      这是检索到的<strong>唯一同时覆盖「稀疏注意力 + 序列并行 + 8bit 量化」的完整系统</strong>，
+      且是视频生成场景。四项协同设计：</p>
+    <ul>
+      <li><strong>Skiparse-2D Attention</strong>：为图像/视频定制的固定规则稀疏模式，
+        沿高与宽独立施加，质量接近 3D Full Attention，
+        且<strong>原生兼容 FlashAttention kernel（不需要自写 Triton/CUDA）</strong>。</li>
+      <li><strong>Sparse Sequence Parallelism (SSP)</strong>：相比 Ulysses SP，
+        <strong>降低 inter-rank 通信量 75%</strong>，每块通信步数<strong>从 4 步降到 1 步</strong>；
+        通过单次 All-to-All 完成子序列划分与稀疏模式切换。</li>
+      <li><strong>HiF8 量化（NPU only）</strong>：动态精度的 HiF8，per-tensor 指数/尾数分配，
+        在稀疏模型之上施加；论文称是<strong>首个证明 8bit 量化与稀疏模型微调可联合进行</strong>的工作。</li>
+      <li><strong>Mix-GRPO 强化学习</strong>：首个在稀疏视频生成模型上做 RL。</li>
+    </ul>
+    <p><strong>实测（5 秒 / 81 帧 / 14B，基线为 Wan2.1 full-attention）</strong>：</p>
+    <div class="tw">
+    <table>
+      <thead><tr><th>配置</th><th>720P</th><th>768P</th></tr></thead>
+      <tbody>
+        <tr><td>NVIDIA H200（BF16, FA3+compile）</td><td>1.53× 单卡 / 1.42× 8 卡</td><td>1.64× 单卡 / 1.52× 8 卡</td></tr>
+        <tr><td><strong>Ascend 950PR（BF16, SDPA）</strong></td><td>1.27× 单 NPU</td><td>1.76× 单 NPU</td></tr>
+        <tr><td><strong>Ascend 950PR（HiF8 8-bit）</strong></td><td>1.69× 单 NPU</td><td><strong>2.27× 单 NPU</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>VBench：OSP-Next <strong>83.73%</strong> vs Wan2.1 基线 83.69%；HiF8 版 <strong>83.29%</strong>
+      （约 −0.4，注：摘要写「0.4% drop」、README 写「−0.4 pt」，<strong>两处表述不一致</strong>）。</p>
+    <p><strong>但必须注意三点限定</strong>：① 其并行是<strong>自研 SSP（All-to-All 类），不是 ring</strong>；
+      ② HiF8 <strong>仅 NPU 可用</strong>，需 CANN 8.5.0 + Ascend 950PR，依赖上游 HiFloat8 仓库；
+      ③ 它需要<strong>稀疏模型微调</strong>（非 training-free），且并行配置有约束
+      <code class="i">sp_size × skiparse_sp_size ≤ fsdp_size</code>。</p>
+    <p>因此它<strong>不是</strong>「Ring + 稀疏 + 量化」的先例，但它是
+      「稀疏 + 序列并行 + 8bit 量化在昇腾视频生成上可行」的<strong>最强证据</strong>，
+      其稀疏掩码如何切分、量化如何与并行协同的工程细节值得直接借鉴。</p>
+  </div>
+
+  <div class="card">
+    <h4>其他未取证的缺口（诚实记录）</h4>
+    <ul>
+      <li>Meta CP 论文（arXiv 2411.01783）的负载均衡伪代码与部分数值表</li>
+      <li>Striped Attention 的逐模型加速比表</li>
+      <li>NSA 论文 §5 的具体 speedup 倍率</li>
+      <li>SageAttention2 的实验精度表</li>
+      <li>xDiT §5.2–5.3 的逐模型加速比与显存表</li>
+      <li>MagiAttention / DAX / MoBA 的部分 benchmark（原文仅以图片给出，无可引用数值）</li>
+      <li><strong>SAAP 与「Sparse Flash Attention」类工作：未检索到可靠原文，故本报告完全未涉及。</strong></li>
+    </ul>
+    <p class="note">另需注意三处论文编号已在调研中订正：
+      <strong>arXiv 2407.08608 就是 FlashAttention-3 本身</strong>（不是独立的「FA3 FP8」论文）；
+      <strong>xDiT 是 arXiv 2411.01738</strong>（2405.07719 是 USP）；
+      <strong>SageAttention2 的标题是 Per-thread INT4 Quantization</strong>（INT8 是其 Hopper 变体 SageAttention2-8b）。</p>
+  </div>
+
+  <h3>10.4 验证口径建议</h3>
 
   <div class="grid2">
     <div class="card">
@@ -1415,39 +1722,111 @@
 
   <h3>序列并行与 Ring Attention</h3>
   <ol start="3">
-    <li>Liu Hao, et al. <strong>Ring Attention with Blockwise Transformers for Near-Infinite Context.</strong>
-      arXiv:2310.01889. <a href="https://arxiv.org/abs/2310.01889">link</a></li>
-    <li>Brandon Cui, et al. <strong>Striped Attention: Faster Ring Attention for Causal Transformers.</strong>
-      arXiv:2311.09431. <a href="https://arxiv.org/abs/2311.09431">link</a></li>
+    <li>Hao Liu, Matei Zaharia, Pieter Abbeel. <strong>Ring Attention with Blockwise Transformers
+      for Near-Infinite Context.</strong> arXiv:2310.01889.
+      <a href="https://arxiv.org/abs/2310.01889">link</a></li>
+    <li>William Brandon, et al. <strong>Striped Attention: Faster Ring Attention for Causal
+      Transformers.</strong> arXiv:2311.09431. <a href="https://arxiv.org/abs/2311.09431">link</a></li>
     <li>Sam Ade Jacobs, et al. <strong>DeepSpeed Ulysses: System Optimizations for Enabling
       Training of Extreme Long Sequence Transformer Models.</strong> arXiv:2309.14509.
       <a href="https://arxiv.org/abs/2309.14509">link</a></li>
-    <li>Jiarui Fang, Jiezhong Qiu, et al. <strong>USP: A Unified Sequence Parallelism Approach
-      for Long Context LLM Training.</strong> arXiv:2405.07719.
+    <li>Jiarui Fang, Shangchun Zhao. <strong>USP: A Unified Sequence Parallelism Approach for
+      Long Context Generative AI.</strong> arXiv:2405.07719.
       <a href="https://arxiv.org/abs/2405.07719">link</a></li>
-    <li><strong>Context Parallelism for Scalable Million-Token Inference.</strong> MLSys 2025.
-      <a href="https://mlsys.org/media/mlsys-2025/Slides/3255.pdf">slides</a></li>
+    <li>Amy (Jie) Yang, et al. (Meta). <strong>Context Parallelism for Scalable Million-Token
+      Inference.</strong> arXiv:2411.01783, MLSys 2025.
+      <a href="https://arxiv.org/abs/2411.01783">abs</a> ·
+      <a href="https://arxiv.org/html/2411.01783v3">HTML</a> ·
+      <a href="https://mlsys.org/media/mlsys-2025/Slides/3255.pdf">slides</a><br>
+      <span class="note">128×H100 / 16 节点；1M context（Llama3 405B）prefill 77s、93% 并行效率、
+      63% FLOPS 利用率；128K prefill 3.8s。主干是 ring（pass-KV / pass-Q 两个精确变体），
+      zigzag 双块配对（rank i 取 chunk[i] 与 chunk[2N−i−1]）。<strong>decode 为负收益</strong>，
+      建议 PD 分离。</span></li>
+    <li>NVIDIA Megatron-LM. <strong>Context Parallel Package 官方文档</strong>（含 cp_comm_type
+      的 p2p / all_gather / a2a / a2a+p2p 四种模式）.
+      <a href="https://github.com/NVIDIA/Megatron-LM/blob/main/docs/user-guide/features/context_parallel.md">link</a></li>
+    <li>SandAI. <strong>MagiAttention 技术博客</strong>（ring P2P 冗余定量、dispatch solver、
+      多阶段重叠）.
+      <a href="https://github.com/SandAI-org/MagiAttention/blob/main/docs/source/blog/magi_attn.md">link</a></li>
   </ol>
 
   <h3>量化与稀疏 Attention</h3>
-  <ol start="8">
+  <ol start="11">
     <li>Jintao Zhang, et al. <strong>SageAttention: Accurate 8-Bit Attention for Plug-and-play
-      Inference Acceleration.</strong> arXiv:2410.02367. <a href="https://arxiv.org/abs/2410.02367">link</a></li>
+      Inference Acceleration.</strong> arXiv:2410.02367.
+      <a href="https://arxiv.org/abs/2410.02367">link</a><br>
+      <span class="note">smooth K（γ(K)=K−mean(K)，开销 &lt;0.2%）；Q/K→INT8 per-block，P/V 留 FP16。
+      表 1 给出视频生成质量对照：全精度 Fscore 3.768 / FA3-FP8 3.394 / 无 smooth 崩到 1.902。</span></li>
     <li>Jintao Zhang, et al. <strong>SageAttention2: Efficient Attention with Thorough Outlier
-      Smoothing and Per-thread INT4 Quantization.</strong> arXiv:2411.10958.
-      <a href="https://arxiv.org/abs/2411.10958">link</a></li>
+      Smoothing and <em>Per-thread INT4</em> Quantization.</strong> arXiv:2411.10958.
+      <a href="https://arxiv.org/abs/2411.10958">link</a><br>
+      <span class="note">Q/K→INT4 per-thread（对齐 PTX mma 线程↔内存映射，零反量化开销）；
+      指出 FP8 matmul 的 FP32 accumulator 实际是 FP22（1+8+13），需两级累加。</span></li>
     <li>Jay Shah, et al. <strong>FlashAttention-3: Fast and Accurate Attention with Asynchrony
-      and Low-precision.</strong> arXiv:2407.08608. <a href="https://arxiv.org/abs/2407.08608">link</a></li>
-    <li>Jingyang Yuan, et al. <strong>Native Sparse Attention: Hardware-Aligned and
-      Natively Trainable Sparse Attention.</strong> arXiv:2502.11089.
-      <a href="https://arxiv.org/abs/2502.11089">link</a></li>
-    <li>Jintao Zhang, et al. <strong>SpargeAttn: Accurate Sparse Attention Accelerating
-      Any Model and Any Resolution.</strong> arXiv:2502.18137.
-      <a href="https://arxiv.org/abs/2502.18137">link</a></li>
+      and Low-precision.</strong> arXiv:2407.08608. <a href="https://arxiv.org/abs/2407.08608">link</a><br>
+      <span class="note">⚠ 编号订正：<strong>2407.08608 就是 FA3 本身</strong>，
+      FP8 是其中一项贡献，不是另一篇独立论文。FP8 用 per-block scale + Hadamard incoherent
+      processing（误差 2.4e-2 → 9.1e-3，且消融显示 Hadamard 是主贡献项）。</span></li>
+    <li>Jingyang Yuan, et al. (DeepSeek-AI / PKU / UW). <strong>Native Sparse Attention:
+      Hardware-Aligned and Natively Trainable Sparse Attention.</strong> arXiv:2502.11089.
+      <a href="https://arxiv.org/abs/2502.11089">link</a><br>
+      <span class="note">三分支 gate 聚合（compress / select / window）；
+      select 的重要性分数复用 compress 分支，需全局 top-n 与 GQA 组内跨 head 一致的块选择——
+      这正是它与 Ring 架构性冲突的根源（见 7.1b）。</span></li>
+    <li>第三方便实现：<strong>Scalable-Flash-Native-Sparse-Attention</strong>（NSA 的 CP 实现，
+      含「Ring Attention ❌ Not suitable」判定表）.
+      <a href="https://github.com/mdy666/Scalable-Flash-Native-Sparse-Attention">link</a></li>
+    <li>Jintao Zhang, et al. <strong>SpargeAttn: Accurate Sparse Attention Accelerating Any Model
+      and Any Resolution.</strong> ICML 2025, arXiv:2502.18137.
+      <a href="https://arxiv.org/abs/2502.18137">link</a><br>
+      <span class="note">「稀疏 + 量化」的单卡代表工作；算法中含 <code class="i">δ_K[j]</code>
+      随 KV 块加载的写法，可作为「块 + scale 一起沿环走」的模板。</span></li>
+    <li>Enzhe Lu, et al. (Moonshot AI). <strong>MoBA: Mixture of Block Attention for Long-Context
+      LLMs.</strong> arXiv:2502.13189. <a href="https://arxiv.org/abs/2502.13189">link</a></li>
+    <li>Yizhao Gao, et al. (Microsoft). <strong>SeerAttention: Self-distilled Attention Gating.</strong>
+      arXiv:2410.13276. <a href="https://arxiv.org/abs/2410.13276">link</a></li>
+    <li>Huiqiang Jiang, et al. (Microsoft). <strong>MInference 1.0.</strong> NeurIPS 2024 Spotlight,
+      arXiv:2407.02490. <a href="https://arxiv.org/abs/2407.02490">link</a></li>
+    <li>⚠ <strong>编号订正</strong>：BurstAttention 的正确编号是 <strong>arXiv:2403.09347</strong>
+      （不是 2406.16835）。它是 ring 式 SP + double-buffer 重叠，<strong>不含 rank 间负载均衡算法</strong>。
+      <a href="https://arxiv.org/abs/2403.09347">link</a></li>
+    <li>DSV. <strong>稀疏感知 context parallelism（训练场景）.</strong> arXiv:2502.07590, ASPLOS'26.
+      <a href="https://arxiv.org/abs/2502.07590">link</a><br>
+      <span class="note">「稀疏 × CP」最完整的系统级工作：128 GPU / 520k token，
+      动态按 head 异质稀疏度重平衡计算，吞吐 3.02×。</span></li>
+  </ol>
+
+  <h3>DiT / 视频生成场景与三轴叠加</h3>
+  <ol start="22">
+    <li>Yunyang Ge, Xianyi He, Zezhong Zhang, Bin Lin, Bin Zhu, Xinhua Cheng, Li Yuan
+      (PKU-YuanGroup). <strong>OSP-Next: Efficient High-Quality Video Generation with Sparse
+      Sequence Parallelism, HiF8 Quantization, and Reinforcement Learning.</strong>
+      arXiv:2605.28691, 2026-05-27.
+      <a href="https://arxiv.org/abs/2605.28691">abs</a> ·
+      <a href="https://arxiv.org/html/2605.28691v1">HTML</a> ·
+      <a href="https://github.com/PKU-YuanGroup/OSP-Next">code</a><br>
+      <span class="note"><strong>本项目最重要的对照基线</strong>：唯一同时覆盖
+      「稀疏 + 序列并行 + 8bit 量化」的视频生成系统；Ascend 950PR 上 HiF8 达 2.27×（768P），
+      VBench 83.29% vs 基线 83.69%。但并行是 All-to-All 类（SSP），非 ring。</span></li>
+    <li>Jiarui Fang, Jinzhe Pan, Xibo Sun, Aoyu Li, Jiannan Wang.
+      <strong>xDiT: an Inference Engine for Diffusion Transformers (DiTs) with Massive
+      Parallelism.</strong> arXiv:2411.01738.
+      <a href="https://arxiv.org/abs/2411.01738">abs</a> ·
+      <a href="https://arxiv.org/html/2411.01738v1">HTML</a> ·
+      <a href="https://github.com/xdit-project/xDiT">code</a><br>
+      <span class="note">⚠ 编号订正：xDiT 是 <strong>2411.01738</strong>（2405.07719 是 USP，同作者）。
+      给出 Table 1 的 SP-Ring / SP-Ulysses / TP / DistriFusion / PipeFusion 通信与显存对比。
+      明确指出 <strong>DiT 用 full attention</strong>，故因果负载不均不存在。</span></li>
+    <li>RiseAI-Sys. <strong>DAX</strong>（SageAttention2 量化 attention + sequence parallelism +
+      quant/comm op 融合）.
+      <a href="https://github.com/RiseAI-Sys/DAX">code</a></li>
+    <li>AMD. <strong>Quark 官方文档：xDiT Inference with Quark Quantization</strong>
+      （含同时开启 ring + Ulysses + fp8 的 8 卡命令；<strong>但量化范围是 Linear 层</strong>）.
+      <a href="https://quark.docs.amd.com/latest/pytorch/example_quark_torch_xdit.html">link</a></li>
   </ol>
 
   <h3>本地代码与文档核查（昇腾）</h3>
-  <ol start="13">
+  <ol start="26">
     <li>CANN <code class="i">ops-transformer</code> · <code class="i">attention/ring_attention_update/</code>：
       README.md、<code class="i">docs/aclnnRingAttentionUpdate.md</code>、
       <code class="i">docs/aclnnRingAttentionUpdateV2.md</code>、<code class="i">op_host/ring_attention_update_tiling.h</code></li>
@@ -1471,13 +1850,21 @@
     <h4>报告口径声明</h4>
     <ul>
       <li><strong>事实</strong>（已核实）：昇腾算子功能/约束/枚举值、框架代码路径与调用关系、
-        两篇论文的摘要与方法描述与实验数字，均来自上述来源的直接读取。</li>
+        各论文的摘要与方法描述与实验数字，均来自上述来源的直接读取。</li>
       <li><strong>推算</strong>（已标注）：5.2 节的 workspace 上界换算表、
-        第 3 节与 6.2 节的通信量/显存公式代入数值、第 4.2 节图 3 的加速上限示意值。</li>
+        第 3 节与 6.2 节的通信量/显存公式代入数值、第 4 节图 3 的加速上限示意值。</li>
       <li><strong>推断/建议</strong>（已标注）：第 7.2 节的稀疏决策一致性解法、
-        第 7.3 节的「slack 兑换精度」方向、第 9 节的分阶段方案与排期建议——
+        第 7.4 节的两个联合优化方向、第 9 节的分阶段方案与排期建议——
         这些是基于事实的工程判断，<strong>尚无公开工作验证</strong>。</li>
-      <li><strong>未找到证据</strong>：见 10.2 节，已明确列出三处公开证据缺口。</li>
+      <li><strong>第三方来源提示</strong>：7.1b 节的「Ring 与 NSA 不兼容」判定来自
+        <strong>第三方开源实现</strong>（mdy666/Scalable-Flash-Native-Sparse-Attention），
+        不是 DeepSeek 官方 NSA 论文的结论。其两条理由（需全局 top-n、需绝对位置）
+        是架构性的、可独立复核，但引用时请注明来源性质。</li>
+      <li><strong>未找到证据</strong>：见 10.3 节，已明确列出三处真实空白与七处未取证的数值缺口。</li>
+      <li><strong>已订正的三处论文编号</strong>：FA3 = arXiv 2407.08608（非独立的「FA3 FP8」论文）；
+        xDiT = arXiv 2411.01738（2405.07719 是 USP）；
+        BurstAttention = arXiv 2403.09347（非 2406.16835）。
+        SageAttention2 的标题是 <em>Per-thread INT4 Quantization</em>（非 INT8）。</li>
     </ul>
   </div>
 </section>
