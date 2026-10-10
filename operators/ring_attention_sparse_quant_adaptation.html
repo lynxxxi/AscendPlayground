@@ -163,11 +163,12 @@
     <li><a href="#s3"><span class="num">03</span>为什么 Top-k 在 Ring 上不成立</a></li>
     <li><a href="#s4"><span class="num">04</span>OSP-Next 为什么只需一次 All-to-All</a></li>
     <li><a href="#s5"><span class="num">05</span>适配 Ring 的两条工程路线</a></li>
-    <li><a href="#s6"><span class="num">06</span>量化 × Ring：scale 作用域分析</a></li>
-    <li><a href="#s7"><span class="num">07</span>量化在环上的四个断点</a></li>
-    <li><a href="#s8"><span class="num">08</span>负载均衡：不均衡真的存在吗</a></li>
-    <li><a href="#s9"><span class="num">09</span>落到昇腾的算子映射</a></li>
-    <li><a href="#s10"><span class="num">10</span>参考文献</a></li>
+    <li><a href="#s6"><span class="num">06</span>主流稀疏算法的 Ring 适配逐案判定</a></li>
+    <li><a href="#s7"><span class="num">07</span>量化 × Ring：scale 作用域分析</a></li>
+    <li><a href="#s8"><span class="num">08</span>量化在环上的四个断点</a></li>
+    <li><a href="#s9"><span class="num">09</span>负载均衡：不均衡真的存在吗</a></li>
+    <li><a href="#s10"><span class="num">10</span>落到昇腾的算子映射</a></li>
+    <li><a href="#s11"><span class="num">11</span>参考文献</a></li>
   </ol>
 </nav>
 
@@ -288,7 +289,7 @@
         <td><strong>数据依赖动态 Top-k</strong><br><span class="src">SpargeAttn、SVG2、VSA、MoBA</span></td>
         <td><strong>Q 与 K 的相似度分数</strong></td>
         <td class="no">❌ 不成立</td>
-        <td>需要全序列打分 → 见第 3 节逐步拆解</td>
+        <td>需要全序列打分 → 见第 3 节拆解；第 6 节有 AdaSpa / RainFusion / Sol-Attn / VSA / SLA 的逐案判定</td>
       </tr>
       <tr>
         <td><strong>全局 compress + select</strong><br><span class="src">NSA</span></td>
@@ -679,7 +680,408 @@ all_to_all_single(recv, x, group=group)
 
 <!-- ============================================ 6 -->
 <section id="s6">
-  <h2><span class="n">06</span>量化 × Ring：scale 作用域分析</h2>
+  <h2><span class="n">06</span>主流稀疏算法的 Ring 适配逐案判定</h2>
+
+  <p>用第 2 节的判定规则，对当前视频生成领域几个主流稀疏算法做逐案分析。
+    每个案例统一按三个问题拆解：<strong>决策依据是什么</strong>、<strong>决策在哪一步做出</strong>、
+    <strong>Ring 上会撞到哪条硬约束</strong>。</p>
+
+  <div class="tw">
+  <table>
+    <thead>
+      <tr><th>算法</th><th>稀疏粒度</th><th>决策依据</th><th>Ring 适配</th><th>一句话结论</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>AdaSpa</strong><br><span class="src">arXiv 2502.21079<br>北大 / 字节</span></td>
+        <td>块级<br>（frame-region 分层）</td>
+        <td>warm-up 步精确搜索<br>+ 跨步不变性复用</td>
+        <td class="yes">✅ 最强候选</td>
+        <td>掩码「算一次、用到底」，<strong>稀疏执行期是纯位置算术</strong>；只需一次性全局代价</td>
+      </tr>
+      <tr>
+        <td><strong>RainFusion</strong><br><span class="src">arXiv 2505.21036<br>华为</span></td>
+        <td>head 级<br>（三型掩码）</td>
+        <td>位置坐标<br>+ 首帧/等间隔采样分类</td>
+        <td class="yes">✅ 可适配</td>
+        <td>掩码本身是位置决定的；<strong>只需把 head 分类结果广播一次 + 逐头均衡</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Sol-Attn</strong><br><span class="src">arXiv 2607.24027<br>NVIDIA</span></td>
+        <td>块级<br>（阈值路由）</td>
+        <td>块代理分数<br>vs <strong>本地阈值</strong></td>
+        <td class="part">⚠ 需改阈值</td>
+        <td><strong>它已经做到流式消费</strong>（不物化代理图）；但阈值来自全局行统计量，要把阈值改成离线标定的常量</td>
+      </tr>
+      <tr>
+        <td><strong>VSA</strong><br><span class="src">trainable coarse-to-fine</span></td>
+        <td>tile 级<br>+ token 级</td>
+        <td>tile 重要性 <strong>top-k</strong></td>
+        <td class="no">❌ 不成立</td>
+        <td>需要全序列 tile 排序（障碍一、二）；且<strong>尚未提供原生 FlashAttention 内核</strong></td>
+      </tr>
+      <tr>
+        <td><strong>SLA</strong><br><span class="src">arXiv 2509.24006<br>清华 / Berkeley</span></td>
+        <td>块级三分类<br>critical / marginal / negligible</td>
+        <td>pooled Q·K 的<br><strong>top-k<sub>h</sub>% / bottom-k<sub>l</sub>%</strong></td>
+        <td class="no">❌ 不成立</td>
+        <td>同样是全局排序；线性注意力部分本身可分布，但 critical 路由需要全局排名</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card p2">
+    <h4>一个可以把判定浓缩到一句话的区分</h4>
+    <p>把上面五个案例放在一起看，会发现真正的分水岭<strong>不是「数据依赖 vs 位置依赖」，而是「排序 vs 阈值」</strong>：</p>
+    <div class="eq">
+      <span class="cm"># 排序型（top-k / top-p / bottom-k）：需要完整分布才能定名次</span><br>
+      → 必须物化整行分数 → <span class="hl">不可流式 → 与 Ring 不兼容</span><br><br>
+      <span class="cm"># 阈值型：单个块到达即可判定「过 / 不过」</span><br>
+      → 空间 O(1)、可流式 → <span class="hl">与 Ring 兼容</span><br><br>
+      <span class="cm"># 关键：Sol-Attn 正是从排序型迁移到了阈值型</span><br>
+      <span class="cm"># 它的原文批评 top-k「enforcing a uniform budget」、top-p「risking severe budget imbalance」，</span><br>
+      <span class="cm"># 而「both materialize the proxy score map ... before sparse attention begins」——</span><br>
+      <span class="cm"># 这句正是 Ring 的障碍一在单卡上的同构表现。</span>
+    </div>
+    <p><strong>所以判定表应该补一列维度</strong>：一个稀疏方法若用<em>排序</em>选块，它在 Ring 上
+      需要先解决「全序列排名」；若用<em>阈值</em>选块，它在 Ring 上是天然可流式的。
+      这是本次逐案分析最重要的结论。</p>
+  </div>
+
+  <h3>6.1 AdaSpa（arXiv 2502.21079 · 北大 / 字节）—— 最强候选</h3>
+
+  <p class="src">Yifei Xia, Suhan Ling, Fangcheng Fu, Yujie Wang, Huixia Li, Xuefeng Xiao, Bin Cui ·
+    <a href="https://arxiv.org/abs/2502.21079">abs</a></p>
+
+  <div class="card p2">
+    <h4>它的两个核心机制</h4>
+    <ol>
+      <li><strong>块化模式（blockified pattern）</strong>：论文观察到 DiT 的稀疏结构是
+        <em>hierarchical and blockified</em>——视频 token 按 frame region 分层，
+        连续型模式（col / diag）无法刻画，而块化模式 Recall 最好。</li>
+      <li><strong>跨去噪步不变性 + Fused LSE-Cached Online Search</strong>：
+        论文实测「<em>sparse pattern 与 LSE 随输入、层、head 变化，但在去噪步之间保持不变</em>」。
+        因此可以在 warm-up 步做一次精确搜索，把掩码复用给后续所有步；
+        并用缓存的 LSE 把后续搜索的耗时压到 full attention 的 <strong>5% 以下</strong>。</li>
+    </ol>
+  </div>
+
+  <div class="card p2">
+    <h4>为什么它对 Ring 最友好</h4>
+    <ul>
+      <li><strong>稀疏执行期是纯位置算术。</strong>一旦掩码确定，每个 rank 收到一个 KV 块时，
+        「我本地这段 Q 该不该和这个块算」就是一次查表/整数比较——<strong>完全本地，零通信</strong>。
+        这满足 C1 与 C3。</li>
+      <li><strong>块化模式与 Ring 的块边界天然同构。</strong>Ring 本来就是按块传输和按块计算的，
+        而 AdaSpa 的稀疏也是块级的——<strong>两者粒度可以直接对齐</strong>，
+        不需要任何重排或变换。</li>
+      <li><strong>掩码可以按 head 独立计算</strong>（论文明确说 head-adaptive）。
+        因此「每个 rank 各自维护本地 Q 段所需的掩码」在语义上是成立的。</li>
+    </ul>
+  </div>
+
+  <div class="card p3">
+    <h4>代价与前提（诚实标注）</h4>
+    <ul>
+      <li><strong>掩码搜索需要一次全局代价。</strong>LSE 与稀疏索引的搜索建立在完整序列上。
+        在 Ring 上这意味着：warm-up 步要么走一次完整的 ring（那就是一次正常的前向），
+        要么退化为一次性 all-gather。</li>
+      <li><strong>但这是一次性的、可摊销的。</strong>最坏情形下 warm-up 只占 1–2 步（总步数通常 20–50 步），
+        而它换来的是<strong>其余所有步的零通信稀疏</strong>。
+        这个交易在 Ring 上非常划算——<em>用一次全局屏障，买断后续所有步的稀疏决策成本</em>。</li>
+      <li><strong>需要实测的点</strong>：掩码是在完整序列上搜出来的，
+        而 Ring 下每个 rank 只持有 <code class="i">S/P</code> 的 Q 段。
+        需要验证「在全序列上搜出的掩码，其对应 Q 段的部分能否被该 rank 直接使用」——
+        由于 LSE 是逐 query 行的量，只要索引表按全局块 ID 编号，理论上是可以的。
+        <span class="note">（这一条是本文推断，建议用最小用例验证。）</span></li>
+    </ul>
+  </div>
+
+  <h3>6.2 RainFusion（arXiv 2505.21036 · 华为）—— 可适配，需补 head 均衡</h3>
+
+  <p class="src">Aiyue Chen, Bin Dong, Jingru Li, Jing Lin, Yiwu Yao, Gongyi Wang（华为）·
+    <a href="https://arxiv.org/abs/2505.21036">abs</a> ·
+    后续版本 RainFusion2.0：<a href="https://arxiv.org/abs/2512.24086">arXiv 2512.24086</a></p>
+
+  <div class="card p2">
+    <h4>它的机制：三型 head 掩码 + 在线分类</h4>
+    <div class="tw">
+    <table>
+      <thead><tr><th>head 类型</th><th>掩码形态</th><th>对 Ring 的输入量</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Spatial Head</strong></td><td>全局条带掩码（跨帧的条带窗口）</td><td>只读本地 Q 帧 + 固定条带位置的 K 帧</td></tr>
+        <tr><td><strong>Temporal Head</strong></td><td>帧内局部窗口 + 全时域周期稀疏</td><td>本地窗口内的 K + 周期性 block</td></tr>
+        <tr><td><strong>Textural Head</strong></td><td><strong>棋盘格下采样</strong> K/V（保留 <code class="i">i mod τ = j mod τ</code>）</td><td>需要全序列 K/V 的 <code class="i">1/τ²</code> 子集</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>分类由 <strong>ARM（Adaptive Recognition Module）</strong>在线完成：
+      对 Q/K 做下采样（取首帧 token，或按等间隔 ω 采样），
+      算近似注意力分数，再计算<strong>掩码下的 recall</strong>
+      <code class="i">R' = S(Q',K',M') / S(Q',K',M_init)</code>，据此判定 head 类别。
+      开销约 <strong>0.2%</strong>。</p>
+  </div>
+
+  <div class="card p2">
+    <h4>Ring 适配分析</h4>
+    <ul>
+      <li><strong>三种掩码本身都是位置决定的</strong>→ 满足第 2 节判定规则。
+        Spatial / Temporal 掩码是块索引的算术比较，Textural 是棋盘格取模——
+        每个 rank 收到 K 块时都能本地判定，无需任何全局信息。</li>
+      <li><strong>ARM 的 head 分类可以广播一次。</strong>分类结果只有「每层 × 每 head 一个标签」，
+        数据量可忽略。关键要求是<strong>各 rank 必须对同一 head 得到相同标签</strong>——
+        否则一个 rank 按 Temporal 掩码收块、另一个按 Spatial 发块，会直接错位。
+        <em>做法：ARM 在一个 rank 上算完后广播标签（几个 bit），或让所有 rank 用同一份采样序列各算一遍（确定性一致）。</em></li>
+      <li><strong>主要适配成本在 head 级负载均衡。</strong>三种 head 的计算量差异很大
+        （Spatial 约 1/2、Temporal 更省、Textural 约 3/4），
+        而 head 的类别<strong>随输入和采样步动态变化</strong>。
+        在 Ring 下，head 是<strong>被复制</strong>的（每个 rank 都用全部 head 算自己的 Q 段），
+        所以「head 类型不均」不会直接变成 rank 间不均——<strong>这是 Ring 相对 Ulysses 的又一个优势</strong>。
+        但代价是<strong>每个 rank 都要处理全部 head 的全部类型</strong>，
+        通信量由最贵的那类 head 决定。</li>
+    </ul>
+  </div>
+
+  <div class="card p3">
+    <h4>Textural head 的额外成本：块计算与块传输的失配</h4>
+    <p>棋盘格下采样让 K/V 的<strong>计算量</strong>降到 <code class="i">1/τ²</code>，
+      但 Ring 的<strong>传输单元是块</strong>，不是「保留的 token」。
+      所以有三种选择：</p>
+    <ol>
+      <li><strong>照常传整块，rank 内只取棋盘格子集</strong>：零改造，但传输量不降
+        （通信不减少，只有计算减少）。</li>
+      <li><strong>在环上按稀疏布局传</strong>：需改造 P2P 布局，复杂度高。</li>
+      <li><strong>预先重排 + 只传子集</strong>：本质上是把稀疏性做进传输层。</li>
+    </ol>
+    <p><strong>建议先用方案 1 做功能验证</strong>——因为 Ring 的瓶颈通常在显存而非通信带宽，
+      只减少计算就已经拿到大部分收益。方案 2/3 留作后续优化。</p>
+    <p class="note">RainFusion2.0（arXiv 2512.24086）把方案推向「block-wise mean 作代表 token +
+      3D window permutation + first frame sink」，并强调<strong>硬件通用性</strong>（面向 ASIC 等非 GPU 设备）。
+      对昇腾而言这个版本更值得关注：它的稀疏掩码预测是通过<strong>块均值</strong>完成的，
+      计算形态简单、可离线标定，比依赖 GPU 特定 kernel 的方案更容易迁移。</p>
+  </div>
+
+  <h3>6.3 Sol-Attn（arXiv 2607.24027 · NVIDIA）—— 已解决障碍一，但阈值需改造</h3>
+
+  <p class="src">Haopeng Li, Yitong Li, Junsong Chen, Tian Ye, Haozhe Liu, Jincheng Yu, Duomin Wang,
+    Ruihua Zhang, Zeke Xie, Enze Xie, Song Han（NVIDIA）·
+    <a href="https://arxiv.org/abs/2607.24027">abs</a> ·
+    <a href="https://github.com/NVlabs/Sana/tree/sol-engine">code</a></p>
+
+  <div class="card p2">
+    <h4>它做对了什么：从「排序」迁移到「阈值」，并且不物化代理图</h4>
+    <p>Sol-Attn 对 top-k / top-p 的批评与本文第 3 节的障碍一<strong>在单卡上同构</strong>：</p>
+    <ul>
+      <li>top-k「enforcing a uniform budget across query blocks」——刚性预算；</li>
+      <li>top-p「risking severe budget imbalance when attention patterns are diffuse or sink-dominated」；</li>
+      <li>而且「<strong>both materialize the proxy score map and routing indices in HBM
+        before sparse attention begins</strong>, incurring non-negligible memory traffic」。</li>
+    </ul>
+    <p>它的解法是<strong>查询相关阈值</strong>：对 query block <code class="i">i</code>，
+      用其代理分数行的均值与标准差定义阈值
+      <code class="i">τ_i = μ_i + β·σ_i</code>，选块集合 <code class="i">S_i = { j : ŝ_ij > τ_i }</code>。</p>
+    <p>关键在于<strong>它把这个判定融合进了 online softmax 的流式过程</strong>：
+      逐 tile 扫 pooled-key 序列产生代理分数，<strong>在片上比较阈值</strong>，
+      过阈值的块<strong>立即</strong>被派发到嵌套的稀疏注意力循环；
+      因为「每个分数在被生成时就被消费」，所以<strong>不需要把完整代理图或路由索引写回 HBM</strong>。</p>
+  </div>
+
+  <div class="card p2">
+    <h4>这对 Ring 的意义</h4>
+    <p><strong>「分数生成即消费」正是 Ring 需要的消费模式。</strong>
+      第 3 节障碍一的本质是 Top-k 必须「先攒齐再决策」；
+      而阈值判定<strong>可以在每个 K 块到达的那一刻完成</strong>——
+      空间 O(1)、无跨块依赖。<em>Sol-Attn 在单卡上为了省 HBM 流量做的事，
+      恰好也是 Ring 为了流式化需要做的事。</em></p>
+  </div>
+
+  <div class="card bad">
+    <h4>但有两个必须处理的断点</h4>
+    <ol>
+      <li><strong>阈值本身依赖全局行统计量。</strong><code class="i">μ_i</code> 和 <code class="i">σ_i</code>
+        是 query block <code class="i">i</code> 的<strong>整行</strong>代理分数的均值与标准差——
+        在 Ring 上要精确计算就必须先看完整行。<br>
+        <strong>改造方案</strong>：论文自己给了一个可用的口径——
+        <em>「β calibrates the model-level mean density」</em>，
+        即 β 标定的是<strong>模型级</strong>的平均密度，而 <code class="i">|S_i|</code> 保持 per-query 变化。
+        因此可以把 <code class="i">τ</code> 退化为<strong>每层每 head 一个离线标定的常量阈值</strong>：
+        <code class="i">S_i = { j : ŝ_ij > τ_{layer,head} }</code>。
+        这样判定完全本地、可流式，代价是失去 per-query 的自适应性
+        （预算不再逐 query 变化，但仍是阈值型而非固定数量型）。
+        <span class="note">（此改造为本文推断，需实测密度分布的偏移量。）</span></li>
+      <li><strong>代理分数复用（proxy-score reuse）与 ring 的 LSE 合并有语义冲突。</strong>
+        Sol-Attn 把低于阈值的代理分数留在寄存器里，<strong>复用它们去近似未选中块的贡献</strong>，
+        并且「the exact and approximate branches <strong>share the same online-softmax state</strong>」。<br>
+        在 Ring 上，每个 rank 的 <code class="i">(O, m, l)</code> 会被
+        <code class="i">RingAttentionUpdate</code> 按 <code class="i">exp(m_prev − m_new)</code> 合并。
+        被跳过的块的「近似贡献」<strong>既没进入本 rank 的 m，也没进入 l</strong>，
+        因此<strong>它无法参与跨 rank 的 LSE 归一化</strong>——
+        粗略地把它加进 <code class="i">O</code> 而不调整 <code class="i">l</code>，会破坏归一化。<br>
+        <strong>可行做法</strong>：把近似修正<strong>移出 LSE 合并</strong>——
+        即在 <code class="i">RingAttentionUpdate</code> 完成归一化之后，
+        再叠加一个由代理分数还原出的低秩/线性修正项（形式上是
+        <code class="i">O_final = O_merged + Correction</code>）。
+        这样修正项不参与 softmax 归一化，语义上自洽。
+        <span class="note">（此改造为本文推断，未见公开实现。）</span></li>
+    </ol>
+  </div>
+
+  <h3>6.4 VSA —— 不成立（trainable + top-k 双重障碍）</h3>
+
+  <div class="card bad">
+    <p>VSA 采用<strong>可训练的 coarse-to-fine 稀疏</strong>：先把视频 token 分成 tile，
+      只挑高重要性的 tile 再做 token 级细粒度注意力。它撞到两个独立的障碍：</p>
+    <ul>
+      <li><strong>它属于排序型（top-k tile），不是阈值型</strong>，因此继承了第 3 节的障碍一与障碍二。
+        它需要全序列的 tile 重要性分数才能选 tile。</li>
+      <li><strong>它没有解决 FlashAttention 兼容性。</strong>OSP-Next 的 related work 明确指出：
+        trainable sparse 方法「require dynamically constructed attention masks and are typically
+        implemented with <strong>FlexAttention</strong> or custom kernels ... making them
+        <strong>difficult to natively integrate with efficient FlashAttention kernels</strong>」，
+        并且「irregular attention masks are difficult to parallelize and can lead to
+        <strong>load imbalance across different ranks</strong>」。</li>
+    </ul>
+    <p><strong>若仍要用</strong>：唯一现实的路径是把 tile 级的 top-k 也改成阈值型
+      （方案同 6.3 的断点一），先在单卡上验证精度损失，再考虑上 Ring。
+      但在本节五个案例里，它的优先级最低。</p>
+  </div>
+
+  <h3>6.5 SLA（arXiv 2509.24006 · 清华 / Berkeley）—— 不成立，但其中一半可以救</h3>
+
+  <p class="src">Jintao Zhang, Haoxu Wang, Kai Jiang, Shuo Yang, Kaiwen Zheng, Haocheng Xi,
+    Ziteng Wang, Hongzhou Zhu, Min Zhao, Ion Stoica, Joseph E. Gonzalez, Jun Zhu, Jianfei Chen
+    （清华大学 / UC Berkeley）·
+    <a href="https://arxiv.org/abs/2509.24006">abs</a> ·
+    <a href="https://github.com/thu-ml/SLA">code</a></p>
+
+  <div class="card p3">
+    <h4>它的机制：把注意力权重三分类，用不同复杂度算</h4>
+    <p>SLA 的观察是：DiT 的注意力权重可以解耦成「小部分高秩的大权重 + 大部分极低秩的权重」。
+      于是把块分成三类：</p>
+    <div class="tw">
+    <table>
+      <thead><tr><th>类别</th><th>判定</th><th>计算方式</th><th>Ring 可分布性</th></tr></thead>
+      <tbody>
+        <tr><td><strong>critical</strong></td><td>top <code class="i">k_h</code>%</td>
+          <td>稀疏 FlashAttention，<code class="i">O(N²)</code></td>
+          <td class="part">需全局排名</td></tr>
+        <tr><td><strong>marginal</strong></td><td>中间部分</td>
+          <td>线性注意力，<code class="i">O(Nd²)</code></td>
+          <td class="yes"><strong>可以</strong>：累加量 <code class="i">H_i, Z_i</code> 可跨 rank 相加</td></tr>
+        <tr><td><strong>negligible</strong></td><td>bottom <code class="i">k_l</code>%</td>
+          <td>跳过</td><td class="yes">可以</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>输出为 <code class="i">O = O^s + Proj(O^l)</code>。</p>
+  </div>
+
+  <div class="card p2">
+    <h4>值得肯定的一点：线性注意力部分是 Ring 友好的</h4>
+    <p>marginal 块的线性注意力形式是</p>
+    <div class="eq">
+      H_i = Σ_{j : M_c[i,j]=0} φ(K_j)ᵀ V_j &nbsp;&nbsp; Z_i = Σ_{j : M_c[i,j]=0} rowsum(φ(K_j)ᵀ)<br>
+      O_i^l = φ(Q_i) H_i / (φ(Q_i) Z_i)
+    </div>
+    <p><strong>注意这是对 j 的求和</strong>——<code class="i">H</code> 与 <code class="i">Z</code> 是
+      <strong>可加的累加量</strong>。在 Ring 上，每个 rank 收到 K 块时累加自己的
+      <code class="i">H_local, Z_local</code>，最后做一次求和即可得到全局量。
+      这是 Ring 上最自然、最便宜的分布方式，<strong>甚至可以完全避开 LSE 合并</strong>
+      （因为线性注意力的输出不是 softmax 归一化的，它是独立的一项）。</p>
+    <p>同理，Sol-Attn 的「代理分数修正」在数学上也更接近这种可加的补偿项，
+      而不是需要参与 softmax 归一化的部分——这与 6.3 断点二的建议一致。</p>
+  </div>
+
+  <div class="card bad">
+    <h4>但 critical 路由是致命的</h4>
+    <p>问题出在分类本身：<code class="i">k_h</code>% 与 <code class="i">k_l</code>% 是
+      <strong>对压缩后注意力矩阵 P_c 的 top-k / bottom-k 排名</strong>
+      （<code class="i">P_c = Softmax(pool(Q)·pool(K)ᵀ/√d)</code>）。
+      这与第 3 节障碍一完全同构：需要完整的一行排名，才能知道哪些是 critical。</p>
+    <p>而且 SLA 还有两个额外门槛：</p>
+    <ul>
+      <li><strong>它需要微调</strong>（论文明确：线性注意力「serves as a learnable compensation」，
+        需要 fine-tune 模型以适应该补偿），不是 training-free；</li>
+      <li><strong>它的高效实现是 GPU kernel</strong>（论文报告 13.7× kernel 加速、
+        Wan2.1-1.3B 上 2.2× 端到端），迁移到昇腾需要重写。</li>
+    </ul>
+    <p><strong>若要用</strong>：把 top-k<sub>h</sub>% / bottom-k<sub>l</sub>% 改成双阈值
+      （<code class="i">P_c > τ_high</code> 为 critical，<code class="i">P_c < τ_low</code> 为 negligible），
+      就变成可流式的。线性注意力部分可以直接上 Ring；critical 部分按第 6.3 节的阈值方案改造。</p>
+  </div>
+
+  <h3>6.6 汇总：按「上 Ring 的可行性」排序</h3>
+
+  <div class="tw">
+  <table>
+    <thead>
+      <tr><th>优先级</th><th>算法</th><th>阻塞点</th><th>改造工作量</th><th>预期</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="yes"><strong>P0</strong></td>
+        <td><strong>AdaSpa</strong></td>
+        <td>掩码搜索需一次全局代价（可摊销到 warm-up）</td>
+        <td>低：稀疏执行期无需改造，只验证掩码跨 rank 可用性</td>
+        <td>最划算。一次全局代价买断后续所有步</td>
+      </tr>
+      <tr>
+        <td class="yes"><strong>P0</strong></td>
+        <td><strong>RainFusion</strong></td>
+        <td>ARM 分类需广播；Textural head 有块粒度失配</td>
+        <td>低–中：补一次标签广播 + 逐 head 均衡；Textural 先用「整块传、子集算」</td>
+        <td>training-free，掩码位置决定，落地路径最短</td>
+      </tr>
+      <tr>
+        <td class="part"><strong>P1</strong></td>
+        <td><strong>Sol-Attn</strong></td>
+        <td>阈值依赖全局行统计量；代理复用与 LSE 合并语义冲突</td>
+        <td>中：阈值改为离线标定常量；修正项移出 LSE 合并</td>
+        <td>流式消费已具备，改造成本主要在数值语义</td>
+      </tr>
+      <tr>
+        <td class="no"><strong>P2</strong></td>
+        <td><strong>SLA</strong></td>
+        <td>critical 路由为全局排名</td>
+        <td>高：需双阈值改造 + 微调流程 + kernel 重写</td>
+        <td>线性部分可救，但整体收益/成本比不佳</td>
+      </tr>
+      <tr>
+        <td class="no"><strong>P3</strong></td>
+        <td><strong>VSA</strong></td>
+        <td>top-k tile 排序 + 无 FlashAttention 原生支持</td>
+        <td>高：需改阈值型 + 重写内核 + 重新训练</td>
+        <td>本轮不建议投入</td>
+      </tr>
+      <tr>
+        <td class="yes"><strong>参照</strong></td>
+        <td><strong>OSP-Next Skiparse-2D</strong></td>
+        <td>无（其自身用 All-to-All 是为了模式切换）</td>
+        <td>低：<strong>搬到 Ring 上可省掉那一次 All-to-All</strong>（见 4.5）</td>
+        <td>唯一已被验证可叠加 8bit 量化的方案</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="verdict">
+    <span class="lab">逐案分析的总结论</span>
+    <p><strong>不要按「谁更新/谁更快」排序，要按「它用什么方式选块」排序。</strong>
+      用<em>阈值</em>选块的（Sol-Attn、RainFusion 的位置掩码、AdaSpa 的复用掩码、
+      OSP-Next 的固定重排）在 Ring 上都有路；用<em>排序</em>选块的（VSA、SLA、NSA、
+      各类 top-k / top-p）都必须先改掉选块方式，才能谈 Ring。</p>
+    <p><strong>而 AdaSpa 与 RainFusion 恰好代表了两条最容易的路径</strong>：
+      前者用「跨步不变性」把全局代价压成一次性；后者用「位置决定掩码 + 一次标签广播」
+      完全避开全局信息。<em>这两个思路可以组合</em>——
+      用 AdaSpa 的「算一次用到底」框架来承载 RainFusion 的三型掩码，
+      可能是本项目最省力的起点。</p>
+  </div>
+</section>
+
+<!-- ============================================ 7 -->
+<section id="s7">
+  <h2><span class="n">07</span>量化 × Ring：scale 作用域分析</h2>
 
   <p>量化的适配性问题可以收敛成一个问题：
     <strong>scale 的作用域，与 ring 上块的边界，对不对齐？</strong></p>
@@ -765,10 +1167,10 @@ all_to_all_single(recv, x, group=group)
 </section>
 
 <!-- ============================================ 7 -->
-<section id="s7">
-  <h2><span class="n">07</span>量化在环上的四个断点</h2>
+<section id="s8">
+  <h2><span class="n">08</span>量化在环上的四个断点</h2>
 
-  <h3>7.1 断点一：量化时机 —— 不能在环上反量化</h3>
+  <h3>8.1 断点一：量化时机 —— 不能在环上反量化</h3>
 
   <div class="card bad">
     <p>这是最容易犯、代价最大的错误。<strong>正确的数据流是：块生成时量化，量化态一路走到 FA 内核。</strong></p>
@@ -781,7 +1183,7 @@ all_to_all_single(recv, x, group=group)
       一旦退回 FP16，Ring 的通信劣势会被放大到不可接受。</p>
   </div>
 
-  <h3>7.2 断点二：量化必须作用在 K/V/P 上，绝不能作用在 softmax 统计量上</h3>
+  <h3>8.2 断点二：量化必须作用在 K/V/P 上，绝不能作用在 softmax 统计量上</h3>
 
   <div class="card bad">
     <p>Ring 的正确性依赖 online softmax 的重缩放因子 <code class="i">exp(m_prev − m_new)</code>，它有两个危险特性：</p>
@@ -796,7 +1198,7 @@ all_to_all_single(recv, x, group=group)
       <strong>不要为了省显存把 softmax 统计量降到 BF16/FP16。</strong></p>
   </div>
 
-  <h3>7.3 断点三：P 的量化会沿环累积误差</h3>
+  <h3>8.3 断点三：P 的量化会沿环累积误差</h3>
 
   <div class="card p3">
     <p>P（注意力概率）有一个好性质：<strong>它是每轮局部产生的，不需要跨 rank 流转</strong>——
@@ -809,7 +1211,7 @@ all_to_all_single(recv, x, group=group)
       不能只在单卡验证量化精度然后假定 P=8 一样。</p>
   </div>
 
-  <h3>7.4 断点四：平滑统计量的全局性</h3>
+  <h3>8.4 断点四：平滑统计量的全局性</h3>
 
   <div class="card bad">
     <p>SageAttention 的核心技巧是 <em>smooth K</em>：<code class="i">γ(K) = K − mean(K)</code>，
@@ -829,7 +1231,7 @@ all_to_all_single(recv, x, group=group)
       均未讨论 context parallel。属于确证的空白。</p>
   </div>
 
-  <h3>7.5 一个必须警惕的反面数据</h3>
+  <h3>8.5 一个必须警惕的反面数据</h3>
 
   <div class="card bad">
     <p>SageAttention 论文给出的视频生成质量对照（CogVideoX / RTX4090），说明<strong>低精度 attention 不是免费的</strong>：</p>
@@ -851,12 +1253,12 @@ all_to_all_single(recv, x, group=group)
 </section>
 
 <!-- ============================================ 8 -->
-<section id="s8">
-  <h2><span class="n">08</span>负载均衡：不均衡真的存在吗</h2>
+<section id="s9">
+  <h2><span class="n">09</span>负载均衡：不均衡真的存在吗</h2>
 
   <p>在投入均衡器之前，必须先测量。db-SP 给出的 ρ_s 定义是现成的度量。</p>
 
-  <h3>8.1 ρ_s 的定义与实测基线</h3>
+  <h3>9.1 ρ_s 的定义与实测基线</h3>
 
   <div class="eq">
     <span class="cm"># db-SP 的稀疏不均衡比：最重 rank 负载 ÷ 全部 rank 平均负载</span><br>
@@ -891,7 +1293,7 @@ all_to_all_single(recv, x, group=group)
     </ol>
   </div>
 
-  <h3>8.2 两个层次的均衡，别混淆</h3>
+  <h3>9.2 两个层次的均衡，别混淆</h3>
 
   <div class="grid2">
     <div class="card p3">
@@ -939,8 +1341,8 @@ all_to_all_single(recv, x, group=group)
 </section>
 
 <!-- ============================================ 9 -->
-<section id="s9">
-  <h2><span class="n">09</span>落到昇腾的算子映射</h2>
+<section id="s10">
+  <h2><span class="n">10</span>落到昇腾的算子映射</h2>
 
   <p>只列与 Ring 适配直接相关的算子事实。</p>
 
@@ -1008,7 +1410,7 @@ all_to_all_single(recv, x, group=group)
     </ol>
   </div>
 
-  <h3>9.1 总结：Ring 上的叠加检查单</h3>
+  <h3>10.1 总结：Ring 上的叠加检查单</h3>
 
   <div class="tw">
   <table>
@@ -1054,8 +1456,8 @@ all_to_all_single(recv, x, group=group)
 </section>
 
 <!-- ============================================ 10 -->
-<section id="s10">
-  <h2><span class="n">10</span>参考文献</h2>
+<section id="s11">
+  <h2><span class="n">11</span>参考文献</h2>
 
   <h3>三篇主线论文</h3>
   <ol>
@@ -1104,6 +1506,42 @@ all_to_all_single(recv, x, group=group)
 
   <h3>稀疏与量化</h3>
   <ol start="9">
+    <li>Yifei Xia, Suhan Ling, Fangcheng Fu, Yujie Wang, Huixia Li, Xuefeng Xiao, Bin Cui
+      （北京大学 / 字节跳动）. <strong>Training-free and Adaptive Sparse Attention for
+      Efficient Long Video Generation（AdaSpa）.</strong> arXiv:2502.21079.
+      <a href="https://arxiv.org/abs/2502.21079">abs</a><br>
+      <span class="note">第 6.1 节分析对象。块化模式 + 跨去噪步不变性 + Fused LSE-Cached Online Search；
+      在线搜索耗时压到 full attention 的 5% 以下。</span></li>
+    <li>Aiyue Chen, Dong Bin, Jingru Li, Jing Lin, Yiwu Yao, Gongyi Wang（华为）.
+      <strong>RainFusion: Adaptive Video Generation Acceleration via Multi-Dimensional
+      Visual Redundancy.</strong> arXiv:2505.21036.
+      <a href="https://arxiv.org/abs/2505.21036">abs</a><br>
+      <span class="note">第 6.2 节分析对象。三型 head（Spatial / Temporal / Textural）+ ARM 在线分类
+      （开销约 0.2%）；attention 加速 2× 以上，VBench −0.2%。</span></li>
+    <li>Aiyue Chen, Yaofu Liu, Junjian Huang, Guang Lian, Yiwu Yao, Wangli Lan, Jing Lin,
+      Zhixin Ma, Tingting Zhou, Harry Yang（华为 / 香港科技大学）.
+      <strong>RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise
+      Sparse Attention.</strong> arXiv:2512.24086.
+      <a href="https://arxiv.org/abs/2512.24086">abs</a><br>
+      <span class="note">块均值作代表 token 预测稀疏掩码 + 3D window permutation + First Frame Sink；
+      80% 稀疏下 1.5–1.8× 端到端加速，强调<strong>跨硬件通用性</strong>（对昇腾迁移更友好）。</span></li>
+    <li>Haopeng Li, Yitong Li, Junsong Chen, Tian Ye, Haozhe Liu, Jincheng Yu, Duomin Wang,
+      Ruihua Zhang, Zeke Xie, Enze Xie, Song Han（NVIDIA）.
+      <strong>Sol-Attn: Accelerating Video Generation Inference via On-the-Fly Attention
+      Sparsification.</strong> arXiv:2607.24027.
+      <a href="https://arxiv.org/abs/2607.24027">abs</a> ·
+      <a href="https://github.com/NVlabs/Sana/tree/sol-engine">code</a><br>
+      <span class="note">第 6.3 节分析对象。<strong>查询相关阈值路由 + 在线 softmax 内流式判定 +
+      代理分数复用</strong>；不物化代理图；视频生成 2.1×、视频编辑 2.3× 端到端加速。</span></li>
+    <li>Jintao Zhang, Haoxu Wang, Kai Jiang, Shuo Yang, Kaiwen Zheng, Haocheng Xi, Ziteng Wang,
+      Hongzhou Zhu, Min Zhao, Ion Stoica, Joseph E. Gonzalez, Jun Zhu, Jianfei Chen
+      （清华大学 / UC Berkeley）. <strong>SLA: Beyond Sparsity in Diffusion Transformers via
+      Fine-Tunable Sparse–Linear Attention.</strong> arXiv:2509.24006.
+      <a href="https://arxiv.org/abs/2509.24006">abs</a> ·
+      <a href="https://github.com/thu-ml/SLA">code</a><br>
+      <span class="note">第 6.5 节分析对象。critical / marginal / negligible 三分类，
+      critical 用稀疏 FA、marginal 用线性注意力；95% 稀疏无质量损失，
+      kernel 13.7×、端到端 2.2×（Wan2.1-1.3B）。</span></li>
     <li>Jingyang Yuan, et al. (DeepSeek-AI / PKU / UW). <strong>Native Sparse Attention.</strong>
       arXiv:2502.11089. <a href="https://arxiv.org/abs/2502.11089">link</a><br>
       <span class="note">compress / select / window 三分支；select 复用 compress 分数并做全局 top-n
@@ -1115,13 +1553,12 @@ all_to_all_single(recv, x, group=group)
       其两条理由（需全局 top-n、需绝对位置）可独立复核。</span></li>
     <li>Jintao Zhang, et al. <strong>SageAttention.</strong> arXiv:2410.02367.
       <a href="https://arxiv.org/abs/2410.02367">link</a><br>
-      <span class="note">smooth K（<code class="i">mean(K)</code> 为全序列均值 —— 见 7.4 断点四）；
-      Q/K→INT8 per-block，P/V 留 FP16；视频质量对照表见 7.5。</span></li>
+      <span class="note">smooth K（<code class="i">mean(K)</code> 为全序列均值 —— 见 8.4 断点四）；      Q/K→INT8 per-block，P/V 留 FP16；视频质量对照表见 8.5。</span></li>
     <li>Jintao Zhang, et al. <strong>SageAttention2: Thorough Outlier Smoothing and
       Per-thread INT4 Quantization.</strong> arXiv:2411.10958.
       <a href="https://arxiv.org/abs/2411.10958">link</a><br>
       <span class="note">指出 FP8 matmul 的 FP32 accumulator 实际是 FP22（1+8+13）；
-      per-thread 粒度与 mma 线程映射绑死，跨 rank 传输时布局可能失真（见 6.2）。</span></li>
+      per-thread 粒度与 mma 线程映射绑死，跨 rank 传输时布局可能失真（见 7.2）。</span></li>
     <li>Jay Shah, et al. <strong>FlashAttention-3.</strong> arXiv:2407.08608.
       <a href="https://arxiv.org/abs/2407.08608">link</a><br>
       <span class="note">FP8 用 per-block scale + Hadamard incoherent processing
@@ -1141,7 +1578,7 @@ all_to_all_single(recv, x, group=group)
   </ol>
 
   <h3>昇腾算子</h3>
-  <ol start="18">
+  <ol start="23">
     <li>CANN <code class="i">ops-transformer</code> · <code class="i">attention/ring_attention_update/</code>：
       README、<code class="i">docs/aclnnRingAttentionUpdate.md</code>、<code class="i">V2</code>、
       <code class="i">op_host/ring_attention_update_tiling.h</code></li>
