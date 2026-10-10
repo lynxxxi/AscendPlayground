@@ -1247,7 +1247,7 @@ all_to_all_single(recv, x, group=group)
     </table>
     </div>
     <p><strong>两条结论</strong>：① 「用 FP8 就行」是危险假设，格式必须逐案验收；
-      ② <strong>outlier 平滑可能是必需项而非可选项</strong>——但它的统计量需要跨 rank 归约（7.4）。
+      ② <strong>outlier 平滑可能是必需项而非可选项</strong>——但它的统计量需要跨 rank 归约（见 8.4）。
       <em>这就是量化 × Ring 最真实的工程张力所在。</em></p>
   </div>
 </section>
@@ -1355,7 +1355,7 @@ all_to_all_single(recv, x, group=group)
         <td><code class="i">RingAttentionUpdate</code><br><code class="i">RingAttentionUpdateV2</code></td>
         <td class="yes">已具备。支持 SBH / TND；V2 可指定 softmax 排布省一次重排；
           <strong>默认确定性实现</strong>（利于精度验收）；
-          softmax 统计量<strong>强制 FLOAT32</strong>，与 7.2 节结论一致。<br>
+          softmax 统计量<strong>强制 FLOAT32</strong>，与 8.2 节结论一致。<br>
           <strong>但它只做合并、不做通信</strong>——环的调度需自研。</td>
       </tr>
       <tr>
@@ -1363,7 +1363,7 @@ all_to_all_single(recv, x, group=group)
         <td><code class="i">quant_flash_attn</code> (QFA)</td>
         <td class="yes">量化模式 <code class="i">GROUP_SCALING=3</code>（MX，block 32，E8M0 scale）
           与 <code class="i">PER_BLOCK=4</code>，<strong>都是 tile 级 scale</strong>，
-          符合第 6 节「per-tile 才适配 Ring」的结论。<br>
+          符合第 7 节「per-tile 才适配 Ring」的结论。<br>
           dtype 覆盖 FP8_E4M3 / <strong>HIFLOAT8</strong> / FP4_E2M1 / HIFLOAT4——
           <strong>HIFLOAT8 正对应 OSP-Next 的 HiF8 路线</strong>。</td>
       </tr>
@@ -1372,7 +1372,7 @@ all_to_all_single(recv, x, group=group)
         <td><code class="i">kv_quant_sparse_flash_attention</code></td>
         <td class="yes"><strong>Per-Token-Head-Tile-128 量化</strong>；
           <code class="i">quant_scale_repo_mode=1</code> 即 <strong>scale 与数据混合存放</strong>，
-          正是 6.2 节推荐的 combine 打包，避免两次 P2P。</td>
+          正是 7.2 节推荐的 combine 打包，避免两次 P2P。</td>
       </tr>
       <tr>
         <td><strong>块稀疏 FA</strong></td>
