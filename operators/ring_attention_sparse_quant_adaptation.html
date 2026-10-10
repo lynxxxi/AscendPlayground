@@ -323,7 +323,7 @@
 
   <p>这是你问的核心问题。下面把它拆成<strong>四个独立的障碍</strong>，每一个单独都足以致命。</p>
 
-  <h3>障碍一：循环依赖 —— 要算分数，必须先有 K</h3>
+  <h3>3.1 障碍一：循环依赖 —— 要算分数，必须先有 K</h3>
 
   <p>Top-k 的决策依据是重要性分数 <code class="i">s(q_i, k_j)</code>，最常用的是
     <code class="i">s_ij = q_i · k_j^T</code>（或用池化后的 Q/K 近似）。</p>
@@ -341,7 +341,7 @@
       <strong>流水线从「流式消费」退化成「先收集后处理」，通信完全暴露在关键路径上。</strong></p>
   </div>
 
-  <h3>障碍二：Top-k 集合与 Q 属主耦合 —— 跨 rank 无法预判</h3>
+  <h3>3.2 障碍二：Top-k 集合与 Q 属主耦合 —— 跨 rank 无法预判</h3>
 
   <p>这是比障碍一更微妙、也更难绕过的一点。</p>
 
@@ -381,7 +381,7 @@
       FVAttn 的调度单元在 Ring 上不存在。这是它不能直接迁移的根本原因，而不是实现细节问题。</p>
   </div>
 
-  <h3>障碍三：预取失效 —— P2P 前向的代价</h3>
+  <h3>3.3 障碍三：预取失效 —— P2P 前向的代价</h3>
 
   <p>Ring 的块是<strong>链式</strong>流转的：rank <code class="i">i</code> 发给 rank <code class="i">i+1</code>，
     每一跳都要经过中间节点。这与 AllGather 的<strong>树形</strong>或<strong>环形集合通信</strong>不同。</p>
@@ -396,7 +396,7 @@
     <span class="cm">  ③ 破坏 double buffer 的固定节奏</span>
   </div>
 
-  <h3>障碍四：不规则工作集破坏流水线节奏</h3>
+  <h3>3.4 障碍四：不规则工作集破坏流水线节奏</h3>
 
   <div class="card bad">
     <p>这是 C1 的直接后果，也是<strong>最容易被低估的</strong>。</p>
@@ -471,7 +471,7 @@
     <figcaption>图 1 · 同样总计算量下，逐轮负载分布决定 Ring 的实际延迟。固定掩码每轮均衡，Top-k 每轮都在换最慢 rank。</figcaption>
   </figure>
 
-  <h3>3.4 小结：Top-k 在 Ring 上的四个障碍</h3>
+  <h3>3.5 小结：Top-k 在 Ring 上的四个障碍</h3>
 
   <div class="tw">
   <table>
@@ -586,7 +586,7 @@ all_to_all_single(recv, x, group=group)
       <em>它把「稀疏选择问题」转化成了「固定重排问题」。</em></p>
   </div>
 
-  <h3>4.5 对你项目的直接含义：把它放到 Ring 上</h3>
+  <h3>4.5 对你项目的直接含义：把它放到 Ring 上（本文推断）</h3>
 
   <div class="card p2">
     <h4>Skiparse-2D 是 Ring 最友好的稀疏形态</h4>
@@ -1086,7 +1086,7 @@ all_to_all_single(recv, x, group=group)
   <p>量化的适配性问题可以收敛成一个问题：
     <strong>scale 的作用域，与 ring 上块的边界，对不对齐？</strong></p>
 
-  <h3>6.1 四种 scale 粒度在 Ring 上的表现</h3>
+  <h3>7.1 四种 scale 粒度在 Ring 上的表现</h3>
 
   <div class="tw">
   <table>
@@ -1114,7 +1114,7 @@ all_to_all_single(recv, x, group=group)
         <td><strong>per-tile / per-block</strong><br>（如 128 token、128×128）</td>
         <td class="yes">✅ 与 Ring 天然对齐</td>
         <td><strong>scale 与块边界严格绑定</strong>，块内自洽，不依赖任何跨块信息。
-          只要让 scale 与 payload 一起打包、一起流转即可（见 6.2）。
+          只要让 scale 与 payload 一起打包、一起流转即可（见 7.2）。
           这是 C3 的直接满足。</td>
         <td>MXFP8（每 32 元素）、<br>per-block 128×128</td>
       </tr>
@@ -1140,7 +1140,7 @@ all_to_all_single(recv, x, group=group)
       VBench 差距在 0.5% 以内。</p>
   </div>
 
-  <h3>6.2 per-tile scale 的通信成本（可以直接算掉）</h3>
+  <h3>7.2 per-tile scale 的通信成本（可以直接算掉）</h3>
 
   <div class="eq">
     <span class="cm"># per-token-head scale（如 tile_size=128），N_kv=8, D=128, FP8 payload</span><br>
