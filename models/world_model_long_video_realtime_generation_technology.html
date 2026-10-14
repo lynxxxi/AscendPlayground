@@ -124,6 +124,8 @@ th{padding:12px 14px;text-align:left;color:var(--acid);background:#0b1d26;border
 td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top;line-height:1.62}
 tbody tr:hover td{background:rgba(74,217,210,.045)}
 td:first-child{color:var(--ink);font-weight:700}
+th:first-child,td:first-child{min-width:96px}
+th:first-child{white-space:nowrap}
 tbody tr:last-child td{border-bottom:0}
 .y{color:var(--acid);font-weight:700}.p{color:var(--amber);font-weight:700}.n{color:var(--dim)}
 
@@ -192,23 +194,25 @@ footer a{color:var(--muted)}
 <header class="topbar"><div class="topbar-in">
   <div class="brand"><i></i>ASCEND PLAYGROUND / MODEL RESEARCH</div>
   <nav class="topnav" aria-label="章节导航">
-    <a href="#map">依赖地图</a><a href="#base">01 基座</a><a href="#forcing">02 Forcing</a><a href="#distill">03 蒸馏</a><a href="#coopt">04 联合优化</a><a href="#rope">05 RoPE</a><a href="#kv">06 KV/精度</a><a href="#serve">07 服务化</a><a href="#ascend">08 昇腾</a><a href="#evidence">09 证据</a>
+    <a href="#map">依赖地图</a><a href="#base">01 基座</a><a href="#forcing">02 Forcing</a><a href="#distill">03 蒸馏</a><a href="#coopt">04 联合优化</a><a href="#rope">05 RoPE</a><a href="#dsp">06 分布式稀疏</a><a href="#moe">07 稀疏 MoE</a><a href="#kv">08 KV/精度</a><a href="#serve">09 服务化</a><a href="#ascend">10 昇腾</a><a href="#evidence">11 证据</a>
   </nav>
 </div></header>
 
 <div class="hero"><div class="wrap">
   <div class="eyebrow">World model · Long video · Realtime generation · 2022 → 2026</div>
   <h1>实时世界模型技术全景
-    <small>从 U-ViT 基座与块级因果结构，到 forcing 家族、少步蒸馏、RoPE / KV 长上下文改造，再到 TurboServe 级的服务化：一条按「先训练后推理、先算法后系统」排序的完整依赖链。</small>
+    <small>从 U-ViT 基座与块级因果结构，到 forcing 家族、少步蒸馏、RoPE / KV 长上下文改造、分布式稀疏并行与稀疏 MoE，再到 TurboServe 级的服务化：一条按「先训练后推理、先算法后系统」排序的完整依赖链。</small>
   </h1>
-  <p class="dek">长视频与实时交互生成不是某一个模型的胜利，而是<strong>四段可分离工程的串联</strong>：先说清模型结构（决定能不能增量执行），再用 forcing 把训练分布搬到推理分布（决定误差会不会跨块爆炸），再用蒸馏把去噪步数压到 1–4 步（决定单块预算），最后用长上下文 RoPE、KV 量化稀疏与服务调度把成本打进商用区间（决定能不能长期在线）。本文按这条因果链分章，每一章都配一张机制/架构图，并给出该技术<strong>加速了什么、代价是什么、依赖谁</strong>。</p>
+  <p class="dek">长视频与实时交互生成不是某一个模型的胜利，而是<strong>四段可分离工程的串联</strong>：先说清模型结构（决定能不能增量执行），再用 forcing 把训练分布搬到推理分布（决定误差会不会跨块爆炸），再用蒸馏把去噪步数压到 1–4 步（决定单块预算），最后用长上下文 RoPE、分布式稀疏并行、稀疏 MoE、KV 量化稀疏与服务调度把成本打进商用区间（决定能不能长期在线）。本文按这条因果链分章，每一章都配机制/架构图，并给出该技术<strong>加速了什么、代价是什么、依赖谁</strong>。</p>
   <div class="metabar">
-    <span class="pill"><b>9</b> 章 · 按产生顺序排列</span>
-    <span class="pill"><b>21</b> 张机制配图</span>
+    <span class="pill"><b>12</b> 章 · 按产生顺序排列</span>
+    <span class="pill"><b>26</b> 张机制配图</span>
     <span class="pill">覆盖 <b>Vidu S2</b> · <b>爱诗 R2</b> · <b>LingBot-World</b> · <b>minWM</b></span>
     <span class="pill">蒸馏 <b>DMD / PCM / rCM / P-DMD / dMAD</b></span>
     <span class="pill">长上下文 <b>Infinity RoPE / LoL / Flex</b></span>
     <span class="pill">注意力 <b>VSA / SLA / QuantWM</b></span>
+    <span class="pill">分布式 <b>db-SP / FVAttn / OSP-Next</b></span>
+    <span class="pill">稀疏 <b>FastMoE / DIET</b></span>
     <span class="pill">证据分级 <b>论文 / 官方 / 媒体 / 社区 / 未公开</b></span>
   </div>
   <div class="verdict">
@@ -237,12 +241,26 @@ footer a{color:var(--muted)}
   <a href="#coopt">04 · 联合优化方法论</a>
   <div class="toc-title" style="margin-top:16px">C 段 · 推理（决定成本）</div>
   <a href="#rope">05 · RoPE 与长上下文位置编码</a>
-  <a href="#kv">06 · KV Cache 的量化与稀疏</a>
-  <a href="#serve">07 · 服务化与调度</a>
+  <a href="#dsp">06 · 分布式稀疏并行（db-SP / FVAttn / OSP-Next）</a>
+  <a class="sub" href="#dsp-ring">6.1 Ring 的代价模型与三条硬约束</a>
+  <a class="sub" href="#dsp-geometry">6.2 几何事实：Ring 不缺块</a>
+  <a class="sub" href="#dsp-ospnext">6.3 OSP-Next：稀疏 → 固定重排</a>
+  <a class="sub" href="#dsp-balance">6.4 db-SP 与 FVAttn 的负载均衡</a>
+  <a class="sub" href="#dsp-routes">6.5 两条路线与逐案判定</a>
+  <a class="sub" href="#dsp-quant">6.6 量化 × Ring：scale 作用域</a>
+  <a class="sub" href="#dsp-ascend">6.7 昇腾算子映射</a>
+  <a href="#moe">07 · 多模态稀疏 MoE</a>
+  <a class="sub" href="#moe-why">7.1 为什么 MoE 回到视野</a>
+  <a class="sub" href="#moe-mech">7.2 路由与稀疏激活机制</a>
+  <a class="sub" href="#moe-systems">7.3 系统侧：少算与少存</a>
+  <a class="sub" href="#moe-video">7.4 视频 / 世界模型的 MoE 实践</a>
+  <a class="sub" href="#moe-ascend">7.5 昇腾视角与选型</a>
+  <a href="#kv">08 · KV Cache 的量化与稀疏</a>
+  <a href="#serve">09 · 服务化与调度</a>
   <div class="toc-title" style="margin-top:16px">D 段 · 落地</div>
-  <a href="#ascend">08 · 昇腾视角与迁移判断</a>
-  <a href="#evidence">09 · 证据分级与来源</a>
-  <a href="#gaps">附录 · 未公开项与已剔除说法</a>
+  <a href="#ascend">10 · 昇腾视角与迁移判断</a>
+  <a href="#evidence">11 · 证据分级与来源</a>
+  <a href="#gaps">附录 · 未公开项与已纠正说法</a>
 </nav>
 <main>
 <!-- ============================ 00 Overview ============================ -->
@@ -289,11 +307,11 @@ footer a{color:var(--muted)}
         <rect x="550" y="58" width="244" height="5" fill="#ffc857"/>
         <text x="568" y="86" fill="#ffc857" font-family="monospace" font-size="11.5">C · 推理运行时</text>
         <text x="568" y="110" fill="#c4d6d8" font-size="10.5">RoPE 重定位让缓存可复用；</text>
-        <text x="568" y="128" fill="#c4d6d8" font-size="10.5">稀疏/线性/低比特注意力；</text>
-        <text x="568" y="146" fill="#c4d6d8" font-size="10.5">KV 量化、淘汰与布局</text>
-        <text x="568" y="172" fill="#ffc857" font-size="10.5">回答：一块要花多少？</text>
-        <text x="568" y="194" fill="#d7ff4f" font-family="monospace" font-size="11">→ 第 05 / 06 章</text>
-        <text x="568" y="212" fill="#6d868d" font-size="10">Infinity/LoL/Flex · VSA/SLA/QuantWM</text>
+        <text x="568" y="128" fill="#c4d6d8" font-size="10.5">分布式稀疏并行（跨卡可行性）；</text>
+        <text x="568" y="146" fill="#c4d6d8" font-size="10.5">稀疏 MoE、注意力稀疏、KV 量化</text>
+        <text x="568" y="172" fill="#ffc857" font-size="10.5">回答：一块要花多少？跨卡还成立吗？</text>
+        <text x="568" y="194" fill="#d7ff4f" font-family="monospace" font-size="11">→ 第 05 / 06 / 07 / 08 章</text>
+        <text x="568" y="212" fill="#6d868d" font-size="10">Infinity RoPE · db-SP/FVAttn · FastMoE · VSA/SLA</text>
 
         <rect x="810" y="58" width="240" height="164" fill="#0e2029" stroke="#ff7a54"/>
         <rect x="810" y="58" width="240" height="5" fill="#ff7a54"/>
@@ -302,8 +320,8 @@ footer a{color:var(--muted)}
         <text x="828" y="128" fill="#c4d6d8" font-size="10.5">会话放置与状态迁移、</text>
         <text x="828" y="146" fill="#c4d6d8" font-size="10.5">弹性供给与成本控制</text>
         <text x="828" y="172" fill="#ffc857" font-size="10.5">回答：多人长会话扛不扛得住？</text>
-        <text x="828" y="194" fill="#d7ff4f" font-family="monospace" font-size="11">→ 第 07 章</text>
-        <text x="828" y="212" fill="#6d868d" font-size="10">TurboServe · 生数加速栈</text>
+        <text x="828" y="194" fill="#d7ff4f" font-family="monospace" font-size="11">→ 第 09 章（＋ 10 / 11 落地）</text>
+        <text x="828" y="212" fill="#6d868d" font-size="10">TurboServe · 生数加速栈 · 昇腾视角</text>
       </g>
 
       <!-- arrows -->
@@ -339,13 +357,13 @@ footer a{color:var(--muted)}
 
         <rect x="550" y="358" width="244" height="92" fill="#122833" stroke="#ffc857"/>
         <text x="568" y="382" fill="#ffc857" font-family="monospace" font-size="11">③ 压缩单步成本</text>
-        <text x="568" y="404" fill="#c4d6d8" font-size="10.5">稀疏 / 线性 / 低比特 / 分块量化</text>
+        <text x="568" y="404" fill="#c4d6d8" font-size="10.5">稀疏 MoE / 注意力稀疏 / 低比特 / 分块量化</text>
         <text x="568" y="424" fill="#6d868d" font-size="10">长上下文收益大；破坏远端细节</text>
 
         <rect x="810" y="358" width="240" height="92" fill="#122833" stroke="#ff7a54"/>
-        <text x="828" y="382" fill="#ff7a54" font-family="monospace" font-size="11">④ 把波动藏进调度</text>
-        <text x="828" y="404" fill="#c4d6d8" font-size="10.5">异步流水 / 合批 / 迁移 / 弹性</text>
-        <text x="828" y="424" fill="#6d868d" font-size="10">不改数值；抬高显存峰值</text>
+        <text x="828" y="382" fill="#ff7a54" font-family="monospace" font-size="11">④ 跨卡分摊 + 藏波动</text>
+        <text x="828" y="404" fill="#c4d6d8" font-size="10.5">分布式稀疏并行 / 异步流水 / 合批 / 迁移</text>
+        <text x="828" y="424" fill="#6d868d" font-size="10">并行决定稀疏可行性；调度藏住剩余波动</text>
       </g>
     </svg>
     </div>
@@ -362,9 +380,12 @@ footer a{color:var(--muted)}
       <tr><td><strong>03 蒸馏</strong></td><td>每块要调用几次主干？</td><td>可长跑的因果学生</td><td>1–4 步少步 checkpoint（NFE 预算落地）</td><td class="n">延迟进不了实时区间（见 §3.1 算术）</td></tr>
       <tr><td><strong>04 联合优化</strong></td><td>稀疏/量化/蒸馏怎么一起决定？</td><td>少步学生 + 目标推理配置</td><td>在目标近似模式下训练的权重（误差已被吸收）</td><td class="n">分项收益对，端到端收益远低于预期</td></tr>
       <tr><td><strong>05 RoPE</strong></td><td>缓存复用后位置还能对齐吗？</td><td>少步学生 + KV 缓存设计</td><td>可在会话中持续生效的位置管理方案</td><td class="n">长会话「语义还在、注意力先散」</td></tr>
-      <tr><td><strong>06 KV / 精度</strong></td><td>一次注意力搬多少字节？缓存能放多长？</td><td>可复用的状态 + 位置方案</td><td>有界的显存占用与可接受的单步成本</td><td class="n">延迟/显存随会话变长单调恶化</td></tr>
-      <tr><td><strong>07 服务化</strong></td><td>几百个长会话怎么稳定又经济地跑？</td><td>有界状态 + 可序列化的会话</td><td>TTFC / TPC P99 / 每生成分钟成本</td><td class="n">单会话快但多会话崩、成本不可控</td></tr>
-      <tr><td><strong>08 昇腾视角</strong></td><td>这些技术在本栈上分别处于什么位置？</td><td>前七章全部机制</td><td>三档迁移判断 + 四级推进路线</td><td class="n">把「机制可迁移」误当「代码可运行」</td></tr>
+      <tr><td><strong>06 分布式稀疏并行</strong></td><td>稀疏方案跨卡之后还成立吗？</td><td>位置方案 + 目标稀疏率</td><td>可上 Ring 的稀疏形态（可离线确定 / 阈值型）+ 均衡手段</td><td class="n">单卡能跑的稀疏，跨卡后负载失衡甚至不可实现</td></tr>
+      <tr><td><strong>07 多模态稀疏 MoE</strong></td><td>容量能不能与激活量解耦？少存能不能不靠量化？</td><td>目标推理配置 + 显存预算</td><td>激活参数预算与专家驻留策略（容量 → 成本不再线性）</td><td class="n">模型容量直接等于每步成本，长上下文下无法摊薄</td></tr>
+      <tr><td><strong>08 KV / 精度</strong></td><td>一次注意力搬多少字节？缓存能放多长？</td><td>可复用的状态 + 位置方案 + 并行策略</td><td>有界的显存占用与可接受的单步成本</td><td class="n">延迟/显存随会话变长单调恶化</td></tr>
+      <tr><td><strong>09 服务化</strong></td><td>几百个长会话怎么稳定又经济地跑？</td><td>有界状态 + 可序列化的会话</td><td>TTFC / TPC P99 / 每生成分钟成本</td><td class="n">单会话快但多会话崩、成本不可控</td></tr>
+      <tr><td><strong>10 昇腾视角</strong></td><td>这些技术在本栈上分别处于什么位置？</td><td>前九章全部机制</td><td>三档迁移判断 + 四级推进路线</td><td class="n">把「机制可迁移」误当「代码可运行」</td></tr>
+      <tr><td><strong>11 证据分级</strong></td><td>这些数字能支持多强的结论？</td><td>全文所有结论与数字</td><td>可复核的引用方式与口径纪律</td><td class="n">把厂商自述当第三方结论、把不同口径的数字并列</td></tr>
     </tbody>
   </table></div>
 
@@ -661,7 +682,7 @@ footer a{color:var(--muted)}
         <rect x="426" y="72" width="80" height="28" fill="#141008" stroke="#32596b"/><text x="466" y="90" fill="#8fa8ae" text-anchor="middle">DMD</text>
         <rect x="514" y="72" width="150" height="28" fill="#141008" stroke="#32596b"/><text x="589" y="90" fill="#8fa8ae" text-anchor="middle">self-rollout DMD</text>
       </g>
-      <text x="676" y="90" fill="#ff7a54" font-size="10">问题：teacher 与 student 之间存在<tspan fill="#d7ff4f">架构间隙</tspan>（见 §2.6）</text>
+      <text x="676" y="90" fill="#ff7a54" font-size="10">问题：teacher 与 student 之间存在<tspan fill="#d7ff4f">架构间隙</tspan>（见 §2.3）</text>
 
       <!-- R2 two processes -->
       <text x="30" y="134" fill="#d7ff4f" font-family="monospace" font-size="11">R2 的两过程</text>
@@ -843,7 +864,7 @@ footer a{color:var(--muted)}
     <div class="card c-amber"><span class="tag amber">消融 · 有效 batch 下限</span><h4>batch &lt; 4 学不到</h4><p>最小 batch size：<strong>&lt; 4 学不到；8 明显改善但不稳；16 可完成全流程且可控性高</strong>。这直接约束 DP / 梯度累积设计——小集群上很难复现这套配方。</p></div>
     <div class="card c-acid"><span class="tag acid">训练配方（可直接对照）</span><h4>480×832 · 77 帧 · chunk 4 · 4 步</h4><p>Wan2.1：batch 32、lr 2e-6、5K/4K/2K/200 步。HY1.5：batch 32、lr 1e-5、双向 8K 步（Stage 1 从 5K 步模型初始化）、Stage1 4K、Stage2 1.5K、Stage3 500。</p></div>
   </div>
-  <div class="callout warn"><b>代码成熟度提示（重要）：</b>论文/README 的主路径是 <strong>4-step chunk-wise</strong>。仓库 HEAD 已可见 HY 路线的文本与视觉 KV cache，但<strong>通过 <code>torch.cat</code> 逐块扩展视觉 KV</strong>；README 仍把更广义的「inference acceleration」标为 TBD。<strong>因此「有 KV cache」不等于「已有生产级、长时有界的 rolling / paged KV」</strong>——这正是 §6.3 反复强调的那道分水岭。</div>
+  <div class="callout warn"><b>代码成熟度提示（重要）：</b>论文/README 的主路径是 <strong>4-step chunk-wise</strong>。仓库 HEAD 已可见 HY 路线的文本与视觉 KV cache，但<strong>通过 <code>torch.cat</code> 逐块扩展视觉 KV</strong>；README 仍把更广义的「inference acceleration」标为 TBD。<strong>因此「有 KV cache」不等于「已有生产级、长时有界的 rolling / paged KV」</strong>——这正是 §8.3 反复强调的那道分水岭。</div>
 
   <h3 id="base-matrix"><span class="h3tag">1.6</span>四家结构横向对照</h3>
   <div class="tablewrap"><table>
@@ -1195,7 +1216,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <tr><td>有效 batch 下限</td><td>较宽松</td><td class="p">公开经验：<strong>&lt; 4 学不到；8 明显改善但不稳；16 才能完成全流程且可控性高</strong></td><td class="p">直接约束 DP / 梯度累积设计；小集群很难复现</td></tr>
       <tr><td>轨迹存储</td><td>无</td><td>离线 ODE 轨迹初始化路线会产生大量轨迹缓存</td><td class="y">Causal Forcing++ 用在线 causal CD 替代，<strong>Stage 2 训练成本约降 4×</strong>、消除约 <strong>1.9 TiB</strong> 额外轨迹存储</td></tr>
       <tr><td>容量-记忆的内在冲突</td><td>无</td><td>cache 越大越容易「过度依赖缓存而不主动纠错」</td><td class="p">Matrix-Game 2.0 消融：<strong>cache 越大反而越早出现伪影（9 帧比 6 帧更差）</strong>，早期伪影被「记忆」成合法场景元素</td></tr>
-      <tr><td>可验证性</td><td>看 loss / 短评测</td><td class="p">必须在<strong>长 rollout</strong> 上验收；训练 loss 与线上稳定性相关性弱</td><td>需要建逐块漂移评测闭环（见 §8.5）</td></tr>
+      <tr><td>可验证性</td><td>看 loss / 短评测</td><td class="p">必须在<strong>长 rollout</strong> 上验收；训练 loss 与线上稳定性相关性弱</td><td>需要建逐块漂移评测闭环（见 §10.5）</td></tr>
     </tbody>
   </table></div>
   <div class="callout warn"><b>给推理工程师的现实结论：</b>forcing 属于上游工作，部署侧<strong>不重复实现它</strong>，只做两件事——① 确认拿到的 checkpoint 确实经过 forcing 后训练（否则长会话必然崩）；② 建立与论文同口径的<strong>逐块漂移曲线</strong>作为回归基线。把「训练 loss 好看」当作「线上稳」是这一层最常见的误判。</div>
@@ -1224,7 +1245,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
 ⇒ 结论：<b>720p 实时数字人的可行区间被算术锁死在 4 步左右</b>，
    这正是 Causal Forcing++ 把目标定在「frame-wise 1–2 步」的动机来源。</div>
-  <div class="callout"><b>反过来读这条公式：</b>当 NFE 从 50 压到 4，主干占比下降、<strong>VAE 与调度开销的占比相对上升</strong>。这正是 §7.5 必须做 DiT–VAE 异步流水的原因——蒸馏把瓶颈从算力搬到了流水线上。</div>
+  <div class="callout"><b>反过来读这条公式：</b>当 NFE 从 50 压到 4，主干占比下降、<strong>VAE 与调度开销的占比相对上升</strong>。这正是 §9.5 必须做 DiT–VAE 异步流水的原因——蒸馏把瓶颈从算力搬到了流水线上。</div>
 
   <figure>
     <div class="svgbox">
@@ -1655,11 +1676,11 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   <p>FlashForward 的问题设定非常具体，也是所有少步 AR 系统都会遇到的一个隐藏开销：<strong>为记忆已生成的 chunk，既有方法需要额外做一次前向来重建「干净或低噪」的 KV cache</strong>——这次前向<strong>不推进输出 latent</strong>，是纯开销。它的三步解法：</p>
   <div class="pipe c4">
     <div class="step hot"><i>① 复用「在飞」的 KV</i><b>不做额外的 cache-update 前向</b><span>每次去噪前向本身就计算了当前 chunk 的 in-flight KV ⇒ 直接复用。当前 chunk 完成一个去噪 stage 后，其 <strong>stage-specific cache 已可供下一个 chunk 使用</strong>。</span></div>
-    <div class="step hot"><i>② stage 级流水线并行</i><b>每张 GPU 负责一个 stage</b><span>于是<strong>不同 chunk 可以并发处于不同去噪阶段</strong>——这与 §7.5 的「共享时间线」是同一思想的另一种切分：Vidu 按模块切（主干/Refiner/VAE），FlashForward 按去噪 stage 切。</span></div>
+    <div class="step hot"><i>② stage 级流水线并行</i><b>每张 GPU 负责一个 stage</b><span>于是<strong>不同 chunk 可以并发处于不同去噪阶段</strong>——这与 §9.5 的「共享时间线」是同一思想的另一种切分：Vidu 按模块切（主干/Refiner/VAE），FlashForward 按去噪 stage 切。</span></div>
     <div class="step"><i>③ clean anchor 双侧条件</i><b>用稀疏干净锚点补回质量</b><span>早可用性的代价是 stage-matched history <strong>带噪</strong>，导致 chunk 间外观与运动漂移。补法是<strong>在对应区域生成之前先生成稀疏的辅助 clean anchor latents</strong>，形成<strong>双侧条件（two-sided conditioning）</strong>。</span></div>
     <div class="step cool"><i>结果：双时间尺度记忆</i><b>两种记忆分工</b><span>稀疏 clean anchor KV 提供<strong>粗粒度、长程、双侧结构引导</strong>；稠密 stage-matched history 保留<strong>精细、近期的演化</strong>。</span></div>
   </div>
-  <div class="callout"><b>公开数字：</b>最多 <strong>4 张 GPU</strong> 下，对 ≥20 秒的 16 FPS 视频，比 <strong>HiAR 快 1.16–1.69×</strong>、比 <strong>Self-Forcing 快 1.42–2.92×</strong>；覆盖 <strong>1.3B 与 14B</strong> 骨干、<strong>480p 与 720p</strong>；在 <strong>20s / 35s / 65s</strong> 三档时长均生成高质量且时序一致的结果。<br><b>注意与 §7.5 的关系：</b>FlashForward 与 Vidu 的共享时间线解决的是同一类问题，但前者<strong>不需要改模型</strong>（只重排执行），后者<strong>需要模型支持主干与 Refiner 的解耦</strong>。这正好对应下一节「三种合作形态」中的 B 与 C。</div>
+  <div class="callout"><b>公开数字：</b>最多 <strong>4 张 GPU</strong> 下，对 ≥20 秒的 16 FPS 视频，比 <strong>HiAR 快 1.16–1.69×</strong>、比 <strong>Self-Forcing 快 1.42–2.92×</strong>；覆盖 <strong>1.3B 与 14B</strong> 骨干、<strong>480p 与 720p</strong>；在 <strong>20s / 35s / 65s</strong> 三档时长均生成高质量且时序一致的结果。<br><b>注意与 §9.5 的关系：</b>FlashForward 与 Vidu 的共享时间线解决的是同一类问题，但前者<strong>不需要改模型</strong>（只重排执行），后者<strong>需要模型支持主干与 Refiner 的解耦</strong>。这正好对应下一节「三种合作形态」中的 B 与 C。</div>
 
   <h3 id="coopt-coop"><span class="h3tag">4.3</span>三种「合作」形态：训练期、推理期、调度期</h3>
   <div class="grid3">
@@ -1885,6 +1906,78 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <figcaption><b>图 5-2 · RoPE 重定位的前后对比</b>：滑窗缓存里最容易被忽略的一条——<i>历史越长，未重定位的 K 的相对距离越离谱；修正点在「何时旋转」而不是「旋转多少」。</i></figcaption>
   </figure>
 
+  <figure>
+    <div class="svgbox">
+    <svg viewBox="0 0 1080 400" role="img" aria-label="Infinity-RoPE 的移动参考系、KV Flush 与 RoPE Cut">
+      <defs>
+        <marker id="ar-inf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#d7ff4f"/></marker>
+      </defs>
+      <rect width="1080" height="400" fill="#0b1a22"/>
+      <text x="30" y="30" fill="#8fa8ae" font-family="monospace" font-size="12" letter-spacing="1.6">∞-ROPE · 移动参考系 ＋ KV FLUSH ＋ ROPE CUT</text>
+
+      <!-- fixed frame problem -->
+      <g>
+        <text x="30" y="64" fill="#ff7a54" font-family="monospace" font-size="11">× 固定参考系（基座 3D-RoPE 的有限时间视野）</text>
+        <line x1="30" y1="96" x2="520" y2="96" stroke="#254150"/>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="30" y="78" width="44" height="22" fill="#2a1210" stroke="#ff7a54"/><text x="52" y="93" fill="#ffc857" text-anchor="middle">blk0</text>
+          <rect x="80" y="78" width="44" height="22" fill="#2a1210" stroke="#ff7a54"/><text x="102" y="93" fill="#ffc857" text-anchor="middle">blk1</text>
+          <rect x="130" y="78" width="44" height="22" fill="#2a1210" stroke="#ff7a54"/><text x="152" y="93" fill="#ffc857" text-anchor="middle">blk2</text>
+          <rect x="180" y="78" width="44" height="22" fill="#2a1210" stroke="#ff7a54"/><text x="202" y="93" fill="#ffc857" text-anchor="middle">blk3</text>
+          <rect x="230" y="78" width="44" height="22" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="252" y="93" fill="#6d868d" text-anchor="middle">blk4</text>
+          <rect x="280" y="78" width="44" height="22" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="302" y="93" fill="#6d868d" text-anchor="middle">blk5</text>
+          <rect x="330" y="78" width="44" height="22" fill="#1b2a1a" stroke="#d7ff4f"/><text x="352" y="93" fill="#d7ff4f" text-anchor="middle">blk6</text>
+        </g>
+        <line x1="60" y1="112" x2="352" y2="112" stroke="#ff7a54" stroke-width="1.4"/>
+        <text x="366" y="100" fill="#ff7a54" font-size="10">位置索引突破基座</text>
+        <text x="366" y="116" fill="#ff7a54" font-size="10">最大帧视野 ⇒ 外推</text>
+        <text x="30" y="140" fill="#6d868d" font-size="10">「时间位置」被固定在原点，窗口前进时索引必须一直增长</text>
+      </g>
+
+      <!-- moving frame -->
+      <g>
+        <text x="30" y="180" fill="#d7ff4f" font-family="monospace" font-size="11">√ Block-Relativistic RoPE：新块相对「基座最大帧视野」旋转，旧块向后旋转</text>
+        <line x1="30" y1="212" x2="520" y2="212" stroke="#254150"/>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="30" y="194" width="44" height="22" fill="#14212e" stroke="#4ad9d2"/><text x="52" y="209" fill="#4ad9d2" text-anchor="middle">blk0</text>
+          <rect x="80" y="194" width="44" height="22" fill="#14212e" stroke="#4ad9d2"/><text x="102" y="209" fill="#4ad9d2" text-anchor="middle">blk1</text>
+          <rect x="130" y="194" width="44" height="22" fill="#14212e" stroke="#4ad9d2"/><text x="152" y="209" fill="#4ad9d2" text-anchor="middle">blk2</text>
+          <rect x="180" y="194" width="44" height="22" fill="#1d2410" stroke="#ffc857"/><text x="202" y="209" fill="#ffc857" text-anchor="middle">blk3</text>
+          <rect x="230" y="194" width="44" height="22" fill="#1d2410" stroke="#ffc857"/><text x="252" y="209" fill="#ffc857" text-anchor="middle">blk4</text>
+          <rect x="280" y="194" width="44" height="22" fill="#1d2410" stroke="#ffc857"/><text x="302" y="209" fill="#ffc857" text-anchor="middle">blk5</text>
+          <rect x="330" y="194" width="44" height="22" fill="#1b2a1a" stroke="#d7ff4f"/><text x="352" y="209" fill="#d7ff4f" text-anchor="middle">blk6</text>
+        </g>
+        <path d="M52,190 Q100,172 152,190" fill="none" stroke="#4ad9d2" stroke-dasharray="4 3" marker-end="url(#ar-inf)"/>
+        <path d="M352,190 Q300,172 252,190" fill="none" stroke="#d7ff4f" stroke-dasharray="4 3" marker-end="url(#ar-inf)"/>
+        <text x="30" y="240" fill="#c4d6d8" font-size="10">较早的块被<tspan fill="#4ad9d2">向后旋转</tspan>，新块相对<tspan fill="#d7ff4f">固定视野</tspan>旋转 ⇒ 相对时间几何守恒，且<tspan fill="#d7ff4f">消除固定时间位置</tspan></text>
+        <text x="30" y="258" fill="#6d868d" font-size="10">「相对论式」表述：没有全局原点，只有块与块之间的相对关系</text>
+      </g>
+
+      <!-- three components -->
+      <g font-size="10">
+        <rect x="560" y="60" width="490" height="96" fill="#0e2029" stroke="#ffc857"/>
+        <text x="578" y="84" fill="#ffc857" font-family="monospace" font-size="11">② KV Flush：只留两个 latent 帧</text>
+        <text x="578" y="106" fill="#c4d6d8">保留：全局 sink + 最近生成的 latent 帧</text>
+        <text x="578" y="126" fill="#c4d6d8">⇒ 无需重新编码即可获得细粒度动作控制</text>
+        <text x="578" y="146" fill="#d7ff4f">⇒ 与即时 prompt 响应（解决「提示响应慢」）</text>
+
+        <rect x="560" y="168" width="490" height="90" fill="#0e2029" stroke="#c4a7ff"/>
+        <text x="578" y="192" fill="#c4a7ff" font-family="monospace" font-size="11">③ RoPE Cut：在时间 RoPE 坐标制造受控不连续</text>
+        <text x="578" y="214" fill="#c4d6d8">在连续 rollout 内人为切开时间轴</text>
+        <text x="578" y="234" fill="#d7ff4f">⇒ 一次 rollout 内实现多镜头 / 场景切换</text>
+        <text x="578" y="252" fill="#6d868d">这是位置编码被「当作剪辑工具」的一个少见用法</text>
+
+        <rect x="560" y="272" width="490" height="88" fill="#16240f" stroke="#d7ff4f"/>
+        <text x="578" y="296" fill="#d7ff4f" font-family="monospace" font-size="11">定位：推理期统一框架，training-free</text>
+        <text x="578" y="318" fill="#c4d6d8">三个组件都不需要重新训练 ⇒ 可直接叠加在已有 checkpoint 上</text>
+        <text x="578" y="338" fill="#c4d6d8">公开结果：整体 VBench 分数持续超过此前的自回归模型</text>
+        <text x="578" y="354" fill="#8fa8ae" font-size="9.5">作为对照：Context Forcing 论文给出其有效上下文约 1.5 秒</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>图 5-3 · Infinity-RoPE 的三组件机制</b>：左侧对比「固定参考系 vs 移动参考系」，右侧是 KV Flush 与 RoPE Cut。<i>把位置编码同时用作「外推手段」和「剪辑工具」，是这一支工作最独特的思路。</i></figcaption>
+  </figure>
+
   <h3 id="rope-infinity"><span class="h3tag">5.4</span>Infinity-RoPE：把时间编码改造成「移动的参考系」</h3>
   <p><strong>Infinity-RoPE</strong>（arXiv 2511.20649 · CVPR 2026，方法名写作 <strong>∞-RoPE</strong>）是目前公开材料里对「无限视野」这件事讲得最完整的一个推理期框架，而且是 <strong>training-free</strong> 的。它诊断出基座模型的三个瓶颈，并给出三个互联组件：</p>
   <div class="tablewrap"><table>
@@ -2015,9 +2108,656 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <div class="card c-violet"><span class="tag violet">记忆外置</span><h4>把位置压力转成记忆压力</h4><p>被移出窗口的历史不再靠位置编码找回，而是压缩进记忆（可学习 query、事件摘要、演化状态）。这解释了为什么 2026 年的长视频工作总把 RoPE 与记忆机制一起讲。</p></div>
   </div>
 
+<!-- ============================ 06 Distributed sparse parallelism ============================ -->
+<section class="ch" id="dsp">
+  <div class="ch-head"><div class="ch-no"><b>06</b>C 段 · 推理</div>
+  <div>
+    <h2>分布式稀疏并行：db-SP、FVAttn 与 OSP-Next</h2>
+    <p class="ch-sub">前几章的稀疏与量化都是在<strong>单卡</strong>视角下讨论的。一旦长视频要跨卡，稀疏就从「少算几个块」变成一个<strong>分布式调度问题</strong>：<strong>决定算哪些块所需的信息，在你这一步的局部视野里拿得到吗？</strong>拿不到，整个方案就不成立——这不是实现细节，而是可行性边界。</p>
+  </div></div>
+
+  <p class="lead-in">本章以三篇主线论文为骨架：<strong>db-SP</strong>（arXiv 2511.23113，清华，把「Ring + 块稀疏」的负载不均衡第一次量化出来）、<strong>FVAttn</strong>（arXiv 2607.16190，中山大学 / 腾讯微信，运行时负载均衡）、<strong>OSP-Next</strong>（arXiv 2605.28691，北大 PKU-YuanGroup 等，规则化稀疏 + HiF8 量化，只需一次 All-to-All）。核心结论先给：<strong>数据依赖的 Top-k 稀疏在 Ring 上有四个结构性障碍，其中两个基本无法工程绕过；能上 Ring 的稀疏必须是「可离线确定」或「阈值型」的。</strong></p>
+
+  <h3 id="dsp-ring"><span class="h3tag">6.1</span>先写清前提：Ring 的代价模型与三条硬约束</h3>
+  <div class="formula">Ring Attention 的代价模型：用 <b>P 倍的 KV 通信</b>，换 <b>1/P 的 KV 显存</b>
+    M_ring  = KV_total / P                ← 显存收益，随并行度 P 线性下降
+    Comm    = KV_total · 2(P−1)/P         ← 通信代价，约 2× 一次性拉取
+
+原论文的显存模型（arXiv 2310.01889）
+    M_ring = b · 6 · c · h    ← 随块大小 c 线性，<b>与序列长度无关</b>
+    构成：1 块 query + 2 块当前 K/V + 2 块接收中 K/V + 1 块输出
+
+<b>通信被计算掩盖的条件（这是 Ring 的收益前提）</b>
+    4·d·c² / F  ≥  4·c·d / B     ⟹     <b>c ≥ F / B</b>
+
+机制本质：Ring 是<b>深度为 P 的流水线</b>，不是「把序列切开各算各的」。
+每个 rank 持有本地 Q，K/V 块沿环流转 P 次，每轮做一次 blockwise attention
+并用 online softmax 累加。收益来自<b>第 i 轮的通信与第 i+1 轮的计算重叠</b>。
+⇒ 重叠成立时通信免费；不成立时 Ring 退化成一个通信开销极大的方案。</div>
+
+  <div class="tablewrap"><table>
+    <caption>表 6-1 · Ring 的三条硬约束。后文所有可行性判定都从这里推出。</caption>
+    <thead><tr><th>约束</th><th>来源</th><th>对稀疏 / 量化的含义</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>C1 · 每轮一个同步点，且预算固定</strong></td>
+        <td>Ring 的流水线结构：每步 P2P 都要等对端</td>
+        <td class="p">任何 rank 间计算量差异都会<strong>直接暴露成等待</strong>。稀疏必须保证<strong>每个同步周期内各 rank 的块数相等</strong>，而不只是总量相等</td>
+      </tr>
+      <tr>
+        <td><strong>C2 · 不引入额外全局屏障</strong></td>
+        <td>Ring 的价值在于「没有全局同步」；任何量化前的 all-reduce 都会独占一段<strong>无法与 attention 重叠</strong>的时间</td>
+        <td class="p">禁止 per-tensor amax 型量化；禁止需要<strong>全序列统计量</strong>的稀疏打分</td>
+      </tr>
+      <tr>
+        <td><strong>C3 · 块是最小传输单元</strong></td>
+        <td>环上流转的是 K/V 块，块大小 c 决定通信粒度</td>
+        <td class="p">量化 scale 必须<strong>挂在块上一起走</strong>；稀疏决策也必须以块为粒度</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><b>一个必须先说清的好消息（对视频 DiT 而言）：</b>Ring 最麻烦的结构性问题在非因果场景下<strong>不存在</strong>。因果三角导致的 <code>1:2:…:P</code> 负载不均衡、zigzag / Striped 配对、每轮掩码形态不同——这些在 full attention 的 DiT 上都不需要处理，<strong>每轮所有 rank 都是稠密满算</strong>。<br><b>但这有个前提：不加稀疏。</b>一旦引入块稀疏，C1 立刻被激活，这正是本章的核心矛盾。<br><b>例外：</b>自回归视频生成（如 MAGI-1，约 400 万 token）的掩码是 <strong>varlen block-causal</strong>，因果问题会回来，且 Ring 的 P2P 冗余会从 <strong>25% 升到 &gt;33%</strong>（MagiAttention 的定量）。</div>
+
+  <h3 id="dsp-geometry"><span class="h3tag">6.2</span>一个关键的几何事实：Ring 不缺块，它算多了</h3>
+  <div class="callout"><b>因果块稀疏掩码，永远是因果稠密掩码的子集。</b>也就是说，一个 query 块需要的所有 K/V 块，因果 ring 本来就都会送到它手上。<strong>Ring 并没有「送错块」的问题——它的问题是把所有块都算了。</strong><br><br>推论：<strong>Ring + 块稀疏的改造目标不是「怎么把需要的块送到」，而是「送到之后怎么决定算哪几个」。</strong>这个视角转换会让后面所有分析清晰很多。</div>
+
+  <figure>
+    <div class="svgbox">
+    <svg viewBox="0 0 1080 420" role="img" aria-label="稀疏决策依据与 Ring 可行性判定">
+      <rect width="1080" height="420" fill="#0b1a22"/>
+      <text x="30" y="30" fill="#8fa8ae" font-family="monospace" font-size="12" letter-spacing="1.6">SPARSITY DECISION SOURCE × RING FEASIBILITY</text>
+
+      <text x="30" y="62" fill="#d7ff4f" font-family="monospace" font-size="11.5">核心问题只有一个：决定「算哪些块」所需的信息，在 ring 的单步局部视野里拿得到吗？</text>
+
+      <!-- two families -->
+      <g>
+        <rect x="30" y="82" width="500" height="150" fill="#16240f" stroke="#d7ff4f"/>
+        <text x="48" y="108" fill="#d7ff4f" font-family="monospace" font-size="11.5">位置依赖 / 阈值型 ⇒ 可以上 Ring</text>
+        <text x="48" y="132" fill="#c4d6d8" font-size="10.5">决策依据是<tspan fill="#d7ff4f">块自己的坐标</tspan>或<tspan fill="#d7ff4f">本地阈值</tspan>，单个块到达即可判定</text>
+        <line x1="48" y1="148" x2="512" y2="148" stroke="#254150"/>
+        <text x="48" y="170" fill="#c4d6d8" font-size="10.5">· <tspan fill="#d7ff4f">db-SP</tspan>：静态划分、提前均衡（稀疏不均衡比 ρ_s 的提出者）</text>
+        <text x="48" y="190" fill="#c4d6d8" font-size="10.5">· <tspan fill="#d7ff4f">RainFusion</tspan>：三型 head 掩码由位置决定，只需广播一次 head 分类</text>
+        <text x="48" y="210" fill="#c4d6d8" font-size="10.5">· <tspan fill="#d7ff4f">AdaSpa</tspan>：掩码「算一次、用到底」，稀疏执行期是纯位置算术</text>
+        <text x="48" y="228" fill="#8fa8ae" font-size="10">· Sol-Attn：已改成<tspan fill="#d7ff4f">阈值型</tspan>，但阈值来自全局行统计量，需改为离线标定常量</text>
+      </g>
+
+      <g>
+        <rect x="550" y="82" width="500" height="150" fill="#2a1210" stroke="#ff7a54"/>
+        <text x="568" y="108" fill="#ff7a54" font-family="monospace" font-size="11.5">数据依赖 / 排序型（Top-k）⇒ 不成立</text>
+        <text x="568" y="132" fill="#c4d6d8" font-size="10.5">需要<tspan fill="#ff7a54">完整分布</tspan>才能定名次 ⇒ 必须物化整行分数 ⇒ 不可流式</text>
+        <line x1="568" y1="148" x2="1032" y2="148" stroke="#254150"/>
+        <text x="568" y="170" fill="#c4d6d8" font-size="10.5">· <tspan fill="#ff7a54">VSA</tspan>：top-k tile + 可训练粗到细，双重障碍</text>
+        <text x="568" y="190" fill="#c4d6d8" font-size="10.5">· <tspan fill="#ff7a54">SLA</tspan>：critical 路由是 top-k_h%，需要全局排名</text>
+        <text x="568" y="210" fill="#c4d6d8" font-size="10.5">· NSA、MoBA、SpargeAttn 的动态部分：同为排序型</text>
+        <text x="568" y="228" fill="#d7ff4f" font-size="10">但 SLA 的<tspan fill="#d7ff4f">线性注意力部分可加</tspan> ⇒ 可沿环累加，见 §6.5</text>
+      </g>
+
+      <!-- three obstacles -->
+      <text x="30" y="266" fill="#8fa8ae" font-family="monospace" font-size="11.5">Top-k 在 Ring 上的四个障碍（本质 / 能否绕过）</text>
+      <g font-size="10">
+        <rect x="30" y="280" width="248" height="120" fill="#0e2029" stroke="#ff7a54"/>
+        <text x="46" y="304" fill="#ff7a54" font-family="monospace" font-size="10.5">① 循环依赖</text>
+        <text x="46" y="326" fill="#c4d6d8">选块需要全部 K；</text>
+        <text x="46" y="344" fill="#c4d6d8">拿到全部 K 就等于算完了</text>
+        <text x="46" y="368" fill="#ffc857">性质：信息时序问题</text>
+        <text x="46" y="388" fill="#d7ff4f">可部分绕过：低分辨率代理</text>
+
+        <rect x="290" y="280" width="248" height="120" fill="#0e2029" stroke="#ff7a54"/>
+        <text x="306" y="304" fill="#ff7a54" font-family="monospace" font-size="10.5">② Top-k 集合与 Q 属主耦合</text>
+        <text x="306" y="326" fill="#c4d6d8">Ring 下没有「完整 head」</text>
+        <text x="306" y="344" fill="#c4d6d8">可搬运</text>
+        <text x="306" y="368" fill="#ffc857">性质：数据布局难题</text>
+        <text x="306" y="388" fill="#ff7a54">基本不可绕过</text>
+
+        <rect x="550" y="280" width="248" height="120" fill="#0e2029" stroke="#ff7a54"/>
+        <text x="566" y="304" fill="#ff7a54" font-family="monospace" font-size="10.5">③ 预取需沿环前进多跳</text>
+        <text x="566" y="326" fill="#c4d6d8">代价 ∝ 环上距离；</text>
+        <text x="566" y="344" fill="#c4d6d8">中间 rank 转发带宽被占</text>
+        <text x="566" y="368" fill="#ffc857">性质：P2P 拓扑</text>
+        <text x="566" y="388" fill="#d7ff4f">可部分绕过：并入正常轮次</text>
+
+        <rect x="810" y="280" width="240" height="120" fill="#0e2029" stroke="#ff7a54"/>
+        <text x="826" y="304" fill="#ff7a54" font-family="monospace" font-size="10.5">④ 逐轮负载不均</text>
+        <text x="826" y="326" fill="#c4d6d8">破坏通信/计算重叠的</text>
+        <text x="826" y="344" fill="#c4d6d8">流水线节奏</text>
+        <text x="826" y="368" fill="#ffc857">性质：需要逐轮调度</text>
+        <text x="826" y="388" fill="#ff7a54">整体均衡不够用</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>图 6-1 · 稀疏决策依据决定 Ring 可行性，Top-k 有四个结构性障碍</b>：判定标准不是「位置依赖 vs 数据依赖」这么简单，而是<strong>「阈值型 vs 排序型」</strong>——单个块到达即可判定「过/不过」的可以流式，需要完整分布排名的不能。<i>障碍 ② 基本无法工程绕过，这是 VSA/SLA 类方法在 Ring 上不成立的根本原因。</i></figcaption>
+  </figure>
+
+  <h3 id="dsp-ospnext"><span class="h3tag">6.3</span>OSP-Next：把「稀疏选择」转化为「固定重排」</h3>
+  <p>OSP-Next 是目前拿到最好公开数字的「规则化稀疏 + 序列并行 + 8bit 量化」方案：<strong>VBench 83.73%（超过 Wan2.1 基线）、950PR 单卡 2.27×</strong>。但它的机制需要被准确理解——<strong>它绕开四个障碍的方式不是「更聪明的选择」，而是「不需要选择」</strong>。</p>
+
+  <h4>Skiparse Rearrange 的「局部等价性」</h4>
+  <div class="formula">论文 Algorithm 1 里的 <b>orig_to_tsa</b> 是全部关键：
+
+    def orig_to_tsa(x, T, H, W, P):
+        return rearrange(x, "b (t h p w q) c -> (p q b) (t h w) c",
+                         p=P, q=P, h=H//P, w=W//P)
+
+它做的是<b>像素 unshuffle</b>：把一个 H×W 的图，按 (p, q) 下标拆成 P² 个子图，
+每个子图 (H/P)×(W/P)。
+
+<b>关键性质：这个 rearrange 是「单元局部」的</b>
+    对整张图做 rearrange ≡ 独立地对每个 k²×k² 的最小单元做 rearrange
+
+为什么这重要 —— 它把「全局重排」降级成了「局部重排」：
+    · 一个 token 该进哪个真子序列，<b>只由它自己的 (h,w) 坐标决定</b>
+    · 因此映射可以<b>离线预先算好</b>（一张固定索引表），运行时不需跨 rank 协商
+    · 更关键：它与序列切分<b>可交换</b>——先切分再各自 rearrange，与先 rearrange 再切分结果一致
+      ⇒ 这就是「可以分配给不同 rank 各自算」的合法性来源</div>
+
+  <h4>为什么只要一次 All-to-All（对比 Ulysses 的 4 次）</h4>
+  <div class="formula">G = P² / group_size          # 真子序列被分成 G 组
+b = B_local / G              # 每组对应 b 个原 batch 元素
+
+# ① 本地 rearrange（无通信）：把序列拆成 P² 条真子序列，拼到 batch 维
+x = orig_to_tsa(x, T, H/P, W/P, P)      # → [(p q b), (t h w), c]
+
+# ② 一次性 All-to-All：一次完成「序列维切分 → 真子序列维切分」的换轴
+x = x.view(group_size, G, G*b, base, C)
+all_to_all_single(recv, x, group=group)
+
+# ③ 本地置换 + ④ 反向 rearrange（均无通信）
+
+论文原话："data exchange to be completed by <b>ONE local rearrangement on each rank
+followed by ONE All-to-All communication step</b> within the communication group"</div>
+  <div class="grid4">
+    <div class="card c-acid"><span class="tag acid">原因 1</span><h4>换的是「轴」，不是「张量」</h4><p>这里只有<strong>一份激活 x</strong>（Attention 的输入），Q/K/V 在后面用权重投影出来——所以不需要像 Ulysses 那样分三次搬 Q、K、V，也不需要第四次搬回输出。<strong>这是「1 次 vs 4 次」最主要的原因。</strong></p></div>
+    <div class="card c-acid"><span class="tag acid">原因 2</span><h4>目的地可离线确定 ⇒ 不需要全局求解阶段</h4><p>这是更深层的原因。一般动态稀疏需要两阶段：① 全局求解「哪个 token 给哪个 rank」（须看全局信息，在 Ring 上代价高昂甚至不可能）；② 一次 All-to-All 实现它。<strong>局部等价性把 ① 消除了——索引表是固定的，直接执行 ②。</strong></p></div>
+    <div class="card c-cyan"><span class="tag">原因 3</span><h4>真子序列等长 ⇒ 交换天然均衡</h4><p>每个 rank 收发等量数据，All-to-All 是一对一的规则交换，不需要额外均衡；切分后各 rank 计算量天然相同——<strong>不触发 C1</strong>。</p></div>
+    <div class="card c-cyan"><span class="tag">原因 4</span><h4>稀疏来自「序列重组」，不是「挑块」</h4><p>Skiparse-2D 的稀疏性来自<strong>每条真子序列内部做稠密注意力</strong>，而不是从全序列里挑块。它不需要打分、不需要全局排序、不需要预取、子序列等长所以负载天然均衡。</p></div>
+  </div>
+  <div class="callout warn"><b>不要把 OSP-Next 的能力理解过头：</b>那一次 All-to-All 的作用是在 <strong>token-wise（TSA）与 group-wise（GSA）两种模式之间切换</strong>（两种模式的真子序列划分不同，token 需要换手），<strong>它不是「把需要的 KV 块拉过来」</strong>。OSP-Next 的「稀疏」本质是<strong>把序列重组成多条短序列，然后各算 dense</strong>。这正是它绕开全部四个障碍的原因：<strong>它把「稀疏选择问题」转化成了「固定重排问题」</strong>。<br><b>另外要注意口径：</b>它用的是 <strong>All-to-All</strong>（Ulysses 风格），不是 Ring P2P。把它搬到 Ring 上需要另行验证。</div>
+
+  <h3 id="dsp-balance"><span class="h3tag">6.4</span>负载均衡：先测量，再决定怎么修</h3>
+  <p>在投入任何均衡器之前必须先测量。<strong>db-SP（arXiv 2511.23113，清华）给出了现成的度量 ρ_s</strong>——它也是目前唯一把「Ring + 块稀疏」的负载不均衡量化出来的工作。</p>
+  <div class="formula"># db-SP 的稀疏不均衡比：最重 rank 负载 ÷ 全部 rank 平均负载
+Ring:     ρ_s = Σ_i max_g(b_{i,g}) / avg     ← <b>每个 ring step 一个同步点</b>（逐轮求和）
+Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同步点
+
+# 物理意义：做完美均衡后理论上能拿到的加速比</div>
+  <div class="tablewrap"><table>
+    <caption>表 6-2 · db-SP 实测的 ρ_s（稀疏不均衡比）。这张表同时回答了「Ring 是不是比 Ulysses 更均衡」。</caption>
+    <thead><tr><th>模型</th><th>稀疏方法</th><th>并行方式</th><th>ρ_s</th></tr></thead>
+    <tbody>
+      <tr><td>Wan2.1</td><td>PAROAttention</td><td>Ring</td><td class="y">1.255</td></tr>
+      <tr><td>Wan2.1</td><td>PAROAttention</td><td>Ulysses</td><td class="p">1.355</td></tr>
+      <tr><td>CogVideoX1.5</td><td>PAROAttention</td><td>Ring</td><td class="y">1.269</td></tr>
+      <tr><td>CogVideoX1.5</td><td>PAROAttention</td><td>Ulysses</td><td class="p">1.447</td></tr>
+      <tr><td>CogVideoX1.5</td><td>SpargeAttn</td><td>Ulysses</td><td class="p">1.513</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3">
+    <div class="card c-acid"><span class="tag acid">判断 1</span><h4>Ring 的 ρ_s 系统性低于 Ulysses</h4><p>1.255–1.269 vs 1.355–1.447。原因是<strong>切分维度不同</strong>：Ulysses 沿 <strong>head</strong> 切分，而稀疏度恰恰是<strong>逐 head 差异最大</strong>的量，差异被直接放大到 rank 级；Ring 沿<strong>序列/块</strong>切分，把头间差异摊薄了。<strong>这是选择 Ring 时一个额外的、独立的收益。</strong></p></div>
+    <div class="card c-amber"><span class="tag amber">判断 2</span><h4>1.26 仍意味着约 21% 的潜在加速被浪费</h4><p>不能忽略。而这个数字还有一层保留：<strong>db-SP 测的是「整体不均衡」，在 Top-k 场景下会低估 Ring 的真实损失</strong>（因为 Top-k 的不均衡是逐轮的，而 ρ_s 对它只做求和聚合）。</p></div>
+    <div class="card c-coral"><span class="tag coral">判断 3</span><h4>越激进的稀疏，不均衡越严重</h4><p>PAROAttention 1.26 → SpargeAttn 更高（其 Ring 版未实现）。<strong>如果用高稀疏率换性能，必须同步准备均衡机制</strong>，不能先上稀疏再补均衡。</p></div>
+  </div>
+
+  <h4>两种均衡思路，两个层次的权衡</h4>
+  <div class="grid2">
+    <div class="card c-acid"><span class="tag acid">db-SP · 提前均衡（静态划分）</span><h4>把耦合的头级/块级问题解耦</h4><p>用「每个层级都能独立接近完美均衡」这个先验，<strong>拆成两个顺序子问题，各自贪心</strong>。</p><p><strong>开销抑制的关键：</strong>利用稀疏掩码在<strong>去噪步之间</strong>的相似性，设阈值 P_s，低于阈值就<strong>复用上一步的划分计划</strong>。动态稀疏下划分执行次数 = 层数 × 去噪步数，在 Wan2.1-T2V-14B 上高达约 <strong>2000 次</strong>——复用是把这份开销压到可忽略的关键。其前提是「跨步相似」，这在多步采样（如 50 步）下成立得很好。</p><p class="y">公开结果：<strong>端到端 1.25×、attention 1.40×</strong>。</p></div>
+    <div class="card c-coral"><span class="tag coral">FVAttn · 运行时修复</span><h4>等掩码 materialize 后再搬运</h4><p><strong>出发点是一个硬观测：4 步蒸馏下，相邻步同一 head 的密度变化最高 97%、同一 rank 负载变化最高 44%。预布局在用过期信号做决策。</strong></p><p><strong>做法：</strong>等掩码 materialize 后，按<strong>已实现的 per-head 负载</strong>，用<strong>受限 P2P 迁移少量重头 head</strong>（8 卡下每 rank ≤ 1 个，约 <strong>20% 本地 head</strong>），把不均衡<strong>从 1.34 压到 1.08</strong>；再用 <strong>SASA</strong> 把非关键 rank 的残余空隙兑换成额外的高价值块（<strong>不抬高全局阈值，因此不延长关键路径</strong>）。</p></div>
+  </div>
+
+  <div class="callout risk"><b>FVAttn 不能直接搬到 Ring 上——这是结构问题，不是实现细节。</b>FVAttn 明确写了它的前提是 Ulysses 风格：「each GPU holds <strong>complete sequences for a subset of attention heads</strong>」。在这个前提下每个 rank 的 Q 是完整的，所以它可以 ① 在掩码 materialize 后看到自己负责 head 的真实负载；② 用「<strong>迁移 head</strong>」而不是「迁移块」来做均衡——因为 head 是完整可搬运的单元。<br><br>而在 <strong>Ring 上，每个 rank 只有一段 Q，没有「完整的 head」可以搬运</strong>。所以 FVAttn 的调度单元在 Ring 上<strong>不存在</strong>。</div>
+
+  <figure>
+    <div class="svgbox">
+    <svg viewBox="0 0 1080 430" role="img" aria-label="Ring 与 Ulysses 的切分维度差异，以及均衡成本排序">
+      <rect width="1080" height="430" fill="#0b1a22"/>
+      <text x="30" y="30" fill="#8fa8ae" font-family="monospace" font-size="12" letter-spacing="1.6">RING vs ULYSSES · 为什么切分维度决定均衡成本</text>
+
+      <!-- Ulysses -->
+      <g>
+        <rect x="30" y="56" width="490" height="176" fill="#0e2029" stroke="#ff7a54"/>
+        <text x="48" y="82" fill="#ff7a54" font-family="monospace" font-size="11.5">Ulysses：沿 head 切分</text>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="48" y="98" width="130" height="30" fill="#141008" stroke="#ffc857"/><text x="113" y="117" fill="#ffc857" text-anchor="middle">rank0 · head 0..h/4</text>
+          <rect x="188" y="98" width="130" height="30" fill="#141008" stroke="#ffc857" opacity=".85"/><text x="253" y="117" fill="#ffc857" text-anchor="middle">rank1 · h/4..h/2</text>
+          <rect x="328" y="98" width="130" height="30" fill="#141008" stroke="#ffc857" opacity=".7"/><text x="393" y="117" fill="#ffc857" text-anchor="middle">rank2 · h/2..3h/4</text>
+        </g>
+        <text x="48" y="152" fill="#c4d6d8" font-size="10.5">每个 rank 持有<tspan fill="#ffc857">完整的序列</tspan>，只负责一部分 head</text>
+        <text x="48" y="172" fill="#c4d6d8" font-size="10.5">⇒ 稀疏度的<tspan fill="#ff7a54">逐 head 差异被直接放大到 rank 级</tspan></text>
+        <text x="48" y="194" fill="#d7ff4f" font-size="10.5">✔ 均衡单元 = 完整 head ⇒ 可用 P2P 迁 head</text>
+        <text x="48" y="216" fill="#ff7a54" font-size="10.5">✘ ρ_s 更高（1.355–1.513）</text>
+      </g>
+
+      <!-- Ring -->
+      <g>
+        <rect x="550" y="56" width="500" height="176" fill="#0e2029" stroke="#4ad9d2"/>
+        <text x="568" y="82" fill="#4ad9d2" font-family="monospace" font-size="11.5">Ring：沿序列 / 块切分</text>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="568" y="98" width="112" height="30" fill="#14212e" stroke="#4ad9d2"/><text x="624" y="117" fill="#4ad9d2" text-anchor="middle">rank0 · seq 段0</text>
+          <rect x="688" y="98" width="112" height="30" fill="#14212e" stroke="#4ad9d2" opacity=".85"/><text x="744" y="117" fill="#4ad9d2" text-anchor="middle">rank1 · 段1</text>
+          <rect x="808" y="98" width="112" height="30" fill="#14212e" stroke="#4ad9d2" opacity=".7"/><text x="864" y="117" fill="#4ad9d2" text-anchor="middle">rank2 · 段2</text>
+          <rect x="928" y="98" width="104" height="30" fill="#14212e" stroke="#4ad9d2" opacity=".55"/><text x="980" y="117" fill="#4ad9d2" text-anchor="middle">rank3 · 段3</text>
+        </g>
+        <text x="568" y="152" fill="#c4d6d8" font-size="10.5">每个 rank 持有<tspan fill="#4ad9d2">一段 Q</tspan>，K/V 块沿环流转</text>
+        <text x="568" y="172" fill="#c4d6d8" font-size="10.5">⇒ 头间差异被<tspan fill="#d7ff4f">摊薄</tspan>，ρ_s 更低（1.255–1.269）</text>
+        <text x="568" y="194" fill="#d7ff4f" font-size="10.5">✔ 天然的均衡优势 + 无全局同步点</text>
+        <text x="568" y="216" fill="#ff7a54" font-size="10.5">✘ 没有完整 head 可搬 ⇒ FVAttn 思路失效</text>
+      </g>
+
+      <!-- cost-ordered balancing options -->
+      <text x="30" y="266" fill="#8fa8ae" font-family="monospace" font-size="11.5">在 Ring 上做均衡：按代价排序的三种手段</text>
+      <g font-size="10">
+        <rect x="30" y="280" width="326" height="130" fill="#16240f" stroke="#d7ff4f"/>
+        <text x="48" y="304" fill="#d7ff4f" font-family="monospace" font-size="11">优先 · 从掩码设计上消除不均衡</text>
+        <text x="48" y="326" fill="#c4d6d8">规则化稀疏的子序列<tspan fill="#d7ff4f">等长</tspan>，逐轮均衡是</text>
+        <text x="48" y="344" fill="#c4d6d8"><tspan fill="#d7ff4f">结构保证</tspan>的 ⇒ 零运行时开销</text>
+        <text x="48" y="368" fill="#8fa8ae">代表：OSP-Next 的 Skiparse 重排</text>
+        <text x="48" y="392" fill="#8fa8ae">代价：稀疏的「智能程度」下降</text>
+
+        <rect x="372" y="280" width="326" height="130" fill="#0e2029" stroke="#4ad9d2"/>
+        <text x="390" y="304" fill="#4ad9d2" font-family="monospace" font-size="11">其次 · 调 Q 块到 rank 的映射</text>
+        <text x="390" y="326" fill="#c4d6d8">Ring 下<tspan fill="#d7ff4f">「搬 Q」比「搬 K」便宜得多</tspan>——</text>
+        <text x="390" y="344" fill="#c4d6d8">Q 本来就在本地，重新分配 Q 块只需一次</text>
+        <text x="390" y="362" fill="#c4d6d8">轻量的序列重排，不涉及 K 的环上搬运</text>
+        <text x="390" y="386" fill="#ffc857">这是 FVAttn「搬 head」在 Ring 上的正确对应物</text>
+        <text x="390" y="404" fill="#6d868d" font-size="9.5">（此条为机制推断，未见公开实现）</text>
+
+        <rect x="714" y="280" width="336" height="130" fill="#0e2029" stroke="#ffc857"/>
+        <text x="732" y="304" fill="#ffc857" font-family="monospace" font-size="11">最后 · 逐轮微调块的计算顺序</text>
+        <text x="732" y="326" fill="#c4d6d8">在 C1 允许的范围内调整块的执行次序</text>
+        <text x="732" y="348" fill="#ff7a54">收益有限：每轮同步点仍然存在</text>
+        <text x="732" y="372" fill="#8fa8ae">本质是在既有的逐轮约束内做局部优化，</text>
+        <text x="732" y="390" fill="#8fa8ae">无法改变「最重 rank 决定这一轮」的事实</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>图 6-2 · 切分维度决定均衡成本，Ring 上的均衡手段要按代价排序</b>：Ulysses 沿 head 切分（可迁 head 但 ρ_s 高），Ring 沿序列切分（ρ_s 低但无完整 head 可迁）。<i>Ring 上的正确对应物是「调 Q 块映射」而不是「迁 head」——因为 Q 不参与环上流转，搬运成本低一个量级。</i></figcaption>
+  </figure>
+
+  <h3 id="dsp-routes"><span class="h3tag">6.5</span>两条可执行路线，以及各主流稀疏方法的逐案判定</h3>
+  <div class="grid2">
+    <div class="card c-acid"><span class="tag acid">路线 A · 首选</span><h4>把稀疏改成「可离线确定」的</h4><p><strong>做法：</strong>约束稀疏掩码<strong>只是「块位置坐标」的函数</strong>，不含任何数据依赖项。可用形态：Skiparse 类（固定 skip 间隔 + 交替模式，OSP-Next）；滑窗 + 全局块；块因果 + 条带（适用于自回归视频）；静态掩码 + 块内自洽。</p><p class="y"><strong>收益：</strong>直接绕开全部四个障碍；不需要新算法；与 Ring 的流水线天然兼容。</p><p class="p"><strong>代价：</strong>稀疏的「智能程度」下降。但 OSP-Next 的实测说明这个代价在视频上<strong>比想象中小</strong>——固定规则模式拿到了超过 full-attention 基线的 VBench。原因是<strong>视频的注意力冗余沿空间/时间邻域聚集，规则化掩码足以覆盖大部分重要交互</strong>。</p></div>
+    <div class="card c-amber"><span class="tag amber">路线 B · 备选</span><h4>用低分辨率代理提前决策</h4><p><strong>思路：</strong>不在原始分辨率上打分，而是在<strong>下采样后的 KV</strong> 上跑选择器。这直接缓解障碍一（循环依赖）——代理 KV 很小，可以在 ring 开始前就准备好。代理的字节量约为 KV 的 <code>1/r</code>（r 为下采样比，如 32）。</p><p class="p"><strong>风险（三条，逐条都致命）：</strong>① 代理仍需一次全局可见性（all-gather 或随环流转一次），<strong>引入新同步点，触碰 C2</strong>；② 代理给出的块级决策是近似的，误差直接进入注意力输出；③ <strong>代理决策仍逐 Q 块不同，障碍二（Top-k 集合与 Q 属主耦合）没有解决</strong>——只是把「需要全精度 K」换成了「需要低精度全局 K」。</p><p><strong>结论：</strong>路线 B 能缓解障碍一和三，<strong>解决不了障碍二和四</strong>。只有在路线 A 的规则形态不足以达到质量目标时才考虑。</p></div>
+  </div>
+
+  <div class="tablewrap"><table>
+    <caption>表 6-3 · 主流稀疏方法的 Ring 适配逐案判定（按「上 Ring 的可行性」排序）</caption>
+    <thead><tr><th>优先级</th><th>方法</th><th>判定</th><th>阻塞点</th><th>改造工作量与预期</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="y"><strong>P0</strong></td>
+        <td><strong>db-SP</strong><br><span class="tag muted">arXiv 2511.23113 · 清华</span></td>
+        <td class="y">✅ 已在 Ring 上验证</td>
+        <td>静态划分需一次（可摊销的）划分计算；跨步复用依赖「跨步相似」前提</td>
+        <td class="y"><strong>唯一把 Ring + 块稀疏的不均衡量化出来的工作</strong>；给出 ρ_s 度量与端到端 1.25× / attention 1.40×。优先沿用其度量与复用小技巧</td>
+      </tr>
+      <tr>
+        <td class="y"><strong>P0</strong></td>
+        <td><strong>AdaSpa</strong><br><span class="tag muted">arXiv 2502.21079</span></td>
+        <td class="y">✅ 最强候选</td>
+        <td>掩码搜索需一次全局代价（可摊销到 warm-up）</td>
+        <td class="y">低：掩码「算一次、用到底」，<strong>稀疏执行期是纯位置算术</strong>；只需验证掩码跨 rank 可用性。<em>一次全局代价买断后续所有步</em></td>
+      </tr>
+      <tr>
+        <td class="y"><strong>P0</strong></td>
+        <td><strong>RainFusion</strong><br><span class="tag muted">arXiv 2505.21036 · 华为</span></td>
+        <td class="y">✅ 可适配</td>
+        <td>ARM 分类需广播；Textural head 有块粒度失配</td>
+        <td class="y">低–中：补一次标签广播 + 逐 head 均衡；Textural 先用「整块传、子集算」。<strong>training-free，掩码位置决定，落地路径最短</strong></td>
+      </tr>
+      <tr>
+        <td class="p"><strong>P1</strong></td>
+        <td><strong>Sol-Attn</strong><br><span class="tag muted">arXiv 2607.24027 · NVIDIA</span></td>
+        <td class="p">⚠ 已解决障碍一，但阈值需改造</td>
+        <td>阈值来自全局行统计量；代理复用与 LSE 合并语义冲突</td>
+        <td class="p">中：阈值改为离线标定常量；修正项移出 LSE 合并。<em>它的「流式消费」已经具备，改造成本主要在数值语义</em></td>
+      </tr>
+      <tr>
+        <td class="n"><strong>P2</strong></td>
+        <td><strong>SLA</strong><br><span class="tag muted">arXiv 2509.24006</span></td>
+        <td class="p">❌ 不成立，但其中一半可以救</td>
+        <td>critical 路由是 <code>top-k_h% / bottom-k_l%</code>，<strong>需要全局排名</strong></td>
+        <td class="p">高：需双阈值改造 + 微调流程 + kernel 重写。<strong>但 marginal 项的线性注意力是天然可加的</strong>——<code>H_i = Σ φ(K_j)ᵀV_j</code>、<code>Z_i = Σ rowsum(φ(K_j)ᵀ)</code> 都是对 j 的求和量，各 rank 累加本地量、最后做一次归约即可，<strong>甚至完全避开 LSE 合并</strong>。改法：把 top-k% 改成双阈值 <code>P_c &gt; τ_high</code> / <code>P_c &lt; τ_low</code></td>
+      </tr>
+      <tr>
+        <td class="n"><strong>P3</strong></td>
+        <td><strong>VSA</strong><br><span class="tag muted">arXiv 2505.13389</span></td>
+        <td class="n">❌ 不成立（双重障碍）</td>
+        <td>① 属于<strong>排序型</strong>（top-k tile），继承障碍一与二；需全序列 tile 重要性分数才能选 tile。② <strong>未解决 FlashAttention 兼容性</strong>：可训练稀疏需要动态构造掩码，通常用 FlexAttention 或自定义 kernel，<strong>难以与高效 FlashAttention kernel 原生集成</strong>，且不规则掩码难以并行、会导致<strong>跨 rank 负载失衡</strong>（OSP-Next 的相关工作明确指出了这一点）</td>
+        <td class="n">高：需改阈值型 + 重写内核 + 重新训练。优先级最低</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="dsp-quant"><span class="h3tag">6.6</span>量化 × Ring：scale 的作用域是第二个可行性边界</h3>
+  <p>稀疏之外，量化在环上还多一层约束——<strong>scale 挂在哪里，决定了它能不能随块一起走</strong>。四个必须理解的断点：</p>
+  <div class="grid4">
+    <div class="card c-coral"><span class="tag coral">断点 1</span><h4>不能在环上反量化</h4><p>反量化必须发生在数据<strong>到达并进入计算之前</strong>的本地环节，不能作为环上流转的一部分——否则通信量按高精度计算，量化的全部收益消失。</p></div>
+    <div class="card c-coral"><span class="tag coral">断点 2</span><h4>量化只能作用在 K/V/P 上，绝不能作用在 softmax 统计量上</h4><p>跨块 LSE 合并是 Ring 每轮的合并原语。softmax 统计量必须保持 <strong>FLOAT32</strong>——这与昇腾 <code>RingAttentionUpdate</code> 算子「softmax 统计量强制 FLOAT32」的设计一致。</p></div>
+    <div class="card c-coral"><span class="tag coral">断点 3</span><h4>P 的量化误差会沿环累积</h4><p>P（注意力概率矩阵）参与每轮的 online softmax 累加，<strong>误差随环上跳数累积</strong>，而不是一次性的。这与单卡上「P 量化误差局部可控」的结论完全不同。</p></div>
+    <div class="card c-coral"><span class="tag coral">断点 4</span><h4>平滑统计量的全局性</h4><p>SageAttention 用 <code>mean(K)</code> 作平滑因子，而这是<strong>全序列均值</strong>。在 Ring 上获取它需要一次全局归约——<strong>直接触碰 C2</strong>。这解释了为什么 SageAttention 的原始形式不能直接上 Ring，必须改用可分块的替代量。</p></div>
+  </div>
+  <div class="callout"><b>把 §6.1 的 C3 与本节合起来读：</b>块是环上的最小传输单元，所以<strong>量化 scale 必须是块级（per-tile）的，并挂在块上一起走</strong>。per-tensor scale 需要全局统计（触碰 C2），per-channel scale 需要在环上重排布局（破坏 C3）。这也解释了 OSP-Next 为什么选 <strong>HiF8</strong>（HIFLOAT8）路线——它的消融显示 <strong>HiF8 训练的 loss 曲线与 BF16 基本一致</strong>，精度代价小到可以接受，同时格式本身对块级 scale 友好。</div>
+
+  <h3 id="dsp-ascend"><span class="h3tag">6.7</span>落到昇腾：算子映射与叠加检查单</h3>
+  <div class="tablewrap"><table>
+    <caption>表 6-4 · Ring 适配直接相关的算子事实（CANN ops-transformer 侧）</caption>
+    <thead><tr><th>Ring 上需要的能力</th><th>算子</th><th>状态与结论</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>跨块 LSE 合并（Ring 每轮的合并原语）</td>
+        <td><code>RingAttentionUpdate</code> / <code>RingAttentionUpdateV2</code></td>
+        <td class="y">已具备。支持 SBH / TND；V2 可指定 softmax 排布省一次重排；<strong>默认确定性实现</strong>（利于精度验收）；<strong>softmax 统计量强制 FLOAT32</strong>，与断点 2 的结论一致。<br><span class="p">但它只做合并、不做通信——<strong>环的调度需自研</strong>。</span></td>
+      </tr>
+      <tr>
+        <td>量化 FlashAttention</td>
+        <td><code>attention/quant_flash_attn/</code>（<code>quant_flash_attn_tiling_info.h</code> 中的 QuantMode / QFA_DTYPE 枚举）</td>
+        <td class="y">可对接；需与块级 scale 的作用域对齐</td>
+      </tr>
+      <tr>
+        <td>KV 量化 + 稀疏融合注意力</td>
+        <td><code>attention/kv_quant_sparse_flash_attention/</code></td>
+        <td class="y">「量化 + 稀疏」在同一算子内的落点</td>
+      </tr>
+      <tr>
+        <td>混合量化稀疏（MLA 路线）</td>
+        <td><code>attention/mixed_quant_sparse_flash_mla/</code></td>
+        <td>参考实现；与 DiT 类注意力的适配需另行评估</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>Ring 上的叠加检查单（按 C1–C3 逐项过）：</b><br>
+  ① <strong>掩码是否可离线确定？</strong>数据依赖则直接排除，或降到阈值型。<br>
+  ② <strong>每个同步周期内各 rank 的块数是否相等？</strong>只保证总量相等不够（C1）。<br>
+  ③ <strong>是否引入新的全局屏障？</strong>per-tensor amax、全序列统计量、全序列 top-k 都会触碰 C2。<br>
+  ④ <strong>量化 scale 是否是块级、并随块传输？</strong>（C3）<br>
+  ⑤ <strong>softmax 统计量是否保持 FP32？</strong><br>
+  ⑥ <strong>是否先测了 ρ_s 再投入均衡器？</strong>不测量就优化，等于在没有基线的情况下调参。</div>
+  <div class="quote">本章可以压缩成一句判断：<strong>在 Ring 上，稀疏的「聪明程度」是一个可以用可行性交换的量。</strong>规则化稀疏（可离线确定、子序列等长）放弃了数据自适应，换来的是绕开全部四个障碍与结构性的负载均衡；而任何需要「先看全局再决定算哪些」的方案，在 Ring 上都要么触碰到 C2，要么在障碍二面前停下来。</div>
+</section>
+<!-- ============================ 07 Multimodal sparse MoE ============================ -->
+<section class="ch" id="moe">
+  <div class="ch-head"><div class="ch-no"><b>07</b>C 段 · 推理</div>
+  <div>
+    <h2>多模态稀疏 MoE：把「容量」与「每步成本」解耦</h2>
+    <p class="ch-sub">前面所有章节都在同一个假设下工作：<strong>模型有多大，每步就要算多大</strong>。MoE 打破的正是这个假设——它让<strong>总容量（存多少）</strong>与<strong>激活量（算多少）</strong>成为两个可以分别调节的量。对长视频与世界模型来说，这是除量化之外<strong>唯一能同时改变「算」与「存」两条曲线的手段</strong>。</p>
+  </div></div>
+
+  <p class="lead-in">本章的组织逻辑是「先分清问题，再谈技术」：MoE 在<strong>视频生成</strong>里和在大语言模型里遇到的瓶颈完全不同——LLM 侧是显存带宽与 all-to-all 通信，视频侧是<strong>大量极窄专家带来的小算子风暴</strong>。混淆这两者，会导出错误的优化优先级。本章先给出容量/激活解耦的账本，再拆路由机制，然后分「少算」与「少存」两条线讲系统侧手段，最后落到视频与世界模型上的四个真实实例。</p>
+
+  <h3 id="moe-why"><span class="h3tag">7.1</span>为什么 MoE 在大约 2025 年之后回到视野</h3>
+  <p>把三个杠杆放在同一张账本上，MoE 的位置就清楚了：</p>
+  <div class="formula">三条独立曲线（以密集模型为基线）
+  ① 每步算力   ∝ 激活参数量        ← 蒸馏/稀疏注意力/量化都在压这条
+  ② 每步显存   ∝ 权重 + KV + 激活   ← 量化与 KV 淘汰在压这条
+  ③ 模型容量   ∝ 总参数量          ← <b>只有 MoE 能把这条与 ① 解耦</b>
+
+MoE 的账本
+  总参数量   N_total  =  N_shared  +  N_experts · E        ← 决定显存与容量
+  每步激活   N_active =  N_shared  +  N_experts · k        ← 决定算力（k = 激活专家数）
+  ⇒ 稀疏度    s = k / E        典型 1/8 ~ 1/32
+  ⇒ <b>容量可以按 E 放大，而单步算力只按 k 增长</b>
+
+代价（必须同时计入）
+  · 权重总量仍要存在某处 ⇒ 「少算」不等于「少存」
+  · 路由 + 重排 + 分散/聚合 的开销 ⇒ 少数 token、极窄专家时占比急剧上升
+  · 负载不均衡 ⇒ 专家并行下最热专家决定这一步的时间（与 §6 的 C1 同构）</div>
+  <div class="callout"><b>关键认识：MoE 买到的是「容量」，不是「速度」。</b>它把每步算力从总参数量上解耦，但<strong>权重总量并没有减少</strong>——只是不需要每次都用上。因此 MoE 的收益必须与「少存」手段（专家卸载、专家缓存、低比特）配合，才能同时改善曲线 ②。这也是本章把「少算」与「少存」分成两节的原因：<strong>它们是两个不同的工程问题，用错了手段会得出「MoE 没用」的结论。</strong></div>
+
+  <figure>
+    <div class="svgbox">
+    <svg viewBox="0 0 1080 400" role="img" aria-label="MoE 的容量与激活解耦，以及稀疏度对算力/显存的影响">
+      <rect width="1080" height="400" fill="#0b1a22"/>
+      <text x="30" y="30" fill="#8fa8ae" font-family="monospace" font-size="12" letter-spacing="1.6">CAPACITY vs ACTIVE PARAMETERS · 解耦与代价</text>
+
+      <!-- dense vs moe -->
+      <g>
+        <text x="30" y="64" fill="#8fa8ae" font-family="monospace" font-size="11">Dense：容量 = 每步成本</text>
+        <rect x="30" y="76" width="400" height="34" fill="#122833" stroke="#32596b"/>
+        <text x="230" y="98" fill="#c4d6d8" font-size="10.5" text-anchor="middle">全部 N 参数每步都要参与计算</text>
+        <text x="30" y="130" fill="#ff7a54" font-size="10.5">想加容量就必须加算力 ⇒ 存在硬上限</text>
+
+        <text x="30" y="170" fill="#d7ff4f" font-family="monospace" font-size="11">MoE：容量与激活量解耦</text>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="30" y="182" width="70" height="30" fill="#16240f" stroke="#d7ff4f"/><text x="65" y="201" fill="#d7ff4f" text-anchor="middle">shared</text>
+          <rect x="106" y="182" width="46" height="30" fill="#122833" stroke="#4ad9d2"/><text x="129" y="201" fill="#4ad9d2" text-anchor="middle">E1</text>
+          <rect x="158" y="182" width="46" height="30" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="181" y="201" fill="#6d868d" text-anchor="middle">E2</text>
+          <rect x="210" y="182" width="46" height="30" fill="#122833" stroke="#4ad9d2"/><text x="233" y="201" fill="#4ad9d2" text-anchor="middle">E3</text>
+          <rect x="262" y="182" width="46" height="30" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="285" y="201" fill="#6d868d" text-anchor="middle">E4</text>
+          <rect x="314" y="182" width="46" height="30" fill="#122833" stroke="#4ad9d2"/><text x="337" y="201" fill="#4ad9d2" text-anchor="middle">E5</text>
+          <rect x="366" y="182" width="46" height="30" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="389" y="201" fill="#6d868d" text-anchor="middle">E6</text>
+        </g>
+        <text x="424" y="201" fill="#8fa8ae" font-size="10">… E 个专家</text>
+        <text x="30" y="238" fill="#d7ff4f" font-size="10.5">实心 = 本步被激活（k 个）；虚线 = 存在但不参与本步计算</text>
+        <text x="30" y="258" fill="#c4d6d8" font-size="10.5">⇒ 容量随 E 增长，单步算力只随 k 增长（稀疏度 s = k/E）</text>
+        <text x="30" y="282" fill="#ffc857" font-size="10.5">⇒ 但权重总量仍要存下 ⇒ 「少算」必须另配「少存」手段</text>
+      </g>
+
+      <!-- cost breakdown -->
+      <g>
+        <rect x="580" y="60" width="470" height="240" fill="#0e2029" stroke="#254150"/>
+        <text x="598" y="86" fill="#4ad9d2" font-family="monospace" font-size="11.5">MoE 单步时间账本</text>
+        <g font-size="10">
+          <rect x="598" y="100" width="434" height="22" fill="#122833" stroke="#32596b"/>
+          <text x="606" y="115" fill="#c4d6d8">router + top-k + 归一化</text>
+          <rect x="598" y="126" width="434" height="22" fill="#122833" stroke="#32596b"/>
+          <text x="606" y="141" fill="#c4d6d8">token → expert 重排（permute / gather）</text>
+          <rect x="598" y="152" width="300" height="22" fill="#16240f" stroke="#d7ff4f"/>
+          <text x="606" y="167" fill="#d7ff4f">专家 FFN 计算（真正被稀疏化的部分）</text>
+          <rect x="598" y="178" width="434" height="22" fill="#122833" stroke="#32596b"/>
+          <text x="606" y="193" fill="#c4d6d8">加权聚合（scatter / unpermute / 归约）</text>
+          <rect x="598" y="204" width="434" height="22" fill="#1e1a14" stroke="#ff7a54"/>
+          <text x="606" y="219" fill="#ffc857">跨设备 all-to-all（专家并行时才出现）</text>
+        </g>
+        <text x="598" y="250" fill="#ff7a54" font-size="10.5">只有第 3 项会被稀疏化。当专家很「窄」（如 256→1280→256）时，</text>
+        <text x="598" y="268" fill="#ff7a54" font-size="10.5">其余四项的固定开销会吞掉全部稀疏收益 —— 这是视频侧的主要矛盾。</text>
+        <text x="598" y="290" fill="#8fa8ae" font-size="10">LLM 侧的瓶颈更多落在第 5 项（通信）与显存带宽上，优先级不同。</text>
+      </g>
+
+      <text x="30" y="340" fill="#8fa8ae" font-family="monospace" font-size="11.5">一句话区分两种优化目标</text>
+      <rect x="30" y="352" width="500" height="34" fill="#122833" stroke="#4ad9d2"/>
+      <text x="46" y="374" fill="#c4d6d8" font-size="10.5">LLM 侧：优化「通信 + 带宽」 ⇒ all-to-all 调度、dispatcher、EP 拓扑</text>
+      <rect x="550" y="352" width="500" height="34" fill="#231a14" stroke="#ff7a54"/>
+      <text x="566" y="374" fill="#ffc857" font-size="10.5">视频侧：优化「小算子风暴」 ⇒ 路由/重排/FFN/聚合全链融合</text>
+    </svg>
+    </div>
+    <figcaption><b>图 7-1 · 容量与激活量的解耦，以及单步时间账本</b>：MoE 只稀疏化账本中的一项，其余四项是固定开销。<i>专家越窄、token 越分散，固定开销占比越高——这决定了视频侧与 LLM 侧必须用不同的优化优先级。</i></figcaption>
+  </figure>
+
+  <h3 id="moe-mech"><span class="h3tag">7.2</span>路由与稀疏激活：机制层面的分野</h3>
+  <div class="tablewrap"><table>
+    <caption>表 7-1 · MoE 路由与结构设计的关键维度。「对推理侧意味着什么」一列是选型时的实际判据。</caption>
+    <thead><tr><th>维度</th><th>选项</th><th>机制要点</th><th>对推理侧意味着什么</th></tr></thead>
+    <tbody>
+      <tr>
+        <td rowspan="3"><strong>路由主体</strong></td>
+        <td>token-choice（主流）</td>
+        <td>每个 token 选择 top-k 个专家；需要容量因子与负载均衡损失来防止塌陷</td>
+        <td class="p">路由分布随输入动态变化 ⇒ <strong>跨设备通信形状不确定</strong>，这是 EP 下最难的部分</td>
+      </tr>
+      <tr>
+        <td>expert-choice</td>
+        <td>每个专家选择自己的 top-n 个 token</td>
+        <td class="y">负载天然均衡；但 token 可能被丢弃，且难以做自回归增量解码</td>
+      </tr>
+      <tr>
+        <td><strong>head-local / 分组路由</strong></td>
+        <td>把路由表示拆成若干子空间，每个子空间独立选专家（如每 token × 每 head 选）</td>
+        <td class="y">跨设备只交换<strong>固定形状</strong>的分片，Top-k 的动态性留在本地 ⇒ 消除动态 all-to-all 的形状波动</td>
+      </tr>
+      <tr>
+        <td rowspan="2"><strong>专家粒度</strong></td>
+        <td>粗粒度（少量大专家）</td>
+        <td>每个专家是一个完整 FFN</td>
+        <td class="n">单专家 GEMM 效率高，但容量扩展的边际收益低、负载更不均衡</td>
+      </tr>
+      <tr>
+        <td><strong>细粒度（大量窄专家）</strong></td>
+        <td>把 FFN 切成更多更小的专家（DeepSeekMoE 式细粒度分段）</td>
+        <td class="p">组合空间更大、容量效率更高；但<strong>单个专家矩阵极小</strong> ⇒ 逐 expert 发 kernel 会变成小算子风暴</td>
+      </tr>
+      <tr>
+        <td><strong>共享专家</strong></td>
+        <td>shared + routed 混合</td>
+        <td>保留少量每步必算的共享专家承载通用能力，routed 专家承载专门能力</td>
+        <td class="y">降低路由的「必须选对」压力；也是把 N_active 做小的常用手法</td>
+      </tr>
+      <tr>
+        <td><strong>时间维专家</strong></td>
+        <td>按去噪阶段 / 噪声级切换</td>
+        <td>不同噪声区间用不同专家（高噪声管结构、低噪声管细节）</td>
+        <td class="y"><strong>视频侧特有的用法</strong>：路由决策由 timestep 决定 ⇒ 静态、可预知 ⇒ 与 EP 解耦，见 §7.4</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><b>一条值得记住的设计判据：</b>如果路由决策<strong>只依赖每个 token 自己</strong>（或只依赖 timestep），那么它在分布式下是「可离线确定」的——这和 §6.2 里 Ring 上稀疏可行性的判据<strong>完全同构</strong>。反过来，一旦路由需要<strong>看全局才能保持均衡</strong>，它就会像 Top-k 稀疏一样撞上同步与不规则通信的墙。<em>这不是巧合：两者的本质都是「决策是否需要全局信息」。</em></div>
+
+  <h3 id="moe-systems"><span class="h3tag">7.3</span>系统侧的两条线：少算与少存</h3>
+  <div class="grid2">
+    <div class="card c-acid"><span class="tag acid">线 1 · 少算</span><h4>把稀疏激活真正变成时间节省</h4>
+      <ul>
+        <li><strong>全链融合</strong>：把 router / top-k → compact layout（按专家聚合 token）→ gate+up → 激活函数 → down → 加权 scatter 融合进尽量少的 kernel。<strong>这是视频侧第一优先项</strong>，不做这一步，稀疏只省了 FLOPs 而没省时间。</li>
+        <li><strong>grouped / fused GEMM</strong>：把「几千个窄专家」的 GEMM 合并成一次分组矩阵乘，而不是逐专家发 kernel。这是 MoE 推理后端最核心的一项能力。</li>
+        <li><strong>固定形状通信</strong>：把动态 all-to-all 换成固定分片交换（head-local 路由的思路），代价是压力转移到本地窄专家的执行效率上。</li>
+        <li><strong>专家并行（EP）+ 负载均衡</strong>：EP 让每个设备只驻留一部分专家；但<strong>最热专家决定这一步的时间</strong>，因此需要动态专家负载均衡（EPLB 一类机制）把热门专家复制或迁移。</li>
+      </ul>
+    </div>
+    <div class="card c-violet"><span class="tag violet">线 2 · 少存</span><h4>让权重总量不成为瓶颈</h4>
+      <ul>
+        <li><strong>专家卸载（offload）</strong>：把当前步未激活的专家留在 host 内存或更低层存储。因为<strong>激活是稀疏的</strong>，这是 MoE 相对 dense 模型天生更擅长的一件事。</li>
+        <li><strong>专家缓存 / 预取</strong>：按路由的可预测性预取即将用到的专家。这里有一个关键前提——<strong>路由越可预测，缓存命中率越高</strong>，所以「时间维专家」（按 timestep 路由）天然比「token-choice 路由」更容易做缓存。</li>
+        <li><strong>低比特权重</strong>：MoE 的容量主要体现为权重总量，因此权重量化对 MoE 的「少存」收益格外直接。但要注意：<strong>窄专家的低精度 kernel 覆盖度往往差于大矩阵</strong>，可能只省显存不提速。</li>
+        <li><strong>路由相关状态保持高精度</strong>：router 与门控通常应保持 FP32 —— 路由一旦抖错，整步的输出分布就变了，误差比单个专家内的数值误差更严重。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 id="moe-video"><span class="h3tag">7.4</span>视频与世界模型上的 MoE：四个可核对的实例</h3>
+  <div class="tablewrap"><table>
+    <caption>表 7-2 · 视频 / 世界模型侧 MoE 的公开实例。注意「MoE」在这些系统里指的是完全不同的东西。</caption>
+    <thead><tr><th>系统</th><th>MoE 形态</th><th>关键机制</th><th>推理侧要点</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Wan2.2</strong></td>
+        <td><strong>时间维双专家</strong>（按 SNR / timestep 切换）</td>
+        <td>高噪声专家管全局结构与粗布局，低噪声专家管细节；A14B 为 27B 总参数、每步激活约 14B</td>
+        <td class="y">路由由 timestep 决定 ⇒ <strong>完全静态、可预知</strong>。因此重点是「双专家常驻 / 切换开销 / offload」，而不是通信调度。<em>这是最容易落地的一类 MoE。</em></td>
+      </tr>
+      <tr>
+        <td><strong>LingBot-World</strong><br><span class="tag muted">v1 从 Wan2.2 初始化</span></td>
+        <td>沿用同一套<strong>双专家</strong>（约 28B 总 / 每步激活一个）</td>
+        <td>因果化时 student <strong>由 high-noise 专家初始化</strong>（实验表明其动作条件动态建模更优）；用 mixed-timestep 协议 + t=0 干净帧监督弥合两个专家的专精差异</td>
+        <td class="y">公开结论：<strong>推理算力/显存与 dense 14B 相当</strong>——这是「MoE 不增推理成本」的一个干净例子。<strong>但前提是只激活一个专家</strong></td>
+      </tr>
+      <tr>
+        <td><strong>MAGI-2 Preview</strong><br><span class="tag coral">超细粒度 MoE</span></td>
+        <td><strong>每 token × 每 head 选专家</strong>：3072 维 routed 表示拆成 12×256 维 head，每个 head 从 256 个窄专家里激活 Top-6</td>
+        <td>每层 12×256 = <strong>3072 个 head-local 专家单元</strong>；每 token 激活 12×6 = <strong>72 个窄专家单元</strong>；专家矩阵仅 <strong>256→1280→256</strong>。总容量推到 <strong>114B</strong>，每 token 激活约 <strong>6B</strong>。默认 <strong>CP=8、EP=8</strong></td>
+        <td class="p"><strong>Head Parallel 让跨设备通信量近似 N·H 而非 N·k·H</strong>（跨设备只交换固定 head slice，Top-k 动态性留在 head owner 本地）⇒ 消除动态 all-to-all 的形状波动。<br><strong>代价是把压力转移到「大量极窄专家的本地执行效率」上</strong>：必须做 grouped/fused execution，否则数千窄专家会变成小算子风暴</td>
+      </tr>
+      <tr>
+        <td><strong>LingBot-Video</strong></td>
+        <td>MoE 视频生成模型</td>
+        <td>公开信息为 <strong>30B 总参 / 3B 激活</strong>，并提供 Diffusers 的 pipeline；官方称 MoE 推理约 <strong>快 3×</strong>；支持 FP8 MoE 与多卡推理路径</td>
+        <td class="y">稀疏度约 1/10；是「MoE + 视频 + 开源权重」这一组合里可核查的实例</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><b>引用这一节时必须区分三种「MoE」：</b>① <strong>时间维专家</strong>（Wan2.2 / LingBot，按 timestep 切换，静态路由，成本模型接近 dense）；② <strong>token-choice 细粒度专家</strong>（MAGI-2，动态路由，成本主要在本地窄专家与小算子）；③ <strong>标准稀疏 MoE 主干</strong>（LingBot-Video，容量/激活解耦）。三者的优化优先级完全不同——把 ① 的结论（「MoE 不增推理成本」）套到 ② 上会严重误判。</div>
+
+  <figure>
+    <div class="svgbox">
+    <svg viewBox="0 0 1080 420" role="img" aria-label="三种 MoE 形态在视频模型中的成本结构对比">
+      <rect width="1080" height="420" fill="#0b1a22"/>
+      <text x="30" y="30" fill="#8fa8ae" font-family="monospace" font-size="12" letter-spacing="1.6">THREE MoE SHAPES IN VIDEO MODELS · 成本结构完全不同</text>
+
+      <!-- shape 1 -->
+      <g>
+        <rect x="30" y="54" width="326" height="190" fill="#16240f" stroke="#d7ff4f"/>
+        <text x="48" y="80" fill="#d7ff4f" font-family="monospace" font-size="11.5">① 时间维专家（静态路由）</text>
+        <text x="48" y="102" fill="#c4d6d8" font-size="10.5">Wan2.2 · LingBot-World</text>
+        <g font-family="monospace" font-size="9.5">
+          <rect x="48" y="116" width="130" height="28" fill="#0d1a08" stroke="#d7ff4f"/><text x="113" y="134" fill="#d7ff4f" text-anchor="middle">high-noise 专家</text>
+          <rect x="188" y="116" width="130" height="28" fill="#122833" stroke="#32596b" stroke-dasharray="3 3"/><text x="253" y="134" fill="#6d868d" text-anchor="middle">low-noise 专家</text>
+        </g>
+        <text x="48" y="164" fill="#c4d6d8" font-size="10.5">路由依据：<tspan fill="#d7ff4f">timestep / SNR</tspan>（完全可预知）</text>
+        <text x="48" y="184" fill="#c4d6d8" font-size="10.5">成本 ≈ dense（因为每步只激活一个）</text>
+        <text x="48" y="206" fill="#d7ff4f" font-size="10.5">优化重点：双专家常驻 / 切换开销 / offload</text>
+        <text x="48" y="228" fill="#8fa8ae" font-size="10">✔ 最容易落地；无需动态通信</text>
+      </g>
+
+      <!-- shape 2 -->
+      <g>
+        <rect x="377" y="54" width="326" height="190" fill="#231a14" stroke="#ff7a54"/>
+        <text x="395" y="80" fill="#ff7a54" font-family="monospace" font-size="11.5">② 超细粒度 token-choice</text>
+        <text x="395" y="102" fill="#c4d6d8" font-size="10.5">MAGI-2 MagiMoE</text>
+        <g font-family="monospace" font-size="9">
+          <rect x="395" y="116" width="44" height="26" fill="#0d1a08" stroke="#d7ff4f"/><text x="417" y="133" fill="#d7ff4f" text-anchor="middle">E1</text>
+          <rect x="444" y="116" width="44" height="26" fill="#122833" stroke="#4ad9d2"/><text x="466" y="133" fill="#4ad9d2" text-anchor="middle">E2</text>
+          <rect x="493" y="116" width="44" height="26" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="515" y="133" fill="#6d868d" text-anchor="middle">E3</text>
+          <rect x="542" y="116" width="44" height="26" fill="#122833" stroke="#4ad9d2"/><text x="564" y="133" fill="#4ad9d2" text-anchor="middle">E4</text>
+          <rect x="591" y="116" width="44" height="26" fill="#0e2029" stroke="#32596b" stroke-dasharray="3 3"/><text x="613" y="133" fill="#6d868d" text-anchor="middle">E5</text>
+          <rect x="640" y="116" width="44" height="26" fill="#122833" stroke="#4ad9d2"/><text x="662" y="133" fill="#4ad9d2" text-anchor="middle">E6</text>
+        </g>
+        <text x="395" y="164" fill="#c4d6d8" font-size="10.5">12 head × 256 专家，每 head <tspan fill="#d7ff4f">Top-6</tspan></text>
+        <text x="395" y="184" fill="#c4d6d8" font-size="10.5">专家矩阵仅 <tspan fill="#d7ff4f">256→1280→256</tspan>（极窄）</text>
+        <text x="395" y="206" fill="#ffc857" font-size="10.5">优化重点：全链融合 + grouped GEMM</text>
+        <text x="395" y="228" fill="#ff7a54" font-size="10">✘ 逐专家发 kernel ⇒ 小算子风暴</text>
+      </g>
+
+      <!-- shape 3 -->
+      <g>
+        <rect x="724" y="54" width="326" height="190" fill="#0e2029" stroke="#b79cff"/>
+        <text x="742" y="80" fill="#b79cff" font-family="monospace" font-size="11.5">③ 标准稀疏 MoE 主干</text>
+        <text x="742" y="102" fill="#c4d6d8" font-size="10.5">LingBot-Video（30B / 3B 激活）</text>
+        <text x="742" y="126" fill="#c4d6d8" font-size="10.5">容量 30B，每步激活 3B ⇒ 稀疏度约 1/10</text>
+        <text x="742" y="148" fill="#c4d6d8" font-size="10.5">官方称 MoE 推理约快 3×</text>
+        <line x1="742" y1="162" x2="1034" y2="162" stroke="#254150"/>
+        <text x="742" y="186" fill="#ffc857" font-size="10.5">「少算」已由稀疏激活提供</text>
+        <text x="742" y="208" fill="#c4d6d8" font-size="10.5">「少存」需另配：FP8 / 专家卸载 / 缓存</text>
+        <text x="742" y="230" fill="#8fa8ae" font-size="10">公开信息有限，量化细节需查仓库</text>
+      </g>
+
+      <!-- comparison band -->
+      <rect x="30" y="266" width="1020" height="126" fill="#0e2029" stroke="#254150"/>
+      <text x="48" y="292" fill="#4ad9d2" font-family="monospace" font-size="11.5">Head Parallel 的通信量优势（MAGI-2 的公开口径）</text>
+      <text x="48" y="316" fill="#c4d6d8" font-size="11" font-family="monospace">标准 MoE 通信量  ≈  N · k · H        ← 随 top-k 放大，形状动态</text>
+      <text x="48" y="338" fill="#d7ff4f" font-size="11" font-family="monospace">Head Parallel   ≈  N · H            ← 只交换固定 head slice，形状固定</text>
+      <text x="48" y="362" fill="#c4d6d8" font-size="10.5">⇒ 消除了动态 all-to-all 的形状波动，但<tspan fill="#ffc857">把性能压力转移到「大量极窄专家的本地执行效率」上</tspan>。</text>
+      <text x="48" y="382" fill="#8fa8ae" font-size="10">这对昇腾侧的含义：真正的工作量在「为窄专家定制 route/sort/grouped FFN/scatter 的全链融合」，而不是通信库替换。</text>
+    </svg>
+    </div>
+    <figcaption><b>图 7-2 · 视频模型里三种 MoE 形态的成本结构</b>：静态时间维路由（成本≈dense）、超细粒度动态路由（成本在小算子）、标准稀疏主干（成本在权重驻留）。<i>Head Parallel 用固定形状通信换掉了动态 all-to-all，代价是把矛盾转移到窄专家的本地执行效率上。</i></figcaption>
+  </figure>
+
+  <h3 id="moe-ascend"><span class="h3tag">7.5</span>昇腾视角与选型判据</h3>
+  <p>昇腾侧在 MoE 上并非空白——已有可复用的能力积木，但<strong>缺口集中在「窄专家的融合执行」</strong>这一项上：</p>
+  <div class="tablewrap"><table>
+    <caption>表 7-3 · MoE 相关能力在昇腾栈上的现状（依据本仓库内可核对的框架分析）</caption>
+    <thead><tr><th>能力</th><th>现状</th><th>对视频 MoE 的含义</th></tr></thead>
+    <tbody>
+      <tr><td>专家并行（EP）+ MoE 通信</td><td class="y">已有基础：Ascend 生态具备专家并行、all-to-all dispatcher、fused / MC2 后端</td><td class="y">标准 token-choice EP 可复用；但「固定 head-owner 通信」这类定制形状需自行实现</td></tr>
+      <tr><td>MoE GroupedMatMul / permute-unpermute 融合</td><td class="y">已有基础算子</td><td class="y">是「避免小算子风暴」的关键积木；需针对窄专家尺寸验证效率</td></tr>
+      <tr><td>融合 MoE 后端</td><td class="p">已有 <code>fused_moe</code> 路径（含融合/非融合两条，依赖 dispatcher、通信组与量化配置）；NPU 侧走 <code>vllm-ascend</code> 的 <code>AscendMoERunner</code></td><td class="p">需确认是否支持目标 Top-k、门控类型（sigmoid / softmax）、route norm/scale</td></tr>
+      <tr><td>专家负载均衡</td><td class="p">已有动态专家负载均衡（DyEPLB）类能力：<code>DynamicDispatcher</code>、<code>ExpertLoadCollector</code>、专家信息传输池</td><td class="p">面向 MoE 多卡场景；需接入方自行改造专家分发路径</td></tr>
+      <tr><td>窄专家的定制融合 kernel</td><td class="n"><strong>核心缺口</strong></td><td class="p">为「head × 窄专家」定制 route → sort → grouped FFN → scatter 的全链融合，是最大的一项算子工作量</td></tr>
+      <tr><td>低精度 MoE</td><td class="p">量化算法侧已包含 MoE；但窄专家的原生低精度 kernel 覆盖度是风险点</td><td class="p">可能「省显存不提速」——与 §8.2 的结论一致，必须先看 kernel trace</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>选型判据：按「路由是否可预知」排序</h4>
+  <div class="pipe c4">
+    <div class="step hot"><i>最容易</i><b>时间维专家</b><span>路由由 timestep 决定 ⇒ <strong>完全静态、可预知</strong>。<br>可直接做专家常驻、切换预取、分阶段 offload。<br><b>Wan2.2 / LingBot 属于这一类</b>，也是昇腾上最值得先做的一类。</span></div>
+    <div class="step cool"><i>中等</i><b>token-choice 粗粒度专家</b><span>路由动态但专家较大 ⇒ 单个 GEMM 效率尚可，通信与负载均衡是主要问题。<br>已有 EP 与均衡能力可复用。</span></div>
+    <div class="step hot"><i>最难</i><b>超细粒度 / head-local 专家</b><span>路由动态 + 专家极窄 ⇒ <strong>全链融合是硬门槛</strong>，不做则稀疏收益被固定开销吞掉。<br>Head Parallel 能固定通信形状，但把矛盾转到本地执行效率。</span></div>
+    <div class="step cool"><i>正交手段</i><b>低比特 + 卸载 + 缓存</b><span>解决的是「少存」而非「少算」。<br>路由越可预知，专家缓存命中率越高 ⇒ <strong>与「时间维专家」天然匹配</strong>。</span></div>
+  </div>
+  <div class="callout"><b>本章与相邻章节的关系：</b>MoE 解决的是「容量 ↔ 每步成本」的解耦，它<strong>不和蒸馏、稀疏注意力、量化竞争，而是叠加</strong>——但它会<strong>改变这些手段的最优配置</strong>：MoE 让「每一步的激活权重集合」随输入变化，因此跨步特征缓存（DiTCache 一类）的有效性、以及权重量化的校准集，都需要按专家分别处理。这也是 §4「联合优化」在 MoE 上的具体体现。</div>
+  <div class="quote">本章可以压缩成一句判断：<strong>MoE 买到的是容量，不是速度；要把它变成速度，取决于路由的可预知程度与窄专家的融合执行质量。</strong>前者决定你能不能做静态调度与专家缓存，后者决定稀疏激活能不能真的省下时间——这两项都成立时，MoE 才是长视频与世界模型里最值得投入的一层。</div>
+</section>
 <!-- ============================ 06 KV / precision ============================ -->
 <section class="ch" id="kv">
-  <div class="ch-head"><div class="ch-no"><b>06</b>C 段 · 推理</div>
+  <div class="ch-head"><div class="ch-no"><b>08</b>C 段 · 推理</div>
   <div>
     <h2>KV Cache、注意力与量化：单步成本怎么砍</h2>
     <p class="ch-sub">前两章把「调用几次主干」和「历史要不要重算」解决了。剩下的是纯粹的算子与存储问题：<strong>一次注意力到底要搬多少字节，缓存到底能放多长</strong>。这一层的收益不像蒸馏那样是数量级的，但它是把实时从「勉强」推到「有余量」、把会话从分钟推到十分钟的唯一路径。</p>
@@ -2107,13 +2847,13 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 6-1 · 注意力与缓存优化的三个正交方向</b>：稀疏/线性改「看多少」、低比特改「每个元素多宽」、淘汰改「留多久」。<i>三者可以叠加，但破坏位置互不重合，验收必须分维度而非只看一个总分。</i></figcaption>
+    <figcaption><b>图 8-1 · 注意力与缓存优化的三个正交方向</b>：稀疏/线性改「看多少」、低比特改「每个元素多宽」、淘汰改「留多久」。<i>三者可以叠加，但破坏位置互不重合，验收必须分维度而非只看一个总分。</i></figcaption>
   </figure>
 
-  <h3 id="kv-sparse"><span class="h3tag">6.1</span>方向一：稀疏与线性注意力（AdaSpa / RainFusion / Sol-Attn / VSA / SLA）</h3>
+  <h3 id="kv-sparse"><span class="h3tag">8.1</span>方向一：稀疏与线性注意力（AdaSpa / RainFusion / Sol-Attn / VSA / SLA）</h3>
   <p>视频 DiT 的注意力有一个特殊性质：<strong>它是「块状可预测」的稀疏</strong>。同一帧内的空间 token 互相高度相关，跨帧的远距离相关性呈现明显的条带与对角结构。这正是块级稀疏方法能在视频上取得远高于语言模型收益的原因。下面这张表是本章的信息密度最高处——每一行的<strong>「决策依据」一列</strong>决定它能不能落地。</p>
   <div class="tablewrap"><table>
-    <caption>表 6-1 · 视频扩散注意力稀疏化的代表工作（论文编号与数字来自公开原文；「决策依据」列是选型关键）</caption>
+    <caption>表 8-1 · 视频扩散注意力稀疏化的代表工作（论文编号与数字来自公开原文；「决策依据」列是选型关键）</caption>
     <thead><tr><th>方法</th><th>稀疏粒度</th><th>决策依据</th><th>公开数字</th><th>是否免训练</th><th>落地风险</th></tr></thead>
     <tbody>
       <tr>
@@ -2170,7 +2910,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
         <td>观察：DiT（尤其视频）注意力权重 = <strong>一小部分高秩的大权重 + 其余非常低秩</strong> ⇒ 前者用<strong>稀疏</strong>、后者用<strong>低秩（线性）</strong>加速。判定：压缩注意力 <code>P_c = Softmax(pool(Q)·pool(K)ᵀ/√d)</code> 的 <strong>top-k<sub>h</sub>% / bottom-k<sub>l</sub>%</strong>；三者合并进<strong>单个 GPU kernel</strong>，<strong>同时支持前向与反向</strong>；输出 <code>O = O^s + Proj(O^l)</code></td>
         <td class="y">少量微调步即达 <strong>20× 注意力计算削减</strong>；<strong>减少 95% 注意力计算而不损端到端质量</strong>；kernel <strong>13.7×</strong>、Wan2.1-1.3B <strong>2.2× 端到端</strong></td>
         <td class="n">否（线性项是「可学习补偿」，<strong>需 fine-tune</strong>）</td>
-        <td class="p">critical 路由需全局排名（§6.1 判据）；高效实现是 GPU kernel，换后端需重写</td>
+        <td class="p">critical 路由需全局排名（§8.1 判据）；高效实现是 GPU kernel，换后端需重写</td>
       </tr>
       <tr>
         <td><strong>SpargeAttn</strong><br><span class="tag muted">arXiv 2502.18137 · ICML 2025<br><span class="tag rose">正确名称不是「SpargeAttention」</span></span></td>
@@ -2315,10 +3055,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="862" y="266" fill="#6d868d" font-size="10">时间 + HBM bytes 同看</text>
     </svg>
     </div>
-    <figcaption><b>图 6-2 · 从 Dense 到块稀疏再到稀疏—线性混合</b>：块稀疏用「结构化」换来可编译性，稀疏—线性用「近似路」换掉剩余的长尾计算。<i>动态 top-k 与静态图编译天然冲突，是工程上最常见的性能反噬点。</i></figcaption>
+    <figcaption><b>图 8-2 · 从 Dense 到块稀疏再到稀疏—线性混合</b>：块稀疏用「结构化」换来可编译性，稀疏—线性用「近似路」换掉剩余的长尾计算。<i>动态 top-k 与静态图编译天然冲突，是工程上最常见的性能反噬点。</i></figcaption>
   </figure>
 
-  <h3 id="kv-quant"><span class="h3tag">6.2</span>方向二：KV 与权重的量化（QuantWM / W8A8 / 分块粒度）</h3>
+  <h3 id="kv-quant"><span class="h3tag">8.2</span>方向二：KV 与权重的量化（QuantWM / W8A8 / 分块粒度）</h3>
   <p>量化在这一层要区分四个<strong>完全不同的对象</strong>，它们的收益与风险不能混为一谈：</p>
   <div class="grid4">
     <div class="card c-violet"><span class="tag violet">对象 A</span><h4>权重（Linear / MLP）</h4><p>收益最直接：显存与带宽近似按位宽比例下降，GEMM 走 INT8/FP8 Tensor Core。<strong>风险最低，通常第一个做。</strong></p></div>
@@ -2339,10 +3079,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <dt>验收指标</dt><dd>不能只测单帧画质。需要沿时间轴测：逐块漂移曲线、动作响应误差、长会话（≥10 分钟）稳定性。<span class="tip" tabindex="0" data-tip="只省显存不提速是常见结果：没有匹配的低精度 kernel 时，Q/DQ 反量化与 layout 转换会吃掉全部收益。">「只省显存不提速」</span>是最常见的失败模式。</dd>
   </dl>
 
-  <h3 id="kv-policy"><span class="h3tag">6.3</span>方向三：缓存策略——留什么、扔什么、怎么摆</h3>
+  <h3 id="kv-policy"><span class="h3tag">8.3</span>方向三：缓存策略——留什么、扔什么、怎么摆</h3>
   <p>滑窗缓存看似简单，实际上有四个独立决策，任何一个选错都会在长会话中暴露：</p>
   <div class="tablewrap"><table>
-    <caption>表 6-2 · KV Cache 的四个策略维度与已验证的具体做法（每条都来自论文正文）</caption>
+    <caption>表 8-2 · KV Cache 的四个策略维度与已验证的具体做法（每条都来自论文正文）</caption>
     <thead><tr><th>维度</th><th>策略</th><th>代表实现与精确做法</th><th>适用场景</th><th>失败表现</th></tr></thead>
     <tbody>
       <tr>
@@ -2456,10 +3196,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="806" y="260" fill="#6d868d" font-size="10">只报平均 FPS 会掩盖此问题</text>
     </svg>
     </div>
-    <figcaption><b>图 6-3 · 缓存布局决定长会话能否成立</b>：逐块 cat 的实现能通过论文级实验，却过不了 30 分钟会话。<i>「延迟和显存不随块数上升」应作为独立的验收项，而不是从平均 FPS 推断。</i></figcaption>
+    <figcaption><b>图 8-3 · 缓存布局决定长会话能否成立</b>：逐块 cat 的实现能通过论文级实验，却过不了 30 分钟会话。<i>「延迟和显存不随块数上升」应作为独立的验收项，而不是从平均 FPS 推断。</i></figcaption>
   </figure>
 
-  <h3 id="kv-stack"><span class="h3tag">6.4</span>三个方向如何叠加：一个可执行的收益次序</h3>
+  <h3 id="kv-stack"><span class="h3tag">8.4</span>三个方向如何叠加：一个可执行的收益次序</h3>
   <div class="pipe c5">
     <div class="step cool"><i>STEP 1</i><b>因果 + 重定位 KV</b><span>先把历史从「重算」变成「只读」。这一层是结构性的，收益最大且质量无损。</span></div>
     <div class="step cool"><i>STEP 2</i><b>预分配 / 分页布局</b><span>消除热路径拷贝，让延迟与显存平台化。不改变数值结果。</span></div>
@@ -2467,11 +3207,11 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <div class="step hot"><i>STEP 4</i><b>稀疏 / 线性混合</b><span>与 STEP 3 正交可叠加。长上下文收益最大，但需要训练侧引入稀疏性。</span></div>
     <div class="step"><i>STEP 5</i><b>KV 量化 + 淘汰策略</b><span>换取会话容量与有效上下文。风险最高，必须有长时回归与刷新点。</span></div>
   </div>
-  <div class="callout"><b>次序为什么不能颠倒：</b>STEP 1–2 决定了「单块延迟是否随长度增长」，STEP 3–5 决定「单块延迟的绝对值」。如果顺序反了——先量化再改缓存布局——你会看到量化省下的时间被热路径拷贝吃掉，从而得出「量化没用」的错误结论。这也是把注意力/缓存优化排在第 6 章、必须在第 5 章 RoPE 之后的原因：<strong>先让状态可复用，再让复用更便宜</strong>。</div>
+  <div class="callout"><b>次序为什么不能颠倒：</b>STEP 1–2 决定了「单块延迟是否随长度增长」，STEP 3–5 决定「单块延迟的绝对值」。如果顺序反了——先量化再改缓存布局——你会看到量化省下的时间被热路径拷贝吃掉，从而得出「量化没用」的错误结论。这也是把注意力/缓存优化排在分布式稀疏并行之后、且必须在第 5 章 RoPE 之后的原因：<strong>先让状态可复用，再让复用更便宜</strong>。</div>
 </section>
 <!-- ============================ 07 Serving ============================ -->
 <section class="ch" id="serve">
-  <div class="ch-head"><div class="ch-no"><b>07</b>C 段 · 推理</div>
+  <div class="ch-head"><div class="ch-no"><b>09</b>C 段 · 推理</div>
   <div>
     <h2>服务化：把「模型很快」变成「会话很稳」</h2>
     <p class="ch-sub">前六章都在优化一个 worker 跑一块的速度。真实产品要面对的是几百个形态各异的长会话：有的持续活跃、有的长时间空闲、有的突然爆发动作。<strong>服务层决定的是这些波动会不会变成用户看到的卡顿与账单</strong>。</p>
@@ -2539,7 +3279,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="146" y="324" fill="#c4d6d8" font-size="10.5">关键认识：TTFC 由「能否尽快产出第一块」决定，稳态体验由「P99 TPC 与抖动」决定，成本由「空闲会话是否占卡」决定 —— 三个目标由三套不同机制负责，不能用一个 FPS 数字概括。</text>
     </svg>
     </div>
-    <figcaption><b>图 7-1 · 流式生成的延迟泳道与三层职责</b>：模型层定上限、Runtime 定单块速度、服务层定波动与成本。<i>任何一层被忽略，另外两层的收益都会在端到端被摊平。</i></figcaption>
+    <figcaption><b>图 9-1 · 流式生成的延迟泳道与三层职责</b>：模型层定上限、Runtime 定单块速度、服务层定波动与成本。<i>任何一层被忽略，另外两层的收益都会在端到端被摊平。</i></figcaption>
   </figure>
 
   <h3 id="serve-turbo"><span class="h3tag">7.2</span>TurboServe：把 serving 建模成在线调度问题</h3>
@@ -2554,7 +3294,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <h4>四个组件与闭环</h4>
   <div class="tablewrap"><table>
-    <caption>表 7-1 · TurboServe 的系统组件（论文口径）</caption>
+    <caption>表 9-1 · TurboServe 的系统组件（论文口径）</caption>
     <thead><tr><th>组件</th><th>职责</th><th>机制</th></tr></thead>
     <tbody>
       <tr><td><strong>workload detector</strong></td><td>感知当前需求</td><td>滑动窗口提取近期需求与需求波动</td></tr>
@@ -2574,7 +3314,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <h4>动机实验：三种策略各自省什么</h4>
   <div class="tablewrap"><table>
-    <caption>表 7-2 · TurboServe 的动机实验（8×H100，回放生数生产 trace）。这张表说明「省成本」与「压尾延迟」是两个不同目标。</caption>
+    <caption>表 9-2 · TurboServe 的动机实验（8×H100，回放生数生产 trace）。这张表说明「省成本」与「压尾延迟」是两个不同目标。</caption>
     <thead><tr><th>配置</th><th>最坏 per-chunk 时延</th><th>总 GPU 成本</th><th>说明</th></tr></thead>
     <tbody>
       <tr><td>基线（最少负载放置 + 固定分配）</td><td>0.71 s</td><td>$3.99</td><td>按云价折算</td></tr>
@@ -2657,7 +3397,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 7-2 · TurboServe 的调度闭环与可迁移状态</b>：服务系统要能工作，前提是模型侧把会话状态<strong>显式化、可序列化</strong>。<i>「状态可描述、按块可执行、状态可移动」是新模型接入服务系统的三项最小契约。</i></figcaption>
+    <figcaption><b>图 9-2 · TurboServe 的调度闭环与可迁移状态</b>：服务系统要能工作，前提是模型侧把会话状态<strong>显式化、可序列化</strong>。<i>「状态可描述、按块可执行、状态可移动」是新模型接入服务系统的三项最小契约。</i></figcaption>
   </figure>
 
   <h4>接入一个新模型必须暴露的最小契约</h4>
@@ -2675,15 +3415,15 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   <h3 id="serve-vidu"><span class="h3tag">7.3</span>Vidu S2 的推理栈：一个已产品化的参照实现</h3>
   <p>S2 论文的推理基础设施段落给出了目前公开材料里最完整的「实时视频生成系统清单」，逐项都能与前面的章节对应：</p>
   <div class="tablewrap"><table>
-    <caption>表 7-3 · Vidu S2 公开推理栈逐项对照（论文口径）</caption>
+    <caption>表 9-3 · Vidu S2 公开推理栈逐项对照（论文口径）</caption>
     <thead><tr><th>环节</th><th>生数 S2 的做法</th><th>对应本文章节</th><th>迁移到其他硬件时的处理</th></tr></thead>
     <tbody>
-      <tr><td>注意力</td><td>逐层混合：在 SageAttention / SpargeAttention / Sparse-Linear Attention 之间按层选择</td><td>§6.1</td><td class="p">自定义注意力算子，需逐个验证精度与 mask 支持</td></tr>
-      <tr><td>线性层</td><td>per-block W8A8 INT8 GEMM（自研 CUDA kernel）</td><td>§6.2</td><td class="p">需重新对齐分块量化粒度与精度影响</td></tr>
-      <tr><td>算子与启动</td><td>Triton / CUDA kernel fusion（如 RMSNorm 融合）、CUDA Graph、启动优化</td><td>§6.4</td><td class="p">需映射到图模式与算子融合方案</td></tr>
-      <tr><td>多 GPU</td><td>Ulysses 风格上下文并行 + 量化跨 GPU 张量传输</td><td>§7.4</td><td class="p">通信库需替换；并行策略本身可迁移</td></tr>
-      <tr><td>调度</td><td>共享时间线：VAE 编码器、主干、Refiner、VAE 解码器在同一时间线上动态共享 GPU</td><td>§7.5</td><td class="y">调度逻辑与硬件基本无关，可移植性最好</td></tr>
-      <tr><td>会话服务</td><td>TurboServe：会话放置 + GPU 供给联合优化</td><td>§7.2</td><td class="p">NCCL → HCCL；调度算法本身可复用</td></tr>
+      <tr><td>注意力</td><td>逐层混合：在 SageAttention / SpargeAttention / Sparse-Linear Attention 之间按层选择</td><td>§8.1</td><td class="p">自定义注意力算子，需逐个验证精度与 mask 支持</td></tr>
+      <tr><td>线性层</td><td>per-block W8A8 INT8 GEMM（自研 CUDA kernel）</td><td>§8.2</td><td class="p">需重新对齐分块量化粒度与精度影响</td></tr>
+      <tr><td>算子与启动</td><td>Triton / CUDA kernel fusion（如 RMSNorm 融合）、CUDA Graph、启动优化</td><td>§8.4</td><td class="p">需映射到图模式与算子融合方案</td></tr>
+      <tr><td>多 GPU</td><td>Ulysses 风格上下文并行 + 量化跨 GPU 张量传输</td><td>§9.4</td><td class="p">通信库需替换；并行策略本身可迁移</td></tr>
+      <tr><td>调度</td><td>共享时间线：VAE 编码器、主干、Refiner、VAE 解码器在同一时间线上动态共享 GPU</td><td>§9.5</td><td class="y">调度逻辑与硬件基本无关，可移植性最好</td></tr>
+      <tr><td>会话服务</td><td>TurboServe：会话放置 + GPU 供给联合优化</td><td>§9.2</td><td class="p">NCCL → HCCL；调度算法本身可复用</td></tr>
     </tbody>
   </table></div>
   <div class="callout warn"><b>引用这些数字时的边界：</b>TurboServe 的生产评测环境为最多 <strong>64 张 NVIDIA B300</strong>；TurboDiffusion 的加速倍数来自<strong>单张 RTX 5090</strong>；S2 论文未公开 per-chunk 毫秒绝对值、GPU 型号与数量、端到端 p50/p99。这三组数字<strong>不能互相换算或相加</strong>。做容量规划时必须明确「我引用的是模型加速、算子加速还是系统加速」。</div>
@@ -2762,12 +3502,12 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="330" y="312" fill="#ffc857" font-size="10.5">代价：显存中同时驻留多个阶段的中间张量，需按阶段估算峰值而非按单块估算。</text>
     </svg>
     </div>
-    <figcaption><b>图 7-3 · 共享时间线流水的真实形态</b>：不是「块的流水线」，而是<strong>阶段错位的多块并发</strong>。<i>峰值显存因此由「同时在飞的块数」决定，这常被单块基准测试严重低估。</i></figcaption>
+    <figcaption><b>图 9-3 · 共享时间线流水的真实形态</b>：不是「块的流水线」，而是<strong>阶段错位的多块并发</strong>。<i>峰值显存因此由「同时在飞的块数」决定，这常被单块基准测试严重低估。</i></figcaption>
   </figure>
 
   <h3 id="serve-checklist"><span class="h3tag">7.6</span>服务化验收清单</h3>
   <div class="tablewrap"><table>
-    <caption>表 7-4 · 四个层级的最小验收矩阵（可按此表反查实现是否真的支持流式服务）</caption>
+    <caption>表 9-4 · 四个层级的最小验收矩阵（可按此表反查实现是否真的支持流式服务）</caption>
     <thead><tr><th>层级</th><th>至少覆盖</th><th>核心指标</th><th>失败保护</th></tr></thead>
     <tbody>
       <tr><td>会话</td><td>短/长、持续活跃、突发交互、长 idle 后恢复</td><td>TTFC、TPC P50/P95/P99/max、stall rate</td><td>deadline miss 自动降级或拒绝接入</td></tr>
@@ -2781,17 +3521,17 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 </section>
 <!-- ============================ 08 Ascend ============================ -->
 <section class="ch" id="ascend">
-  <div class="ch-head"><div class="ch-no"><b>08</b>D 段 · 落地</div>
+  <div class="ch-head"><div class="ch-no"><b>10</b>D 段 · 落地</div>
   <div>
     <h2>昇腾视角：四个杠杆逐项对照现有能力</h2>
-    <p class="ch-sub">前七章的技术全部来自公开论文与官方仓库，其中绝大多数在 NVIDIA 栈上实现与验证。本章把它们逐项映射到昇腾软件栈的现有能力上，目标是给出<strong>「哪些可以直接用、哪些要自己补、哪些是真正的硬骨头」</strong>三档判断，而不是笼统的可行性结论。</p>
+    <p class="ch-sub">前九章的技术全部来自公开论文与官方仓库，其中绝大多数在 NVIDIA 栈上实现与验证。本章把它们逐项映射到昇腾软件栈的现有能力上，目标是给出<strong>「哪些可以直接用、哪些要自己补、哪些是真正的硬骨头」</strong>三档判断，而不是笼统的可行性结论。</p>
   </div></div>
 
-  <div class="callout warn"><b>本章的证据口径，先说明清楚：</b>①「昇腾侧能力」一栏只引用<strong>本仓库内可核对的 MindIE-SD 文档与源码</strong>（本地快照），以及公开的官方文档；②「模型侧技术」一栏只引用本文前七章已标注的来源；③<strong>凡是「昇腾上跑某模型的实际收益」这类数字，本章一律不给</strong>——因为目前没有可核对的公开同口径数据。混淆「机制可迁移」与「代码可运行」是这一主题下最容易犯的错。</div>
+  <div class="callout warn"><b>本章的证据口径，先说明清楚：</b>①「昇腾侧能力」一栏只引用<strong>本仓库内可核对的 MindIE-SD 文档与源码</strong>（本地快照），以及公开的官方文档；②「模型侧技术」一栏只引用本文前九章已标注的来源；③<strong>凡是「昇腾上跑某模型的实际收益」这类数字，本章一律不给</strong>——因为目前没有可核对的公开同口径数据。混淆「机制可迁移」与「代码可运行」是这一主题下最容易犯的错。</div>
 
   <h3 id="ascend-map"><span class="h3tag">8.1</span>逐项对照表</h3>
   <div class="tablewrap"><table>
-    <caption>表 8-1 · 四个杠杆 × 昇腾现有能力的逐项对照。最后一列是真正需要投入的部分。</caption>
+    <caption>表 10-1 · 四个杠杆 × 昇腾现有能力的逐项对照。最后一列是真正需要投入的部分。</caption>
     <thead><tr><th>杠杆 / 技术</th><th>出处章节</th><th>昇腾侧现有能力（可核对）</th><th>差距与需要自建的部分</th></tr></thead>
     <tbody>
       <tr>
@@ -2802,7 +3542,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </tr>
       <tr>
         <td><strong>滑窗 KV Cache 管理</strong></td>
-        <td>§1.2 / §6.3</td>
+        <td>§1.2 / §8.3</td>
         <td>MindIE-SD 已有两类「以存代算」缓存：<code>DiTCache</code>（跨去噪步复用 DiT block 区间）与 <code>AttentionCache</code>（跨步复用 attention 结果）</td>
         <td class="p">注意：这两类是<strong>跨时间步缓存</strong>，与流式所需的<strong>跨块 KV 缓存</strong>不是同一件事。滑窗/环形/分页布局、淘汰策略、RoPE 位置基准的运行时管理需要自行实现</td>
       </tr>
@@ -2826,43 +3566,43 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </tr>
       <tr>
         <td><strong>线性层 / 激活量化</strong></td>
-        <td>§6.2</td>
+        <td>§8.2</td>
         <td>MindIE-SD 明确列出：动态量化（仅权重）、静态量化（权重+激活，需校准数据）、<strong>Time-aware 量化</strong>（按时间维度动态调整策略）；数据类型覆盖 INT8 / FP8 / W8A8 / INT4 / MXFP4 / W4A4；经 <code>msmodelslim</code> 导出权重后用 <code>mindiesd.quantize()</code> 接入</td>
         <td class="p">约束明确：<strong>Linear 量化当前仅 Atlas 800I A2 推理服务器支持</strong>；多卡并行量化有命名规则限制（<code>quant_model_weight_{algo}_{rank}.safetensors</code>）；与少步模型联合校准时序需自行验证</td>
       </tr>
       <tr>
         <td><strong>注意力量化（FA 量化）</strong></td>
-        <td>§6.1 / §6.2</td>
+        <td>§8.1 / §8.2</td>
         <td>MindIE-SD 提供 <code>QuantFA</code> 路径：量化转换后可走 <code>attn.fa3.forward(...)</code> 或回落到 <code>npu_fusion_attention</code>；要求被量化类持有 <code>inner_dim</code> 与 <code>heads</code> 属性</td>
         <td class="p">需要手动在 transformer block 中改写 FA 调用逻辑；<strong>逐层混合注意力</strong>（S2 的 SageAttention / SpargeAttention / SLA 按层选择）目前没有现成的等价物，需要在 MindIE-SD 的算子集合上重建同类分层策略</td>
       </tr>
       <tr>
         <td><strong>序列 / 上下文并行</strong></td>
-        <td>§7.4</td>
+        <td>§9.4</td>
         <td>MindIE-SD 已提供 <strong>Ring Sequence Parallel</strong>（Q 切分、KV 环状传递，通信可被计算掩盖）与 <strong>Ulysses Sequence Parallel</strong>（序列维切分 + AllToAll 交换注意力头），以及 <strong>CFG 并行</strong>、张量并行</td>
         <td class="y">这一层与 CUDA 侧差距最小，机制一一对应。需按 HCCS/集群拓扑重新调优 all-to-all 占比，并按 token 数自适应选择并行度</td>
       </tr>
       <tr>
         <td><strong>CFG 消除</strong></td>
-        <td>§2.5 / §7.5</td>
+        <td>§2.5 / §9.5</td>
         <td>MindIE-SD 提供 <strong>CFG 融合</strong>与 <strong>CFG 并行</strong></td>
         <td class="p">流式场景的最优解是 guidance distill 到 <code>guidance=1</code>（前向次数与 KV 同时减半），这属训练侧；框架侧的 CFG 融合只能缓解不能消除</td>
       </tr>
       <tr>
         <td><strong>异步 DiT–VAE 流水</strong></td>
-        <td>§7.5</td>
+        <td>§9.5</td>
         <td>MindIE-SD 有<strong>显存共享</strong>与<strong>异步 offload</strong>；多实例（multi-instance）与 CV 并行属工程优化项</td>
         <td class="p">「共享时间线」（主干 / Refiner / VAE 编解码在同一时间线上动态共享设备）需要自己搭执行器；关键是按阶段估算峰值显存，而非按单块估算</td>
       </tr>
       <tr>
         <td><strong>会话级服务调度</strong></td>
-        <td>§7.2</td>
+        <td>§9.2</td>
         <td class="y">调度逻辑与硬件基本无关：会话放置、合批、弹性供给的算法可直接复用</td>
         <td class="p">状态迁移的通信层需要替换（NCCL → HCCL）；状态序列化格式由模型侧定义，需要自己实现 <code>pack_state / restore_state</code></td>
       </tr>
       <tr>
         <td><strong>图编译与算子融合</strong></td>
-        <td>§7.5</td>
+        <td>§9.5</td>
         <td>MindIE-SD 提供 <code>compilation</code> 模块（基于 FX graph 自动改图，可保持单算子下发）与算子融合能力</td>
         <td class="p">流式场景引入了<strong>动态位置源</strong>与<strong>可变窗口长度</strong>两个新变量，是图重编译的主要来源。需要先把 shape 与策略固定成有限个 bucket，再谈编译收益</td>
       </tr>
@@ -2875,7 +3615,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <div class="card c-acid"><span class="tag acid">已适配（视频/多模态生成）</span><h4>Wan2.1 / Wan2.2 / HunyuanVideo / HunyuanDit / CogVideoX-2B / CogVideoX-5B / OpenSora v1.2 / OpenSoraPlan v1.2 / v1.3 / Stable Video Diffusion / CogView3-Plus-3B / FLUX.1-dev / SD 系列</h4><p>其中 Wan2.1 / Wan2.2 与 HunyuanVideo 属于深度适配对象，Cache / CFG·SP·TP / 稀疏 FA / 量化 / 数据类型各列均有对应支持项。</p></div>
     <div class="card c-coral"><span class="tag coral">未出现在适配矩阵中</span><h4>Vidu 系列 · 可灵 · Seedance / 即梦 等闭源商业模型</h4><p>这不是能力判断，而是<strong>事实陈述</strong>：闭源模型没有可适配的权重与代码，自然不在框架支持的模型列表里。「商业上架云平台」与「进入框架级适配矩阵」是两件性质完全不同的事，混为一谈是本主题下最常见的误判。</p></div>
   </div>
-  <div class="callout"><b>一个对迁移决策更重要的事实：</b>前七章里的开源资产（minWM 改造流水线、Causal-Forcing、SageAttention、SLA、TurboServe）<strong>大多数是可获取的代码而非仅论文</strong>。这意味着昇腾侧的路径可以是「拿起开源实现，逐个替换后端」，而不是「从论文复现」。判断优先级时，应优先选<strong>有开源实现</strong>的那条路线。</div>
+  <div class="callout"><b>一个对迁移决策更重要的事实：</b>前九章里的开源资产（minWM 改造流水线、Causal-Forcing、SageAttention、SLA、TurboServe）<strong>大多数是可获取的代码而非仅论文</strong>。这意味着昇腾侧的路径可以是「拿起开源实现，逐个替换后端」，而不是「从论文复现」。判断优先级时，应优先选<strong>有开源实现</strong>的那条路线。</div>
 
   <h3 id="ascend-hard"><span class="h3tag">8.3</span>三块真正的硬骨头</h3>
   <div class="grid3">
@@ -2923,7 +3663,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="30" y="396" fill="#6d868d" font-size="10.5" font-family="monospace">判断原则：优先选「第 1 档占比高」的技术路线；第 3 档的三项决定整个项目的工期，而不是算子数量。</text>
     </svg>
     </div>
-    <figcaption><b>图 8-1 · 迁移难度三档分层</b>：真正决定工期的是第 3 档的三项运行时机制，而不是算子移植数量。<i>把第 3 档当作「后面的工程细节」，是这一类项目最常见的排期错误。</i></figcaption>
+    <figcaption><b>图 10-1 · 迁移难度三档分层</b>：真正决定工期的是第 3 档的三项运行时机制，而不是算子移植数量。<i>把第 3 档当作「后面的工程细节」，是这一类项目最常见的排期错误。</i></figcaption>
   </figure>
 
   <h3 id="ascend-road"><span class="h3tag">8.4</span>四级推进路线（每级都有可验收的产物）</h3>
@@ -2937,7 +3677,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <h3 id="ascend-verify"><span class="h3tag">8.5</span>验收口径：不要只报 FPS</h3>
   <div class="tablewrap"><table>
-    <caption>表 8-2 · 迁移项目的六个必测维度。沿用前几章的指标定义，便于与论文对照。</caption>
+    <caption>表 10-2 · 迁移项目的六个必测维度。沿用前几章的指标定义，便于与论文对照。</caption>
     <thead><tr><th>维度</th><th>指标</th><th>注意事项</th></tr></thead>
     <tbody>
       <tr><td>延迟</td><td>TTFC、每块 P50/P95/P99、控制到可见响应，冷/热启动分开</td><td>必须包含排队、文本编码、VAE、编码与传输；论文数字若排除某段需注明</td></tr>
@@ -2952,7 +3692,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 </section>
 <!-- ============================ 09 Evidence ============================ -->
 <section class="ch" id="evidence">
-  <div class="ch-head"><div class="ch-no"><b>09</b>D 段 · 落地</div>
+  <div class="ch-head"><div class="ch-no"><b>11</b>D 段 · 落地</div>
   <div>
     <h2>证据分级与来源</h2>
     <p class="ch-sub">本报告刻意把来源分四类并分别说明其可信边界。同一件事在不同层级的证据里，细节丰富度与可靠性差别很大；而实时生成这个领域<strong>恰恰是「数字很多、口径很乱」的重灾区</strong>。</p>
@@ -2960,7 +3700,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <h3 id="ev-grading"><span class="h3tag">9.1</span>分级标准与使用规则</h3>
   <div class="tablewrap"><table>
-    <caption>表 9-1 · 四级来源的边界与本文的引用方式</caption>
+    <caption>表 11-1 · 四级来源的边界与本文的引用方式</caption>
     <thead><tr><th>等级</th><th>来源</th><th>可支持什么结论</th><th>不支持什么</th></tr></thead>
     <tbody>
       <tr><td><span class="grade g-paper">论文</span></td><td>团队 arXiv 技术报告或同行评审论文</td><td class="y">机制描述可逐句核对；编排/超参/消融可复现</td><td class="n">不代表第三方复现；论文数字的硬件与口径差异极大</td></tr>
