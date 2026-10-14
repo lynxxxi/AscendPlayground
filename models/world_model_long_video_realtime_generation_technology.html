@@ -212,8 +212,7 @@ footer a{color:var(--muted)}
     <span class="pill">长上下文 <b>Infinity RoPE / LoL / Flex</b></span>
     <span class="pill">注意力 <b>VSA / SLA / QuantWM</b></span>
     <span class="pill">分布式 <b>db-SP / FVAttn / OSP-Next</b></span>
-    <span class="pill">稀疏 <b>FastMoE / DIET</b></span>
-    <span class="pill">证据分级 <b>论文 / 官方 / 媒体 / 社区 / 未公开</b></span>
+    <span class="pill">稀疏 <b>FastMoE / DIET</b></span>    <span class="pill">证据分级 <b>论文 / 官方 / 媒体 / 社区 / 未公开</b></span>
   </div>
   <div class="verdict">
     <div>
@@ -2482,7 +2481,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
     <p class="ch-sub">前面所有章节都在同一个假设下工作：<strong>模型有多大，每步就要算多大</strong>。MoE 打破的正是这个假设——它让<strong>总容量（存多少）</strong>与<strong>激活量（算多少）</strong>成为两个可以分别调节的量。对长视频与世界模型来说，这是除量化之外<strong>唯一能同时改变「算」与「存」两条曲线的手段</strong>。</p>
   </div></div>
 
-  <p class="lead-in">本章的组织逻辑是「先分清问题，再谈技术」：MoE 在<strong>视频生成</strong>里和在大语言模型里遇到的瓶颈完全不同——LLM 侧是显存带宽与 all-to-all 通信，视频侧是<strong>大量极窄专家带来的小算子风暴</strong>。混淆这两者，会导出错误的优化优先级。本章先给出容量/激活解耦的账本，再拆路由机制，然后分「少算」与「少存」两条线讲系统侧手段，最后落到视频与世界模型上的四个真实实例。</p>
+  <p class="lead-in">本章的组织逻辑是「先分清问题，再谈技术」：MoE 在<strong>视频生成</strong>里和在大语言模型里遇到的瓶颈完全不同——LLM 侧是显存带宽与 all-to-all 通信，视频侧是<strong>大量极窄专家带来的小算子风暴</strong>。混淆这两者，会导出错误的优化优先级。本章先给出容量/激活解耦的账本，再拆路由机制，然后分「少算」（系统层，以 <strong>FastMoE</strong> 为代表）与「少存」（模型层，以 <strong>DIET</strong> 为代表）两条线讲手段，最后落到视频与世界模型上的可核对实例。</p>
 
   <h3 id="moe-why"><span class="h3tag">7.1</span>为什么 MoE 在大约 2025 年之后回到视野</h3>
   <p>把三个杠杆放在同一张账本上，MoE 的位置就清楚了：</p>
@@ -2613,28 +2612,81 @@ MoE 的账本
   <div class="callout"><b>一条值得记住的设计判据：</b>如果路由决策<strong>只依赖每个 token 自己</strong>（或只依赖 timestep），那么它在分布式下是「可离线确定」的——这和 §6.2 里 Ring 上稀疏可行性的判据<strong>完全同构</strong>。反过来，一旦路由需要<strong>看全局才能保持均衡</strong>，它就会像 Top-k 稀疏一样撞上同步与不规则通信的墙。<em>这不是巧合：两者的本质都是「决策是否需要全局信息」。</em></div>
 
   <h3 id="moe-systems"><span class="h3tag">7.3</span>系统侧的两条线：少算与少存</h3>
+  <p>这一节按「改系统」还是「改模型」分成两层。<strong>FastMoE</strong>（arXiv 2103.13262）是系统层的代表——它让 MoE 跑得更快；<strong>DIET</strong>（arXiv 2609.37829）是模型层的代表——它直接<strong>裁掉专家</strong>，把「少存」做成一次性的、可验证的结构改动。两者解决的是完全不同的浪费，且可以叠加。</p>
+
+  <div class="tablewrap"><table>
+    <caption>表 7-2 · MoE 的两层优化：系统层 vs 模型层。判断一个方法属于哪一层，决定了它的收益形状。</caption>
+    <thead><tr><th>层次</th><th>代表</th><th>解决什么浪费</th><th>收益形状</th><th>是否需要重训</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>系统层</strong></td>
+        <td><strong>FastMoE</strong><br><span class="tag muted">arXiv 2103.13262</span></td>
+        <td>MoE 执行本身的开销：门控与专家的重复 kernel、跨设备通信、逐专家循环的低效</td>
+        <td>同样的模型<strong>跑得更快</strong>；对显存与 checkpoint 大小几乎无改善</td>
+        <td class="y">不需要（只换执行方式）</td>
+      </tr>
+      <tr>
+        <td><strong>模型层</strong></td>
+        <td><strong>DIET</strong><br><span class="tag acid">arXiv 2609.37829 · 2026-09</span></td>
+        <td><strong>动态稀疏没有解决存储问题</strong>：每步只激活 k 个专家，但 E 个专家的权重仍全部常驻</td>
+        <td><strong>权重总量变小</strong>：checkpoint 与常驻显存近似按裁剪比例下降</td>
+        <td class="y">不需要（training-free）</td>
+      </tr>
+      <tr>
+        <td>正交手段</td>
+        <td>专家卸载 / 专家缓存 / 低比特权重</td>
+        <td>「存不下」但不想删专家</td>
+        <td>省显存但引入搬运或精度代价；<strong>路由越可预知，缓存命中率越高</strong></td>
+        <td class="y">不需要</td>
+      </tr>
+    </tbody>
+  </table></div>
+
   <div class="grid2">
-    <div class="card c-acid"><span class="tag acid">线 1 · 少算</span><h4>把稀疏激活真正变成时间节省</h4>
+    <div class="card c-acid"><span class="tag acid">线 1 · 少算（系统层）</span><h4>把稀疏激活真正变成时间节省</h4>
       <ul>
         <li><strong>全链融合</strong>：把 router / top-k → compact layout（按专家聚合 token）→ gate+up → 激活函数 → down → 加权 scatter 融合进尽量少的 kernel。<strong>这是视频侧第一优先项</strong>，不做这一步，稀疏只省了 FLOPs 而没省时间。</li>
         <li><strong>grouped / fused GEMM</strong>：把「几千个窄专家」的 GEMM 合并成一次分组矩阵乘，而不是逐专家发 kernel。这是 MoE 推理后端最核心的一项能力。</li>
         <li><strong>固定形状通信</strong>：把动态 all-to-all 换成固定分片交换（head-local 路由的思路），代价是压力转移到本地窄专家的执行效率上。</li>
         <li><strong>专家并行（EP）+ 负载均衡</strong>：EP 让每个设备只驻留一部分专家；但<strong>最热专家决定这一步的时间</strong>，因此需要动态专家负载均衡（EPLB 一类机制）把热门专家复制或迁移。</li>
       </ul>
+      <p style="margin-top:14px"><span class="y"><strong>FastMoE 的定位：</strong></span>它属于这一层——<strong>不改模型、不改专家数量，只改 MoE 的执行方式</strong>（门控与专家的融合、避免逐专家循环、优化跨设备通信）。因此它的收益是「同一份权重跑得更快」，而<strong>对显存占用与 checkpoint 大小几乎没有帮助</strong>。引用它时不要把「加速」和「省显存」混为一谈。</p>
     </div>
-    <div class="card c-violet"><span class="tag violet">线 2 · 少存</span><h4>让权重总量不成为瓶颈</h4>
+    <div class="card c-violet"><span class="tag violet">线 2 · 少存（模型层）</span><h4>让权重总量不成为瓶颈</h4>
       <ul>
         <li><strong>专家卸载（offload）</strong>：把当前步未激活的专家留在 host 内存或更低层存储。因为<strong>激活是稀疏的</strong>，这是 MoE 相对 dense 模型天生更擅长的一件事。</li>
         <li><strong>专家缓存 / 预取</strong>：按路由的可预测性预取即将用到的专家。这里有一个关键前提——<strong>路由越可预测，缓存命中率越高</strong>，所以「时间维专家」（按 timestep 路由）天然比「token-choice 路由」更容易做缓存。</li>
         <li><strong>低比特权重</strong>：MoE 的容量主要体现为权重总量，因此权重量化对 MoE 的「少存」收益格外直接。但要注意：<strong>窄专家的低精度 kernel 覆盖度往往差于大矩阵</strong>，可能只省显存不提速。</li>
+        <li><strong>专家裁剪（DIET 路线）</strong>：直接<strong>删掉冗余专家</strong>——这是唯一能把权重总量真正变小、且不引入搬运开销的手段。见下节。</li>
         <li><strong>路由相关状态保持高精度</strong>：router 与门控通常应保持 FP32 —— 路由一旦抖错，整步的输出分布就变了，误差比单个专家内的数值误差更严重。</li>
       </ul>
     </div>
   </div>
 
+  <h4 id="moe-diet">DIET：把「少存」做成一次性的结构改动</h4>
+  <p><strong>DIET</strong>（<em>DeletIon-response Expert Trimming for Video Diffusion Transformers</em>，arXiv 2609.37829，2026-09，西安交大 / 阿里云 / 上海交大）直指一个被 MoE 文献长期绕开的矛盾：<strong>动态稀疏省下了算力，但没有省下存储——E 个专家的权重仍然全部常驻</strong>。它给出的解法是<strong>裁掉专家</strong>，而且是 <strong>training-free</strong> 的。四步机制环环相扣：</p>
+  <div class="pipe c4">
+    <div class="step cool"><i>STEP 1</i><b>一次插桩标定</b><span>跑一次「全专家」的插桩前向（120 个 case），记录<strong>所有专家的输出</strong>与 router 的 logits / gates / 选择结果，并对 <strong>CFG 的 conditional 与 unconditional token 做配对</strong>——共 <strong>368,640 对匹配 token</strong>，约 <strong>375 GB fp16</strong> 缓存状态，约为一次普通前向的 <strong>16× 专家算力</strong>。<strong>这部分代价只付一次。</strong></span></div>
+    <div class="step hot"><i>STEP 2</i><b>冻结状态重放（frozen-state replay）</b><span>在缓存张量上重放「删除某一个专家 + 其 group 内 top-k 重新路由」的后果 = <strong>纯张量运算，零额外前向</strong>。因此可以逐一评估全部 <strong>6,144 个 layer-local 删除</strong>（48 层 × 128 专家）。<strong>这是整个方法能成立的关键：把「评估一次删除」的成本从一次前向降到一次算术。</strong></span></div>
+    <div class="step hot"><i>STEP 3</i><b>删除响应签名</b><span><code>s_{l,e}</code> = 各 case 上 <code>Δ_{l,e}(x) = y_{E\{e}}(x) − y_E(x)</code> 的均值，跨 case 拼接。<strong>只用于判断「方向」（余弦相似度）</strong>——因为<strong>联合删除不满足线性叠加</strong>：联合扰动与单次响应之和的余弦相似度会从 1.00 掉到 <strong>0.66（k=64）</strong>，重构误差升到 <strong>0.95</strong>。</span></div>
+    <div class="step"><i>STEP 4</i><b>ODL 多样性目标 + 跨层预算搜索</b><span><strong>ODL</strong>（Overall Diversity Loss）用 k-median / 指派代价：每个被裁掉的专家要向<strong>最近的保留专家</strong>支付余弦距离。逐层用 <strong>GRASP 贪心初始化 + 单交换局部搜索 + 模拟退火</strong>求解。<br>再用<strong>回归引导的跨层预算搜索</strong>：在「每层保留数」向量上拟合正则化线性代理 <code>y_d = w_dᵀk + b_d</code>，再做约束 LP + 混合整数步分配——<strong>比均匀预算高 1.2 个点</strong>。</span></div>
+  </div>
+  <div class="tablewrap"><table>
+    <caption>表 7-3 · DIET 在 LingBot-Video 30B-A3B 上的公开结果（48 层 / 每层 128 专家 / 4 组内 grouped top-8）</caption>
+    <thead><tr><th>指标</th><th>裁剪前</th><th>裁剪后</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>专家数量</td><td>6,144</td><td class="y">3,072</td><td><strong>50% 裁剪，无微调</strong></td></tr>
+      <tr><td>Checkpoint 大小</td><td>57 GB</td><td class="y">30 GB</td><td>可放进单张 <strong>48 GB GPU</strong></td></tr>
+      <tr><td>副本常驻显存</td><td>93 GiB</td><td class="y">45 GiB</td><td class="y">近似减半</td></tr>
+      <tr><td>VBench Total</td><td>0.7941</td><td class="y">0.8115</td><td>官方 scorer、284-case 配对协议 ⇒ <strong>裁剪后不降反升</strong></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout risk"><b>DIET 最反直觉、也最有价值的一条结论：</b>实验表明<strong>质量最好的掩码恰恰是对原始路由扰动最大的那个</strong>；而那些「最不破坏路由」的判据，质量损失反而最大。也就是说——<strong>「尽量少改变路由」是一个错误的目标函数。</strong><br><br>这条结论对整个 MoE 优化都有含义：它说明<strong>「让稀疏化尽量不影响原模型行为」这个直觉是错的</strong>。原因在于冗余专家被删掉后，路由本来就会重新分配负载；强行保持原路由等于把冗余<strong>固定在结构里</strong>。这与 §4.3 的「训练期吸收近似」是同一条逻辑——<strong>让模型在目标结构下重新工作，比让近似尽量逼近原结构更有效。</strong></div>
+  <div class="callout warn"><b>引用边界：</b>DIET 的评测对象是 <strong>LingBot-Video 30B-A3B</strong>（模型本身开源），但<strong>其标定流程需按目标模型重跑</strong>；375 GB 中间缓存与 16× 专家算力的一次性代价需计入成本；「50% 裁剪不降反升」是单一模型的实测结论，<strong>不应直接外推到其他 MoE 配置</strong>。相关工作另有 PARE（arXiv 2605.27336）、Dense2MoE（arXiv 2510.09094）、REAP（arXiv 2510.13999）可作对照。</div>
+
   <h3 id="moe-video"><span class="h3tag">7.4</span>视频与世界模型上的 MoE：四个可核对的实例</h3>
   <div class="tablewrap"><table>
-    <caption>表 7-2 · 视频 / 世界模型侧 MoE 的公开实例。注意「MoE」在这些系统里指的是完全不同的东西。</caption>
+    <caption>表 7-4 · 视频 / 世界模型侧 MoE 的公开实例。注意「MoE」在这些系统里指的是完全不同的东西。</caption>
     <thead><tr><th>系统</th><th>MoE 形态</th><th>关键机制</th><th>推理侧要点</th></tr></thead>
     <tbody>
       <tr>
@@ -2733,7 +2785,7 @@ MoE 的账本
   <h3 id="moe-ascend"><span class="h3tag">7.5</span>昇腾视角与选型判据</h3>
   <p>昇腾侧在 MoE 上并非空白——已有可复用的能力积木，但<strong>缺口集中在「窄专家的融合执行」</strong>这一项上：</p>
   <div class="tablewrap"><table>
-    <caption>表 7-3 · MoE 相关能力在昇腾栈上的现状（依据本仓库内可核对的框架分析）</caption>
+    <caption>表 7-5 · MoE 相关能力在昇腾栈上的现状（依据本仓库内可核对的框架分析）</caption>
     <thead><tr><th>能力</th><th>现状</th><th>对视频 MoE 的含义</th></tr></thead>
     <tbody>
       <tr><td>专家并行（EP）+ MoE 通信</td><td class="y">已有基础：Ascend 生态具备专家并行、all-to-all dispatcher、fused / MC2 后端</td><td class="y">标准 token-choice EP 可复用；但「固定 head-owner 通信」这类定制形状需自行实现</td></tr>
@@ -2750,10 +2802,10 @@ MoE 的账本
     <div class="step hot"><i>最容易</i><b>时间维专家</b><span>路由由 timestep 决定 ⇒ <strong>完全静态、可预知</strong>。<br>可直接做专家常驻、切换预取、分阶段 offload。<br><b>Wan2.2 / LingBot 属于这一类</b>，也是昇腾上最值得先做的一类。</span></div>
     <div class="step cool"><i>中等</i><b>token-choice 粗粒度专家</b><span>路由动态但专家较大 ⇒ 单个 GEMM 效率尚可，通信与负载均衡是主要问题。<br>已有 EP 与均衡能力可复用。</span></div>
     <div class="step hot"><i>最难</i><b>超细粒度 / head-local 专家</b><span>路由动态 + 专家极窄 ⇒ <strong>全链融合是硬门槛</strong>，不做则稀疏收益被固定开销吞掉。<br>Head Parallel 能固定通信形状，但把矛盾转到本地执行效率。</span></div>
-    <div class="step cool"><i>正交手段</i><b>低比特 + 卸载 + 缓存</b><span>解决的是「少存」而非「少算」。<br>路由越可预知，专家缓存命中率越高 ⇒ <strong>与「时间维专家」天然匹配</strong>。</span></div>
+    <div class="step cool"><i>正交手段</i><b>低比特 + 卸载 + 缓存 + 裁剪</b><span>解决的是「少存」而非「少算」。<br>路由越可预知，专家缓存命中率越高 ⇒ <strong>与「时间维专家」天然匹配</strong>；<br>而<strong>专家裁剪（DIET）</strong>是唯一把权重总量真正变小、且不引入搬运开销的手段。</span></div>
   </div>
-  <div class="callout"><b>本章与相邻章节的关系：</b>MoE 解决的是「容量 ↔ 每步成本」的解耦，它<strong>不和蒸馏、稀疏注意力、量化竞争，而是叠加</strong>——但它会<strong>改变这些手段的最优配置</strong>：MoE 让「每一步的激活权重集合」随输入变化，因此跨步特征缓存（DiTCache 一类）的有效性、以及权重量化的校准集，都需要按专家分别处理。这也是 §4「联合优化」在 MoE 上的具体体现。</div>
-  <div class="quote">本章可以压缩成一句判断：<strong>MoE 买到的是容量，不是速度；要把它变成速度，取决于路由的可预知程度与窄专家的融合执行质量。</strong>前者决定你能不能做静态调度与专家缓存，后者决定稀疏激活能不能真的省下时间——这两项都成立时，MoE 才是长视频与世界模型里最值得投入的一层。</div>
+  <div class="callout"><b>本章与相邻章节的关系：</b>MoE 解决的是「容量 ↔ 每步成本」的解耦，它<strong>不和蒸馏、稀疏注意力、量化竞争，而是叠加</strong>——但它会<strong>改变这些手段的最优配置</strong>：MoE 让「每一步的激活权重集合」随输入变化，因此跨步特征缓存（DiTCache 一类）的有效性、以及权重量化的校准集，都需要按专家分别处理。这也是 §4「联合优化」在 MoE 上的具体体现。<br><br>还有一条更值得注意的呼应：<strong>MoE 的「少算」与「少存」是两件独立的事</strong>（FastMoE vs DIET），这和 §8.2 里「量化不必然提速」、§6.1 里「稀疏不必然省时」是同一种教训——<strong>每一项优化都要问清它到底改的是哪一条曲线</strong>。</div>
+  <div class="quote">本章可以压缩成一句判断：<strong>MoE 买到的是容量，不是速度；要把它变成速度与可行性，取决于路由的可预知程度、窄专家的融合执行质量、以及是否愿意动结构去裁掉冗余专家。</strong>第一项决定你能不能做静态调度与专家缓存（FastMoE 那一层），第二项决定稀疏激活能不能真的省下时间，第三项决定权重总量能不能真正变小（DIET 那一层）——三项都成立时，MoE 才是长视频与世界模型里最值得投入的一层。<br><br>而 DIET 那条反直觉结论值得再强调一次：<strong>在 MoE 上，「尽量不改变原模型行为」不是正确的目标函数。</strong>这与本报告第 4 章的主线完全一致——让模型在目标结构下重新工作，比让近似尽量逼近原结构更有效。</div>
 </section>
 <!-- ============================ 06 KV / precision ============================ -->
 <section class="ch" id="kv">
@@ -3815,6 +3867,28 @@ MoE 的账本
     <li><b>TurboServe: Serving Streaming Video Generation Efficiently and Economically</b><span>arXiv 2606.19271 · cs.DC · 上海交大 + 生数 + 清华</span><a href="https://arxiv.org/abs/2606.19271">arxiv.org/abs/2606.19271</a></li>
     <li><b>Matrix-Game 2.0: An Open-Source, Real-Time, and Streaming Interactive World Model</b><span>arXiv 2508.13009 · Skywork AI · 单 H100 25 FPS；cache 越大反而越早出伪影的消融</span><a href="https://arxiv.org/abs/2508.13009">arxiv.org/abs/2508.13009</a></li>
     <li><b>MAGI-1: Autoregressive Video Generation at Scale</b><span>arXiv 2505.13211 · chunk 级自回归、噪声随时间单调递增、峰值推理开销恒定</span><a href="https://arxiv.org/abs/2505.13211">arxiv.org/abs/2505.13211</a></li>
+  </ol>
+
+  <h4>分布式稀疏并行（第 06 章）</h4>
+  <ol class="srcs">
+    <li><b>db-SP: Accelerating Sparse Attention for Visual Generative Models with Dual-Balanced Sequence Parallelism</b><span>arXiv 2511.23113 · 清华大学 · 2025-11-28 · 提出 ρ_s 稀疏不均衡比</span><a href="https://arxiv.org/abs/2511.23113">arxiv.org/abs/2511.23113</a></li>
+    <li><b>FVAttn: Adaptive Sparse Attention with Runtime Load Balancing for Video Generation</b><span>arXiv 2607.16190 · 中山大学 / 腾讯微信 · 2026-07-17 · 运行时负载均衡（1.34 → 1.08）</span><a href="https://arxiv.org/abs/2607.16190">arxiv.org/abs/2607.16190</a></li>
+    <li><b>OSP-Next: Efficient High-Quality Video Generation with Sparse Sequence Parallelism, HiF8 Quantization, and Reinforcement Learning</b><span>arXiv 2605.28691 · 北大 PKU-YuanGroup / 南洋理工 / Rabbitpre AI · 2026-05-27 · Skiparse Rearrange 与单次 All-to-All；VBench 83.73%、950PR 单卡 2.27×</span><a href="https://arxiv.org/abs/2605.28691">arxiv.org/abs/2605.28691</a></li>
+    <li><b>Ring Attention with Blockwise Transformers for Near-Infinite Context</b><span>arXiv 2310.01889 · Ring 显存模型 6·b·c·h 与重叠条件 c ≥ F/B 的来源</span><a href="https://arxiv.org/abs/2310.01889">arxiv.org/abs/2310.01889</a></li>
+    <li><b>DeepSpeed Ulysses: System Optimizations for Enabling Training of Extreme Long Sequence Transformer Models</b><span>arXiv 2309.14509 · 「4 次 All-to-All」与「attention 可替换为任意注意力机制」的来源</span><a href="https://arxiv.org/abs/2309.14509">arxiv.org/abs/2309.14509</a></li>
+    <li><b>USP: A Unified Sequence Parallelism Approach for Long Context Generative AI</b><span>arXiv 2405.07719</span><a href="https://arxiv.org/abs/2405.07719">arxiv.org/abs/2405.07719</a></li>
+    <li><b>xDiT: an Inference Engine for Diffusion Transformers (DiTs) with Massive Parallelism</b><span>arXiv 2411.01738 · DiT 用 full attention；MM-DiT 必须条件与图像一起切序列</span><a href="https://arxiv.org/abs/2411.01738">arxiv.org/abs/2411.01738</a></li>
+    <li><b>MagiAttention（SandAI）</b><span>ring P2P 冗余定量 25% / &gt;33%、dispatch solver —— 用于 varlen block-causal 场景的冗余估计</span><a href="https://github.com/SandAI-org/MagiAttention">github.com/SandAI-org/MagiAttention</a></li>
+  </ol>
+
+  <h4>多模态稀疏 MoE（第 07 章）</h4>
+  <ol class="srcs">
+    <li><b>FastMoE: A Fast Mixture-of-Expert Training System</b><span>arXiv 2103.13262 · 系统层代表：不改模型、只改 MoE 执行方式（门控与专家融合、避免逐专家循环、优化跨设备通信）</span><a href="https://arxiv.org/abs/2103.13262">arxiv.org/abs/2103.13262</a></li>
+    <li><b>DIET: DeletIon-response Expert Trimming for Video Diffusion Transformers</b><span>arXiv 2609.37829 · 2026-09-29 · 西安交大 / 阿里云 / 上海交大 · training-free 专家裁剪：冻结状态重放 + 删除响应签名 + ODL 多样性目标 + 回归引导跨层预算搜索。在 LingBot-Video 30B-A3B 上 50% 裁剪（6,144 → 3,072 专家），checkpoint 57 GB → 30 GB，副本显存 93 → 45 GiB，VBench Total 0.7941 → 0.8115</span><a href="https://arxiv.org/abs/2609.37829">arxiv.org/abs/2609.37829</a></li>
+    <li><b>PARE: Pruning and Adaptive Routing for Efficient Video Generation</b><span>arXiv 2605.27336 · 对照工作</span><a href="https://arxiv.org/abs/2605.27336">arxiv.org/abs/2605.27336</a></li>
+    <li><b>Dense2MoE</b><span>arXiv 2510.09094 · 对照工作</span><a href="https://arxiv.org/abs/2510.09094">arxiv.org/abs/2510.09094</a></li>
+    <li><b>REAP</b><span>arXiv 2510.13999 · 对照工作</span><a href="https://arxiv.org/abs/2510.13999">arxiv.org/abs/2510.13999</a></li>
+    <li><b>MindIE-SD 能力清单中的 MoE 相关项</b><span>本仓库 <code>frameworks/mindiesd_sd_capability_upstream_adoption_analysis.html</code>：C4 融合 MoE / 频域调制（<code>fused_moe</code>、<code>frequency_regulator</code>）、C12 DyEPLB 动态专家负载均衡（<code>DynamicDispatcher</code>、<code>ExpertLoadCollector</code>、专家信息传输池）</span></li>
   </ol>
 
   <h4>昇腾与框架侧（可在本仓库内核对）</h4>
