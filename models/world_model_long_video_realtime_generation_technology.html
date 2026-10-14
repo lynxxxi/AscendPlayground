@@ -76,13 +76,55 @@ li{margin:5px 0}
 .note.warn{border-left-color:var(--warn);background:var(--warn-bg)}
 .note p:first-child{margin-top:0}.note p:last-child{margin-bottom:0}
 
-/* ---------- figures ---------- */
-figure{margin:22px 0;border:1px solid var(--line);background:#fff}
+/* ---------- 配图：允许溢出正文栏 + 点击放大 ---------- */
+figure{
+  margin:24px 0 30px;border:1px solid var(--line);background:#fff;
+  width:calc(100% + 160px);margin-right:-160px;
+}
 figure svg{display:block;width:100%;height:auto}
-figcaption{padding:11px 16px;border-top:1px solid var(--line);background:var(--bg2);color:var(--muted);font-size:.84rem;line-height:1.7}
+figcaption{padding:11px 16px;border-top:1px solid var(--line);background:var(--bg2);color:var(--muted);font-size:.86rem;line-height:1.75}
 figcaption b{color:var(--ink)}
-.svgbox{overflow-x:auto}
-.svgbox svg{min-width:660px}
+/* 图容器：整块可点，右上角有放大提示 */
+.svgbox{position:relative;overflow-x:auto;cursor:zoom-in}
+.svgbox svg{min-width:760px}
+.svgbox::after{
+  content:"点击放大";position:absolute;right:8px;top:8px;padding:3px 8px;
+  border:1px solid var(--line2);background:rgba(255,255,255,.94);
+  color:var(--muted);font:600 .68rem/1.5 var(--mono);opacity:0;transition:opacity .15s;
+}
+figure:hover .svgbox::after{opacity:1}
+
+/* 放大层 */
+#lightbox{
+  position:fixed;inset:0;z-index:200;display:none;background:#fff;
+  grid-template-rows:auto minmax(0,1fr);
+}
+#lightbox.open{display:grid}
+#lightbox .lb-bar{
+  display:flex;align-items:center;gap:14px;padding:10px 18px;
+  border-bottom:1px solid var(--line);background:var(--bg2);
+  font:600 .74rem/1.5 var(--mono);color:var(--muted);
+}
+#lightbox .lb-bar b{color:var(--ink);font-weight:700}
+#lightbox .lb-bar .lb-cap{color:var(--muted);font:400 .84rem/1.6 var(--sans);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lightbox .lb-zoom{
+  margin-left:auto;padding:5px 11px;border:1px solid var(--line2);background:#fff;
+  color:var(--ink);font:600 .74rem/1.4 var(--mono);cursor:pointer;
+}
+#lightbox .lb-close{
+  padding:5px 11px;border:1px solid var(--line2);background:#fff;
+  color:var(--ink);font:600 .74rem/1.4 var(--mono);cursor:pointer;
+}
+#lightbox .lb-zoom:hover,#lightbox .lb-close:hover{border-color:var(--accent);color:var(--accent)}
+#lightbox .lb-stage{overflow:auto;padding:18px}
+#lightbox .lb-stage svg{width:100%;height:auto;min-width:0}
+#lightbox.raw .lb-stage svg{width:2200px;max-width:none}
+body.lb-lock{overflow:hidden}
+
+@media(max-width:1280px){
+  figure{width:100%;margin-right:0}
+}
 
 /* ---------- tables ---------- */
 .tablewrap{overflow:auto;margin:18px 0;border:1px solid var(--line)}
@@ -149,11 +191,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
 
 <div class="hero"><div class="wrap">
   <h1>世界模型 · 长视频 · 实时生成技术全景</h1>
-  <p class="sub"><b>这篇报告解决的问题</b>：视频生成正在从「离线抽卡」变成「实时交互系统」，但相关技术分散在几十篇论文里，且分属模型结构、训练方法、推理优化、服务调度四个层面，很难看清彼此的依赖关系。本文把它们按<b>依赖顺序</b>串成一条链：先有什么结构、再用什么训练方法、再做哪些推理优化、最后靠什么服务化落地。</p>
-  <p class="sub"><b>怎么读</b>：每一章开头都有一个方框，说明这项技术<b>是什么、解决什么问题、不用它会怎样</b>；如果你只关心某一层，可以直接跳到对应章节，各章已尽量自足。文中<b>加粗</b>的是结论与关键数字，其余为支撑说明。</p>
+  <p class="sub">视频生成正在从「离线抽卡」变成「实时交互系统」。相关技术分散在几十篇论文里，分属<b>模型结构、训练方法、推理优化、服务化</b>四个层面。本文把它们按依赖顺序串成一条链：先有什么结构、再用什么训练方法、再做哪些推理优化、最后靠什么服务化落地。</p>
   <div class="metabar">
     <span class="pill"><b>12</b> 章</span>
-    <span class="pill"><b>29</b> 张机制图</span>
+    <span class="pill"><b>30</b> 张机制图</span>
     <span class="pill"><b>37</b> 张对照表</span>
     <span class="pill">覆盖 <b>Vidu</b> · <b>爱诗 R2</b> · <b>LingBot-World</b> · <b>minWM</b></span>
     <span class="pill">蒸馏 <b>DMD / PCM / rCM / DP-DMD / DMAD</b></span>
@@ -167,23 +208,95 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
 <nav class="toc" aria-label="目录">
   <div class="toc-title">总纲</div>
   <a href="#map">00 · 技术全景与依赖关系</a>
+  <a class="sub" href="#map-flow">技术依赖链</a>
+  <a class="sub" href="#map-timeline">演进时间线</a>
+  <a class="sub" href="#map-read">章节接口表</a>
+
   <div class="toc-title">一、模型结构</div>
-  <a href="#base">01 · 基座与四家模型结构</a>
+  <a href="#base">01 · 模型结构</a>
+  <a class="sub" href="#base-evolution">1.1 演进：三次架构转向</a>
+  <a class="sub" href="#base-uvit">1.2 U-ViT / UniDiffuser（谱系起点）</a>
+  <a class="sub" href="#base-vidu">1.3 生数 Vidu S1 / S2</a>
+  <a class="sub" href="#base-r2">1.4 爱诗科技 PixVerse R2</a>
+  <a class="sub" href="#base-lingbot">1.5 蚂蚁灵波 LingBot-World</a>
+  <a class="sub" href="#base-minwm">1.6 minWM 框架</a>
+  <a class="sub" href="#base-matrix">1.7 四家结构横向对照</a>
+
   <div class="toc-title">二、训练方法</div>
   <a href="#forcing">02 · Forcing：让模型扛住自己的历史</a>
+  <a class="sub" href="#forcing-gap">2.1 暴露偏差（问题来源）</a>
+  <a class="sub" href="#forcing-knobs">2.2 两个调节旋钮</a>
+  <a class="sub" href="#forcing-pipeline">2.3 四阶段因果化流水线</a>
+  <a class="sub" href="#forcing-family">2.4 家族对照（12 个方案）</a>
+  <a class="sub" href="#forcing-srf">2.5 Self-Replay Forcing</a>
+  <a class="sub" href="#forcing-cost">2.6 训练成本</a>
   <a href="#distill">03 · 蒸馏：把去噪步数压到 1–4 步</a>
+  <a class="sub" href="#distill-budget">3.1 NFE 预算算术</a>
+  <a class="sub" href="#distill-families">3.2 四族对照（含命名核实）</a>
+  <a class="sub" href="#distill-collapse">3.3 模式崩溃与四类补救</a>
+  <a class="sub" href="#distill-stack">3.4 公开系统的组合方式</a>
+  <a class="sub" href="#distill-verify">3.5 验收矩阵</a>
   <a href="#coopt">04 · 联合优化：稀疏、量化、蒸馏一起决定</a>
+  <a class="sub" href="#coopt-problem">4.1 写成优化问题</a>
+  <a class="sub" href="#coopt-map">4.2 联合点台账</a>
+  <a class="sub" href="#coopt-coop">4.3 三种合作形态</a>
+  <a class="sub" href="#coopt-rule">4.4 三条可执行原则</a>
+
   <div class="toc-title">三、推理优化</div>
   <a href="#rope">05 · RoPE：长上下文的位置编码</a>
+  <a class="sub" href="#rope-why">5.1 为什么视频更依赖它</a>
+  <a class="sub" href="#rope-taxonomy">5.2 四类改造路线</a>
+  <a class="sub" href="#rope-vidu">5.3 Vidu 的实现</a>
+  <a class="sub" href="#rope-infinity">5.4 Infinity-RoPE</a>
+  <a class="sub" href="#rope-lol">5.5 LoL 与 sink-collapse</a>
+  <a class="sub" href="#rope-flex">5.6 频率侧改造与动态分配</a>
+  <a class="sub" href="#rope-formulas">5.7 四个可直接落地的公式</a>
+  <a class="sub" href="#rope-check">5.8 核查清单</a>
   <a href="#dsp">06 · 分布式稀疏并行</a>
+  <a class="sub" href="#dsp-ring">6.1 Ring 的代价模型与三条硬约束</a>
+  <a class="sub" href="#dsp-geometry">6.2 几何事实：Ring 不缺块</a>
+  <a class="sub" href="#dsp-ospnext">6.3 OSP-Next（一次 All-to-All）</a>
+  <a class="sub" href="#dsp-balance">6.4 负载均衡：db-SP 与 FVAttn</a>
+  <a class="sub" href="#dsp-routes">6.5 两条路线与逐案判定</a>
+  <a class="sub" href="#dsp-quant">6.6 量化 × Ring</a>
+  <a class="sub" href="#dsp-ascend">6.7 算子映射</a>
   <a href="#moe">07 · 多模态稀疏 MoE</a>
+  <a class="sub" href="#moe-why">7.1 容量与每步成本解耦</a>
+  <a class="sub" href="#moe-mech">7.2 路由机制（6 个设计维度）</a>
+  <a class="sub" href="#moe-systems">7.3 FastMoE / DIET（系统层与模型层）</a>
+  <a class="sub" href="#moe-video">7.4 视频侧四个实例</a>
+  <a class="sub" href="#moe-ascend">7.5 选型判据</a>
   <a href="#kv">08 · KV Cache、注意力与量化</a>
+  <a class="sub" href="#kv-sparse">8.1 注意力稀疏（10 个方案）</a>
+  <a class="sub" href="#kv-quant">8.2 KV 与权重量化</a>
+  <a class="sub" href="#kv-policy">8.3 缓存策略（淘汰与布局）</a>
+  <a class="sub" href="#kv-stack">8.4 三个方向的叠加次序</a>
   <a href="#sr">09 · 超分与精修模块</a>
+  <a class="sub" href="#sr-why">9.1 级联的成本算术</a>
+  <a class="sub" href="#sr-mech">9.2 四个设计点</a>
+  <a class="sub" href="#sr-case">9.3 四种精修拓扑</a>
+  <a class="sub" href="#sr-fps">9.4 三个帧率的口径</a>
   <a href="#vae">10 · 轻量化 VAE</a>
+  <a class="sub" href="#vae-why">10.1 为什么成为瓶颈</a>
+  <a class="sub" href="#vae-shapes">10.2 三类手段</a>
+  <a class="sub" href="#vae-light">10.3 LightVAE / TAEHV 两条路线</a>
+  <a class="sub" href="#vae-ratio">10.4 压缩率的双向影响</a>
+  <a class="sub" href="#vae-verify">10.5 验收清单</a>
+
   <div class="toc-title">四、服务化</div>
   <a href="#serve">11 · 服务化与调度</a>
+  <a class="sub" href="#serve-metrics">11.1 四个指标口径</a>
+  <a class="sub" href="#serve-turbo">11.2 TurboServe 在线调度</a>
+  <a class="sub" href="#serve-vidu">11.3 Vidu S2 推理栈</a>
+  <a class="sub" href="#serve-parallel">11.4 并行策略</a>
+  <a class="sub" href="#serve-pipeline">11.5 共享时间线流水</a>
+  <a class="sub" href="#serve-checklist">11.6 服务化验收</a>
+
   <div class="toc-title">附</div>
   <a href="#evidence">12 · 来源与未核实项</a>
+  <a class="sub" href="#ev-numbers">12.1 数字口径纪律</a>
+  <a class="sub" href="#ev-sources">12.2 来源清单</a>
+  <a class="sub" href="#ev-gaps">12.3 未能核实项</a>
 </nav>
 <main>
 <!-- ============================ 00 Overview ============================ -->
@@ -194,7 +307,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <p class="ch-sub">实时世界模型是一个<strong>四段串联</strong>的系统：每一段都为下一段设定约束，同时把「不可能」变成「可能」。顺序颠倒会导致优化失去目标函数——这也是本报告按「先后训练、后推理」组织的原因。</p>
   </div></div>
 
-  <figure>
+  <figure id="map-flow">
     <div class="svgbox">
     <svg viewBox="0 0 1080 470" role="img" aria-label="实时生成技术的四段依赖链与各章位置">
       <defs>
@@ -295,28 +408,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <figcaption><b>图 0-1 · 四段依赖链与四个正交杠杆</b>：A→B→C→D 是<strong>能力递进</strong>关系（每段把上一段的产物变成可用系统），四个杠杆是<strong>乘性收益</strong>关系（各自独立但要联合调参）。<i>反向箭头是本报告反复强调的一点：服务层的 SLO 会反向决定训练侧的预算分配。</i></figcaption>
   </figure>
 
-  <h3 id="map-read"><span class="h3tag">1</span>每一章回答的问题，以及它与邻章的接口</h3>
-  <div class="tablewrap"><table>
-    <caption>表 0-1 · 章节接口表。「上游给什么」与「本章交给下游什么」是判断技术落点的关键。</caption>
-    <thead><tr><th>章</th><th>回答的问题</th><th>上游给什么</th><th>本章交给下游什么</th><th>若不成立</th></tr></thead>
-    <tbody>
-      <tr><td><strong>01 基座与模型结构</strong></td><td>模型能不能「只看历史」地增量生成？条件怎么注入？</td><td>—（起点）</td><td>块级因果接口、可缓存的状态结构、参考/动作条件通道</td><td class="n">只能做离线抽卡，后续全部失效</td></tr>
-      <tr><td><strong>02 Forcing</strong></td><td>模型能否承受自己生成的历史？</td><td>因果结构 + 一个双向教师</td><td>能长跑的因果 checkpoint（对抗暴露偏差）</td><td class="n">几十块后身份漂移、背景突变</td></tr>
-      <tr><td><strong>03 蒸馏</strong></td><td>每块要调用几次主干？</td><td>可长跑的因果学生</td><td>1–4 步少步 checkpoint（NFE 预算落地）</td><td class="n">延迟进不了实时区间（见 §3.1 算术）</td></tr>
-      <tr><td><strong>04 联合优化</strong></td><td>稀疏/量化/蒸馏怎么一起决定？</td><td>少步学生 + 目标推理配置</td><td>在目标近似模式下训练的权重（误差已被吸收）</td><td class="n">分项收益对，端到端收益远低于预期</td></tr>
-      <tr><td><strong>05 RoPE</strong></td><td>缓存复用后位置还能对齐吗？</td><td>少步学生 + KV 缓存设计</td><td>可在会话中持续生效的位置管理方案</td><td class="n">长会话「语义还在、注意力先散」</td></tr>
-      <tr><td><strong>06 分布式稀疏并行</strong></td><td>稀疏方案跨卡之后还成立吗？</td><td>位置方案 + 目标稀疏率</td><td>可上 Ring 的稀疏形态（可离线确定 / 阈值型）+ 均衡手段</td><td class="n">单卡能跑的稀疏，跨卡后负载失衡甚至不可实现</td></tr>
-      <tr><td><strong>07 多模态稀疏 MoE</strong></td><td>容量能不能与激活量解耦？少存能不能不靠量化？</td><td>目标推理配置 + 显存预算</td><td>激活参数预算与专家驻留策略（容量 → 成本不再线性）</td><td class="n">模型容量直接等于每步成本，长上下文下无法摊薄</td></tr>
-      <tr><td><strong>08 KV / 精度</strong></td><td>一次注意力搬多少字节？缓存能放多长？</td><td>可复用的状态 + 位置方案 + 并行策略</td><td>有界的显存占用与可接受的单步成本</td><td class="n">延迟/显存随会话变长单调恶化</td></tr>
-      <tr><td><strong>09 服务化</strong></td><td>几百个长会话怎么稳定又经济地跑？</td><td>有界状态 + 可序列化的会话</td><td>TTFC / TPC P99 / 每生成分钟成本</td><td class="n">单会话快但多会话崩、成本不可控</td></tr>
-      <tr><td><strong>10 超分与精修</strong></td><td>能不能让主干根本不算高分辨率？</td><td>低分辨率主干 + 目标分辨率</td><td>把「NFE × 分辨率²」拆成两级成本的拓扑</td><td class="n">主干被算术锁死在高分辨率多步上（单步代价 ∝ 分辨率⁴）</td></tr>
-      <tr><td><strong>11 轻量化 VAE</strong></td><td>主干变快之后，谁成了新瓶颈？</td><td>精修后的 latent 序列</td><td>能在解码端吃住的显存与吞吐（否则主干收益被吃掉）</td><td class="n">「中间很快、头尾堵车」，多卡收益被单卡解码阶段吞掉</td></tr>
-      <tr><td><strong>12 昇腾视角</strong></td><td>这些技术在本栈上分别处于什么位置？</td><td>前十一章全部机制</td><td>三档迁移判断 + 四级推进路线</td><td class="n">把「机制可迁移」误当「代码可运行」</td></tr>
-      <tr><td><strong>13 证据分级</strong></td><td>这些数字能支持多强的结论？</td><td>全文所有结论与数字</td><td>可复核的引用方式与口径纪律</td><td class="n">把厂商自述当第三方结论、把不同口径的数字并列</td></tr>
-    </tbody>
-  </table></div>
-
-  <h3 id="map-timeline"><span class="h3tag">2</span>技术演进时间线（按产生顺序）</h3>
+  <h3 id="map-timeline"><span class="h3tag">1</span>技术演进时间线（按产生顺序）</h3>
   <figure>
     <div class="svgbox">
     <svg viewBox="0 0 1080 420" role="img" aria-label="2022 至 2026 年世界模型、长视频与实时生成技术演进时间线">
@@ -383,17 +475,159 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   </figure>
 
   </section>
+  <h3 id="map-read"><span class="h3tag">2</span>每一章回答的问题，以及它与邻章的接口</h3>
+  <div class="tablewrap"><table>
+    <caption>表 0-1 · 章节接口表。「上游给什么」与「本章交给下游什么」是判断技术落点的关键。</caption>
+    <thead><tr><th>章</th><th>回答的问题</th><th>上游给什么</th><th>本章交给下游什么</th><th>若不成立</th></tr></thead>
+    <tbody>
+      <tr><td><strong>01 基座与模型结构</strong></td><td>模型能不能「只看历史」地增量生成？条件怎么注入？</td><td>—（起点）</td><td>块级因果接口、可缓存的状态结构、参考/动作条件通道</td><td class="n">只能做离线抽卡，后续全部失效</td></tr>
+      <tr><td><strong>02 Forcing</strong></td><td>模型能否承受自己生成的历史？</td><td>因果结构 + 一个双向教师</td><td>能长跑的因果 checkpoint（对抗暴露偏差）</td><td class="n">几十块后身份漂移、背景突变</td></tr>
+      <tr><td><strong>03 蒸馏</strong></td><td>每块要调用几次主干？</td><td>可长跑的因果学生</td><td>1–4 步少步 checkpoint（NFE 预算落地）</td><td class="n">延迟进不了实时区间（见 §3.1 算术）</td></tr>
+      <tr><td><strong>04 联合优化</strong></td><td>稀疏/量化/蒸馏怎么一起决定？</td><td>少步学生 + 目标推理配置</td><td>在目标近似模式下训练的权重（误差已被吸收）</td><td class="n">分项收益对，端到端收益远低于预期</td></tr>
+      <tr><td><strong>05 RoPE</strong></td><td>缓存复用后位置还能对齐吗？</td><td>少步学生 + KV 缓存设计</td><td>可在会话中持续生效的位置管理方案</td><td class="n">长会话「语义还在、注意力先散」</td></tr>
+      <tr><td><strong>06 分布式稀疏并行</strong></td><td>稀疏方案跨卡之后还成立吗？</td><td>位置方案 + 目标稀疏率</td><td>可上 Ring 的稀疏形态（可离线确定 / 阈值型）+ 均衡手段</td><td class="n">单卡能跑的稀疏，跨卡后负载失衡甚至不可实现</td></tr>
+      <tr><td><strong>07 多模态稀疏 MoE</strong></td><td>容量能不能与激活量解耦？少存能不能不靠量化？</td><td>目标推理配置 + 显存预算</td><td>激活参数预算与专家驻留策略（容量 → 成本不再线性）</td><td class="n">模型容量直接等于每步成本，长上下文下无法摊薄</td></tr>
+      <tr><td><strong>08 KV / 精度</strong></td><td>一次注意力搬多少字节？缓存能放多长？</td><td>可复用的状态 + 位置方案 + 并行策略</td><td>有界的显存占用与可接受的单步成本</td><td class="n">延迟/显存随会话变长单调恶化</td></tr>
+      <tr><td><strong>09 服务化</strong></td><td>几百个长会话怎么稳定又经济地跑？</td><td>有界状态 + 可序列化的会话</td><td>TTFC / TPC P99 / 每生成分钟成本</td><td class="n">单会话快但多会话崩、成本不可控</td></tr>
+      <tr><td><strong>10 超分与精修</strong></td><td>能不能让主干根本不算高分辨率？</td><td>低分辨率主干 + 目标分辨率</td><td>把「NFE × 分辨率²」拆成两级成本的拓扑</td><td class="n">主干被算术锁死在高分辨率多步上（单步代价 ∝ 分辨率⁴）</td></tr>
+      <tr><td><strong>11 轻量化 VAE</strong></td><td>主干变快之后，谁成了新瓶颈？</td><td>精修后的 latent 序列</td><td>能在解码端吃住的显存与吞吐（否则主干收益被吃掉）</td><td class="n">「中间很快、头尾堵车」，多卡收益被单卡解码阶段吞掉</td></tr>
+      <tr><td><strong>12 昇腾视角</strong></td><td>这些技术在本栈上分别处于什么位置？</td><td>前十一章全部机制</td><td>三档迁移判断 + 四级推进路线</td><td class="n">把「机制可迁移」误当「代码可运行」</td></tr>
+      <tr><td><strong>13 证据分级</strong></td><td>这些数字能支持多强的结论？</td><td>全文所有结论与数字</td><td>可复核的引用方式与口径纪律</td><td class="n">把厂商自述当第三方结论、把不同口径的数字并列</td></tr>
+    </tbody>
+  </table></div>
+
 <!-- ============================ 01 Base architectures ============================ -->
 <section class="ch" id="base">
-  <div class="ch-head"><div>
+  <div class="ch-head">
     <div class="ch-no">01</div>
     <h2>模型结构：四家实时世界模型的骨架</h2>
-    <p class="ch-sub">本章的判据只有一条：<strong>模型允许信息往哪个方向流动、允许注入什么条件、允许复用哪些状态</strong>。这三个问题决定了后续所有章节是否有可能成立——画质、分辨率、时长都可以后补，信息流不能。</p>
-  </div></div>
+  </div>
 
-  <p class="lead-in">先给结论：<strong>2026 年的实时世界模型已经收敛到同一个骨架</strong>——潜空间 + 音视频（或视频+动作）联合 DiT + 块级因果注意力 + 可复用状态 + 少步蒸馏。四家产品的差异不在骨架，而在<strong>四个选择</strong>上：条件怎么注入（token 拼接 / AdaLN / cross-attention / 投影变换）、记忆怎么做（滑窗 KV / sink / 多时间尺度 / 动态调度）、因果化怎么做（TF / DF / MoBA）、少步与降分辨率怎么配（纯少步 / 低分辨率主干 + Refiner）。</p>
+  <div class="brief">
+    <dl>
+      <dt>是什么</dt>
+      <dd>本章拆解四个已在运行的实时视频／世界模型的<b>网络结构与信息流</b>：生数 Vidu S1/S2、爱诗科技 PixVerse R2、蚂蚁灵波 LingBot-World、以及改造框架 minWM。看的是它们由什么主干构成、条件从哪里注入、注意力允许谁看见谁、状态如何被复用。</dd>
+      <dt>解决什么</dt>
+      <dd>这些模型要同时满足三个互相牵制的要求：<b>能增量生成</b>（不能等整段视频算完）、<b>能接受实时控制</b>（相机、动作、参考图随时到达）、<b>能长时间不漂移</b>（几十分钟会话）。这三点都由结构决定，而不是由训练或工程决定。</dd>
+      <dt>有什么用</dt>
+      <dd>结构决定了后续一切的上限：能不能做 KV 复用、能不能少步蒸馏、能不能流式服务。<b>四家产品最终收敛到同一个骨架，差异只剩四个选择</b>——条件怎么注入、记忆怎么做、因果化怎么做、分辨率从哪里换回来。</dd>
+      <dt>不用会怎样</dt>
+      <dd>用双向模型只能整段生成，做不了流式；没有可复用状态，每一块都要重算历史；没有条件通道，控制信号无法中途进入。后续第 02–11 章的所有优化都会因此失去前提。</dd>
+    </dl>
+  </div>
 
-  <h3 id="base-uvit"><span class="h3tag">1</span>谱系起点：U-ViT → UniDiffuser 留下了什么</h3>
+  <h3 id="base-evolution"><span class="h3tag">1</span>先看演进：从图像扩散到实时世界模型</h3>
+  <p>要理解这四家的结构选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
+
+  <figure id="base-evo">
+    <div class="svgbox">
+    <svg viewBox="0 0 1060 420" role="img" aria-label="视频生成模型的四次架构转向与本研究覆盖的四个模型">
+      <rect width="1060" height="420" fill="#ffffff"/>
+      <text x="24" y="24" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#1a2124">三次架构转向：每一次都改变了「什么可以复用」</text>
+
+      <!-- phase 1 -->
+      <g transform="translate(24,40)">
+        <rect x="0" y="0" width="240" height="150" fill="#f7f8f8" stroke="#cfd4d6"/>
+        <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">① 图像扩散时代</text>
+        <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">2020 – 2022</text>
+        <g font-family="ui-monospace,monospace" font-size="9">
+          <rect x="14" y="52" width="212" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="120" y="69" text-anchor="middle">U-Net 主干（卷积为主）</text>
+          <rect x="14" y="84" width="212" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="120" y="101" text-anchor="middle">像素空间 或 潜空间扩散</text>
+          <rect x="14" y="116" width="212" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="120" y="133" text-anchor="middle">一个模型一个任务</text>
+        </g>
+      </g>
+
+      <text x="274" y="118" font-size="16" fill="#6b7478">→</text>
+
+      <!-- phase 2 -->
+      <g transform="translate(296,40)">
+        <rect x="0" y="0" width="240" height="150" fill="#eef6f6" stroke="#0f6f78"/>
+        <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">② 转向纯 Transformer</text>
+        <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">2022 – 2023</text>
+        <g font-family="ui-monospace,monospace" font-size="9">
+          <rect x="14" y="52" width="212" height="26" fill="#ffffff" stroke="#0f6f78"/><text x="120" y="69" text-anchor="middle">U-ViT：一切都是 token</text>
+          <rect x="14" y="84" width="212" height="26" fill="#ffffff" stroke="#0f6f78"/><text x="120" y="101" text-anchor="middle">UniDiffuser：一模型多任务</text>
+          <rect x="14" y="116" width="212" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="120" y="133" text-anchor="middle">条件也作为 token 进入主干</text>
+        </g>
+        <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0f6f78">⇒ 新增模态只需定义 token 化</text>
+      </g>
+
+      <text x="546" y="118" font-size="16" fill="#6b7478">→</text>
+
+      <!-- phase 3 -->
+      <g transform="translate(568,40)">
+        <rect x="0" y="0" width="228" height="150" fill="#f7f8f8" stroke="#cfd4d6"/>
+        <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">③ 视频 DiT 与因果化</text>
+        <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">2023 – 2025</text>
+        <g font-family="ui-monospace,monospace" font-size="9">
+          <rect x="14" y="52" width="200" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="114" y="69" text-anchor="middle">时空 patch + 3D RoPE</text>
+          <rect x="14" y="84" width="200" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="114" y="101" text-anchor="middle">双向注意力 → 块级因果掩码</text>
+          <rect x="14" y="116" width="200" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="114" y="133" text-anchor="middle">KV Cache 让历史从重算变只读</text>
+        </g>
+        <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0f6f78">⇒ 第一次出现「可增量提交」</text>
+      </g>
+
+      <text x="806" y="118" font-size="16" fill="#6b7478">→</text>
+
+      <!-- phase 4 -->
+      <g transform="translate(828,40)">
+        <rect x="0" y="0" width="208" height="150" fill="#eef6f6" stroke="#0f6f78"/>
+        <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">④ 实时世界模型</text>
+        <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">2025 – 2026</text>
+        <g font-family="ui-monospace,monospace" font-size="9">
+          <rect x="14" y="52" width="180" height="26" fill="#ffffff" stroke="#0f6f78"/><text x="104" y="69" text-anchor="middle">音视频 / 动作联合建模</text>
+          <rect x="14" y="84" width="180" height="26" fill="#ffffff" stroke="#0f6f78"/><text x="104" y="101" text-anchor="middle">少步 + 低分主干 + 精修</text>
+          <rect x="14" y="116" width="180" height="26" fill="#ffffff" stroke="#0f6f78"/><text x="104" y="133" text-anchor="middle">多时间尺度记忆</text>
+        </g>
+        <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0f6f78">⇒ 边生成边接受控制</text>
+      </g>
+
+      <line x1="24" y1="222" x2="1036" y2="222" stroke="#e2e5e6"/>
+
+      <text x="24" y="248" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#1a2124">本文覆盖的四个模型，各自继承了什么、又各自换了什么</text>
+      <g font-family="ui-monospace,monospace" font-size="9">
+        <rect x="24" y="260" width="240" height="76" fill="#ffffff" stroke="#0f6f78"/>
+        <text x="38" y="280" font-weight="700" fill="#1a2124">生数 Vidu S1 / S2</text>
+        <text x="38" y="298" fill="#3d474b">自研 U-ViT 谱系</text>
+        <text x="38" y="314" fill="#3d474b">换成：联合音视频 DiT + 参考图作</text>
+        <text x="38" y="328" fill="#3d474b">条件 token + 单步 latent 精修</text>
+
+        <rect x="276" y="260" width="240" height="76" fill="#ffffff" stroke="#cfd4d6"/>
+        <text x="290" y="280" font-weight="700" fill="#1a2124">爱诗 PixVerse R2</text>
+        <text x="290" y="298" fill="#3d474b">继承：多模态统一建模思路</text>
+        <text x="290" y="314" fill="#3d474b">换成：单一因果骨干原生训</text>
+        <text x="290" y="328" fill="#3d474b">＋ 三通道分层记忆</text>
+
+        <rect x="528" y="260" width="240" height="76" fill="#ffffff" stroke="#cfd4d6"/>
+        <text x="542" y="280" font-weight="700" fill="#1a2124">蚂蚁灵波 LingBot-World</text>
+        <text x="542" y="298" fill="#3d474b">继承：开源 Wan2.2 双专家</text>
+        <text x="542" y="314" fill="#3d474b">换成：MoBA 掩码因果预训练</text>
+        <text x="542" y="328" fill="#3d474b">＋ 相机 Plücker + AdaLN 注入</text>
+
+        <rect x="780" y="260" width="256" height="76" fill="#ffffff" stroke="#cfd4d6"/>
+        <text x="794" y="280" font-weight="700" fill="#1a2124">minWM（改造框架）</text>
+        <text x="794" y="298" fill="#3d474b">继承：任意现成双向底座</text>
+        <text x="794" y="314" fill="#3d474b">换成：PRoPE 相机注入 + 三阶</text>
+        <text x="794" y="328" fill="#3d474b">段因果化蒸馏</text>
+      </g>
+
+      <rect x="24" y="348" width="1012" height="60" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="38" y="368" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#1a2124">本章的阅读顺序</text>
+      <text x="38" y="386" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">1.1 先讲 U-ViT / UniDiffuser 留下的两个设计遗产（下面所有模型都用到了它们）；1.2–1.5 逐个拆四家模型；1.6 横向对照。</text>
+      <text x="38" y="402" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">如果只关心某一家，可以直接跳到 1.2–1.5 对应小节，各节自足。</text>
+    </svg>
+    </div>
+    <figcaption><b>图 1-0 · 三次架构转向与本文覆盖的四个模型</b>：从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
+  </figure>
+
+  <div class="note">
+    <p><strong>两个贯穿全章的问题</strong>，读后面每一节时都可以带着它们：</p>
+    <p><strong>① 谁是 query、谁是 key？</strong>也就是模型里的注意力允许谁看见谁。这决定了能不能流式（见 1.6 的掩码对照图）。</p>
+    <p><strong>② 哪些计算可以留到下一块复用？</strong>也就是状态存在哪里、以什么粒度淘汰。这决定了长会话的成本曲线。</p>
+  </div>
+
+  <h3 id="base-uvit"><span class="h3tag">2</span>谱系起点：U-ViT → UniDiffuser 留下了什么</h3>
+  <p>先说这两个工作各自解决了什么，再看今天四家模型从它们身上继承了什么。</p>
   <div class="grid2">
     <div class="note">
       <span class="tag">U-ViT · 2022-09 · arXiv 2209.12152</span>
@@ -480,7 +714,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
 <!-- ===== 图 1-2 Vidu S2 全链路架构 ===== -->
 <!-- ===== 图 1-2 Vidu S2 全链路架构 ===== -->
 
-  <h3 id="base-vidu"><span class="h3tag">2</span>生数 Vidu S1 / S2：参考图作为条件 token 的联合音视频因果 DiT</h3>
+  <h3 id="base-vidu"><span class="h3tag">3</span>生数 Vidu S1 / S2：参考图作为条件 token 的联合音视频因果 DiT</h3>
   <p>Vidu S 系列的结构可以精确写成三行公式，这也是目前公开材料里最完整的一份「流式 DiT」结构描述：</p>
   <div class="formula">双向阶段：  x̂₀^{1:N} = f_θ^bi ( x_t^{1:N} , t , <b>r</b> , c^{1:N} )
                 r  ：参考图，<b>对所有 segment 共享</b>
@@ -619,7 +853,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   <div class="note"><b>S2-Editing 的结构差异值得单独记：</b>编辑任务的目标不是「生成合理内容」，而是<strong>完全保留源视频的运动与时序、只替换外观</strong>。其核心机制是 <strong>frame-aligned attention</strong>——每个目标帧<strong>只读同一时间步的源帧</strong>，从而保证运动与节奏严格一致；同时参考图对所有帧可见，使新外观贯穿全片。流式运行时，<strong>源帧在与对应目标帧一起被消费后不进入缓存</strong>，以节省显存。<em>这是一条通用的设计模式：把「必须严格对齐的输入」按时间对齐消费掉，而不是塞进长期缓存。</em></div>
 
 
-  <h3 id="base-r2"><span class="h3tag">3</span>爱诗科技（PixVerse）R2：单一因果骨干 + 三通道记忆</h3>
+  <h3 id="base-r2"><span class="h3tag">4</span>爱诗科技（PixVerse）R2：单一因果骨干 + 三通道记忆</h3>
   <p>先澄清一个命名问题：<strong>公开可核实的公司世界模型线是 R1 → R2，未发现任何名为「realm」的模型</strong>。R2 的技术报告（2026-08-23）与产品博文（2026-09-22）披露了目前四家中最完整的训练配方。</p>
   <div class="note"><b>R2 的方法论贡献在于「砍掉了两个阶段」。</b>传统链条是「双向 → AR 转换 → 任务专用蒸馏 teacher → DMD → self-rollout DMD」，R2 合并为两步：① <strong>Omni Causal AR 持续预训练</strong>；② <strong>Real-Time Acceleration</strong> 直接蒸馏<strong>同一个因果底座</strong>——student 的 ODE 初始化与 teacher <strong>都来自同一因果模型，不另训 fast model</strong>。这一点的工程含义很大：<strong>避免了「双向教师 → 因果学生」之间的架构间隙</strong>（见 §2.3 关于 frame-level injectivity 的讨论）。</div>
 
@@ -704,7 +938,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <figcaption><b>图 1-3 · R2 的两过程框架与三通道记忆</b>：左上是被 R2 弃用的长链条，左下是它的两步替代——关键在于 teacher 与 student 同源。<i>右下第三通道是本章提到的最有方向性的一项设计：当记忆的索引单位从时间位置变成物体，「主体离场再回访」这类问题才有解。</i></figcaption>
   </figure>
 
-  <h3 id="base-lingbot"><span class="h3tag">4</span>蚂蚁灵波 LingBot-World：从 14B 双专家到 MoBA 因果预训练</h3>
+  <h3 id="base-lingbot"><span class="h3tag">5</span>蚂蚁灵波 LingBot-World：从 14B 双专家到 MoBA 因果预训练</h3>
   <p>LingBot-World 是四家里<strong>公开信息最完整、且有开源权重</strong>的一支（v1 与 v2 均已开源，v2 提供 14B 与 1.3B 的 causal-fast 版本）。它的演进路径本身就是一份「如何把双向视频模型改造成实时世界模型」的教程。</p>
   <div class="tablewrap"><table>
     <caption>表 1-2 · LingBot-World v1（arXiv 2601.20540）与 v2 / Infinity（arXiv 2607.07534）的结构对照</caption>
@@ -798,7 +1032,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <figcaption><b>图 1-4 · LingBot-World 的 MoBA 掩码与双专家因果化</b>：MoBA 用「补一个双向块」的方式防止纯因果训练退化；双专家则展示了 MoE 在推理侧不增成本的一种用法。<i>右下角那条关于三种 fps 的提示，是本报告在对比所有世界模型数字时的统一口径要求。</i></figcaption>
   </figure>
 
-  <h3 id="base-minwm"><span class="h3tag">5</span>minWM：把「已有双向底座」改造成世界模型的流水线</h3>
+  <h3 id="base-minwm"><span class="h3tag">6</span>minWM：把「已有双向底座」改造成世界模型的流水线</h3>
   <p>minWM（arXiv 2605.30263，生数主导）的定位不是某个模型，而是一条<strong>可复现的改造流水线</strong>：把现有双向 T2V/TI2V 基础模型转成「相机可控 + 少步 + 自回归」的实时交互世界模型。它以 Wan2.1-T2V-1.3B（cross-attention 注入条件）与 HY1.5-TI2V-8B（MMDiT 风格）两种代表骨架做了实例化，因此<strong>它的价值在于「换底座也能复用」</strong>。</p>
   <div class="brief">
     <dl>
@@ -1062,7 +1296,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <figcaption><b>图 1-6 · 四种注意力掩码对照</b>：从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
   </figure>
 
-  <h3 id="base-matrix"><span class="h3tag">6</span>四家结构横向对照</h3>
+  <h3 id="base-matrix"><span class="h3tag">7</span>四家结构横向对照</h3>
   <div class="tablewrap"><table>
     <caption>表 1-4 · 四家实时世界模型的结构选择对照。空白项表示公开材料未披露。</caption>
     <thead><tr><th>维度</th><th>生数 Vidu S1/S2</th><th>爱诗 PixVerse R2</th><th>灵波 LingBot-World v2</th><th>minWM（框架）</th></tr></thead>
@@ -4335,6 +4569,15 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   全部机制描述以公开一手来源为准；未核实项已在第 12 章逐条列出。
 </footer>
 
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="放大的配图">
+  <div class="lb-bar">
+    <b id="lbTitle">图</b>
+    <span class="lb-cap" id="lbCap"></span>
+    <button class="lb-zoom" id="lbZoom" type="button">原始尺寸</button>
+    <button class="lb-close" id="lbClose" type="button">关闭 (Esc)</button>
+  </div>
+  <div class="lb-stage" id="lbStage"></div>
+</div>
 <script>
 (function () {
   var progress = document.getElementById('progress');
@@ -4352,6 +4595,57 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   }
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+})();
+
+/* 配图点击放大 */
+(function () {
+  var lb = document.getElementById('lightbox');
+  var stage = document.getElementById('lbStage');
+  var titleEl = document.getElementById('lbTitle');
+  var capEl = document.getElementById('lbCap');
+  if (!lb || !stage) return;
+
+  function close() {
+    lb.classList.remove('open', 'raw');
+    document.body.classList.remove('lb-lock');
+    var zb = document.getElementById('lbZoom');
+    if (zb) zb.textContent = '原始尺寸';
+    stage.innerHTML = '';
+  }
+
+  function open(fig) {
+    var svg = fig.querySelector('svg');
+    if (!svg) return;
+    var cap = fig.querySelector('figcaption');
+    var capText = cap ? cap.textContent.trim() : '';
+    titleEl.textContent = (capText.match(/^图\s*[0-9]+-[0-9]+/) || ['图'])[0];
+    capEl.textContent = capText.replace(/^图\s*[0-9]+-[0-9]+\s*·?\s*/, '');
+    stage.innerHTML = '';
+    stage.appendChild(svg.cloneNode(true));
+    lb.classList.add('open');
+    document.body.classList.add('lb-lock');
+    stage.scrollTop = 0;
+    stage.scrollLeft = 0;
+  }
+
+  document.querySelectorAll('figure').forEach(function (fig) {
+    var box = fig.querySelector('.svgbox');
+    if (!box) return;
+    box.addEventListener('click', function () { open(fig); });
+  });
+
+  lb.addEventListener('click', function (e) {
+    if (e.target === lb || e.target.classList.contains('lb-stage')) close();
+  });
+  document.getElementById('lbClose').addEventListener('click', close);
+  var zoomBtn = document.getElementById('lbZoom');
+  zoomBtn.addEventListener('click', function () {
+    var raw = lb.classList.toggle('raw');
+    zoomBtn.textContent = raw ? '适应宽度' : '原始尺寸';
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && lb.classList.contains('open')) close();
+  });
 })();
 </script>
 </body>
