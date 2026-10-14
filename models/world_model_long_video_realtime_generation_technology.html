@@ -247,8 +247,7 @@ footer a{color:var(--muted)}
   <a class="sub" href="#dsp-balance">6.4 db-SP 与 FVAttn 的负载均衡</a>
   <a class="sub" href="#dsp-routes">6.5 两条路线与逐案判定</a>
   <a class="sub" href="#dsp-quant">6.6 量化 × Ring：scale 作用域</a>
-  <a class="sub" href="#dsp-ascend">6.7 昇腾算子映射</a>
-  <a href="#moe">07 · 多模态稀疏 MoE</a>
+  <a class="sub" href="#dsp-ascend">6.7 昇腾算子映射</a>  <a href="#moe">07 · 多模态稀疏 MoE</a>
   <a class="sub" href="#moe-why">7.1 为什么 MoE 回到视野</a>
   <a class="sub" href="#moe-mech">7.2 路由与稀疏激活机制</a>
   <a class="sub" href="#moe-systems">7.3 系统侧：少算与少存</a>
@@ -2026,7 +2025,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   <div class="callout risk"><b>命名澄清（重要）：LoL 不是 RoPE 外推方法。</b>LoL = <strong>「Longer than Longer」</strong>（arXiv 2601.16914 · CVPR 2026，标题 <em>«LoL: Longer than Longer, Scaling Video Generation to Hour»</em>）。检索中<strong>未出现</strong>「Long-Long RoPE」或「Level-of-Line RoPE」这类展开——那很可能是对标题的误读。</div>
   <p>LoL 的真正价值在于它命名并解释了一个<strong>由位置编码引发的失败模式</strong>：</p>
   <div class="grid3">
-    <div class="card c-coral"><span class="tag coral">现象</span><h4>sink-collapse（注意力汇坍塌）</h4><p>用 attention sink 帧缓解长时衰减，会诱发一种失败模式：<strong>生成内容反复「回退」到 sink 帧</strong>，造成<strong>突兀的场景重置</strong>与<strong>循环运动模式</strong>。</p><p class="p">这不是「忘了」，而是「过度记得」——与 §2.6 中 Matrix-Game 2.0 的消融结论（cache 越大反而越早出现伪影，早期伪影被「记忆」成合法场景元素）是同一种病。</p></div>
+    <div class="card c-coral"><span class="tag coral">现象</span><h4>sink-collapse（注意力汇坍塌）</h4><p>用 attention sink 帧缓解长时衰减，会诱发一种失败模式：<strong>生成内容反复「回退」到 sink 帧</strong>，造成<strong>突兀的场景重置</strong>与<strong>循环运动模式</strong>。</p><p class="p">这不是「忘了」，而是「过度记得」——与 §2.6 表 2-2 中 Matrix-Game 2.0 的消融结论（cache 越大反而越早出现伪影，早期伪影被「记忆」成合法场景元素）是同一种病。</p></div>
     <div class="card c-violet"><span class="tag violet">根因</span><h4>RoPE 周期性与多头注意力的冲突</h4><p>作者把根因定位为 <strong>RoPE 的周期性结构</strong>与当前生成模型普遍的<strong>多头注意力机制</strong>之间的内在冲突：不同 head 在长序列上趋于「注意力同质化」，从而被 sink 帧系统性地吸引。</p><p class="p">这是一个值得记住的视角：<strong>位置编码的周期性不再是无害的近似，而会成为长时坍塌的机制来源。</strong></p></div>
     <div class="card c-acid"><span class="tag acid">解法</span><h4>multi-head RoPE jitter</h4><p>轻量、<strong>training-free</strong>：引入<strong>多头 RoPE 抖动</strong>，打破<strong>头间注意力同质化</strong>，从而缓解长时坍塌，同时保持生成质量。</p><p class="y">公开结果：作者称首次展示<strong>实时、流式、无限长且质量几乎不衰减</strong>的视频生成，连续视频最长 <strong>12 小时</strong>。</p></div>
   </div>
@@ -2117,7 +2116,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <p class="lead-in">本章以三篇主线论文为骨架：<strong>db-SP</strong>（arXiv 2511.23113，清华，把「Ring + 块稀疏」的负载不均衡第一次量化出来）、<strong>FVAttn</strong>（arXiv 2607.16190，中山大学 / 腾讯微信，运行时负载均衡）、<strong>OSP-Next</strong>（arXiv 2605.28691，北大 PKU-YuanGroup 等，规则化稀疏 + HiF8 量化，只需一次 All-to-All）。核心结论先给：<strong>数据依赖的 Top-k 稀疏在 Ring 上有四个结构性障碍，其中两个基本无法工程绕过；能上 Ring 的稀疏必须是「可离线确定」或「阈值型」的。</strong></p>
 
-  <h3 id="dsp-ring"><span class="h3tag">6.1</span>先写清前提：Ring 的代价模型与三条硬约束</h3>
+  <h3 id="dsp-ring"><span class="h3tag">06.1</span>先写清前提：Ring 的代价模型与三条硬约束</h3>
   <div class="formula">Ring Attention 的代价模型：用 <b>P 倍的 KV 通信</b>，换 <b>1/P 的 KV 显存</b>
     M_ring  = KV_total / P                ← 显存收益，随并行度 P 线性下降
     Comm    = KV_total · 2(P−1)/P         ← 通信代价，约 2× 一次性拉取
@@ -2158,7 +2157,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <div class="callout"><b>一个必须先说清的好消息（对视频 DiT 而言）：</b>Ring 最麻烦的结构性问题在非因果场景下<strong>不存在</strong>。因果三角导致的 <code>1:2:…:P</code> 负载不均衡、zigzag / Striped 配对、每轮掩码形态不同——这些在 full attention 的 DiT 上都不需要处理，<strong>每轮所有 rank 都是稠密满算</strong>。<br><b>但这有个前提：不加稀疏。</b>一旦引入块稀疏，C1 立刻被激活，这正是本章的核心矛盾。<br><b>例外：</b>自回归视频生成（如 MAGI-1，约 400 万 token）的掩码是 <strong>varlen block-causal</strong>，因果问题会回来，且 Ring 的 P2P 冗余会从 <strong>25% 升到 &gt;33%</strong>（MagiAttention 的定量）。</div>
 
-  <h3 id="dsp-geometry"><span class="h3tag">6.2</span>一个关键的几何事实：Ring 不缺块，它算多了</h3>
+  <h3 id="dsp-geometry"><span class="h3tag">06.2</span>一个关键的几何事实：Ring 不缺块，它算多了</h3>
   <div class="callout"><b>因果块稀疏掩码，永远是因果稠密掩码的子集。</b>也就是说，一个 query 块需要的所有 K/V 块，因果 ring 本来就都会送到它手上。<strong>Ring 并没有「送错块」的问题——它的问题是把所有块都算了。</strong><br><br>推论：<strong>Ring + 块稀疏的改造目标不是「怎么把需要的块送到」，而是「送到之后怎么决定算哪几个」。</strong>这个视角转换会让后面所有分析清晰很多。</div>
 
   <figure>
@@ -2228,7 +2227,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <figcaption><b>图 6-1 · 稀疏决策依据决定 Ring 可行性，Top-k 有四个结构性障碍</b>：判定标准不是「位置依赖 vs 数据依赖」这么简单，而是<strong>「阈值型 vs 排序型」</strong>——单个块到达即可判定「过/不过」的可以流式，需要完整分布排名的不能。<i>障碍 ② 基本无法工程绕过，这是 VSA/SLA 类方法在 Ring 上不成立的根本原因。</i></figcaption>
   </figure>
 
-  <h3 id="dsp-ospnext"><span class="h3tag">6.3</span>OSP-Next：把「稀疏选择」转化为「固定重排」</h3>
+  <h3 id="dsp-ospnext"><span class="h3tag">06.3</span>OSP-Next：把「稀疏选择」转化为「固定重排」</h3>
   <p>OSP-Next 是目前拿到最好公开数字的「规则化稀疏 + 序列并行 + 8bit 量化」方案：<strong>VBench 83.73%（超过 Wan2.1 基线）、950PR 单卡 2.27×</strong>。但它的机制需要被准确理解——<strong>它绕开四个障碍的方式不是「更聪明的选择」，而是「不需要选择」</strong>。</p>
 
   <h4>Skiparse Rearrange 的「局部等价性」</h4>
@@ -2273,7 +2272,7 @@ followed by ONE All-to-All communication step</b> within the communication group
   </div>
   <div class="callout warn"><b>不要把 OSP-Next 的能力理解过头：</b>那一次 All-to-All 的作用是在 <strong>token-wise（TSA）与 group-wise（GSA）两种模式之间切换</strong>（两种模式的真子序列划分不同，token 需要换手），<strong>它不是「把需要的 KV 块拉过来」</strong>。OSP-Next 的「稀疏」本质是<strong>把序列重组成多条短序列，然后各算 dense</strong>。这正是它绕开全部四个障碍的原因：<strong>它把「稀疏选择问题」转化成了「固定重排问题」</strong>。<br><b>另外要注意口径：</b>它用的是 <strong>All-to-All</strong>（Ulysses 风格），不是 Ring P2P。把它搬到 Ring 上需要另行验证。</div>
 
-  <h3 id="dsp-balance"><span class="h3tag">6.4</span>负载均衡：先测量，再决定怎么修</h3>
+  <h3 id="dsp-balance"><span class="h3tag">06.4</span>负载均衡：先测量，再决定怎么修</h3>
   <p>在投入任何均衡器之前必须先测量。<strong>db-SP（arXiv 2511.23113，清华）给出了现成的度量 ρ_s</strong>——它也是目前唯一把「Ring + 块稀疏」的负载不均衡量化出来的工作。</p>
   <div class="formula"># db-SP 的稀疏不均衡比：最重 rank 负载 ÷ 全部 rank 平均负载
 Ring:     ρ_s = Σ_i max_g(b_{i,g}) / avg     ← <b>每个 ring step 一个同步点</b>（逐轮求和）
@@ -2372,7 +2371,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
     <figcaption><b>图 6-2 · 切分维度决定均衡成本，Ring 上的均衡手段要按代价排序</b>：Ulysses 沿 head 切分（可迁 head 但 ρ_s 高），Ring 沿序列切分（ρ_s 低但无完整 head 可迁）。<i>Ring 上的正确对应物是「调 Q 块映射」而不是「迁 head」——因为 Q 不参与环上流转，搬运成本低一个量级。</i></figcaption>
   </figure>
 
-  <h3 id="dsp-routes"><span class="h3tag">6.5</span>两条可执行路线，以及各主流稀疏方法的逐案判定</h3>
+  <h3 id="dsp-routes"><span class="h3tag">06.5</span>两条可执行路线，以及各主流稀疏方法的逐案判定</h3>
   <div class="grid2">
     <div class="card c-acid"><span class="tag acid">路线 A · 首选</span><h4>把稀疏改成「可离线确定」的</h4><p><strong>做法：</strong>约束稀疏掩码<strong>只是「块位置坐标」的函数</strong>，不含任何数据依赖项。可用形态：Skiparse 类（固定 skip 间隔 + 交替模式，OSP-Next）；滑窗 + 全局块；块因果 + 条带（适用于自回归视频）；静态掩码 + 块内自洽。</p><p class="y"><strong>收益：</strong>直接绕开全部四个障碍；不需要新算法；与 Ring 的流水线天然兼容。</p><p class="p"><strong>代价：</strong>稀疏的「智能程度」下降。但 OSP-Next 的实测说明这个代价在视频上<strong>比想象中小</strong>——固定规则模式拿到了超过 full-attention 基线的 VBench。原因是<strong>视频的注意力冗余沿空间/时间邻域聚集，规则化掩码足以覆盖大部分重要交互</strong>。</p></div>
     <div class="card c-amber"><span class="tag amber">路线 B · 备选</span><h4>用低分辨率代理提前决策</h4><p><strong>思路：</strong>不在原始分辨率上打分，而是在<strong>下采样后的 KV</strong> 上跑选择器。这直接缓解障碍一（循环依赖）——代理 KV 很小，可以在 ring 开始前就准备好。代理的字节量约为 KV 的 <code>1/r</code>（r 为下采样比，如 32）。</p><p class="p"><strong>风险（三条，逐条都致命）：</strong>① 代理仍需一次全局可见性（all-gather 或随环流转一次），<strong>引入新同步点，触碰 C2</strong>；② 代理给出的块级决策是近似的，误差直接进入注意力输出；③ <strong>代理决策仍逐 Q 块不同，障碍二（Top-k 集合与 Q 属主耦合）没有解决</strong>——只是把「需要全精度 K」换成了「需要低精度全局 K」。</p><p><strong>结论：</strong>路线 B 能缓解障碍一和三，<strong>解决不了障碍二和四</strong>。只有在路线 A 的规则形态不足以达到质量目标时才考虑。</p></div>
@@ -2427,7 +2426,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
     </tbody>
   </table></div>
 
-  <h3 id="dsp-quant"><span class="h3tag">6.6</span>量化 × Ring：scale 的作用域是第二个可行性边界</h3>
+  <h3 id="dsp-quant"><span class="h3tag">06.6</span>量化 × Ring：scale 的作用域是第二个可行性边界</h3>
   <p>稀疏之外，量化在环上还多一层约束——<strong>scale 挂在哪里，决定了它能不能随块一起走</strong>。四个必须理解的断点：</p>
   <div class="grid4">
     <div class="card c-coral"><span class="tag coral">断点 1</span><h4>不能在环上反量化</h4><p>反量化必须发生在数据<strong>到达并进入计算之前</strong>的本地环节，不能作为环上流转的一部分——否则通信量按高精度计算，量化的全部收益消失。</p></div>
@@ -2437,7 +2436,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
   </div>
   <div class="callout"><b>把 §6.1 的 C3 与本节合起来读：</b>块是环上的最小传输单元，所以<strong>量化 scale 必须是块级（per-tile）的，并挂在块上一起走</strong>。per-tensor scale 需要全局统计（触碰 C2），per-channel scale 需要在环上重排布局（破坏 C3）。这也解释了 OSP-Next 为什么选 <strong>HiF8</strong>（HIFLOAT8）路线——它的消融显示 <strong>HiF8 训练的 loss 曲线与 BF16 基本一致</strong>，精度代价小到可以接受，同时格式本身对块级 scale 友好。</div>
 
-  <h3 id="dsp-ascend"><span class="h3tag">6.7</span>落到昇腾：算子映射与叠加检查单</h3>
+  <h3 id="dsp-ascend"><span class="h3tag">06.7</span>落到昇腾：算子映射与叠加检查单</h3>
   <div class="tablewrap"><table>
     <caption>表 6-4 · Ring 适配直接相关的算子事实（CANN ops-transformer 侧）</caption>
     <thead><tr><th>Ring 上需要的能力</th><th>算子</th><th>状态与结论</th></tr></thead>
@@ -2483,7 +2482,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
 
   <p class="lead-in">本章的组织逻辑是「先分清问题，再谈技术」：MoE 在<strong>视频生成</strong>里和在大语言模型里遇到的瓶颈完全不同——LLM 侧是显存带宽与 all-to-all 通信，视频侧是<strong>大量极窄专家带来的小算子风暴</strong>。混淆这两者，会导出错误的优化优先级。本章先给出容量/激活解耦的账本，再拆路由机制，然后分「少算」（系统层，以 <strong>FastMoE</strong> 为代表）与「少存」（模型层，以 <strong>DIET</strong> 为代表）两条线讲手段，最后落到视频与世界模型上的可核对实例。</p>
 
-  <h3 id="moe-why"><span class="h3tag">7.1</span>为什么 MoE 在大约 2025 年之后回到视野</h3>
+  <h3 id="moe-why"><span class="h3tag">07.1</span>为什么 MoE 在大约 2025 年之后回到视野</h3>
   <p>把三个杠杆放在同一张账本上，MoE 的位置就清楚了：</p>
   <div class="formula">三条独立曲线（以密集模型为基线）
   ① 每步算力   ∝ 激活参数量        ← 蒸馏/稀疏注意力/量化都在压这条
@@ -2562,7 +2561,7 @@ MoE 的账本
     <figcaption><b>图 7-1 · 容量与激活量的解耦，以及单步时间账本</b>：MoE 只稀疏化账本中的一项，其余四项是固定开销。<i>专家越窄、token 越分散，固定开销占比越高——这决定了视频侧与 LLM 侧必须用不同的优化优先级。</i></figcaption>
   </figure>
 
-  <h3 id="moe-mech"><span class="h3tag">7.2</span>路由与稀疏激活：机制层面的分野</h3>
+  <h3 id="moe-mech"><span class="h3tag">07.2</span>路由与稀疏激活：机制层面的分野</h3>
   <div class="tablewrap"><table>
     <caption>表 7-1 · MoE 路由与结构设计的关键维度。「对推理侧意味着什么」一列是选型时的实际判据。</caption>
     <thead><tr><th>维度</th><th>选项</th><th>机制要点</th><th>对推理侧意味着什么</th></tr></thead>
@@ -2611,7 +2610,7 @@ MoE 的账本
 
   <div class="callout"><b>一条值得记住的设计判据：</b>如果路由决策<strong>只依赖每个 token 自己</strong>（或只依赖 timestep），那么它在分布式下是「可离线确定」的——这和 §6.2 里 Ring 上稀疏可行性的判据<strong>完全同构</strong>。反过来，一旦路由需要<strong>看全局才能保持均衡</strong>，它就会像 Top-k 稀疏一样撞上同步与不规则通信的墙。<em>这不是巧合：两者的本质都是「决策是否需要全局信息」。</em></div>
 
-  <h3 id="moe-systems"><span class="h3tag">7.3</span>系统侧的两条线：少算与少存</h3>
+  <h3 id="moe-systems"><span class="h3tag">07.3</span>系统侧的两条线：少算与少存</h3>
   <p>这一节按「改系统」还是「改模型」分成两层。<strong>FastMoE</strong>（arXiv 2103.13262）是系统层的代表——它让 MoE 跑得更快；<strong>DIET</strong>（arXiv 2609.37829）是模型层的代表——它直接<strong>裁掉专家</strong>，把「少存」做成一次性的、可验证的结构改动。两者解决的是完全不同的浪费，且可以叠加。</p>
 
   <div class="tablewrap"><table>
@@ -2684,7 +2683,7 @@ MoE 的账本
   <div class="callout risk"><b>DIET 最反直觉、也最有价值的一条结论：</b>实验表明<strong>质量最好的掩码恰恰是对原始路由扰动最大的那个</strong>；而那些「最不破坏路由」的判据，质量损失反而最大。也就是说——<strong>「尽量少改变路由」是一个错误的目标函数。</strong><br><br>这条结论对整个 MoE 优化都有含义：它说明<strong>「让稀疏化尽量不影响原模型行为」这个直觉是错的</strong>。原因在于冗余专家被删掉后，路由本来就会重新分配负载；强行保持原路由等于把冗余<strong>固定在结构里</strong>。这与 §4.3 的「训练期吸收近似」是同一条逻辑——<strong>让模型在目标结构下重新工作，比让近似尽量逼近原结构更有效。</strong></div>
   <div class="callout warn"><b>引用边界：</b>DIET 的评测对象是 <strong>LingBot-Video 30B-A3B</strong>（模型本身开源），但<strong>其标定流程需按目标模型重跑</strong>；375 GB 中间缓存与 16× 专家算力的一次性代价需计入成本；「50% 裁剪不降反升」是单一模型的实测结论，<strong>不应直接外推到其他 MoE 配置</strong>。相关工作另有 PARE（arXiv 2605.27336）、Dense2MoE（arXiv 2510.09094）、REAP（arXiv 2510.13999）可作对照。</div>
 
-  <h3 id="moe-video"><span class="h3tag">7.4</span>视频与世界模型上的 MoE：四个可核对的实例</h3>
+  <h3 id="moe-video"><span class="h3tag">07.4</span>视频与世界模型上的 MoE：四个可核对的实例</h3>
   <div class="tablewrap"><table>
     <caption>表 7-4 · 视频 / 世界模型侧 MoE 的公开实例。注意「MoE」在这些系统里指的是完全不同的东西。</caption>
     <thead><tr><th>系统</th><th>MoE 形态</th><th>关键机制</th><th>推理侧要点</th></tr></thead>
@@ -2782,7 +2781,7 @@ MoE 的账本
     <figcaption><b>图 7-2 · 视频模型里三种 MoE 形态的成本结构</b>：静态时间维路由（成本≈dense）、超细粒度动态路由（成本在小算子）、标准稀疏主干（成本在权重驻留）。<i>Head Parallel 用固定形状通信换掉了动态 all-to-all，代价是把矛盾转移到窄专家的本地执行效率上。</i></figcaption>
   </figure>
 
-  <h3 id="moe-ascend"><span class="h3tag">7.5</span>昇腾视角与选型判据</h3>
+  <h3 id="moe-ascend"><span class="h3tag">07.5</span>昇腾视角与选型判据</h3>
   <p>昇腾侧在 MoE 上并非空白——已有可复用的能力积木，但<strong>缺口集中在「窄专家的融合执行」</strong>这一项上：</p>
   <div class="tablewrap"><table>
     <caption>表 7-5 · MoE 相关能力在昇腾栈上的现状（依据本仓库内可核对的框架分析）</caption>
