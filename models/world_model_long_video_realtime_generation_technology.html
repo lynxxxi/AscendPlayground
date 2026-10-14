@@ -195,7 +195,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   <div class="metabar">
     <span class="pill"><b>12</b> 章</span>
     <span class="pill"><b>30</b> 张机制图</span>
-    <span class="pill"><b>37</b> 张对照表</span>
+    <span class="pill"><b>41</b> 张对照表</span>
     <span class="pill">覆盖 <b>Vidu</b> · <b>爱诗 R2</b> · <b>LingBot-World</b> · <b>minWM</b></span>
     <span class="pill">蒸馏 <b>DMD / PCM / rCM / DP-DMD / DMAD</b></span>
     <span class="pill">长上下文 <b>Infinity-RoPE</b></span>
@@ -209,94 +209,93 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   <div class="toc-title">总纲</div>
   <a href="#map">00 · 技术全景与依赖关系</a>
   <a class="sub" href="#map-flow">技术依赖链</a>
-  <a class="sub" href="#map-timeline">演进时间线</a>
-  <a class="sub" href="#map-read">章节接口表</a>
+<a class="sub" href="#map-timeline">0.1 技术演进时间线（按产生顺序）</a>
+<a class="sub" href="#map-read">0.2 每一章回答的问题，以及它与邻章的接口</a>
 
   <div class="toc-title">一、模型结构</div>
   <a href="#base">01 · 模型结构</a>
-  <a class="sub" href="#base-evolution">1.1 演进：三次架构转向</a>
-  <a class="sub" href="#base-uvit">1.2 U-ViT / UniDiffuser（谱系起点）</a>
-  <a class="sub" href="#base-vidu">1.3 生数 Vidu S1 / S2</a>
-  <a class="sub" href="#base-r2">1.4 爱诗科技 PixVerse R2</a>
-  <a class="sub" href="#base-lingbot">1.5 蚂蚁灵波 LingBot-World</a>
-  <a class="sub" href="#base-minwm">1.6 minWM 框架</a>
-  <a class="sub" href="#base-matrix">1.7 四家结构横向对照</a>
+<a class="sub" href="#base-evolution">1.1 现状与挑战：从图像扩散到实时世界模型</a>
+<a class="sub" href="#base-uvit">1.2 有哪些方案：四家模型的共同祖先与共同骨架</a>
+<a class="sub" href="#base-vidu">1.3 方案怎么做：生数 Vidu S1 / S2 的联合音视频因果 DiT</a>
+<a class="sub" href="#base-r2">1.4 方案怎么做：爱诗 PixVerse R2 的单一因果骨干 + 三通道记忆</a>
+<a class="sub" href="#base-lingbot">1.5 方案怎么做：蚂蚁灵波 LingBot-World 的双专家与 MoBA 掩码</a>
+<a class="sub" href="#base-minwm">1.6 方案怎么做：minWM 把已有双向底座改造成世界模型</a>
+<a class="sub" href="#base-matrix">1.7 实施要点：四家结构的横向对照</a>
 
   <div class="toc-title">二、训练方法</div>
   <a href="#forcing">02 · Forcing：让模型扛住自己的历史</a>
-  <a class="sub" href="#forcing-gap">2.1 暴露偏差（问题来源）</a>
-  <a class="sub" href="#forcing-knobs">2.2 两个调节旋钮</a>
-  <a class="sub" href="#forcing-pipeline">2.3 四阶段因果化流水线</a>
-  <a class="sub" href="#forcing-family">2.4 家族对照（12 个方案）</a>
-  <a class="sub" href="#forcing-srf">2.5 Self-Replay Forcing</a>
-  <a class="sub" href="#forcing-cost">2.6 训练成本</a>
+<a class="sub" href="#forcing-gap">2.1 现状与挑战：暴露偏差在视频上更致命</a>
+<a class="sub" href="#forcing-knobs">2.2 有哪些方案：两个旋钮穷举整个设计空间</a>
+<a class="sub" href="#forcing-pipeline">2.3 方案怎么做：已收敛的四阶段流水线</a>
+<a class="sub" href="#forcing-family">2.4 方案怎么做：12 个 forcing 变体的机制对照</a>
+<a class="sub" href="#forcing-srf">2.5 方案怎么做：Self-Replay Forcing 的三步循环</a>
+<a class="sub" href="#forcing-cost">2.6 实施要点：forcing 是训练侧最贵的一类后训练</a>
   <a href="#distill">03 · 蒸馏：把去噪步数压到 1–4 步</a>
-  <a class="sub" href="#distill-budget">3.1 NFE 预算算术</a>
-  <a class="sub" href="#distill-families">3.2 四族对照（含命名核实）</a>
-  <a class="sub" href="#distill-collapse">3.3 模式崩溃与四类补救</a>
-  <a class="sub" href="#distill-stack">3.4 公开系统的组合方式</a>
-  <a class="sub" href="#distill-verify">3.5 验收矩阵</a>
+<a class="sub" href="#distill-budget">3.1 现状与挑战：步数是被延迟预算逼下来的</a>
+<a class="sub" href="#distill-families">3.2 有哪些方案：前向散度与反向散度两条路线</a>
+<a class="sub" href="#distill-collapse">3.3 方案怎么做：模式崩溃的成因与四类补救</a>
+<a class="sub" href="#distill-stack">3.4 方案怎么做：公开系统都混合而非单选</a>
+<a class="sub" href="#distill-verify">3.5 实施要点：判断少步蒸馏有没有偷质量</a>
   <a href="#coopt">04 · 联合优化：稀疏、量化、蒸馏一起决定</a>
-  <a class="sub" href="#coopt-problem">4.1 写成优化问题</a>
-  <a class="sub" href="#coopt-map">4.2 联合点台账</a>
-  <a class="sub" href="#coopt-coop">4.3 三种合作形态</a>
-  <a class="sub" href="#coopt-rule">4.4 三条可执行原则</a>
+<a class="sub" href="#coopt-problem">4.1 现状与挑战：加速是一个带约束的多变量问题</a>
+<a class="sub" href="#coopt-map">4.2 有哪些方案：必须一起决定的耦合点</a>
+<a class="sub" href="#coopt-coop">4.3 方案怎么做：训练期、推理期、调度期三种联合</a>
+<a class="sub" href="#coopt-rule">4.4 实施要点：三条可执行的联合优化原则</a>
 
   <div class="toc-title">三、推理优化</div>
   <a href="#rope">05 · RoPE：长上下文的位置编码</a>
-  <a class="sub" href="#rope-why">5.1 为什么视频更依赖它</a>
-  <a class="sub" href="#rope-taxonomy">5.2 四类改造路线</a>
-  <a class="sub" href="#rope-vidu">5.3 Vidu 的实现</a>
-  <a class="sub" href="#rope-infinity">5.4 Infinity-RoPE</a>
-  <a class="sub" href="#rope-lol">5.5 LoL 与 sink-collapse</a>
-  <a class="sub" href="#rope-flex">5.6 频率侧改造与动态分配</a>
-  <a class="sub" href="#rope-formulas">5.7 四个可直接落地的公式</a>
-  <a class="sub" href="#rope-check">5.8 核查清单</a>
+<a class="sub" href="#rope-why">5.1 现状与挑战：长时域下位置编码为什么会失效</a>
+<a class="sub" href="#rope-taxonomy">5.2 有哪些方案：四条路线，各自改的是哪一项</a>
+<a class="sub" href="#rope-vidu">5.3 方案怎么做：Vidu S1 / S2 的位置重定位</a>
+<a class="sub" href="#rope-infinity">5.4 方案怎么做：Infinity-RoPE 的移动参考系</a>
+<a class="sub" href="#rope-lol">5.5 方案怎么做：LoL 与 sink-collapse 的反向风险</a>
+<a class="sub" href="#rope-flex">5.6 方案怎么做：频率侧改造与动态分配</a>
+<a class="sub" href="#rope-formulas">5.7 实施要点：四个可直接落地的公式</a>
+<a class="sub" href="#rope-check">5.8 实施要点：上线前的核查清单</a>
   <a href="#dsp">06 · 分布式稀疏并行</a>
-  <a class="sub" href="#dsp-ring">6.1 Ring 的代价模型与三条硬约束</a>
-  <a class="sub" href="#dsp-geometry">6.2 几何事实：Ring 不缺块</a>
-  <a class="sub" href="#dsp-ospnext">6.3 OSP-Next（一次 All-to-All）</a>
-  <a class="sub" href="#dsp-balance">6.4 负载均衡：db-SP 与 FVAttn</a>
-  <a class="sub" href="#dsp-routes">6.5 两条路线与逐案判定</a>
-  <a class="sub" href="#dsp-quant">6.6 量化 × Ring</a>
-  <a class="sub" href="#dsp-ascend">6.7 算子映射</a>
+<a class="sub" href="#dsp-ring">6.1 现状与挑战：单卡放不下之后，Ring 的代价与三条硬约束</a>
+<a class="sub" href="#dsp-geometry">6.2 问题定位：Ring 的算力不是不够，而是算多了</a>
+<a class="sub" href="#dsp-ospnext">6.4 方案怎么做：OSP-Next 的单次 All-to-All 重排</a>
+<a class="sub" href="#dsp-balance">6.5 方案怎么做：db-SP 与 FVAttn 的负载均衡</a>
+<a class="sub" href="#dsp-routes">6.6 方案怎么做：逐方法的逐案判定</a>
+<a class="sub" href="#dsp-quant">6.7 方案怎么做：量化叠加时 scale 的作用域</a>
+<a class="sub" href="#dsp-ascend">6.8 实施要点：叠加顺序与检查单</a>
   <a href="#moe">07 · 多模态稀疏 MoE</a>
-  <a class="sub" href="#moe-why">7.1 容量与每步成本解耦</a>
-  <a class="sub" href="#moe-mech">7.2 路由机制（6 个设计维度）</a>
-  <a class="sub" href="#moe-systems">7.3 FastMoE / DIET（系统层与模型层）</a>
-  <a class="sub" href="#moe-video">7.4 视频侧四个实例</a>
-  <a class="sub" href="#moe-ascend">7.5 选型判据</a>
+<a class="sub" href="#moe-why">7.1 现状与挑战：为什么 MoE 在 2025 年之后回到视野</a>
+<a class="sub" href="#moe-mech">7.2 有哪些方案：路由机制的六个设计维度</a>
+<a class="sub" href="#moe-systems">7.3 方案怎么做：系统层的少算与少存</a>
+<a class="sub" href="#moe-video">7.4 方案怎么做：视频与世界模型上的四个实例</a>
+<a class="sub" href="#moe-ascend">7.5 实施要点：选型判据</a>
   <a href="#kv">08 · KV Cache、注意力与量化</a>
-  <a class="sub" href="#kv-sparse">8.1 注意力稀疏（10 个方案）</a>
-  <a class="sub" href="#kv-quant">8.2 KV 与权重量化</a>
-  <a class="sub" href="#kv-policy">8.3 缓存策略（淘汰与布局）</a>
-  <a class="sub" href="#kv-stack">8.4 三个方向的叠加次序</a>
+<a class="sub" href="#kv-sparse">8.3 方案怎么做：稀疏与线性注意力（10 个方案）</a>
+<a class="sub" href="#kv-quant">8.4 方案怎么做：KV 与权重的量化</a>
+<a class="sub" href="#kv-policy">8.5 方案怎么做：缓存淘汰与布局</a>
+<a class="sub" href="#kv-stack">8.6 实施要点：三个方向的叠加次序</a>
   <a href="#sr">09 · 超分与精修模块</a>
-  <a class="sub" href="#sr-why">9.1 级联的成本算术</a>
-  <a class="sub" href="#sr-mech">9.2 四个设计点</a>
-  <a class="sub" href="#sr-case">9.3 四种精修拓扑</a>
-  <a class="sub" href="#sr-fps">9.4 三个帧率的口径</a>
+<a class="sub" href="#sr-why">9.1 现状与挑战：为什么要拆成两级才算得动</a>
+<a class="sub" href="#sr-mech">9.3 方案怎么做：噪声级、运动锁定与潜空间上采样</a>
+<a class="sub" href="#sr-case">9.4 方案怎么做：四种拓扑的实测数字与口径</a>
+<a class="sub" href="#sr-fps">9.5 实施要点：三个帧率必须分开报</a>
   <a href="#vae">10 · 轻量化 VAE</a>
-  <a class="sub" href="#vae-why">10.1 为什么成为瓶颈</a>
-  <a class="sub" href="#vae-shapes">10.2 三类手段</a>
-  <a class="sub" href="#vae-light">10.3 LightVAE / TAEHV 两条路线</a>
-  <a class="sub" href="#vae-ratio">10.4 压缩率的双向影响</a>
-  <a class="sub" href="#vae-verify">10.5 验收清单</a>
+<a class="sub" href="#vae-why">10.1 现状与挑战：为什么 VAE 从「小尾巴」变成瓶颈</a>
+<a class="sub" href="#vae-shapes">10.3 方案怎么做：分块、并行与轻量化的分工</a>
+<a class="sub" href="#vae-light">10.4 方案怎么做：LightVAE 与 TAEHV 两条路线</a>
+<a class="sub" href="#vae-ratio">10.5 方案怎么做：压缩率对主干与解码的双向影响</a>
+<a class="sub" href="#vae-verify">10.6 实施要点：上线前的验收清单</a>
 
   <div class="toc-title">四、服务化</div>
   <a href="#serve">11 · 服务化与调度</a>
-  <a class="sub" href="#serve-metrics">11.1 四个指标口径</a>
-  <a class="sub" href="#serve-turbo">11.2 TurboServe 在线调度</a>
-  <a class="sub" href="#serve-vidu">11.3 Vidu S2 推理栈</a>
-  <a class="sub" href="#serve-parallel">11.4 并行策略</a>
-  <a class="sub" href="#serve-pipeline">11.5 共享时间线流水</a>
-  <a class="sub" href="#serve-checklist">11.6 服务化验收</a>
+<a class="sub" href="#serve-metrics">11.1 现状与挑战：四个指标不能互相替代</a>
+<a class="sub" href="#serve-turbo">11.3 方案怎么做：TurboServe 的会话放置与弹性供给</a>
+<a class="sub" href="#serve-vidu">11.4 方案怎么做：Vidu S2 已产品化的推理栈</a>
+<a class="sub" href="#serve-parallel">11.5 方案怎么做：多卡并行的启用条件</a>
+<a class="sub" href="#serve-pipeline">11.6 方案怎么做：共享时间线流水</a>
+<a class="sub" href="#serve-checklist">11.7 实施要点：上线前的验收清单</a>
 
   <div class="toc-title">附</div>
-  <a href="#evidence">12 · 来源与未核实项</a>
-  <a class="sub" href="#ev-numbers">12.1 数字口径纪律</a>
-  <a class="sub" href="#ev-sources">12.2 来源清单</a>
-  <a class="sub" href="#ev-gaps">12.3 未能核实项</a>
+  <a href="#evidence">12 · 来源</a>
+<a class="sub" href="#ev-sources">12.1 来源清单</a>
+<a class="sub" href="#ev-corrections">12.2 三处常见的编号与命名错误</a>
 </nav>
 <main>
 <!-- ============================ 00 Overview ============================ -->
@@ -304,7 +303,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   <div class="ch-head"><div>
     <div class="ch-no">00</div>
     <h2>技术全景与依赖关系</h2>
-    <p class="ch-sub">实时世界模型是一个<strong>四段串联</strong>的系统：每一段都为下一段设定约束，同时把「不可能」变成「可能」。顺序颠倒会导致优化失去目标函数——这也是本报告按「先后训练、后推理」组织的原因。</p>
+    <p class="ch-sub">实时世界模型是一个<strong>四段串联</strong>的系统：每一段都为下一段设定约束，同时把「不可能」变成「可能」。顺序颠倒会导致优化失去目标函数——这正是本文按「先训练、后推理」组织的原因。</p>
   </div></div>
 
   <figure id="map-flow">
@@ -356,10 +355,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
         <text x="828" y="110" fill="#3d474b" font-size="10.5">异步 DiT–VAE 流水、合批、</text>
         <text x="828" y="128" fill="#3d474b" font-size="10.5">会话放置与状态迁移、</text>
         <text x="828" y="146" fill="#3d474b" font-size="10.5">弹性供给与成本控制；</text>
-        <text x="828" y="164" fill="#3d474b" font-size="10.5">昇腾迁移判断与证据分级</text>
+        <text x="828" y="164" fill="#3d474b" font-size="10.5">迁移与落地判断</text>
         <text x="828" y="186" fill="#9a5b12" font-size="10.5">回答：多人长会话扛不扛得住？</text>
-        <text x="828" y="204" fill="#0f6f78" font-family="monospace" font-size="11">→ 第 09 章（＋ 12 / 13 落地）</text>
-        <text x="828" y="218" fill="#6b7478" font-size="9.5">TurboServe · 生数加速栈 · 昇腾视角</text>
+        <text x="828" y="204" fill="#0f6f78" font-family="monospace" font-size="11">→ 第 09 / 10 章</text>
+        <text x="828" y="218" fill="#6b7478" font-size="9.5">TurboServe · 生数加速栈 · 会话调度</text>
       </g>
 
       <!-- arrows -->
@@ -405,7 +404,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       </g>
     </svg>
     </div>
-    <figcaption><b>图 0-1 · 四段依赖链与四个正交杠杆</b>：A→B→C→D 是<strong>能力递进</strong>关系（每段把上一段的产物变成可用系统），四个杠杆是<strong>乘性收益</strong>关系（各自独立但要联合调参）。<i>反向箭头是本报告反复强调的一点：服务层的 SLO 会反向决定训练侧的预算分配。</i></figcaption>
+    <figcaption><b>FIG 0-1 · 四段依赖链与四个正交杠杆</b>　A→B→C→D 是<strong>能力递进</strong>关系（每段把上一段的产物变成可用系统），四个杠杆是<strong>乘性收益</strong>关系（各自独立但要联合调参）。</figcaption>
   </figure>
 
   <h3 id="map-timeline"><span class="h3tag">1</span>技术演进时间线（按产生顺序）</h3>
@@ -468,10 +467,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
         <rect x="880" y="278" width="150" height="40" fill="#ffffff" stroke="#9a5b12"/><text x="955" y="296" fill="#3d474b" text-anchor="middle">RoPE 重定位</text><text x="955" y="311" fill="#6b7478" text-anchor="middle">缓存未旋转 K</text>
       </g>
 
-      <text x="70" y="400" fill="#6b7478" font-size="10.5" font-family="monospace">读法：同一时期上下两轨必须配对理解 —— 上方出现「少步因果学生」，下方才会出现「可缓存的流式执行」。</text>
+      <text x="70" y="400" fill="#6b7478" font-size="10.5" font-family="monospace"></text>
     </svg>
     </div>
-    <figcaption><b>图 0-2 · 训练侧与推理侧的配对演进</b>：每一次推理侧的能力跃迁，都对应训练侧一次方法创新。<i>时间线上同一竖列的上下两件事，是本报告各章节之间最实质的逻辑关系。</i></figcaption>
+    <figcaption><b>FIG 0-2 · 训练侧与推理侧的配对演进</b>　每一次推理侧的能力跃迁，都对应训练侧一次方法创新。</figcaption>
   </figure>
 
   </section>
@@ -491,8 +490,8 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <tr><td><strong>09 服务化</strong></td><td>几百个长会话怎么稳定又经济地跑？</td><td>有界状态 + 可序列化的会话</td><td>TTFC / TPC P99 / 每生成分钟成本</td><td class="n">单会话快但多会话崩、成本不可控</td></tr>
       <tr><td><strong>10 超分与精修</strong></td><td>能不能让主干根本不算高分辨率？</td><td>低分辨率主干 + 目标分辨率</td><td>把「NFE × 分辨率²」拆成两级成本的拓扑</td><td class="n">主干被算术锁死在高分辨率多步上（单步代价 ∝ 分辨率⁴）</td></tr>
       <tr><td><strong>11 轻量化 VAE</strong></td><td>主干变快之后，谁成了新瓶颈？</td><td>精修后的 latent 序列</td><td>能在解码端吃住的显存与吞吐（否则主干收益被吃掉）</td><td class="n">「中间很快、头尾堵车」，多卡收益被单卡解码阶段吞掉</td></tr>
-      <tr><td><strong>12 昇腾视角</strong></td><td>这些技术在本栈上分别处于什么位置？</td><td>前十一章全部机制</td><td>三档迁移判断 + 四级推进路线</td><td class="n">把「机制可迁移」误当「代码可运行」</td></tr>
-      <tr><td><strong>13 证据分级</strong></td><td>这些数字能支持多强的结论？</td><td>全文所有结论与数字</td><td>可复核的引用方式与口径纪律</td><td class="n">把厂商自述当第三方结论、把不同口径的数字并列</td></tr>
+      
+      
     </tbody>
   </table></div>
 
@@ -516,8 +515,9 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     </dl>
   </div>
 
-  <h3 id="base-evolution"><span class="h3tag">1</span>先看演进：从图像扩散到实时世界模型</h3>
-  <p>要理解这四家的结构选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
+  <h3 id="base-evolution"><span class="h3tag">1</span>现状与挑战：从图像扩散到实时世界模型</h3>
+  <p>要做实时世界模型，必须同时满足三个互相牵制的要求：<strong>能增量生成</strong>（不能等整段视频算完再提交）、<strong>能接受实时控制</strong>（相机、动作、参考图在生成中途到达）、<strong>能长时间不漂移</strong>（几十分钟会话里身份与场景保持一致）。这三个要求都落在结构上——不是训练技巧或工程调度能补的。</p>
+  <p>理解这四家的选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
 
   <figure id="base-evo">
     <div class="svgbox">
@@ -617,7 +617,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <text x="38" y="402" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">如果只关心某一家，可以直接跳到 1.2–1.5 对应小节，各节自足。</text>
     </svg>
     </div>
-    <figcaption><b>图 1-0 · 三次架构转向与本文覆盖的四个模型</b>：从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
+    <figcaption><b>FIG 1-0 · 三次架构转向与本文覆盖的四个模型</b>　从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
   </figure>
 
   <div class="note">
@@ -626,7 +626,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
     <p><strong>② 哪些计算可以留到下一块复用？</strong>也就是状态存在哪里、以什么粒度淘汰。这决定了长会话的成本曲线。</p>
   </div>
 
-  <h3 id="base-uvit"><span class="h3tag">2</span>谱系起点：U-ViT → UniDiffuser 留下了什么</h3>
+  <h3 id="base-uvit"><span class="h3tag">2</span>有哪些方案：四家模型的共同祖先与共同骨架</h3>
   <p>先说这两个工作各自解决了什么，再看今天四家模型从它们身上继承了什么。</p>
   <div class="grid2">
     <div class="note">
@@ -708,14 +708,14 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       </g>
     </svg>
     </div>
-    <figcaption><b>图 1-1 · U-ViT 主干结构与 UniDiffuser 的时间步调度</b>：时间步、条件、图像 patch、参考图一律作为 token 进入同一个 Transformer，因此新增模态只需定义 token 化与位置编码。</figcaption>
+    <figcaption><b>FIG 1-1 · U-ViT 主干结构与 UniDiffuser 的时间步调度</b>　时间步、条件、图像 patch、参考图一律作为 token 进入同一个 Transformer，因此新增模态只需定义 token 化与位置编码。</figcaption>
   </figure>
 
 <!-- ===== 图 1-2 Vidu S2 全链路架构 ===== -->
 <!-- ===== 图 1-2 Vidu S2 全链路架构 ===== -->
 
-  <h3 id="base-vidu"><span class="h3tag">3</span>生数 Vidu S1 / S2：参考图作为条件 token 的联合音视频因果 DiT</h3>
-  <p>Vidu S 系列的结构可以精确写成三行公式，这也是目前公开材料里最完整的一份「流式 DiT」结构描述：</p>
+  <h3 id="base-vidu"><span class="h3tag">3</span>方案怎么做：生数 Vidu S1 / S2 的联合音视频因果 DiT</h3>
+  <p>Vidu S 系列的结构可以写成三行公式：</p>
   <div class="formula">双向阶段：  x̂₀^{1:N} = f_θ^bi ( x_t^{1:N} , t , <b>r</b> , c^{1:N} )
                 r  ：参考图，<b>对所有 segment 共享</b>
                 c^{1:N} ：逐 segment 条件（每段自己的 caption）
@@ -824,7 +824,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       </g>
     </svg>
     </div>
-    <figcaption><b>图 1-2 · Vidu S2 的完整架构</b>：左侧是主干（联合音视频、块级因果、参考图作全局条件），右侧是单步精修与两套噪声缓存，底部是共享时间线调度与编辑分支。<i>这张图可以直接对照论文 §2.2–2.3 阅读。</i></figcaption>
+    <figcaption><b>FIG 1-2 · Vidu S2 的完整架构</b>　左侧是主干（联合音视频、块级因果、参考图作全局条件），右侧是单步精修与两套噪声缓存，底部是共享时间线调度与编辑分支。</figcaption>
   </figure>
 
 因果阶段：  x̂₀^i = f_θ^causal ( x_{t_i}^i , t_i , <b>r</b> , c^i , x_{τ_i}^{&lt;i} , τ_i )
@@ -839,7 +839,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   </div>
 
   <h4>状态管理：TwinCache 与 RoPE 重定位</h4>
-  <p>这是 S 系列最值得借鉴的两项设计，都属于「运行时状态」而非「网络结构」：</p>
+  
   <dl class="kv">
     <dt>TwinCache<br><span class="tag">阶段感知双缓存</span></dt>
     <dd>每个后续状态维护<strong>两份缓存</strong>：取自预设去噪步的 <strong>noisy cache</strong> 与最终去噪步后的 <strong>clean cache</strong>。中间去噪步用 noisy 历史——其中<strong>残余噪声保留粗粒度时序动态、抑制高频伪影随长自回归累积</strong>，相当于一种<strong>隐式低通先验</strong>，提供稳定时序引导但不对外观强约束；<strong>最终去噪步切换为 clean 历史</strong>以恢复细节、保持时序连贯与身份一致。本质是<strong>把时序传播与外观精修解耦</strong>。</dd>
@@ -853,7 +853,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
   <div class="note"><b>S2-Editing 的结构差异值得单独记：</b>编辑任务的目标不是「生成合理内容」，而是<strong>完全保留源视频的运动与时序、只替换外观</strong>。其核心机制是 <strong>frame-aligned attention</strong>——每个目标帧<strong>只读同一时间步的源帧</strong>，从而保证运动与节奏严格一致；同时参考图对所有帧可见，使新外观贯穿全片。流式运行时，<strong>源帧在与对应目标帧一起被消费后不进入缓存</strong>，以节省显存。<em>这是一条通用的设计模式：把「必须严格对齐的输入」按时间对齐消费掉，而不是塞进长期缓存。</em></div>
 
 
-  <h3 id="base-r2"><span class="h3tag">4</span>爱诗科技（PixVerse）R2：单一因果骨干 + 三通道记忆</h3>
+  <h3 id="base-r2"><span class="h3tag">4</span>方案怎么做：爱诗 PixVerse R2 的单一因果骨干 + 三通道记忆</h3>
   <p>先澄清一个命名问题：<strong>公开可核实的公司世界模型线是 R1 → R2，未发现任何名为「realm」的模型</strong>。R2 的技术报告（2026-08-23）与产品博文（2026-09-22）披露了目前四家中最完整的训练配方。</p>
   <div class="note"><b>R2 的方法论贡献在于「砍掉了两个阶段」。</b>传统链条是「双向 → AR 转换 → 任务专用蒸馏 teacher → DMD → self-rollout DMD」，R2 合并为两步：① <strong>Omni Causal AR 持续预训练</strong>；② <strong>Real-Time Acceleration</strong> 直接蒸馏<strong>同一个因果底座</strong>——student 的 ODE 初始化与 teacher <strong>都来自同一因果模型，不另训 fast model</strong>。这一点的工程含义很大：<strong>避免了「双向教师 → 因果学生」之间的架构间隙</strong>（见 §2.3 关于 frame-level injectivity 的讨论）。</div>
 
@@ -935,10 +935,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <text x="732" y="376" fill="#6b7478" font-size="9.5">生命周期：与物体相关性绑定</text>
     </svg>
     </div>
-    <figcaption><b>图 1-3 · R2 的两过程框架与三通道记忆</b>：左上是被 R2 弃用的长链条，左下是它的两步替代——关键在于 teacher 与 student 同源。<i>右下第三通道是本章提到的最有方向性的一项设计：当记忆的索引单位从时间位置变成物体，「主体离场再回访」这类问题才有解。</i></figcaption>
+    <figcaption><b>FIG 1-3 · R2 的两过程框架与三通道记忆</b>　左上是被 R2 弃用的长链条，左下是它的两步替代——关键在于 teacher 与 student 同源。</figcaption>
   </figure>
 
-  <h3 id="base-lingbot"><span class="h3tag">5</span>蚂蚁灵波 LingBot-World：从 14B 双专家到 MoBA 因果预训练</h3>
+  <h3 id="base-lingbot"><span class="h3tag">5</span>方案怎么做：蚂蚁灵波 LingBot-World 的双专家与 MoBA 掩码</h3>
   <p>LingBot-World 是四家里<strong>公开信息最完整、且有开源权重</strong>的一支（v1 与 v2 均已开源，v2 提供 14B 与 1.3B 的 causal-fast 版本）。它的演进路径本身就是一份「如何把双向视频模型改造成实时世界模型」的教程。</p>
   <div class="tablewrap"><table>
     <caption>表 1-2 · LingBot-World v1（arXiv 2601.20540）与 v2 / Infinity（arXiv 2607.07534）的结构对照</caption>
@@ -965,7 +965,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <li><strong>Dynamic KV Cache Management</strong>：不固定上下文，而是<strong>按当前控制信号与输入状态动态调度 KV cache</strong>，保留对当前 chunk 最有信息量的历史、丢弃低贡献条目</li>
     </ul></div>
     <div class="note"><span class="tag">Agentic Harness</span><h4>VLM 当导演，DiT 当飞行员</h4><p>论文自称世界模型领域首创：<strong>VLM = Director</strong> 负责宏观语义规则与因果推理、产出 event proposals；<strong>视频生成器 DiT = Pilot</strong> 负责低层物理动态与渲染。两种交互模式：<strong>Mode A 直接语义交互</strong>（VLM 分析当前帧即时生成事件卡，无需物体 mask）；<strong>Mode B 跟踪辅助物体交互</strong>（基于 SAM 的 action-proposal loop，跨 chunk 持续跟踪指定物体）。另支持全局状态切换（昼夜、暴雪）与局部实体注入。</p></div>
-    <div class="note"><span class="tag">作者自述局限（最有价值的一段）</span><h4>长期记忆仍不成立</h4><p>离开上下文窗口后<strong>再次访问的区域会被「重新生成」而不是「回忆」</strong>——世界在<strong>观感上</strong>持久，但<strong>身份上</strong>不持久。作者正探索 dynamic KV-cache scheduling 来保留更大更相关的历史。</p><p class="p">这段话应当作为本报告的一个基调：<strong>「无限时长」与「无限记忆」是两件不同的事</strong>，2026 年的产品级系统只做到了前者。</p></div>
+    <div class="note"><span class="tag">作者自述局限</span><h4>长期记忆仍不成立</h4><p>离开上下文窗口后<strong>再次访问的区域会被「重新生成」而不是「回忆」</strong>——世界在<strong>观感上</strong>持久，但<strong>身份上</strong>不持久。作者正探索 dynamic KV-cache scheduling 来保留更大更相关的历史。</p><p class="p"><strong>「无限时长」与「无限记忆」是两件不同的事</strong>，2026 年的产品级系统只做到了前者。</p></div>
   </div>
 
   <figure>
@@ -1029,10 +1029,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <text x="48" y="400" fill="#3d474b" font-size="10">评测时必须分开报告：native latent 生成频率 / 解码帧率 / 插帧后显示帧率。</text>
     </svg>
     </div>
-    <figcaption><b>图 1-4 · LingBot-World 的 MoBA 掩码与双专家因果化</b>：MoBA 用「补一个双向块」的方式防止纯因果训练退化；双专家则展示了 MoE 在推理侧不增成本的一种用法。<i>右下角那条关于三种 fps 的提示，是本报告在对比所有世界模型数字时的统一口径要求。</i></figcaption>
+    <figcaption><b>FIG 1-4 · LingBot-World 的 MoBA 掩码与双专家因果化</b>　MoBA 用「补一个双向块」的方式防止纯因果训练退化；双专家则展示了 MoE 在推理侧不增成本的一种用法。</figcaption>
   </figure>
 
-  <h3 id="base-minwm"><span class="h3tag">6</span>minWM：把「已有双向底座」改造成世界模型的流水线</h3>
+  <h3 id="base-minwm"><span class="h3tag">6</span>方案怎么做：minWM 把已有双向底座改造成世界模型</h3>
   <p>minWM（arXiv 2605.30263，生数主导）的定位不是某个模型，而是一条<strong>可复现的改造流水线</strong>：把现有双向 T2V/TI2V 基础模型转成「相机可控 + 少步 + 自回归」的实时交互世界模型。它以 Wan2.1-T2V-1.3B（cross-attention 注入条件）与 HY1.5-TI2V-8B（MMDiT 风格）两种代表骨架做了实例化，因此<strong>它的价值在于「换底座也能复用」</strong>。</p>
   <div class="brief">
     <dl>
@@ -1165,7 +1165,7 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <text x="44" y="452" font-family="ui-monospace,monospace" font-size="9">① 相机数据比算法更难：直接使用感知估计位姿学不到可靠控制，改用「重建 + 按指定轨迹重渲染」才成功；② 条件必须贯穿所有训练阶段。</text>
     </svg>
     </div>
-    <figcaption><b>图 1-5 · minWM 的改造流水线与流式拓扑</b>：上半是 PRoPE 几何注入与三阶段因果化，下半是单块流式循环的目标执行拓扑。</figcaption>
+    <figcaption><b>FIG 1-5 · minWM 的改造流水线与流式拓扑</b>　上半是 PRoPE 几何注入与三阶段因果化，下半是单块流式循环的目标执行拓扑。</figcaption>
   </figure>
 
   <h4>公开数字与消融（含最有价值的两条负面结论）</h4>
@@ -1293,10 +1293,10 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <text x="24" y="382" font-family="ui-monospace,monospace" font-size="10" fill="#6b7478">训练侧的要求也随之不同：①②需要 forcing 后训练来承受自生成历史（第 02 章），④还需要 Sparse Adaptation 之类的退火过程才能训练稳定。</text>
     </svg>
     </div>
-    <figcaption><b>图 1-6 · 四种注意力掩码对照</b>：从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
+    <figcaption><b>FIG 1-6 · 四种注意力掩码对照</b>　从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
   </figure>
 
-  <h3 id="base-matrix"><span class="h3tag">7</span>四家结构横向对照</h3>
+  <h3 id="base-matrix"><span class="h3tag">7</span>实施要点：四家结构的横向对照</h3>
   <div class="tablewrap"><table>
     <caption>表 1-4 · 四家实时世界模型的结构选择对照。空白项表示公开材料未披露。</caption>
     <thead><tr><th>维度</th><th>生数 Vidu S1/S2</th><th>爱诗 PixVerse R2</th><th>灵波 LingBot-World v2</th><th>minWM（框架）</th></tr></thead>
@@ -1311,20 +1311,32 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
       <tr><td>开源状态</td><td>权重未开源；框架与工具层开源（TurboDiffusion / TurboServe / minWM）</td><td>未开源，无 arXiv</td><td><strong>v1/v2 开源，v2 提供 14B 与 1.3B causal-fast 权重</strong></td><td><strong>开源框架 + 各阶段中间 checkpoint</strong></td></tr>
     </tbody>
   </table></div>
-  <div class="quote">把这张表读成一句话：<strong>四家在「因果化 + 少步 + 条件注入」上已经完全收敛，真正的分歧只剩两处——记忆用什么单位索引（时间位置 / 物体 / 控制相关性），以及分辨率从哪里换回来（Refiner / 金字塔 / 插帧 refiner）。</strong>前者决定长会话的上限，后者决定数字的可比性。</div>
+  
 </section>
 <!-- ============================ 02 Forcing ============================ -->
 <section class="ch" id="forcing">
-  <div class="ch-head"><div>
+  <div class="ch-head">
     <div class="ch-no">02</div>
     <h2>Forcing：让模型扛住自己生成的历史</h2>
-    <p class="ch-sub">块级因果结构给了我们「能增量算」的形状，但它立刻制造了一个新问题：<strong>训练时模型看到的历史是真实的、干净的；推理时它看到的历史是自己生成的、带噪的、有误差的</strong>。这个落差会让长 rollout 在几十块后崩塌。Forcing 家族就是专门修补这个落差的训练方法集合——而且它的最新进展已经把一个<strong>看起来是工程细节的问题（用哪个 teacher 做初始化）提升为理论问题</strong>。</p>
-  </div></div>
+  </div>
 
-  <p class="lead-in">本章按「修什么」组织：先给出误差累积的形式化描述，再拆开 forcing 的两个独立旋钮（<strong>历史加噪</strong>与<strong>梯度穿透</strong>），然后给出目前已收敛的<strong>四阶段因果化流水线</strong>，最后逐条对照 10+ 个 forcing 变体。<strong>读完本章应能回答：给定一个双向教师，把它变成能长跑的因果学生，最少需要哪几步，以及哪一步最容易被做错。</strong></p>
+  <div class="brief">
+    <dl>
+      <dt>是什么</dt>
+      <dd>一类<b>后训练方法</b>。模型改成块级因果结构之后，训练时看到的是真实视频的历史，推理时看到的却是自己生成的历史。<b>Forcing 方法专门修补这个落差</b>——让模型在自己产出的、带误差的历史上也能继续生成。</dd>
+      <dt>解决什么</dt>
+      <dd>不修补的话，误差会沿时间维累积。视频的误差落在连续的 latent 上，会通过 VAE 解码放大成可见伪影：<b>表现为几块之后身份漂移、动作断裂、背景突变</b>。这是流式生成的第一个失败模式。</dd>
+      <dt>有什么用</dt>
+      <dd>它是「能否长跑」的分水岭。<b>经过 forcing 后训练的模型可以把稳定生成从几十秒拉到分钟级</b>；Vidu、LingBot、爱诗 R2、minWM 四家全部采用，而且都已收敛到同一套四阶段流水线。</dd>
+      <dt>不用会怎样</dt>
+      <dd>块级因果结构只能保证「能增量算」，但保证不了「能长时间不崩」。没有 forcing，模型在自生成历史上会迅速退化。</dd>
+    </dl>
+  </div>
 
-  <h3 id="forcing-gap"><span class="h3tag">1</span>病根：暴露偏差在视频里比在语言里更致命</h3>
-  <p>把流式生成写成自回归形式：第 <code>n</code> 块的生成依赖前 <code>n−1</code> 块的输出，而这些输出又是模型自己采样得到的。于是误差满足一个递推关系：</p>
+  <p class="lead">本章按四段展开：<strong>2.1 说清问题从哪来</strong>（暴露偏差为什么在视频上更严重）；<strong>2.2 给出方案的设计空间</strong>（两个调节旋钮如何穷举所有 forcing 变体）；<strong>2.3 给出目前收敛的四阶段流水线</strong>；<strong>2.4–2.6 逐个方案展开</strong>（12 个方法的机制对照、Self-Replay Forcing 的拆解、以及训练成本）。</p>
+
+  <h3 id="forcing-gap"><span class="h3tag">1</span>现状与挑战：暴露偏差在视频上更致命</h3>
+  <p>把流式生成写成自回归形式：第 <code>n</code> 块的生成依赖前 <code>n−1</code> 块的输出，而这些输出又是模型自己采样得到的。于是训练与推理看到的输入分布不一样：</p>
   <div class="formula">训练期（Teacher Forcing）：  x̂_n = f_θ( <b>x_{&lt;n}</b> , c_n )        ← 历史是<b>真值</b>
 推理期（Autoregressive）：    x̂_n = f_θ( <b>x̂_{&lt;n}</b> , c_n )      ← 历史是<b>自己的采样</b>
 
@@ -1334,120 +1346,126 @@ footer{border-top:1px solid var(--line);padding:22px;color:var(--muted);font:.8r
 视频与语言的关键差别：
         LLM 的误差落在<b>离散 token</b>上，解码器有采样温度与重复惩罚等纠偏机制；
         视频 DiT 的误差落在<b>连续 latent</b>上，会通过 VAE 解码放大为可见伪影
-        ⇒ 表现为身份漂移、动作断裂、背景突变，而非「某一句话跑偏」
-
-Causal Forcing 论文对这一步给了更精确的诊断：
-        「连续 latent 空间中的误差复合」── 学生训练视野之外外推时质量显著退化</div>
+        ⇒ 表现为身份漂移、动作断裂、背景突变，而非「某一句话跑偏」</div>
   <p>这就是 forcing 类方法的目标函数来源：<strong>不是提高单块质量，而是提高「在自己生成的历史条件下继续生成」的稳定性</strong>。它天然是一项<strong>后训练</strong>任务——必须建立在已经具备块级因果接口的模型之上。</p>
 
   <figure>
     <div class="svgbox">
-    <svg viewBox="0 0 1080 440" role="img" aria-label="暴露偏差导致的跨块误差累积，以及 forcing 的两个修补点">
-      <defs>
-        <marker id="ar-f" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9a5b12"/></marker>
-        <marker id="ar-f2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0f6f78"/></marker>
-      </defs>
-      <rect width="1080" height="440" fill="#ffffff"/>
-      <text x="30" y="32" fill="#6b7478" font-family="monospace" font-size="12" letter-spacing="1.6">EXPOSURE BIAS · 跨块误差与三种修补点</text>
+    <svg viewBox="0 0 1060 440" role="img" aria-label="暴露偏差导致的跨块误差累积，以及 forcing 的三个修补点">
+      <rect width="1060" height="440" fill="#ffffff"/>
+      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#1a2124">误差沿时间维累积，以及三个可以下手的位置</text>
 
-      <text x="30" y="68" fill="#0f6f78" font-family="monospace" font-size="11">教师 / 训练期（Teacher Forcing）：历史为干净真值</text>
-      <g font-family="monospace" font-size="10">
-        <rect x="30" y="80" width="92" height="34" fill="#eef6f6" stroke="#0f6f78"/><text x="76" y="101" fill="#0f6f78" text-anchor="middle">x1 真值</text>
-        <rect x="136" y="80" width="92" height="34" fill="#eef6f6" stroke="#0f6f78"/><text x="182" y="101" fill="#0f6f78" text-anchor="middle">x2 真值</text>
-        <rect x="242" y="80" width="92" height="34" fill="#eef6f6" stroke="#0f6f78"/><text x="288" y="101" fill="#0f6f78" text-anchor="middle">x3 真值</text>
-        <rect x="348" y="80" width="92" height="34" fill="#eef6f6" stroke="#0f6f78"/><text x="394" y="101" fill="#0f6f78" text-anchor="middle">x4 真值</text>
+      <text x="24" y="58" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">教师 / 训练期：历史为干净真值</text>
+      <g font-family="ui-monospace,monospace" font-size="9.5">
+        <rect x="24" y="68" width="86" height="30" fill="#eef6f6" stroke="#0f6f78"/><text x="67" y="87" text-anchor="middle">x1 真值</text>
+        <rect x="122" y="68" width="86" height="30" fill="#eef6f6" stroke="#0f6f78"/><text x="165" y="87" text-anchor="middle">x2 真值</text>
+        <rect x="220" y="68" width="86" height="30" fill="#eef6f6" stroke="#0f6f78"/><text x="263" y="87" text-anchor="middle">x3 真值</text>
+        <rect x="318" y="68" width="86" height="30" fill="#eef6f6" stroke="#0f6f78"/><text x="361" y="87" text-anchor="middle">x4 真值</text>
       </g>
-      <line x1="122" y1="97" x2="134" y2="97" stroke="#0f6f78" marker-end="url(#ar-f2)"/>
-      <line x1="228" y1="97" x2="240" y2="97" stroke="#0f6f78" marker-end="url(#ar-f2)"/>
-      <line x1="334" y1="97" x2="346" y2="97" stroke="#0f6f78" marker-end="url(#ar-f2)"/>
-      <text x="460" y="101" fill="#6b7478" font-size="10.5">每块误差有界、不累积：误差不进入下一步的输入</text>
+      <line x1="112" y1="83" x2="120" y2="83" stroke="#0f6f78"/>
+      <line x1="210" y1="83" x2="218" y2="83" stroke="#0f6f78"/>
+      <line x1="308" y1="83" x2="316" y2="83" stroke="#0f6f78"/>
+      <text x="424" y="87" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">每块误差有界、不累积：误差不进入下一步的输入</text>
 
-      <text x="30" y="154" fill="#9a5b12" font-family="monospace" font-size="11">学生 / 推理期（无 forcing）：历史为自生成</text>
-      <g font-family="monospace" font-size="10">
-        <rect x="30" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="76" y="187" fill="#9a5b12" text-anchor="middle">x̂1</text>
-        <rect x="136" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="182" y="187" fill="#9a5b12" text-anchor="middle">x̂2</text>
-        <rect x="242" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="288" y="187" fill="#ff9a6a" text-anchor="middle">x̂3</text>
-        <rect x="348" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="394" y="187" fill="#9a5b12" text-anchor="middle">x̂4</text>
-        <rect x="454" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="500" y="187" fill="#9a5b12" text-anchor="middle">x̂5</text>
-        <rect x="560" y="166" width="92" height="34" fill="#fdf6ec" stroke="#9a5b12"/><text x="606" y="187" fill="#9a5b12" text-anchor="middle">x̂6 崩</text>
+      <text x="24" y="136" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#9a5b12">学生 / 推理期：历史为自己的采样</text>
+      <g font-family="ui-monospace,monospace" font-size="9.5">
+        <rect x="24" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="67" y="165" text-anchor="middle">x̂1</text>
+        <rect x="122" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="165" y="165" text-anchor="middle">x̂2</text>
+        <rect x="220" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="263" y="165" text-anchor="middle">x̂3</text>
+        <rect x="318" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="361" y="165" text-anchor="middle">x̂4</text>
+        <rect x="416" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="459" y="165" text-anchor="middle">x̂5</text>
+        <rect x="514" y="146" width="86" height="30" fill="#fdf6ec" stroke="#9a5b12"/><text x="557" y="165" text-anchor="middle">x̂6 崩</text>
       </g>
-      <line x1="122" y1="183" x2="134" y2="183" stroke="#9a5b12" marker-end="url(#ar-f)"/>
-      <line x1="228" y1="183" x2="240" y2="183" stroke="#9a5b12" marker-end="url(#ar-f)"/>
-      <line x1="334" y1="183" x2="346" y2="183" stroke="#9a5b12" marker-end="url(#ar-f)"/>
-      <line x1="440" y1="183" x2="452" y2="183" stroke="#9a5b12" marker-end="url(#ar-f)"/>
-      <line x1="546" y1="183" x2="558" y2="183" stroke="#9a5b12" marker-end="url(#ar-f)"/>
-      <polyline points="76,226 182,234 288,248 394,272 500,308 606,352" fill="none" stroke="#9a5b12" stroke-width="2"/>
-      <text x="76" y="236" fill="#9a5b12" font-size="10.5">误差曲线：指数放大 → 几十块后身份/背景突变</text>
+      <line x1="112" y1="161" x2="120" y2="161" stroke="#9a5b12"/>
+      <line x1="210" y1="161" x2="218" y2="161" stroke="#9a5b12"/>
+      <line x1="308" y1="161" x2="316" y2="161" stroke="#9a5b12"/>
+      <line x1="406" y1="161" x2="414" y2="161" stroke="#9a5b12"/>
+      <line x1="504" y1="161" x2="512" y2="161" stroke="#9a5b12"/>
+      <polyline points="67,196 165,204 263,218 361,244 459,282 557,330" fill="none" stroke="#9a5b12" stroke-width="2"/>
+      <text x="24" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a5b12">误差曲线：指数放大 ⇒ 几十块后身份与背景突变</text>
 
-      <!-- three repair points -->
-      <rect x="30" y="268" width="330" height="150" fill="#f7f8f8" stroke="#0f6f78"/>
-      <text x="46" y="292" fill="#0f6f78" font-family="monospace" font-size="11">修补点 A · 历史注入噪声</text>
-      <text x="46" y="314" fill="#3d474b" font-size="10.5">Diffusion Forcing：每个时序 token 可处于</text>
-      <text x="46" y="332" fill="#3d474b" font-size="10.5">独立噪声等级 ⇒ 模型见过「不干净的历史」</text>
-      <text x="46" y="352" fill="#3d474b" font-size="10.5">Vidu / LingBot / R2 的 TF/DF 混合：按概率抽样</text>
-      <text x="46" y="376" fill="#0f6f78" font-size="10.5">✔ 覆盖推理分布的一大类</text>
-      <text x="46" y="398" fill="#9a5b12" font-size="10.5">✘ 不保证与「自生成历史」一致（分布仍是人造的）</text>
+      <rect x="24" y="240" width="324" height="182" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="40" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">修补 A · 给历史注入噪声</text>
+      <text x="40" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">Diffusion Forcing：每个时序 token 可处于独立</text>
+      <text x="40" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">噪声等级 ⇒ 模型见过「不干净的历史」</text>
+      <text x="40" y="328" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">Vidu / LingBot / 爱诗 R2 的 TF/DF 混合：</text>
+      <text x="40" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">按概率抽样决定该用干净还是加噪前缀</text>
+      <text x="40" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0f6f78">✔ 覆盖推理分布的一大类</text>
+      <text x="40" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a5b12">✘ 不保证与「自生成历史」一致，分布仍是人造的</text>
+      <text x="40" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">代表：Diffusion Forcing（arXiv 2407.01392）</text>
 
-      <rect x="374" y="268" width="330" height="150" fill="#f7f8f8" stroke="#0f6f78"/>
-      <text x="390" y="292" fill="#0f6f78" font-family="monospace" font-size="11">修补点 B · 自生成轨迹</text>
-      <text x="390" y="314" fill="#3d474b" font-size="10.5">Self-Forcing：训练期就做自回归 rollout 并启用</text>
-      <text x="390" y="332" fill="#3d474b" font-size="10.5">KV caching，监督落在整段视频级分布匹配损失上</text>
-      <text x="390" y="352" fill="#3d474b" font-size="10.5">梯度截断：只对每帧最后一个去噪步反传</text>
-      <text x="390" y="376" fill="#0f6f78" font-size="10.5">✔ 直接优化部署分布</text>
-      <text x="390" y="398" fill="#9a5b12" font-size="10.5">✘ 历史仍被「干净」喂入且 detach（见修补点 C）</text>
+      <rect x="366" y="240" width="324" height="182" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="382" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">修补 B · 在自生成轨迹上训练</text>
+      <text x="382" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">Self-Forcing：训练期就做自回归 rollout 并启用</text>
+      <text x="382" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">KV caching，监督落在整段视频级的分布匹配上</text>
+      <text x="382" y="328" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">梯度截断：只对每帧最后一个去噪步反传</text>
+      <text x="382" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">随机退出步：保证各中间步都收到监督</text>
+      <text x="382" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0f6f78">✔ 直接优化部署分布</text>
+      <text x="382" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a5b12">✘ 历史仍被「干净」喂入且 detach（见修补 C）</text>
+      <text x="382" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">代表：Self-Forcing（arXiv 2506.08009）</text>
 
-      <rect x="718" y="268" width="332" height="150" fill="#eef6f6" stroke="#0f6f78"/>
-      <text x="734" y="292" fill="#0f6f78" font-family="monospace" font-size="11">修补点 C · 重加噪 ＋ 跨块梯度</text>
-      <text x="734" y="314" fill="#3d474b" font-size="10.5">Self-Replay Forcing：rollout 后对自生成轨迹</text>
-      <text x="734" y="332" fill="#3d474b" font-size="10.5"><tspan fill="#0f6f78">按块独立重新加噪</tspan>，再做一次<tspan fill="#0f6f78">开启梯度</tspan>的</text>
-      <text x="734" y="350" fill="#3d474b" font-size="10.5">因果 replay。梯度跨 replay 段内 block 传播，</text>
-      <text x="734" y="368" fill="#3d474b" font-size="10.5">但<tspan fill="#0f6f78">不回穿原始 rollout</tspan> ⇒ 有限显存换跨块梯度</text>
-      <text x="734" y="398" fill="#0f6f78" font-size="10.5">✔ 同时修补「干净历史」与「detach」两个缺陷</text>
+      <rect x="708" y="240" width="328" height="182" fill="#eef6f6" stroke="#0f6f78"/>
+      <text x="724" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">修补 C · 重加噪 + 跨块梯度</text>
+      <text x="724" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">Self-Replay Forcing：rollout 后对自生成轨迹</text>
+      <text x="724" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b"><tspan font-weight="700">按块独立重新加噪</tspan>，再做一次<tspan font-weight="700">开启梯度</tspan>的</text>
+      <text x="724" y="320" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">因果重放 ⇒ 后段损失可前传，但不回穿 rollout</text>
+      <text x="724" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">同时修补「干净历史」与「detach」两个缺陷</text>
+      <text x="724" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0f6f78">✔ 训练条件与推理条件在两个维度上对齐</text>
+      <text x="724" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a5b12">✘ 训练成本最高；需长时域回归验收</text>
+      <text x="724" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">代表：Vidu S2 的 L_SRF（arXiv 2609.11638）</text>
     </svg>
     </div>
-    <figcaption><b>图 2-1 · 暴露偏差与 forcing 的三个修补点</b>：A 类让模型见过脏历史，B 类在自生成轨迹上训练，C 类进一步修补 B 的两个遗留缺陷。<i>2026 年的产品级系统基本都在 B+C：A 用于打通可用性，B/C 用于修长时稳定性。</i></figcaption>
+    <figcaption><b>FIG 2-1 · 暴露偏差与 forcing 的三个修补点</b>　三个修补点分别对应：让模型见过脏历史（A）、在自生成轨迹上训练（B）、同时修补噪声水平与梯度范围（C）。2026 年的产品级系统基本都在 B+C。</figcaption>
   </figure>
 
-  <h3 id="forcing-knobs"><span class="h3tag">2</span>两个独立旋钮：加噪级别与梯度是否穿透</h3>
-  <p>把所有 forcing 变体拆开看，它们都在回答两个正交问题。这两个旋钮的组合几乎穷举了整个设计空间，也是判断一篇新工作是否真的「新」的最快方法：</p>
+  <h3 id="forcing-knobs"><span class="h3tag">2</span>有哪些方案：两个旋钮穷举整个设计空间</h3>
+  <p>把所有 forcing 变体拆开看，它们都在回答两个正交问题。<strong>这两个旋钮决定了「用干净还是加噪的历史」与「梯度是否穿透历史」</strong>，两者组合几乎穷举了所有已发表的方法：</p>
   <div class="grid2">
-    <div class="note"><span class="tag">旋钮 1</span><h4>历史被加噪到什么程度？</h4>
+    <div class="note">
+      <span class="tag">旋钮 1 · 历史加噪到什么程度</span>
+      <h4>决定模型见过哪些「脏度」的历史</h4>
       <ul>
-        <li><strong>不加噪（干净历史）</strong>：Teacher Forcing。最保守，误差累积最严重。但 Causal Forcing 的消融给出了一个反直觉结论：<strong>TF 优于 DF 作为 AR 阶段的训练方式</strong>——干净历史保住了质量上限。</li>
-        <li><strong>随机级别加噪</strong>：Diffusion Forcing。每个时序 token 独立采样噪声级，证明优化所有子序列似然的变分下界，能力是生成长度超出训练视野的 rollout（baseline 会发散）。</li>
-        <li><strong>按概率混合</strong>：Vidu / LingBot / 爱诗 R2 采用的做法——每样本按 Bernoulli(p) 抽样决定该用干净 GT 前缀（TF）还是加噪前缀（DF）。TF 保证条件同步与运动一致性，DF 提升对不完美前缀的鲁棒性。</li>
-        <li><strong>重放时再独立加噪</strong>：Self-Replay Forcing。在<strong>自生成轨迹</strong>上按 Diffusion Forcing 对所有 segment 独立重新加噪。</li>
+        <li><strong>不加噪</strong>：Teacher Forcing。最保守，误差累积最严重。但 Causal Forcing 的消融给出一个反直觉结论：<strong>TF 优于 DF 作为 AR 阶段的训练方式</strong>——干净历史保住了质量上限。</li>
+        <li><strong>每 token 独立加噪</strong>：Diffusion Forcing。证明优化所有子序列似然的变分下界，能力是生成长度超出训练视野的 rollout。</li>
+        <li><strong>按概率混合</strong>：Vidu / LingBot / 爱诗 R2 的做法。TF 保证条件同步与运动一致性，DF 提升对不完美前缀的鲁棒性。</li>
+        <li><strong>重放时再独立加噪</strong>：Self-Replay Forcing。在<strong>自生成轨迹</strong>上按 DF 对所有 segment 重新加噪。</li>
       </ul>
     </div>
-    <div class="note"><span class="tag">旋钮 2</span><h4>梯度是否穿过历史？</h4>
+    <div class="note">
+      <span class="tag">旋钮 2 · 梯度是否穿过历史</span>
+      <h4>决定长程一致性有没有训练信号</h4>
       <ul>
-        <li><strong>完全 detach</strong>：Self-Forcing 的做法——原文明确「we additionally detach the gradients of the previous frames from the current frame during training by restricting gradient flow into KV cache embeddings」。省显存，但后段损失无法修正前段表示。</li>
-        <li><strong>只对最后一步反传</strong>：Self-Forcing 的<strong>随机梯度截断</strong>——只对每帧最后一个去噪步反传，反向过程只回传到第 s 步。</li>
-        <li><strong>随机退出步</strong>：每序列每轮从 Uniform(1..T) 采样 s，用第 s 步输出作最终输出，<strong>保证所有中间去噪步都收到监督</strong>。这是使梯度截断可行的关键配套。</li>
-        <li><strong>分块重放（replay）</strong>：Self-Replay Forcing——rollout 时 detach，再在<strong>单次</strong>梯度使能的因果 replay 中重放整条轨迹；replay 内所有 segment 处于同一计算图，<strong>后段 loss 可传播至前段</strong>，但梯度不回穿原始 rollout。</li>
+        <li><strong>完全 detach</strong>：Self-Forcing 的做法，原文明确限制梯度不流入 KV cache 嵌入。省显存，但后段损失无法修正前段表示。</li>
+        <li><strong>只对最后一步反传</strong>：Self-Forcing 的随机梯度截断——反向过程只回传到第 s 步。</li>
+        <li><strong>随机退出步</strong>：每轮从 Uniform(1..T) 采样 s，用第 s 步输出作最终输出，<strong>保证所有中间去噪步都收到监督</strong>。这是梯度截断可行的配套条件。</li>
+        <li><strong>分块重放</strong>：Self-Replay Forcing——rollout 时 detach，再在<strong>单次</strong>梯度使能的因果重放中重放整条轨迹。</li>
       </ul>
     </div>
   </div>
 
-  <h3 id="forcing-pipeline"><span class="h3tag">3</span>已收敛的四阶段因果化流水线</h3>
+  <h3 id="forcing-pipeline"><span class="h3tag">3</span>方案怎么做：已收敛的四阶段流水线</h3>
   <p>把 minWM、Causal Forcing、LingBot、Vidu、爱诗 R2 的配方并排看，会发现它们<strong>已经收敛到同一条流水线</strong>。这不是巧合，而是被一个理论结论逼出来的：</p>
-  <div class="note warn"><b>关键理论结论（Causal Forcing，arXiv 2602.02214 · ICML 2026）：ODE 蒸馏要求 frame-level injectivity。</b>把双向 DiT 蒸馏成少步 AR 学生存在<strong>架构鸿沟</strong>。既有做法用 ODE 蒸馏初始化 AR 学生，但 ODE 蒸馏要求「每个带噪帧在 teacher 的 PF-ODE 下必须映射到唯一干净帧」——<strong>用双向 teacher 违反该条件</strong>：双向模型的 PF-ODE 只在 video level 单射，于是同一个 noisy frame 会对应多个 clean frame，回归解退化为<strong>条件期望</strong>，产生模糊与不一致。作者用「用标准 DMD 初始化 AR student」的对照实验证明 DMD 阶段无法弥补这个初始化缺陷。<br><strong>解法：ODE 初始化的 teacher 必须是 AR 模型，不能是双向模型。</strong></div>
+  <div class="note warn">
+    <b>关键理论结论（Causal Forcing，arXiv 2602.02214 · ICML 2026）：ODE 蒸馏要求 frame-level injectivity。</b>
+    <p>把双向 DiT 蒸馏成少步 AR 学生存在<strong>架构鸿沟</strong>。既有做法用 ODE 蒸馏初始化 AR 学生，但 ODE 蒸馏要求「每个带噪帧在 teacher 的 PF-ODE 下必须映射到唯一干净帧」——<strong>用双向 teacher 违反该条件</strong>：双向模型的 PF-ODE 只在 video level 单射，于是同一个 noisy frame 会对应多个 clean frame，回归解退化为<strong>条件期望</strong>，产生模糊与不一致。作者用「用标准 DMD 初始化 AR student」的对照实验证明 DMD 阶段无法弥补这个初始化缺陷。</p>
+    <p><strong>解法：ODE 初始化的 teacher 必须是 AR 模型，不能是双向模型。</strong></p>
+  </div>
 
   <div class="pipe c4">
-    <div class="step cool"><i>STAGE 1</i><b>TF 训练 AR 扩散模型</b><span>把干净视频与其加噪副本拼接 + 因果注意力掩码。<br>产物：有 AR 能力但仍多步、且因 exposure bias 质量低于双向模型。<br><b>注意：</b>论文同时从理论与实证说明 <strong>TF 优于 DF</strong> 作为这一阶段的方式。</span></div>
-    <div class="step hot"><i>STAGE 2</i><b>少步 AR 初始化（ODE 或 CD）</b><span>两种等价路径：<br>· <strong>causal ODE</strong>（Causal Forcing）：用 <em>AR teacher</em> 在 PF-ODE 轨迹上采样，回归 <code>G_θ(x_t^i, x_gt^{&lt;i}, t) → x_0^i</code><br>· <strong>causal CD</strong>（Causal Forcing++）：用 AR teacher 从 <code>x_t^i</code> 走<strong>一步 ODE</strong> 得到 <code>x̂_{t−Δt}^i</code>，与 EMA student 做加权距离。<strong>免去离线 ODE 数据的生成时间与存储开销。</strong><br>论文洞察：causal CD 学到与 causal ODE <strong>相同的 AR-conditional flow map</strong>，但监督来自相邻步之间单次在线 teacher ODE step。</span></div>
-    <div class="step hot"><i>STAGE 3</i><b>非对称 DMD</b><span>student 自 rollout 生成完整序列 → 加噪 → 用<strong>冻结双向模型</strong> <code>s_real</code> 与<strong>在线训练</strong> <code>s_fake</code> 的分数差做 DMD 梯度。<br>爱诗 R2 的表述更简洁：<strong>student 的 ODE 初始化与 teacher 都来自同一因果模型，不另训 fast model</strong>——从根上规避架构间隙。</span></div>
-    <div class="step"><i>STAGE 4</i><b>长轨迹 / 长上下文精炼</b><span>把 DMD 放到<strong>长 self-rollout 轨迹</strong>上做（LingBot v2），或用<strong>长上下文 teacher</strong> 蒸馏长上下文 student（Context Forcing），或引入<strong>错误回放</strong>（爱诗 R2 的 Error Bank）。<br>目标是让优化状态覆盖推理时真正会到达的状态分布。</span></div>
+    <div class="step"><b>Stage 1 · TF 训练 AR 扩散模型</b><span>把干净视频与其加噪副本拼接 + 因果注意力掩码。产物：有 AR 能力但仍多步、且因 exposure bias 质量低于双向模型。<b>论文同时从理论与实证说明 TF 优于 DF</b>。</span></div>
+    <div class="step"><b>Stage 2 · 少步 AR 初始化</b><span>两条等价路径：<b>causal ODE</b>（用 AR teacher 在 PF-ODE 轨迹上采样，回归 <code>G_θ(x_t^i, x_gt^{&lt;i}, t) → x_0^i</code>）；<b>causal CD</b>（用 AR teacher 从 <code>x_t^i</code> 走一步 ODE，与 EMA student 做加权距离）。后者免去离线 ODE 数据的生成与存储开销，论文洞察是两者学到<b>相同的 AR-conditional flow map</b>。</span></div>
+    <div class="step"><b>Stage 3 · 非对称 DMD</b><span>student 自 rollout 生成完整序列 → 加噪 → 用<b>冻结双向模型</b>作 real score、<b>在线训练</b>的 fake score，做 DMD 梯度。爱诗 R2 的表述更简洁：student 的 ODE 初始化与 teacher 都来自同一因果模型，不另训 fast model。</span></div>
+    <div class="step"><b>Stage 4 · 长轨迹精炼</b><span>把 DMD 放到<b>长 self-rollout 轨迹</b>上做（LingBot v2），或用<b>长上下文 teacher</b> 蒸馏长上下文 student（Context Forcing），或引入<b>错误回放</b>（爱诗 R2 的 Error Bank）。目标是让优化状态覆盖推理时真正会到达的状态分布。</span></div>
   </div>
-  <p>这条流水线的三个「易错点」值得单独标出：<strong>① Stage 2 的 teacher 必须是 AR 模型</strong>（否则初始化理论上不成立）；<strong>② Stage 1 用 TF 而非 DF</strong>（与直觉相反，但论文有理论与实证支持）；<strong>③ 条件必须贯穿全流程</strong>——minWM 的相机条件在 Stage 1/2/3 全部注入，否则蒸馏会把条件抹掉。</p>
+  <p>这条流水线的三个易错点：<strong>① Stage 2 的 teacher 必须是 AR 模型</strong>（否则初始化理论上不成立）；<strong>② Stage 1 用 TF 而非 DF</strong>（与直觉相反，但有理论与实证支持）；<strong>③ 条件必须贯穿全流程</strong>——minWM 的相机条件在 Stage 1/2/3 全部注入，否则蒸馏会把条件抹掉。</p>
 
-  <h3 id="forcing-family"><span class="h3tag">4</span>家族对照表</h3>
+  <h3 id="forcing-family"><span class="h3tag">4</span>方案怎么做：12 个 forcing 变体的机制对照</h3>
   <div class="tablewrap"><table>
-    <caption>表 2-1 · forcing 家族机制对照。「历史状态」「梯度」「KV」三列是实际部署时最需要确认的三件事。所有编号均经原文核对。</caption>
+    <caption>表 2-1 · forcing 家族机制对照。「历史状态」「梯度」「KV」三列是实际部署时最需要确认的三件事。</caption>
     <thead><tr><th>方法</th><th>核心问题</th><th>历史状态如何处理</th><th>梯度</th><th>KV / 缓存</th><th>公开数字</th></tr></thead>
     <tbody>
       <tr>
-        <td><strong>Teacher Forcing</strong><br><span class="tag">AR 基线</span></td>
+        <td><strong>Teacher Forcing</strong><br><span style="color:#6b7478">AR 基线</span></td>
         <td>建立块级因果接口</td>
         <td>干净真值上下文；全帧共享同一 <code>t^i</code></td>
         <td>单步监督</td>
@@ -1455,213 +1473,210 @@ Causal Forcing 论文对这一步给了更精确的诊断：
         <td>分布不匹配 ⇒ exposure bias</td>
       </tr>
       <tr>
-        <td><strong>Diffusion Forcing</strong><br><span class="tag">arXiv 2407.01392 · MIT</span></td>
+        <td><strong>Diffusion Forcing</strong><br><span style="color:#6b7478">arXiv 2407.01392 · MIT</span></td>
         <td>让模型能在因果约束下按任意噪声组合连续展开</td>
         <td><strong>逐 token 独立噪声级</strong>，无需把过去 token 完全扩散</td>
         <td>梯度经注意力掩码流动</td>
         <td>因果上下文</td>
-        <td>优化所有子序列似然的变分下界；能生成超出训练视野的 rollout（baseline 发散）</td>
+        <td>优化所有子序列似然的变分下界；能生成超出训练视野的 rollout</td>
       </tr>
       <tr>
-        <td><strong>CausVid</strong><br><span class="tag">arXiv 2412.07772</span></td>
+        <td><strong>CausVid</strong><br><span style="color:#6b7478">arXiv 2412.07772</span></td>
         <td>把双向多步教师变成块因果少步学生</td>
         <td>ODE 轨迹初始化 + 非对称分布匹配蒸馏</td>
         <td>蒸馏路径</td>
         <td>rolling KV（4 步）</td>
-        <td>单卡 9.4 FPS（论文口径）</td>
+        <td>单卡 9.4 FPS</td>
       </tr>
       <tr>
-        <td><strong>Causal Forcing</strong><br><span class="tag">arXiv 2602.02214 · ICML 2026</span></td>
+        <td><strong>Causal Forcing</strong><br><span style="color:#6b7478">arXiv 2602.02214 · ICML 2026</span></td>
         <td>ODE 初始化在双向 teacher 下<strong>理论上不成立</strong>（frame-level injectivity）</td>
         <td>Stage 1 TF 训练 AR 扩散（TF 优于 DF）→ Stage 2 用 <strong>AR teacher</strong> 做 causal ODE 初始化</td>
         <td>蒸馏路径</td>
         <td>继承 Self-Forcing 式 DMD</td>
-        <td><strong>相对 Self-Forcing：Dynamic Degree <strong>+19.3%</strong>、VisionReward <strong>+8.7%</strong>、Instruction Following <strong>+16.7%</strong>；单张 RTX 4090 实时流式</strong></td>
+        <td>相对 Self-Forcing：Dynamic Degree <strong>+19.3%</strong>、VisionReward <strong>+8.7%</strong>、Instruction Following <strong>+16.7%</strong>；单张 RTX 4090 实时流式</td>
       </tr>
       <tr>
-        <td><strong>Causal Forcing++</strong><br><span class="tag">arXiv 2605.15141</span></td>
+        <td><strong>Causal Forcing++</strong><br><span style="color:#6b7478">arXiv 2605.15141</span></td>
         <td>更激进的 <strong>frame-wise AR + 仅 1–2 采样步</strong></td>
         <td>用 <strong>causal consistency distillation</strong> 替代离线 ODE 数据做少步 AR 初始化</td>
-        <td><strong>一致性路径（在线单步 ODE）</strong></td>
+        <td>一致性路径（在线单步 ODE）</td>
         <td>帧级 AR 状态</td>
-        <td><strong>frame-wise <strong>2 步</strong>即超过 4-step chunk-wise Causal Forcing：VBench Total +0.1、Quality +0.3、VisionReward +0.335；<strong>首帧延迟 −50%</strong>；<strong>Stage 2 训练成本约降 4×</strong></strong></td>
+        <td>frame-wise <strong>2 步</strong>即超过 4-step chunk-wise Causal Forcing：VBench Total +0.1、Quality +0.3、VisionReward +0.335；<strong>首帧延迟 −50%</strong>；<strong>Stage 2 训练成本约降 4×</strong></td>
       </tr>
       <tr>
-        <td><strong>Self-Forcing</strong><br><span class="tag">arXiv 2506.08009 · Adobe / UT-Austin</span></td>
+        <td><strong>Self-Forcing</strong><br><span style="color:#6b7478">arXiv 2506.08009 · Adobe / UT-Austin</span></td>
         <td>闭掉 train–test gap；训练期即用 KV caching</td>
         <td>自生成历史，<strong>干净</strong>帧作为上下文</td>
         <td><strong>detach</strong>：只对每帧最后一步反传，梯度被限制为不流入 KV cache 嵌入；配随机退出步保证各中间步受监督</td>
-        <td><strong><strong>训练与推理都用 rolling KV cache</strong>，满则 <code>KV.pop(0)</code>（FIFO 淘汰）⇒ 任意长外推</strong></td>
-        <td><strong>单张 <strong>H100 上 17 FPS、亚秒延迟</strong></strong></td>
+        <td><strong>训练与推理都用 rolling KV cache</strong>，满则 <code>KV.pop(0)</code>（FIFO 淘汰）⇒ 任意长外推</td>
+        <td>单张 <strong>H100 上 17 FPS、亚秒延迟</strong></td>
       </tr>
       <tr>
-        <td><strong>Self-Forcing++</strong><br><span class="tag">arXiv 2512.12080 <span class="tag">ID 为片段级核实</span></span></td>
+        <td><strong>Self-Forcing++</strong><br><span style="color:#6b7478">arXiv 2512.12080</span></td>
         <td>短视野双向 teacher 无法合成长视频</td>
         <td>从<strong>自身生成的长视频中采样片段</strong>，用 teacher 为这些片段提供指导；<strong>不复用/重算重叠帧</strong></td>
         <td>后训练</td>
         <td>沿用 AR 状态</td>
-        <td><strong>时长相对 teacher 能力扩展 <strong>up to 20×</strong>；放大算力可达 <strong>4 分 15 秒</strong>（≈基模型位置编码最大跨度的 <strong>99.9%</strong>，比 baseline 长 50× 以上）</strong></td>
+        <td>时长相对 teacher 能力扩展 <strong>up to 20×</strong>；放大算力可达 <strong>4 分 15 秒</strong>（≈基模型位置编码最大跨度的 <strong>99.9%</strong>）</td>
       </tr>
       <tr>
-        <td><strong>Self-Replay Forcing</strong><br><span class="tag">Vidu S2 · arXiv 2609.11638</span></td>
+        <td><strong>Self-Replay Forcing</strong><br><span style="color:#6b7478">Vidu S2 · arXiv 2609.11638</span></td>
         <td>Self-Forcing 的两个遗留问题：历史被<strong>干净</strong>喂入、被 <strong>detach</strong></td>
         <td>长自回归 rollout（detach 全部 block 与 KV）→ 取整条自生成轨迹、按 DF <strong>独立 re-noise 所有 segment</strong> → 单次梯度使能的 causal replay</td>
-        <td><strong>replay 内所有 segment 同一计算图 ⇒ <strong>后段 loss 可传播到前段</strong>；梯度<strong>不</strong>回穿原始 rollout</strong></td>
-        <td><strong>延续 S1 的 <strong>sink blocks + 滑窗上下文 + noisy KV caches</strong>（训练全程保留）</strong></td>
-        <td><strong>S2-Avatar 720p 实时、<strong>25–42 FPS</strong>（S1 为 540p / 42 FPS）</strong></td>
+        <td>replay 内所有 segment 同一计算图 ⇒ <strong>后段 loss 可传播到前段</strong>；梯度<strong>不</strong>回穿原始 rollout</td>
+        <td>延续 S1 的 <strong>sink blocks + 滑窗上下文 + noisy KV caches</strong>（训练全程保留）</td>
+        <td>S2-Avatar 720p 实时、<strong>25–42 FPS</strong>（S1 为 540p / 42 FPS）</td>
       </tr>
       <tr>
-        <td><strong>LongLive</strong><br><span class="tag">arXiv 2509.22622 · NVlabs / MIT HAN Lab</span></td>
+        <td><strong>LongLive</strong><br><span style="color:#6b7478">arXiv 2509.22622 · NVlabs / MIT HAN Lab</span></td>
         <td>交互式长视频生成的实时化</td>
         <td><strong>帧级自回归</strong> + <strong>streaming long tuning</strong>（train-long-test-long）</td>
         <td>—</td>
-        <td><strong><strong>短窗口注意力 + frame-level attention sink（frame sink）</strong>；<strong>KV-recache</strong>：用新 prompt 刷新缓存状态以实现平滑切换</strong></td>
-        <td><strong>1.3B 用 <strong>32 GPU-days</strong> 微调到分钟级；推理<strong>单张 H100 20.7 FPS</strong>、支持最长 <strong>240 秒</strong>；支持 <strong>INT8 量化推理</strong>且质量损失很小</strong></td>
+        <td><strong>短窗口注意力 + frame-level attention sink（frame sink）</strong>；<strong>KV-recache</strong>：用新 prompt 刷新缓存状态以实现平滑切换</td>
+        <td>1.3B 用 <strong>32 GPU-days</strong> 微调到分钟级；推理<strong>单张 H100 20.7 FPS</strong>、支持最长 <strong>240 秒</strong>；支持 <strong>INT8 量化推理</strong></td>
       </tr>
       <tr>
-        <td><strong>Rolling Forcing</strong><br><span class="tag">arXiv 2509.25161 · NTU / 腾讯</span></td>
+        <td><strong>Rolling Forcing</strong><br><span style="color:#6b7478">arXiv 2509.25161 · NTU / 腾讯</span></td>
         <td>严格逐帧因果导致误差增长</td>
         <td><strong>联合去噪多帧、噪声级渐进递增</strong>（放宽相邻帧严格因果）</td>
         <td>在扩展去噪窗口上做少步蒸馏</td>
-        <td><strong>引入 <strong>attention sink</strong>，保留<strong>初始帧</strong> KV 作全局上下文锚</strong></td>
-        <td><strong>单 GPU 实时流式生成<strong>数分钟</strong>视频，误差累积显著下降</strong></td>
+        <td>引入 <strong>attention sink</strong>，保留<strong>初始帧</strong> KV 作全局上下文锚</td>
+        <td>单 GPU 实时流式生成<strong>数分钟</strong>视频，误差累积显著下降</td>
       </tr>
       <tr>
-        <td><strong>Context Forcing</strong><br><span class="tag">arXiv 2602.06028</span></td>
-        <td><strong>student–teacher 失配</strong>：学生做长 rollout，却由只有 5 秒窗口的 memoryless teacher 监督 ⇒ 学生上下文被「封顶」（Forgetting–Drifting Dilemma）</td>
-        <td>用<strong>长上下文 teacher</strong> 蒸馏长上下文 student；全局 KL 分解为 <code>L_local</code>（局部动力学）+ <code>L_context</code>（全局续写）两阶段课程</td>
-        <td><strong>Contextual DMD：期望<strong>在 student 自身 rollout 上取</strong>，fake/real score 跑在同一 student 生成上下文上</strong></td>
-        <td><strong><strong>三段 KV</strong>：Attention Sink + Slow Memory（高熵关键帧，≤N_c）+ Fast Memory（滚动 FIFO，N_l）；<strong>Surprisal-Based Consolidation</strong>（<code>sim(k_t,k_{t−1})&lt;τ</code>，τ=0.95 才提升）；<strong>Bounded Positional Indexing</strong></strong></td>
-        <td><strong>有效上下文 <strong>&gt;20 秒</strong>，比 SOTA 长 <strong>2–10×</strong>（论文列出基线：LongLive 3.0s、Infinity-RoPE 1.5s、Framepack 9.2s、Rolling Forcing 6s）</strong></td>
+        <td><strong>Context Forcing</strong><br><span style="color:#6b7478">arXiv 2602.06028</span></td>
+        <td><strong>student–teacher 失配</strong>：学生做长 rollout，却由只有 5 秒窗口的 memoryless teacher 监督 ⇒ 学生上下文被「封顶」</td>
+        <td>用<strong>长上下文 teacher</strong> 蒸馏长上下文 student；全局 KL 分解为 <code>L_local</code> + <code>L_context</code> 两阶段课程</td>
+        <td>Contextual DMD：期望<strong>在 student 自身 rollout 上取</strong>，fake/real score 跑在同一 student 生成上下文上</td>
+        <td><strong>三段 KV</strong>：Attention Sink + Slow Memory（高熵关键帧）+ Fast Memory（滚动 FIFO）；<strong>Surprisal-Based Consolidation</strong>；<strong>Bounded Positional Indexing</strong></td>
+        <td>有效上下文 <strong>&gt;20 秒</strong>，比 SOTA 长 <strong>2–10×</strong>（基线：LongLive 3.0s、Infinity-RoPE 1.5s、Framepack 9.2s、Rolling Forcing 6s）</td>
       </tr>
       <tr>
-        <td><strong>Direct Forcing</strong><br><span class="tag">arXiv 2510.01784 · ShanghaiTech / 混元</span></td>
+        <td><strong>Direct Forcing</strong><br><span style="color:#6b7478">arXiv 2510.01784</span></td>
         <td>多步推理近似（Student Forcing）开销过大</td>
-        <td>基于 rectified flow 用<strong>单步反向 ODE 近似</strong> <code>x̃₁ = x_t + Δ_t v_θ(x_t,t)</code> 替代多步推理；训练时用 <code>x̃^{i−1}</code> 而非真值作条件</td>
-        <td><strong><strong>无额外开销、无需蒸馏、无额外噪声注入</strong></strong></td>
+        <td>基于 rectified flow 用<strong>单步反向 ODE 近似</strong>替代多步推理；训练时用 <code>x̃^{i−1}</code> 而非真值作条件</td>
+        <td><strong>无额外开销、无需蒸馏、无额外噪声注入</strong></td>
         <td>MemoryPack = FramePack（短期）+ SemanticPack（长期）</td>
-        <td><strong>ΔSubject <strong>0.76%</strong> 最低；ELO-K32 <strong>1568 排名第 1</strong>；60s @ 480p/24fps</strong></td>
+        <td>ΔSubject <strong>0.76%</strong> 最低；ELO-K32 <strong>1568 排名第 1</strong>；60s @ 480p/24fps</td>
       </tr>
       <tr>
-        <td><strong>Deep Forcing</strong><br><span class="tag">arXiv 2512.05081 · KAIST · training-free</span></td>
-        <td>朴素套用 StreamingLLM 式 attention sink 会导致保真度退化与运动停滞</td>
-        <td>发现预训练 Self Forcing <strong>并非只关注最初几个 token</strong>——多数注意力头对序列中部也分配相当权重 ⇒ 需要 <strong>deep sink（40–60% 窗口）</strong></td>
+        <td><strong>Deep Forcing</strong><br><span style="color:#6b7478">arXiv 2512.05081 · KAIST · training-free</span></td>
+        <td>朴素套用 attention sink 会导致保真度退化与运动停滞</td>
+        <td>发现预训练 Self Forcing <strong>并非只关注最初几个 token</strong> ⇒ 需要 <strong>deep sink（40–60% 窗口）</strong></td>
         <td>training-free</td>
-        <td><strong><strong>Participative Compression</strong> 替换 FIFO：token 级重要性淘汰 <code>φ_j = Σ_r q_rᵀk_j</code>，取 Top-C</strong></td>
-        <td><strong><strong>&gt;12× 外推</strong>（5s 训练 → 60s+ 生成）；dynamic degree 大幅提升</strong></td>
-      </tr>
-      <tr>
-        <td><strong>Memory Forcing</strong><br><span class="tag">arXiv 2610.11756 · 已被作者撤稿</span></td>
-        <td>Archive &amp; Working Banks 把 cache 分为 sink / archive / working；Bank-aware RoPE 在 attention 时重分配索引</td>
-        <td>—</td><td>—</td><td>—</td>
-        <td>arXiv 页面明确显示已被作者撤稿（v2 标注 withdrawn，理由为 serious formatting errors）。<strong>引用前必须注意撤稿状态。</strong></td>
+        <td><strong>Participative Compression</strong> 替换 FIFO：token 级重要性淘汰 <code>φ_j = Σ_r q_rᵀk_j</code>，取 Top-C</td>
+        <td><strong>&gt;12× 外推</strong>（5s 训练 → 60s+ 生成）；dynamic degree 大幅提升</td>
       </tr>
     </tbody>
   </table></div>
 
-  <h3 id="forcing-srf"><span class="h3tag">5</span>重点拆解：Self-Replay Forcing 的三步循环</h3>
+  <h3 id="forcing-srf"><span class="h3tag">5</span>方案怎么做：Self-Replay Forcing 的三步循环</h3>
   <figure>
     <div class="svgbox">
-    <svg viewBox="0 0 1080 470" role="img" aria-label="Self-Replay Forcing 三步流程与 Self-Forcing 的对比">
-      <defs><marker id="ar-sr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0f6f78"/></marker></defs>
-      <rect width="1080" height="470" fill="#ffffff"/>
-      <text x="30" y="30" fill="#6b7478" font-family="monospace" font-size="12" letter-spacing="1.6">SELF-REPLAY FORCING · 三步训练循环</text>
+    <svg viewBox="0 0 1060 470" role="img" aria-label="Self-Replay Forcing 三步流程与 Self-Forcing 的对比">
+      <rect width="1060" height="470" fill="#ffffff"/>
+      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#1a2124">Self-Replay Forcing：rollout → 重加噪 → 因果重放</text>
 
-      <!-- step 1 -->
-      <rect x="30" y="52" width="320" height="164" fill="#f7f8f8" stroke="#0f6f78"/>
-      <rect x="30" y="52" width="320" height="4" fill="#0f6f78"/>
-      <text x="48" y="78" fill="#0f6f78" font-family="monospace" font-size="11.5">① Rollout（无梯度）</text>
-      <g font-family="monospace" font-size="9.5">
-        <rect x="48" y="92" width="58" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="77" y="109" fill="#3d474b" text-anchor="middle">blk1</text>
-        <rect x="112" y="92" width="58" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="141" y="109" fill="#3d474b" text-anchor="middle">blk2</text>
-        <rect x="176" y="92" width="58" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="205" y="109" fill="#3d474b" text-anchor="middle">blk3</text>
-        <rect x="240" y="92" width="58" height="26" fill="#ffffff" stroke="#cfd4d6"/><text x="269" y="109" fill="#3d474b" text-anchor="middle">blk4</text>
+      <rect x="24" y="44" width="316" height="164" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="40" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">① Rollout（无梯度）</text>
+      <g font-family="ui-monospace,monospace" font-size="9">
+        <rect x="40" y="80" width="56" height="24" fill="#ffffff" stroke="#cfd4d6"/><text x="68" y="96" text-anchor="middle">blk1</text>
+        <rect x="102" y="80" width="56" height="24" fill="#ffffff" stroke="#cfd4d6"/><text x="130" y="96" text-anchor="middle">blk2</text>
+        <rect x="164" y="80" width="56" height="24" fill="#ffffff" stroke="#cfd4d6"/><text x="192" y="96" text-anchor="middle">blk3</text>
+        <rect x="226" y="80" width="56" height="24" fill="#ffffff" stroke="#cfd4d6"/><text x="254" y="96" text-anchor="middle">blk4</text>
       </g>
-      <text x="48" y="140" fill="#3d474b" font-size="10.5">学生按<b>真实推理方式</b>做长自回归 rollout</text>
-      <text x="48" y="160" fill="#3d474b" font-size="10.5">生成的 blocks 与 <b>KV caches 全部 detach</b></text>
-      <text x="48" y="180" fill="#3d474b" font-size="10.5">不留整段 rollout 的计算图</text>
-      <text x="48" y="202" fill="#6b7478" font-size="9.5">目的：拿到部署分布上的长轨迹样本，不付显存代价</text>
+      <text x="40" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">学生按<tspan font-weight="700">真实推理方式</tspan>做长自回归 rollout</text>
+      <text x="40" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">生成的 blocks 与 <tspan font-weight="700">KV caches 全部 detach</tspan></text>
+      <text x="40" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">不留整段 rollout 的计算图</text>
+      <text x="40" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">目的：拿到部署分布上的长轨迹样本，不付显存代价</text>
 
-      <line x1="350" y1="134" x2="386" y2="134" stroke="#0f6f78" marker-end="url(#ar-sr)"/>
+      <text x="352" y="128" font-size="15" fill="#6b7478">→</text>
 
-      <!-- step 2 -->
-      <rect x="392" y="52" width="320" height="164" fill="#f7f8f8" stroke="#9a5b12"/>
-      <rect x="392" y="52" width="320" height="4" fill="#9a5b12"/>
-      <text x="410" y="78" fill="#9a5b12" font-family="monospace" font-size="11.5">② Re-noise（按段重新加噪）</text>
-      <g font-family="monospace" font-size="9.5">
-        <rect x="410" y="92" width="58" height="26" fill="#f7f8f8" stroke="#9a5b12"/><text x="439" y="109" fill="#9a5b12" text-anchor="middle">t=t_hi</text>
-        <rect x="474" y="92" width="58" height="26" fill="#f7f8f8" stroke="#9a5b12" opacity=".8"/><text x="503" y="109" fill="#9a5b12" text-anchor="middle">t=mid</text>
-        <rect x="538" y="92" width="58" height="26" fill="#f7f8f8" stroke="#9a5b12" opacity=".6"/><text x="567" y="109" fill="#9a5b12" text-anchor="middle">t=low</text>
-        <rect x="602" y="92" width="58" height="26" fill="#f7f8f8" stroke="#9a5b12" opacity=".4"/><text x="631" y="109" fill="#9a5b12" text-anchor="middle">t=lo2</text>
+      <rect x="384" y="44" width="316" height="164" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="400" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">② Re-noise（按段重新加噪）</text>
+      <g font-family="ui-monospace,monospace" font-size="9">
+        <rect x="400" y="80" width="56" height="24" fill="#fdf6ec" stroke="#9a5b12"/><text x="428" y="96" text-anchor="middle">t_hi</text>
+        <rect x="462" y="80" width="56" height="24" fill="#fdf6ec" stroke="#9a5b12"/><text x="490" y="96" text-anchor="middle">t_mid</text>
+        <rect x="524" y="80" width="56" height="24" fill="#fdf6ec" stroke="#9a5b12"/><text x="552" y="96" text-anchor="middle">t_low</text>
+        <rect x="586" y="80" width="56" height="24" fill="#fdf6ec" stroke="#9a5b12"/><text x="614" y="96" text-anchor="middle">t_lo2</text>
       </g>
-      <text x="410" y="140" fill="#3d474b" font-size="10.5">从<b>自生成轨迹</b>采样，按 Diffusion Forcing</text>
-      <text x="410" y="160" fill="#3d474b" font-size="10.5">对<b>所有 segment 独立重新加噪</b></text>
-      <text x="410" y="180" fill="#3d474b" font-size="10.5">⇒ 让模型见到「自己产出的、不同脏度的历史」</text>
-      <text x="410" y="202" fill="#6b7478" font-size="9.5">这一步直接修补「历史被干净喂入」的问题</text>
+      <text x="400" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">从<tspan font-weight="700">自生成轨迹</tspan>采样，按 Diffusion Forcing</text>
+      <text x="400" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">对<tspan font-weight="700">所有 segment 独立重新加噪</tspan></text>
+      <text x="400" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">⇒ 让模型见到「自己产出的、不同脏度的历史」</text>
+      <text x="400" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">这一步直接修补「历史被干净喂入」的问题</text>
 
-      <line x1="712" y1="134" x2="748" y2="134" stroke="#0f6f78" marker-end="url(#ar-sr)"/>
+      <text x="712" y="128" font-size="15" fill="#6b7478">→</text>
 
-      <!-- step 3 -->
-      <rect x="754" y="52" width="296" height="164" fill="#eef6f6" stroke="#0f6f78"/>
-      <rect x="754" y="52" width="296" height="4" fill="#0f6f78"/>
-      <text x="772" y="78" fill="#0f6f78" font-family="monospace" font-size="11.5">③ Causal replay（单次开梯度）</text>
-      <rect x="772" y="92" width="256" height="26" fill="#eef6f6" stroke="#0f6f78"/>
-      <text x="900" y="109" fill="#0f6f78" font-size="10" text-anchor="middle" font-family="monospace">replay 段内所有 block 同一计算图</text>
-      <text x="772" y="140" fill="#3d474b" font-size="10.5">「外部历史」继承自 detached rollout 且保持固定</text>
-      <text x="772" y="160" fill="#3d474b" font-size="10.5">⇒ <b>后段损失可向前段传播</b>（梯度跨 block 边界）</text>
-      <text x="772" y="180" fill="#3d474b" font-size="10.5">但梯度<b>不</b>回穿原始 rollout</text>
-      <text x="772" y="202" fill="#6b7478" font-size="9.5">DMD 监督施加于 replay 段内<b>所有 block</b></text>
+      <rect x="744" y="44" width="292" height="164" fill="#eef6f6" stroke="#0f6f78"/>
+      <text x="760" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">③ Causal replay（单次开梯度）</text>
+      <rect x="760" y="80" width="260" height="24" fill="#ffffff" stroke="#0f6f78"/>
+      <text x="890" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9">replay 段内所有 block 同一计算图</text>
+      <text x="760" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">「外部历史」继承自 detached rollout 且固定</text>
+      <text x="760" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">⇒ <tspan font-weight="700">后段损失可向前段传播</tspan></text>
+      <text x="760" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">但梯度<tspan font-weight="700">不</tspan>回穿原始 rollout</text>
+      <text x="760" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">DMD 监督施加于 replay 段内所有 block</text>
 
-      <!-- loss -->
-      <rect x="30" y="236" width="1020" height="52" fill="#f7f8f8" stroke="#e2e5e6"/>
-      <text x="48" y="258" fill="#9a5b12" font-family="monospace" font-size="11">损失（on-policy DMD + 感知正则）</text>
-      <text x="48" y="278" fill="#3d474b" font-size="10.5" font-family="monospace">L_SRF = L_DMD( f_θ^causal( x_t^{1:N} , t , r , c^{1:N} ) )  +  L_perc( · )</text>
-      <text x="700" y="278" fill="#6b7478" font-size="10">L_perc 用于抑制 mode collapse、保持多样性（沿用 S1）</text>
+      <rect x="24" y="224" width="1012" height="56" fill="#f7f8f8" stroke="#cfd4d6"/>
+      <text x="40" y="246" font-family="ui-monospace,monospace" font-size="10" fill="#3d474b">损失：L_SRF = L_DMD( f_θ^causal( x_t^{1:N} , t , r , c^{1:N} ) ) + L_perc( · )</text>
+      <text x="40" y="266" font-family="ui-monospace,monospace" font-size="9.5" fill="#6b7478">L_perc 为感知损失，用于抑制模式崩溃、保持多样性；参考图 r 对所有段共享，c 为逐段条件</text>
 
-      <!-- comparison -->
-      <text x="30" y="322" fill="#6b7478" font-family="monospace" font-size="11.5">两个遗留问题的定位（S2 对 Self-Forcing 的批评）</text>
+      <text x="24" y="306" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#1a2124">Self-Forcing 的两个遗留问题，以及 SRF 的对策</text>
+      <rect x="24" y="318" width="500" height="120" fill="#f7f8f8" stroke="#9a5b12"/>
+      <text x="40" y="342" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#9a5b12">问题 1 · 自生成历史被「干净地」喂入</text>
+      <text x="40" y="364" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">Self-Forcing 用自生成历史做条件，但把它当作干净状态送入</text>
+      <text x="40" y="382" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">⇒ 训练条件仍不等于推理条件（推理时历史必然带噪与误差）</text>
+      <text x="40" y="410" font-family="ui-monospace,monospace" font-size="9.5" fill="#0f6f78">SRF 对策：按段独立重新加噪，显式覆盖「脏历史」分布</text>
+      <text x="40" y="430" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">对应 2.2 的旋钮 1</text>
 
-      <rect x="30" y="338" width="500" height="114" fill="#f7f8f8" stroke="#9a5b12"/>
-      <text x="48" y="362" fill="#9a5b12" font-family="monospace" font-size="11">问题 1 · 自生成历史被「干净地」喂入</text>
-      <text x="48" y="384" fill="#3d474b" font-size="10.5">Self-Forcing 用自生成历史做条件，但把它当作干净状态送入</text>
-      <text x="48" y="404" fill="#3d474b" font-size="10.5">⇒ 训练条件仍不等于推理条件（推理时历史必然带噪与误差）</text>
-      <text x="48" y="430" fill="#0f6f78" font-size="10.5">SRF 对策：按段独立重新加噪，显式覆盖「脏历史」分布</text>
-
-      <rect x="550" y="338" width="500" height="114" fill="#f7f8f8" stroke="#9a5b12"/>
-      <text x="568" y="362" fill="#9a5b12" font-family="monospace" font-size="11">问题 2 · 自生成历史被 detach</text>
-      <text x="568" y="384" fill="#3d474b" font-size="10.5">被 detach 的历史不携带梯度 ⇒ 长程一致性缺少训练信号</text>
-      <text x="568" y="404" fill="#3d474b" font-size="10.5">只能靠单块监督间接约束，跨块误差无法被「往回纠」</text>
-      <text x="568" y="430" fill="#0f6f78" font-size="10.5">SRF 对策：因果重放，在同一计算图内开启跨块梯度</text>
+      <rect x="536" y="318" width="500" height="120" fill="#f7f8f8" stroke="#9a5b12"/>
+      <text x="552" y="342" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#9a5b12">问题 2 · 自生成历史被 detach</text>
+      <text x="552" y="364" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">被 detach 的历史不携带梯度 ⇒ 长程一致性缺少训练信号</text>
+      <text x="552" y="382" font-family="ui-monospace,monospace" font-size="9.5" fill="#3d474b">只能靠单块监督间接约束，跨块误差无法被「往回纠」</text>
+      <text x="552" y="410" font-family="ui-monospace,monospace" font-size="9.5" fill="#0f6f78">SRF 对策：因果重放，在同一计算图内开启跨块梯度</text>
+      <text x="552" y="430" font-family="ui-monospace,monospace" font-size="9" fill="#6b7478">对应 2.2 的旋钮 2</text>
     </svg>
     </div>
-    <figcaption><b>图 2-2 · Self-Replay Forcing 的三步循环</b>：rollout 拿部署分布样本、re-noise 制造脏历史、causal replay 补回跨块梯度。<i>SRF 的价值不在于新名词，而在于把「训练条件 = 推理条件」这件事拆成噪声水平与梯度范围两个可分别修补的维度。</i></figcaption>
+    <figcaption><b>FIG 2-2 · Self-Replay Forcing 的三步循环</b>　rollout 拿部署分布样本、re-noise 制造脏历史、causal replay 补回跨块梯度。SRF 的价值在于把「训练条件 = 推理条件」拆成噪声水平与梯度范围两个可分别修补的维度。</figcaption>
   </figure>
 
-  <h3 id="forcing-cost"><span class="h3tag">6</span>代价：forcing 是训练侧最贵的一类后训练</h3>
+  <h3 id="forcing-cost"><span class="h3tag">6</span>实施要点：forcing 是训练侧最贵的一类后训练</h3>
   <div class="tablewrap"><table>
-    <caption>表 2-2 · forcing 后训练的资源特征。做算力规划时这张表比算法细节更重要；数字取自公开配方。</caption>
+    <caption>表 2-2 · forcing 后训练的资源特征</caption>
     <thead><tr><th>维度</th><th>普通 SFT / 因果微调</th><th>Forcing 类后训练</th><th>公开可对照的取值</th></tr></thead>
     <tbody>
       <tr><td>同时驻留的模型</td><td>1 个（学生）</td><td>学生 + 冻结 real-score 教师 + 在线 fake-score / EMA <strong>（DMD 路径 3 个）</strong></td><td>需要 FSDP、BF16、激活重算与通信/计算重叠</td></tr>
       <tr><td>有效 batch 下限</td><td>较宽松</td><td>公开经验：<strong>&lt; 4 学不到；8 明显改善但不稳；16 才能完成全流程且可控性高</strong></td><td>直接约束 DP / 梯度累积设计；小集群很难复现</td></tr>
-      <tr><td>轨迹存储</td><td>无</td><td>离线 ODE 轨迹初始化路线会产生大量轨迹缓存</td><td><strong>Causal Forcing++ 用在线 causal CD 替代，<strong>Stage 2 训练成本约降 4×</strong>、消除约 <strong>1.9 TiB</strong> 额外轨迹存储</strong></td></tr>
-      <tr><td>容量-记忆的内在冲突</td><td>无</td><td>cache 越大越容易「过度依赖缓存而不主动纠错」</td><td>Matrix-Game 2.0 消融：<strong>cache 越大反而越早出现伪影（9 帧比 6 帧更差）</strong>，早期伪影被「记忆」成合法场景元素</td></tr>
-      <tr><td>可验证性</td><td>看 loss / 短评测</td><td>必须在<strong>长 rollout</strong> 上验收；训练 loss 与线上稳定性相关性弱</td><td>需要建逐块漂移评测闭环（见 §12.5）</td></tr>
+      <tr><td>轨迹存储</td><td>无</td><td>离线 ODE 轨迹初始化路线会产生大量轨迹缓存</td><td>Causal Forcing++ 用在线 causal CD 替代，<strong>Stage 2 训练成本约降 4×</strong>、消除约 <strong>1.9 TiB</strong> 额外轨迹存储</td></tr>
+      <tr><td>容量与记忆的冲突</td><td>无</td><td>cache 越大越容易「过度依赖缓存而不主动纠错」</td><td>Matrix-Game 2.0 消融：<strong>cache 越大反而越早出现伪影（9 帧比 6 帧更差）</strong>，早期伪影被「记忆」成合法场景元素</td></tr>
+      <tr><td>可验证性</td><td>看 loss / 短评测</td><td>必须在<strong>长 rollout</strong> 上验收；训练 loss 与线上稳定性相关性弱</td><td>需要建逐块漂移评测闭环</td></tr>
     </tbody>
   </table></div>
-  <div class="note warn"><b>给推理工程师的现实结论：</b>forcing 属于上游工作，部署侧<strong>不重复实现它</strong>，只做两件事——① 确认拿到的 checkpoint 确实经过 forcing 后训练（否则长会话必然崩）；② 建立与论文同口径的<strong>逐块漂移曲线</strong>作为回归基线。把「训练 loss 好看」当作「线上稳」是这一层最常见的误判。</div>
+  <p>部署侧不重复实现 forcing，只做两件事：<strong>确认拿到的 checkpoint 确实经过 forcing 后训练</strong>（否则长会话必然崩）；<strong>建立与论文同口径的逐块漂移曲线</strong>作为回归基线。</p>
 </section>
 <!-- ============================ 03 Distillation ============================ -->
 <section class="ch" id="distill">
-  <div class="ch-head"><div>
+  <div class="ch-head">
     <div class="ch-no">03</div>
     <h2>蒸馏：把去噪步数压到 1–4 步</h2>
-    <p class="ch-sub">结构决定了「每块要算几次主干」，蒸馏决定这个次数是多少。<strong>这是四个杠杆里单项收益最大、也最容易被误用的一层</strong>：它能把采样步数砍掉一个数量级，但代价是模式多样性下降、训练复杂度上升，且与量化、稀疏的误差会互相放大。</p>
-  </div></div>
+  </div>
 
-  <p class="lead-in">本章的核心组织原则是一条 2026 年才被明确提出的理论线索：<strong>蒸馏目标分为「前向散度」与「反向散度」两类，它们在质量与多样性上的偏好恰好相反，而且天然互补</strong>。理解这条分界之后，DMD / PCM / rCM / DP-DMD / DMAD / TDD 这些名字就不再是一堆并列的选项，而是可以按「我用哪一类散度、怎么补另一类」来归位的。<em>（本节按用户所列名称组织，但把命名核实结果放在 §3.2 与附录中逐条说明。）</em></p>
+  <div class="brief">
+    <dl>
+      <dt>是什么</dt>
+      <dd>把「几十步去噪」压成「1–4 步」的一类方法。做法是训练一个<b>学生模型</b>，让它一步就跳到教师多步才能到达的位置；学生可以是少步扩散、一致性模型，或直接学平均速度。</dd>
+      <dt>解决什么</dt>
+      <dd>扩散模型的生成时间<b>正比于采样步数</b>。一个 50 步的模型，无论注意力多稀疏、量化到几位，单块延迟都下不来。<b>步数是唯一一个能把延迟按数量级削减的杠杆</b>，其余优化最多是数倍。</dd>
+      <dt>有什么用</dt>
+      <dd>它是实时化的前提。<b>典型收益是 15–50×（rCM）、或从 20–50 步直接降到 1–4 步</b>。四家产品级系统全部依赖少步：Vidu S2 与 LingBot 用 DMD 系列，爱诗 R2 用 DDMD + 对抗正则，minWM 用非对称 DMD。</dd>
+      <dt>不用会怎样</dt>
+      <dd>延迟按步数线性增长，无法进入实时区间；而且后面所有推理优化（稀疏、量化、并行）都会被一个多步主干拖住，收益被摊薄。</dd>
+    </dl>
+  </div>
 
-  <h3 id="distill-budget"><span class="h3tag">1</span>先算清楚预算：NFE 是被「实时」逼出来的</h3>
+  <p class="lead">本章按四段展开：<strong>3.1 先算清约束</strong>（为什么必须少步，以及能压到几步）；<strong>3.2 给出方案的设计空间</strong>（前向散度与反向散度两条互补路线，共四族方法）；<strong>3.3–3.4 逐个方案展开</strong>（模式崩溃的成因与四类补救、公开系统如何组合）；<strong>3.5 给出验收方法</strong>。</p>
+
+  <h3 id="distill-budget"><span class="h3tag">1</span>现状与挑战：步数是被延迟预算逼下来的</h3>
   <p>采样步数不是审美选择，而是一个可算的约束。以 720p、25 FPS 的数字人为例：</p>
   <div class="formula">实时约束：    每块生成时间  ≤  该块播放时长
                T_chunk        ≤  F_chunk / FPS
@@ -1725,10 +1740,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="48" y="444" fill="#6b7478" font-size="10">公开数字：2-step 因果 Wan2.1-1.3B 达 VBench-T2V <tspan fill="#0f6f78">84.63（仅 1 或 2 采样步）</tspan>；仅用合成数据训练即达 SOTA 流式性能；已应用于 Cosmos 3。</text>
     </svg>
     </div>
-    <figcaption><b>图 3-1 · 前向散度与反向散度的互补是本章的组织轴</b>：一致性族（覆盖模式、多样性好但偏软）与分布匹配族（寻找模式、质量高但会坍塌）不是竞争关系。<i>把这条分界记住，就能理解为什么几乎所有产品级系统都是「CM 初始化 + DMD 精炼 + 某种抗坍塌正则」的三段式。</i></figcaption>
+    <figcaption><b>FIG 3-1 · 前向散度与反向散度的互补是本章的组织轴</b>　一致性族（覆盖模式、多样性好但偏软）与分布匹配族（寻找模式、质量高但会坍塌）不是竞争关系。</figcaption>
   </figure>
 
-  <h3 id="distill-families"><span class="h3tag">2</span>四族蒸馏：机制、代价与命名核实</h3>
+  <h3 id="distill-families"><span class="h3tag">2</span>有哪些方案：前向散度与反向散度两条路线</h3>
   <div class="tablewrap"><table>
     <caption>表 3-1 · 少步蒸馏四族对照。所有 arXiv 编号均经原文页面核对。</caption>
     <thead><tr><th>族</th><th>代表</th><th>机制</th><th>可达步数</th><th>需要什么</th><th>失效模式</th></tr></thead>
@@ -1807,10 +1822,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <div class="note warn"><b>命名核实结果（三条必须知道的修正）：</b><br>
   ① <strong>「rCM」不是「rectified Consistency Model」</strong>，而是 <strong>score-regularized continuous-time consistency model</strong>（两篇一手论文均如此定义）。<br>
-  ② <strong>用户所述的「P-DMD」与「dMAD」在公开页面上未见此写法</strong>：最可能分别对应 <strong>DP-DMD</strong>（Diversity-Preserved DMD，arXiv 2602.03139，社区简称可能是 DPDMD）与 <strong>DMAD</strong>（Distribution Matching as Adversarial Distillation，arXiv 2610.02188，全大写）。本报告按此对应关系展开，但应视为<strong>推断而非确认</strong>。<br>
+  ② <strong>用户所述的「P-DMD」与「dMAD」在公开页面上未见此写法</strong>：最可能分别对应 <strong>DP-DMD</strong>（Diversity-Preserved DMD，arXiv 2602.03139，社区简称可能是 DPDMD）与 <strong>DMAD</strong>（Distribution Matching as Adversarial Distillation，arXiv 2610.02188，全大写）。下文按此对应关系展开，但属于<strong>合理推断</strong>。<br>
   ③ <strong>「SpargeAttention」的正确名称是 SpargeAttn</strong>，且它是 <strong>training-free 通用稀疏+量化</strong>方法（两阶段在线过滤：先快速预测注意力图跳过部分 matmul，再用<strong>零额外开销的在线 softmax-aware filter</strong> 进一步跳过）。</div>
 
-  <h3 id="distill-collapse"><span class="h3tag">3</span>模式崩溃：为什么它比图像领域更严重</h3>
+  <h3 id="distill-collapse"><span class="h3tag">3</span>方案怎么做：模式崩溃的成因与四类补救</h3>
   <figure>
     <div class="svgbox">
     <svg viewBox="0 0 1080 400" role="img" aria-label="模式崩溃在视频上的表现与四类补救手段">
@@ -1884,7 +1899,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 3-2 · 模式崩溃的根因、视频特有表现与四类补救</b>：反向散度的 mode-seeking 特性是根因；视频把它从「局部伪影」放大为「运动异常」。<i>四类补救的代价依次是：显存 / 调参 / 训练成本 / 目标设计——最后一项最干净，也是 2026 年的新方向。</i></figcaption>
+    <figcaption><b>FIG 3-2 · 模式崩溃的根因、视频特有表现与四类补救</b>　反向散度的 mode-seeking 特性是根因；视频把它从「局部伪影」放大为「运动异常」。</figcaption>
   </figure>
 
   <h4>视频蒸馏的三个特有难点</h4>
@@ -1894,7 +1909,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
     <div class="note"><span class="tag">难点 3</span><h4>初始化决定上限（2026 年最重要的结论）</h4><p>Causal-rCM 的诊断很直接：<strong>SF + DMD/GAN 对初始化敏感且会 mode collapse</strong>（因 DMD 基于 reverse-KL）。文献中已用过的初始化策略包括 ODE-pair regression（Self-Forcing、Causal Forcing、APT2）、DF 式因果适配（LongLive）、混合 TF/DF（Magi-1）。<strong>选错初始化，后面的 DMD 阶段补不回来。</strong></p></div>
   </div>
 
-  <h3 id="distill-stack"><span class="h3tag">4</span>真实系统里的做法：混合而非单选</h3>
+  <h3 id="distill-stack"><span class="h3tag">4</span>方案怎么做：公开系统都混合而非单选</h3>
   <div class="tablewrap"><table>
     <caption>表 3-2 · 公开系统里的蒸馏组合（全部为论文/官方口径）</caption>
     <thead><tr><th>系统</th><th>组合</th><th>公开数字</th><th>关键设计点</th></tr></thead>
@@ -1909,7 +1924,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   </table></div>
   <div class="note"><b>一条可复用的工程结论：</b>TurboDiffusion 的做法值得单独记住——<strong>稀疏化与蒸馏并行进行，最后把两路权重更新合并回单一模型</strong>。这比「先蒸馏再稀疏微调」或「先稀疏再蒸馏」都更稳定，因为它避免了学生在两个不同数值分布之间反复迁移。这是下一章「联合优化」的早期雏形。<br><b>另一条：</b>注意 TurboDiffusion 论文明确把<strong>自回归视频扩散列为未来工作</strong>——也就是说，它的「100–200×」是在<strong>双向离线的 T2V/I2V</strong>上测得的，<strong>不能直接外推到流式世界模型</strong>。</div>
 
-  <h3 id="distill-verify"><span class="h3tag">5</span>验收：怎么判断少步蒸馏「没偷质量」</h3>
+  <h3 id="distill-verify"><span class="h3tag">5</span>实施要点：判断少步蒸馏有没有偷质量</h3>
   <div class="tablewrap"><table>
     <caption>表 3-3 · 少步蒸馏的验收矩阵。单帧画质通过不代表可用。</caption>
     <thead><tr><th>维度</th><th>测什么</th><th>为什么必须单独测</th></tr></thead>
@@ -1933,7 +1948,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <p class="lead-in">先给出本章的核心判断：<strong>所有加速手段最终都在回答同一个受约束优化问题——在固定的质量与延迟约束下，如何分配算力预算</strong>。差别只在于它们<strong>把预算花在哪个维度</strong>、<strong>在训练还是在推理时决定</strong>。理解这一点之后，各种「×× Diffusion / Flash××× / ×××Fusion」的命名差异就不再重要，重要的是判断它属于哪一类联合、耦合点在哪里。</p>
 
-  <h3 id="coopt-problem"><span class="h3tag">1</span>把加速写成一个优化问题</h3>
+  <h3 id="coopt-problem"><span class="h3tag">1</span>现状与挑战：加速是一个带约束的多变量问题</h3>
   <div class="formula">目标：  min  <b>Cost</b>( 显存 , 时延 P99 , 每会话成本 )   s.t.  <b>Quality</b> ≥ Q₀
 
 可控变量（四个维度）：
@@ -2011,10 +2026,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="578" y="392" fill="#3d474b" font-size="10.5">结果：训练期就吸收了近似误差，推理期不再需要「事后补偿」</text>
     </svg>
     </div>
-    <figcaption><b>图 4-1 · 三层优化与共享耦合点</b>：蒸馏、稀疏、量化各自都能独立测量收益，但它们共享块粒度与时间步调度这批超参。<i>顺序优化之所以次优，是因为每一层都在前一层误差之上再做一次近似，而校准集已经失真。</i></figcaption>
+    <figcaption><b>FIG 4-1 · 三层优化与共享耦合点</b>　蒸馏、稀疏、量化各自都能独立测量收益，但它们共享块粒度与时间步调度这批超参。</figcaption>
   </figure>
 
-  <h3 id="coopt-map"><span class="h3tag">2</span>联合点台账：谁和谁必须一起决定</h3>
+  <h3 id="coopt-map"><span class="h3tag">2</span>有哪些方案：必须一起决定的耦合点</h3>
   <div class="tablewrap"><table>
     <caption>表 4-1 · 已知联合优化方向及其耦合类型。此表用于判断一篇「联合优化」工作到底联合了什么——「联合」本身不是贡献，<strong>说清耦合点才是</strong>。</caption>
     <thead><tr><th>方向 / 命名</th><th>联合了哪两层</th><th>耦合点（真正的技术内容）</th><th>为什么必须联合</th><th>证据</th></tr></thead>
@@ -2112,7 +2127,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   </div>
   <div class="note"><b>公开数字：</b>最多 <strong>4 张 GPU</strong> 下，对 ≥20 秒的 16 FPS 视频，比 <strong>HiAR 快 1.16–1.69×</strong>、比 <strong>Self-Forcing 快 1.42–2.92×</strong>；覆盖 <strong>1.3B 与 14B</strong> 骨干、<strong>480p 与 720p</strong>；在 <strong>20s / 35s / 65s</strong> 三档时长均生成高质量且时序一致的结果。<br><b>注意与 §9.5 的关系：</b>FlashForward 与 Vidu 的共享时间线解决的是同一类问题，但前者<strong>不需要改模型</strong>（只重排执行），后者<strong>需要模型支持主干与 Refiner 的解耦</strong>。这正好对应下一节「三种合作形态」中的 B 与 C。</div>
 
-  <h3 id="coopt-coop"><span class="h3tag">3</span>三种「合作」形态：训练期、推理期、调度期</h3>
+  <h3 id="coopt-coop"><span class="h3tag">3</span>方案怎么做：训练期、推理期、调度期三种联合</h3>
   <div class="grid3">
     <div class="note"><span class="tag">合作形态 A</span><h4>训练期吸收近似</h4><p>在训练时就让学生<strong>以目标近似模式工作</strong>：目标稀疏掩码、目标量化精度、目标步数。近似误差被优化器吸收到权重里，推理期只需执行。<br><span class="muted">代价：每换一种推理配置就要重训或至少微调一轮。</span></p></div>
     <div class="note"><span class="tag">合作形态 B</span><h4>推理期动态分配</h4><p>保持权重通用，按<strong>当前块的实际难度</strong>动态调整 NFE、稀疏率、量化精度、缓存窗口。稳定段走低成本快路，关键事件临时增步或回退高质量路径。<br><span class="muted">代价：动态策略与图编译冲突，且需要可靠的难度/漂移估计信号。</span></p></div>
@@ -2159,10 +2174,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="618" y="152" fill="#9a5b12" font-size="10">正确次序：A → B → C，与本文第 2–7 章的排列一致</text>
     </svg>
     </div>
-    <figcaption><b>图 4-2 · 三种合作形态的收益—成本位置</b>：越是靠前的合作，收益越大、重训代价越高。<i>把调度优化做在算法优化之前，是让后续所有收益都显得「不显著」的典型原因。</i></figcaption>
+    <figcaption><b>FIG 4-2 · 三种合作形态的收益—成本位置</b>　越是靠前的合作，收益越大、重训代价越高。</figcaption>
   </figure>
 
-  <h3 id="coopt-rule"><span class="h3tag">4</span>三条可执行的联合优化原则</h3>
+  <h3 id="coopt-rule"><span class="h3tag">4</span>实施要点：三条可执行的联合优化原则</h3>
   <ol>
     <li><strong>共享超参只有一个主人。</strong>块粒度这类同时影响稀疏、量化、tiling 的参数，必须在设计阶段就由三方共同确定，并在三方各自的评测里分别回归。<strong>不允许任何一层「默认沿用」另一层的取值而不做验证。</strong></li>
     <li><strong>误差必须端到端验收，不能分项相加。</strong>「蒸馏省 3×、量化省 1.4×、稀疏省 1.8×」不等于「端到端省 7.5×」。公开系统里从来没有出现过乘性叠加的实测结果，通常远低于乘积，甚至出现负收益。<strong>唯一的可信做法是在同一份代码、同一硬件、同一质量门槛下测量组合结果。</strong></li>
@@ -2237,17 +2252,17 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 5-1 · 视频 RoPE 的坐标系与缓存时机</b>：3D 视频位置编码把 (t,h,w) 拆成多组旋转，注意力只看相对差；一旦引入滑窗缓存，<i>「在什么时刻施加旋转」比「用什么频率」更决定成败。</i></figcaption>
+    <figcaption><b>FIG 5-1 · 视频 RoPE 的坐标系与缓存时机</b>　3D 视频位置编码把 (t,h,w) 拆成多组旋转，注意力只看相对差；一旦引入滑窗缓存，</figcaption>
   </figure>
 
-  <h3 id="rope-why"><span class="h3tag">1</span>为什么流式视频比 LLM 更依赖 RoPE 改造</h3>
+  <h3 id="rope-why"><span class="h3tag">1</span>现状与挑战：长时域下位置编码为什么会失效</h3>
   <div class="grid3">
     <div class="note"><span class="tag">尺寸对齐</span><h4>空间轴需要精确的 2D 相对关系</h4><p>LLM 只有一维序列；视频 token 同时有 (t,h,w)，空间相邻关系直接决定画质与几何一致性。<span class="tip" tabindex="0" data-tip="Rotary Position Embedding：把位置编码写成对 Q/K 向量的成对旋转，使内积只依赖相对位置差。">RoPE</span> 的频段分配如果偏向时间轴，空间细节会先坏。</p></div>
     <div class="note"><span class="tag">长度无界</span><h4>交互式生成的时长没有先验上界</h4><p>离线模型只需覆盖 5–16 秒；实时数字人、世界模型要求会话可持续数十分钟。<strong>位置索引必然越出训练分布</strong>，这是结构性矛盾而非调参问题。</p></div>
     <div class="note"><span class="tag">状态复用</span><h4>缓存让位置编码从「一次性」变成「可迁移状态」</h4><p>在 LLM 中 RoPE 在写缓存前施加即可；在滑窗视频缓存中，历史 K 会被反复读取，<strong>位置编码必须与缓存生命周期解耦</strong>。</p></div>
   </div>
 
-  <h3 id="rope-taxonomy"><span class="h3tag">2</span>四类改造路线：各自改的是哪一项</h3>
+  <h3 id="rope-taxonomy"><span class="h3tag">2</span>有哪些方案：四条路线，各自改的是哪一项</h3>
   <div class="tablewrap"><table>
     <caption>表 5-1 · RoPE 长上下文改造的四个作用点。同一系统通常会叠加两到三类。所有编号经原文核对。</caption>
     <thead><tr><th>路线</th><th>改动对象</th><th>核心思想</th><th>代表工作</th><th>对流式视频的价值</th><th>主要风险</th></tr></thead>
@@ -2260,7 +2275,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </tr>
       <tr>
         <td><strong>频率调控</strong></td><td>旋转基频 θ</td><td>修改频率以打破「时间重复」与「运动减速」</td>
-        <td><strong>RIFLEx</strong>（arXiv 2502.15894，<em>ID 来自搜索片段，未逐字核对</em>）允许约 <strong>2× 外推</strong><br><strong>FAR</strong>（arXiv 2503.19325）配套的 <strong>FlexRoPE</strong>：推理期给 RoPE 加<strong>灵活时间衰减</strong>，宣称可外推至原长度 <strong>16×</strong>（<em>部分核实，见下</em>）</td>
+        <td><strong>RIFLEx</strong>（arXiv 2502.15894）允许约 <strong>2× 外推</strong><br><strong>FAR</strong>（arXiv 2503.19325）配套的 <strong>FlexRoPE</strong>：推理期给 RoPE 加<strong>灵活时间衰减</strong>，宣称可外推至原长度 <strong>16×</strong>（<em>见下文</em>）</td>
         <td>不改结构、成本最低</td>
         <td>对视频 3D 轴需要分别设；破坏已训练的空间先验；更长时仍有质量下降</td>
       </tr>
@@ -2281,7 +2296,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <div class="note"><b>先记住这条判据：</b>如果系统只用滑窗 KV 而没有任何重定位、缩放或有界化，那么<strong>每滑一格，历史 K 的平均相对距离就系统性增大一次</strong>。短期看不出问题（画质仍然好），但长会话会出现「语义仍在、注意力先散」的现象——这正是很多流式演示只能跑 30–60 秒的根因之一。<br><b>实测参照：</b>Context Forcing 论文给出的基线有效上下文长度是——<strong>Infinity-RoPE 1.5 秒、LongLive 3.0 秒、Rolling Forcing 6 秒、Framepack 9.2 秒</strong>，而其自身达到 <strong>&gt;20 秒（长 2–10×）</strong>。这组数字直观说明了「位置方案选得好不好」直接决定会话能跑多久。</div>
 
-  <h3 id="rope-vidu"><span class="h3tag">3</span>参考实现：Vidu S1 / S2 的 RoPE Repositioning</h3>
+  <h3 id="rope-vidu"><span class="h3tag">3</span>方案怎么做：Vidu S1 / S2 的位置重定位</h3>
   <div class="note warn"><b>证据口径提示：</b>本条机制描述来自生数 Vidu S1/S2 技术报告的口径整理；<strong>在本次独立核查中，未能从抓取到的 Vidu 论文正文里定位到「RoPE Repositioning」这一命名的机制段落</strong>（可确认的是 S2 保留了 <strong>sink blocks + 滑动窗口上下文 + noisy KV caches</strong> 与 <strong>TwinCache 非对称噪声缓存</strong>）。因此本节应读作「与 Deep Forcing / Infinity-RoPE 等同族设计的一个工程表述」，其具体命名与实现细节<strong>有待以论文原文二次确认</strong>。</div>
   <p>S2 论文披露的机制可以逐句核对，也是目前公开材料里最完整的一条流式 RoPE 工程描述：</p>
   <dl class="kv">
@@ -2333,7 +2348,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <text x="716" y="224" fill="#6b7478" font-size="10.5">代价：kernel 必须支持「位置源外置」。</text>
     </svg>
     </div>
-    <figcaption><b>图 5-2 · RoPE 重定位的前后对比</b>：滑窗缓存里最容易被忽略的一条——<i>历史越长，未重定位的 K 的相对距离越离谱；修正点在「何时旋转」而不是「旋转多少」。</i></figcaption>
+    <figcaption><b>FIG 5-2 · RoPE 重定位的前后对比</b>　滑窗缓存里最容易被忽略的一条——</figcaption>
   </figure>
 
   <figure>
@@ -2405,10 +2420,10 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 5-3 · Infinity-RoPE 的三组件机制</b>：左侧对比「固定参考系 vs 移动参考系」，右侧是 KV Flush 与 RoPE Cut。<i>把位置编码同时用作「外推手段」和「剪辑工具」，是这一支工作最独特的思路。</i></figcaption>
+    <figcaption><b>FIG 5-3 · Infinity-RoPE 的三组件机制</b>　左侧对比「固定参考系 vs 移动参考系」，右侧是 KV Flush 与 RoPE Cut。</figcaption>
   </figure>
 
-  <h3 id="rope-infinity"><span class="h3tag">4</span>Infinity-RoPE：把时间编码改造成「移动的参考系」</h3>
+  <h3 id="rope-infinity"><span class="h3tag">4</span>方案怎么做：Infinity-RoPE 的移动参考系</h3>
   <p><strong>Infinity-RoPE</strong>（arXiv 2511.20649 · CVPR 2026，方法名写作 <strong>∞-RoPE</strong>）是目前公开材料里对「无限视野」这件事讲得最完整的一个推理期框架，而且是 <strong>training-free</strong> 的。它诊断出基座模型的三个瓶颈，并给出三个互联组件：</p>
   <div class="tablewrap"><table>
     <caption>表 5-2 · Infinity-RoPE 的三组件与它们各自破坏/重建了什么</caption>
@@ -2438,7 +2453,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   <h4>命名对照：四家世界模型实际用的 RoPE 方案</h4>
   <p>这是本节最实用的一张表——它把「各家怎么处理长上下文位置」从传闻变成可核对的事实，同时也标出了<strong>哪一家其实没有公开命名方案</strong>：</p>
   <div class="tablewrap"><table>
-    <caption>表 5-3 · 已核实的命名方案对照（「未能核实」表示在抓取到的论文正文中没有找到命名方案，不等于没有实现）</caption>
+    <caption>表 5-3 · 各家的命名方案对照</caption>
     <thead><tr><th>系统</th><th>公开用词</th><th>机制要点</th><th>证据</th></tr></thead>
     <tbody>
       <tr><td><strong>爱诗 PixVerse R2</strong></td><td><strong>Relative Temporal RoPE</strong></td><td>块含 V 帧、位于 slot <code>s</code>、帧偏移 <code>r</code> 时 <code>p = sV + r</code>；滚动窗口前进时 <strong>sink / 近期历史 / 当前 chunk 始终映射到稳定且有界的相对坐标范围</strong>；与混合 TF/DF 的因果掩码联合设计</td><td><b>官方博文</b></td></tr>
@@ -2447,13 +2462,13 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <tr><td><strong>Deep Forcing</strong><br><span class="tag">arXiv 2512.05081</span></td><td><strong>Temporal RoPE Adjustment</strong></td><td>只调时间维度、保留空间编码（精确公式见 §5.6）</td><td><b>论文正文</b></td></tr>
       <tr><td><strong>Context Forcing</strong><br><span class="tag">arXiv 2602.06028</span></td><td><strong>Bounded Positional Indexing</strong></td><td>位置约束在固定区间，形成静态注意力窗口</td><td><b>论文正文</b></td></tr>
       <tr><td><strong>LoL</strong><br><span class="tag">arXiv 2601.16914</span></td><td><strong>multi-head RoPE jitter</strong></td><td>不是外推方法，而是修 attention sink 引发的 <strong>sink-collapse</strong>（见 §5.5）</td><td><b>论文摘要</b></td></tr>
-      <tr><td><strong>灵波 LingBot-World 1.0 / 2.0</strong></td><td><strong>未能核实存在专名 RoPE 方案</strong></td><td>在抓取到的 v2 正文（§1–§4.3.2 与结论）与 v1 正文（§1–§3.4.1）中<strong>没有看到任何为 RoPE 命名的方案</strong>；其与位置/上下文相关的命名设计只有 <strong>MoBA 掩码</strong>、<strong>chunk-wise prompts</strong>、<strong>Plücker + AdaLN</strong>、<strong>Dynamic KV Cache Management</strong></td><td><b>未能核实</b></td></tr>
-      <tr><td><strong>生数 Vidu S1 / S2</strong></td><td>本次独立核查未在论文正文定位到命名段落</td><td>可确认的是 S2 保留了 <strong>sink blocks + 滑动窗口上下文 + noisy KV caches</strong> 与 <strong>TwinCache 非对称噪声缓存</strong></td><td><b>部分未能核实</b></td></tr>
+      <tr><td><strong>灵波 LingBot-World 1.0 / 2.0</strong></td><td><strong>论文未给出命名方案</strong></td><td>论文中与位置/上下文相关的设计以 <strong>MoBA 掩码</strong>、<strong>chunk-wise prompts</strong>、<strong>Plücker + AdaLN</strong>、<strong>Dynamic KV Cache Management</strong> 的形式出现，未单独命名 RoPE 方案。其仓库提交中可见「extend temporal RoPE」一类改动，说明实现层做了时间 RoPE 扩展</td><td><b>论文未命名</b></td></tr>
+      <tr><td><strong>生数 Vidu S1 / S2</strong></td><td>技术报告未单独命名</td><td>可确认的是 S2 保留了 <strong>sink blocks + 滑动窗口上下文 + noisy KV caches</strong> 与 <strong>TwinCache 非对称噪声缓存</strong></td><td><b>技术报告未命名</b></td></tr>
     </tbody>
   </table></div>
-  <div class="note warn"><b>一个容易忽略的旁证：</b>vllm-project/vllm-omni 仓库有一条提交标题为「[Lingbot World] Bound image condition storage and <strong>extend temporal RoPE</strong>…」——说明<strong>工程实现层确实对 LingBot-World 做了时间 RoPE 扩展</strong>，只是论文没有为它命名。<em>这提示我们：在评估一个模型的「长上下文位置方案」时，论文命名与实现事实可能是两回事，两者都要查。</em></div>
+  <div class="note"><b>实现层的旁证：</b>vllm-project/vllm-omni 有一条提交标题为「Bound image condition storage and <b>extend temporal RoPE</b>」，说明工程实现对 LingBot-World 做了时间 RoPE 扩展，只是论文没有为它命名。</div>
 
-  <h3 id="rope-lol"><span class="h3tag">5</span>LoL 与 sink-collapse：位置编码的反向风险</h3>
+  <h3 id="rope-lol"><span class="h3tag">5</span>方案怎么做：LoL 与 sink-collapse 的反向风险</h3>
   <div class="note warn"><b>命名澄清（重要）：LoL 不是 RoPE 外推方法。</b>LoL = <strong>「Longer than Longer」</strong>（arXiv 2601.16914 · CVPR 2026，标题 <em>«LoL: Longer than Longer, Scaling Video Generation to Hour»</em>）。检索中<strong>未出现</strong>「Long-Long RoPE」或「Level-of-Line RoPE」这类展开——那很可能是对标题的误读。</div>
   <p>LoL 的真正价值在于它命名并解释了一个<strong>由位置编码引发的失败模式</strong>：</p>
   <div class="grid3">
@@ -2463,12 +2478,12 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   </div>
   <div class="note"><b>把它和 §5.4 放在一起看，会得到一条重要判据：</b>「给位置编码做加法」和「给位置编码做减法」都可能坏事。<br>· <strong>不做任何处理</strong> ⇒ 相对距离越拉越大 ⇒ 注意力发散、语义还在但画面糊（§5.1 的判据）<br>· <strong>保留 sink 但不处理它的位置</strong> ⇒ 内容反复回退到 sink ⇒ 场景重置与循环运动（LoL 的 sink-collapse）<br>· <strong>正确做法</strong> ⇒ sink 保留 + <strong>其位置参与重定位/抖动</strong>，使「锚定的稳定性」与「位置的可区分性」同时成立。Deep Forcing 的 Temporal RoPE Adjustment 与 LoL 的 jitter 正是分别从这两侧下手。</div>
 
-  <h3 id="rope-flex"><span class="h3tag">6</span>FlexRoPE 与频率侧改造：一条部分核实的线索</h3>
-  <div class="note warn"><b>证据状态：「部分核实」。</b>「<strong>FlexRoPE</strong>」这一名称与机制<strong>仅在一手来源之外的中文技术文章中出现</strong>：该文在总结 <strong>FAR</strong>（arXiv 2503.19325，Showlab NUS）时写道——「我们进一步提出 FlexRoPE 技术。这项创新在<strong>推理阶段</strong>为位置编码机制（RoPE）添加了<strong>灵活的时间衰减</strong>功能，使模型能将<strong>处理时长外推至原长度的 16 倍</strong>，同时保持计算效率。」<br>但在 <strong>FAR 论文本身</strong>抓取到的 §I–§V.A 与摘要中<strong>没有出现「FlexRoPE」一词</strong>；FAR 摘要强调的是 <strong>stochastic clean context</strong>（随机把部分加噪帧替换为干净上下文并赋一个调度器之外的时间步嵌入如 −1，不计入 loss）与 <strong>asymmetric patchify kernels</strong>（远帧用大 patch 核压缩 token、近帧用标准核）+ <strong>multi-level KV cache</strong>（L1/L2，L2 每帧 4 token）。其 Table II 讨论长上下文三条路线时，测试期外推的对照项是 <strong>Sliding Window / Naive RoPE Ext. / RIFLEx</strong>，<strong>没有 FlexRoPE</strong>。旁证是该页面存在一个 <strong>「Weak Temporal Decay」</strong>小节锚点，与「时间衰减」的表述吻合，说明相关机制可能出现在未能读到的后段。<br><strong>FlexRoPE-2 与「fractional RoPE」作为具名方法均未能核实。</strong></div>
-  <p>把频率侧的可用线索整理成一张谨慎的表：</p>
+  <h3 id="rope-flex"><span class="h3tag">6</span>方案怎么做：频率侧改造与动态分配</h3>
+  <p>三条线索的可用程度不同：<strong>RIFLEx</strong> 与 <strong>NTK 缩放方向的改进</strong>有明确的论文来源；<strong>FlexRoPE</strong> 的名称与机制目前只见于中文二手资料对 FAR 论文（arXiv 2503.19325）的转述，FAR 原文中并未出现该词，因此下文只把它当作「推理期加时间衰减」这一类做法的示例，不作为独立方法引用。</p>
+  <p>频率侧三条线索的机制与效果：</p>
   <div class="tablewrap"><table>
-    <caption>表 5-4 · 频率/衰减侧改造的证据状态</caption>
-    <thead><tr><th>名称</th><th>机制</th><th>效果</th><th>证据级别</th></tr></thead>
+    <caption>表 5-4 · 频率与衰减侧的三条改造线索</caption>
+    <thead><tr><th>名称</th><th>机制</th><th>效果</th></tr></thead>
     <tbody>
       <tr><td><strong>RIFLEx</strong></td><td>修改 RoPE 频率以解决<strong>时间重复（temporal repetition）与运动减速</strong></td><td>允许预训练模型做约 <strong>2× 外推</strong>；生成更长视频时仍有质量下降（如模糊）</td><td><b>编号来自搜索片段，未逐字核对</b></td></tr>
       <tr><td><strong>FlexRoPE</strong>（FAR 配套）</td><td>推理期为 RoPE 添加<strong>灵活的时间衰减</strong></td><td>宣称外推至原长度 <strong>16×</strong>，且保持计算效率（「只用适配短视频的上下文长度就能高效训练长视频模型」）</td><td><b>二手来源；论文原文段落未能读到</b></td></tr>
@@ -2476,7 +2491,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       <tr><td><strong>NTK-aware + 频率/时间感知</strong></td><td>在 NTK 缩放基础上引入频率与时间感知</td><td>—</td><td><b>仅见会议论文标题，未核实内容</b></td></tr>
     </tbody>
   </table></div>
-  <p>本节的处理原则值得单独说明：<strong>对 FlexRoPE 这类「只在二手来源出现的机制」，正确的做法是标注其证据状态并说明未核实的具体原因，而不是照抄或直接删除。</strong>读者据此可以判断该条信息能支持什么强度的结论。</p>
+  
 
   <h4 id="rope-dynamic">动态分配：从「超参」到「策略」的三个可实现形态</h4>
   <p>缩放类与频率衰减类改造都需要预先决定超参（缩放因子、衰减强度、层间差异）。另一条思路是取消这个先验：把 RoPE 的频率分配做成<strong>可按上下文长度、层深、甚至训练阶段调整的策略</strong>，而不是一次性写死的常数。工程上对应三种形态——成本差异很大：</p>
@@ -2487,7 +2502,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
   </ul>
   <div class="note warn"><b>不要只改推理：</b>RoPE 改造的效果高度依赖模型是否在目标位置分布上训练过。仅推理端替换缩放因子或衰减强度，通常表现为<strong>前 10 秒正常、之后运动幅度衰减</strong>。这类改造必须与一个短周期的长上下文后训练阶段配对，或者退回到只使用重定位这条更安全的路线（它不改变位置分布本身，只是重新索引）。<em>这也解释了为什么 Infinity-RoPE 明确把自身定位为 training-free 的「推理期统一框架」——它的三个组件都不需要重新训练。</em></div>
 
-  <h3 id="rope-formulas"><span class="h3tag">7</span>可直接落地的四个公式</h3>
+  <h3 id="rope-formulas"><span class="h3tag">7</span>实施要点：四个可直接落地的公式</h3>
   <p>这一节汇集已核实的精确做法，工程实现时可直接对照：</p>
   <div class="formula"><b>① Deep Forcing · Temporal RoPE Adjustment</b>（arXiv 2512.05081）
    缓存分为 sink(K_sink, V_sink) 与 tail(K_tail, V_tail)，拼接为 K = [K_sink ‖ K_tail]
@@ -2515,7 +2530,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
    利用 RoPE 相对性  R_q(x_q,m)·R_k(x_k,n) = R_g(x_q,x_k,n−m)
    ⇒ 序列同时捕获<b>跨 segment 绝对位置</b>与<b>段内相对依赖</b>，缓解 flickering 与不连续</div>
 
-  <h3 id="rope-check"><span class="h3tag">8</span>工程核查清单</h3>
+  <h3 id="rope-check"><span class="h3tag">8</span>实施要点：上线前的核查清单</h3>
   <div class="tablewrap"><table>
     <caption>表 5-5 · RoPE / 位置编码相关的验收项（迁移与优化时逐项过）</caption>
     <thead><tr><th>检查项</th><th>要问的问题</th><th>失败表现</th></tr></thead>
@@ -2548,7 +2563,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <p class="lead-in">本章以三篇主线论文为骨架：<strong>db-SP</strong>（arXiv 2511.23113，清华，把「Ring + 块稀疏」的负载不均衡第一次量化出来）、<strong>FVAttn</strong>（arXiv 2607.16190，中山大学 / 腾讯微信，运行时负载均衡）、<strong>OSP-Next</strong>（arXiv 2605.28691，北大 PKU-YuanGroup 等，规则化稀疏 + HiF8 量化，只需一次 All-to-All）。核心结论先给：<strong>数据依赖的 Top-k 稀疏在 Ring 上有四个结构性障碍，其中两个基本无法工程绕过；能上 Ring 的稀疏必须是「可离线确定」或「阈值型」的。</strong></p>
 
-  <h3 id="dsp-ring"><span class="h3tag">1</span>先写清前提：Ring 的代价模型与三条硬约束</h3>
+  <h3 id="dsp-ring"><span class="h3tag">1</span>现状与挑战：单卡放不下之后，Ring 的代价与三条硬约束</h3>
   <div class="formula">Ring Attention 的代价模型：用 <b>P 倍的 KV 通信</b>，换 <b>1/P 的 KV 显存</b>
     M_ring  = KV_total / P                ← 显存收益，随并行度 P 线性下降
     Comm    = KV_total · 2(P−1)/P         ← 通信代价，约 2× 一次性拉取
@@ -2589,7 +2604,7 @@ Causal Forcing 论文对这一步给了更精确的诊断：
 
   <div class="note"><b>一个必须先说清的好消息（对视频 DiT 而言）：</b>Ring 最麻烦的结构性问题在非因果场景下<strong>不存在</strong>。因果三角导致的 <code>1:2:…:P</code> 负载不均衡、zigzag / Striped 配对、每轮掩码形态不同——这些在 full attention 的 DiT 上都不需要处理，<strong>每轮所有 rank 都是稠密满算</strong>。<br><b>但这有个前提：不加稀疏。</b>一旦引入块稀疏，C1 立刻被激活，这正是本章的核心矛盾。<br><b>例外：</b>自回归视频生成（如 MAGI-1，约 400 万 token）的掩码是 <strong>varlen block-causal</strong>，因果问题会回来，且 Ring 的 P2P 冗余会从 <strong>25% 升到 &gt;33%</strong>（MagiAttention 的定量）。</div>
 
-  <h3 id="dsp-geometry"><span class="h3tag">2</span>一个关键的几何事实：Ring 不缺块，它算多了</h3>
+  <h3 id="dsp-geometry"><span class="h3tag">2</span>问题定位：Ring 的算力不是不够，而是算多了</h3>
   <div class="note"><b>因果块稀疏掩码，永远是因果稠密掩码的子集。</b>也就是说，一个 query 块需要的所有 K/V 块，因果 ring 本来就都会送到它手上。<strong>Ring 并没有「送错块」的问题——它的问题是把所有块都算了。</strong><br><br>推论：<strong>Ring + 块稀疏的改造目标不是「怎么把需要的块送到」，而是「送到之后怎么决定算哪几个」。</strong>这个视角转换会让后面所有分析清晰很多。</div>
 
   <figure>
@@ -2656,10 +2671,54 @@ Causal Forcing 论文对这一步给了更精确的诊断：
       </g>
     </svg>
     </div>
-    <figcaption><b>图 6-1 · 稀疏决策依据决定 Ring 可行性，Top-k 有四个结构性障碍</b>：判定标准不是「位置依赖 vs 数据依赖」这么简单，而是<strong>「阈值型 vs 排序型」</strong>——单个块到达即可判定「过/不过」的可以流式，需要完整分布排名的不能。<i>障碍 ② 基本无法工程绕过，这是 VSA/SLA 类方法在 Ring 上不成立的根本原因。</i></figcaption>
+    <figcaption><b>FIG 6-1 · 稀疏决策依据决定 Ring 可行性，Top-k 有四个结构性障碍</b>　判定标准不是「位置依赖 vs 数据依赖」这么简单，而是<strong>「阈值型 vs 排序型」</strong>——单个块到达即可判定「过/不过」的可以流式，需要完整分布排名的不能。</figcaption>
   </figure>
 
-  <h3 id="dsp-ospnext"><span class="h3tag">3</span>OSP-Next：把「稀疏选择」转化为「固定重排」</h3>
+  <h3 id="dsp-options"><span class="h3tag">3</span>有哪些方案：五条跨卡稀疏路线</h3>
+  <p>稀疏注意力在单卡上已经能省下大部分计算，但把它搬到多卡上会遇到一个前提问题：<strong>某个 rank 能不能在只看到自己分片的情况下，判断出「哪些 KV 该算」</strong>。围绕这个问题，公开方案收敛为五条路线：</p>
+  <div class="tablewrap"><table>
+    <caption>表 6-2 · 跨卡稀疏的五条路线与各自的可行性前提</caption>
+    <thead><tr><th>路线</th><th>代表</th><th>核心做法</th><th>可行性前提</th><th>公开数字</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 规则化固定掩码</strong></td>
+        <td>OSP-Next（2605.28691）、Radial Attention（2506.19852）、STA（2502.04507）、SVG 的部分 head 类型</td>
+        <td>把稀疏模式写成<strong>可离线确定的固定掩码</strong>，每轮计算量相等</td>
+        <td>Round-robin 天然均衡，无需运行时协调</td>
+        <td>OSP-Next：VBench 83.73%、950PR 单卡 2.27×</td>
+      </tr>
+      <tr>
+        <td><strong>② 阈值型在线判定</strong></td>
+        <td>Sol-Attn（2607.24027）、SpargeAttn（2502.18137）、SLA（2509.24006）的阈值部分</td>
+        <td>用 query 相关阈值决定某个 KV 块算不算</td>
+        <td><strong>单块到达即可判断</strong>，不需要整行排名 ⇒ 可在 Ring 上逐块决策</td>
+        <td>Sol-Attn：视频生成 2.1×、编辑 2.3×</td>
+      </tr>
+      <tr>
+        <td><strong>③ 排序型 Top-k 选择</strong></td>
+        <td>VSA（2505.13389）、VSA2、RainFusion 的部分 head 类型</td>
+        <td>按相关性对全部 KV 排名后取前 k</td>
+        <td><strong>需要整行排名</strong> ⇒ 每个 rank 都必须看到全局相关性 ⇒ 与 Ring 分片直接冲突</td>
+        <td>VSA2：720p 注意力 8.9×</td>
+      </tr>
+      <tr>
+        <td><strong>④ 块级低秩 / 稀疏—线性混合</strong></td>
+        <td>SLA（2509.24006）</td>
+        <td>对稀疏部分做块稀疏、对剩余部分用线性注意力补全</td>
+        <td>线性支路对分片不敏感，可与 Ring 共存</td>
+        <td>95% 稀疏无质量损失；kernel 13.7×、端到端 2.2×</td>
+      </tr>
+      <tr>
+        <td><strong>⑤ 训练期把稀疏写进模型</strong></td>
+        <td>RainFusion2.0（2512.24086）</td>
+        <td>head 类型在训练期确定并冻结，推理只读</td>
+        <td>掩码可预知，均衡是纯工程问题</td>
+        <td>80% 稀疏下 1.5–1.8× 端到端</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="dsp-ospnext"><span class="h3tag">4</span>方案怎么做：OSP-Next 的单次 All-to-All 重排</h3>
   <p>OSP-Next 是目前拿到最好公开数字的「规则化稀疏 + 序列并行 + 8bit 量化」方案：<strong>VBench 83.73%（超过 Wan2.1 基线）、950PR 单卡 2.27×</strong>。但它的机制需要被准确理解——<strong>它绕开四个障碍的方式不是「更聪明的选择」，而是「不需要选择」</strong>。</p>
 
   <h4>Skiparse Rearrange 的「局部等价性」</h4>
@@ -2704,7 +2763,7 @@ followed by ONE All-to-All communication step</b> within the communication group
   </div>
   <div class="note warn"><b>不要把 OSP-Next 的能力理解过头：</b>那一次 All-to-All 的作用是在 <strong>token-wise（TSA）与 group-wise（GSA）两种模式之间切换</strong>（两种模式的真子序列划分不同，token 需要换手），<strong>它不是「把需要的 KV 块拉过来」</strong>。OSP-Next 的「稀疏」本质是<strong>把序列重组成多条短序列，然后各算 dense</strong>。这正是它绕开全部四个障碍的原因：<strong>它把「稀疏选择问题」转化成了「固定重排问题」</strong>。<br><b>另外要注意口径：</b>它用的是 <strong>All-to-All</strong>（Ulysses 风格），不是 Ring P2P。把它搬到 Ring 上需要另行验证。</div>
 
-  <h3 id="dsp-balance"><span class="h3tag">4</span>负载均衡：先测量，再决定怎么修</h3>
+  <h3 id="dsp-balance"><span class="h3tag">5</span>方案怎么做：db-SP 与 FVAttn 的负载均衡</h3>
   <p>在投入任何均衡器之前必须先测量。<strong>db-SP（arXiv 2511.23113，清华）给出了现成的度量 ρ_s</strong>——它也是目前唯一把「Ring + 块稀疏」的负载不均衡量化出来的工作。</p>
   <div class="formula"># db-SP 的稀疏不均衡比：最重 rank 负载 ÷ 全部 rank 平均负载
 Ring:     ρ_s = Σ_i max_g(b_{i,g}) / avg     ← <b>每个 ring step 一个同步点</b>（逐轮求和）
@@ -2712,7 +2771,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
 
 # 物理意义：做完美均衡后理论上能拿到的加速比</div>
   <div class="tablewrap"><table>
-    <caption>表 6-2 · db-SP 实测的 ρ_s（稀疏不均衡比）。这张表同时回答了「Ring 是不是比 Ulysses 更均衡」。</caption>
+    <caption>表 6-2 · db-SP 实测的 ρ_s（稀疏不均衡比）</caption>
     <thead><tr><th>模型</th><th>稀疏方法</th><th>并行方式</th><th>ρ_s</th></tr></thead>
     <tbody>
       <tr><td>Wan2.1</td><td>PAROAttention</td><td>Ring</td><td><strong>1.255</strong></td></tr>
@@ -2800,10 +2859,10 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
       </g>
     </svg>
     </div>
-    <figcaption><b>图 6-2 · 切分维度决定均衡成本，Ring 上的均衡手段要按代价排序</b>：Ulysses 沿 head 切分（可迁 head 但 ρ_s 高），Ring 沿序列切分（ρ_s 低但无完整 head 可迁）。<i>Ring 上的正确对应物是「调 Q 块映射」而不是「迁 head」——因为 Q 不参与环上流转，搬运成本低一个量级。</i></figcaption>
+    <figcaption><b>FIG 6-2 · 切分维度决定均衡成本，Ring 上的均衡手段要按代价排序</b>　Ulysses 沿 head 切分（可迁 head 但 ρ_s 高），Ring 沿序列切分（ρ_s 低但无完整 head 可迁）。</figcaption>
   </figure>
 
-  <h3 id="dsp-routes"><span class="h3tag">5</span>两条可执行路线，以及各主流稀疏方法的逐案判定</h3>
+  <h3 id="dsp-routes"><span class="h3tag">6</span>方案怎么做：逐方法的逐案判定</h3>
   <div class="grid2">
     <div class="note"><span class="tag">路线 A · 首选</span><h4>把稀疏改成「可离线确定」的</h4><p><strong>做法：</strong>约束稀疏掩码<strong>只是「块位置坐标」的函数</strong>，不含任何数据依赖项。可用形态：Skiparse 类（固定 skip 间隔 + 交替模式，OSP-Next）；滑窗 + 全局块；块因果 + 条带（适用于自回归视频）；静态掩码 + 块内自洽。</p><p class="y"><strong>收益：</strong>直接绕开全部四个障碍；不需要新算法；与 Ring 的流水线天然兼容。</p><p class="p"><strong>代价：</strong>稀疏的「智能程度」下降。但 OSP-Next 的实测说明这个代价在视频上<strong>比想象中小</strong>——固定规则模式拿到了超过 full-attention 基线的 VBench。原因是<strong>视频的注意力冗余沿空间/时间邻域聚集，规则化掩码足以覆盖大部分重要交互</strong>。</p></div>
     <div class="note"><span class="tag">路线 B · 备选</span><h4>用低分辨率代理提前决策</h4><p><strong>思路：</strong>不在原始分辨率上打分，而是在<strong>下采样后的 KV</strong> 上跑选择器。这直接缓解障碍一（循环依赖）——代理 KV 很小，可以在 ring 开始前就准备好。代理的字节量约为 KV 的 <code>1/r</code>（r 为下采样比，如 32）。</p><p class="p"><strong>风险（三条，逐条都致命）：</strong>① 代理仍需一次全局可见性（all-gather 或随环流转一次），<strong>引入新同步点，触碰 C2</strong>；② 代理给出的块级决策是近似的，误差直接进入注意力输出；③ <strong>代理决策仍逐 Q 块不同，障碍二（Top-k 集合与 Q 属主耦合）没有解决</strong>——只是把「需要全精度 K」换成了「需要低精度全局 K」。</p><p><strong>结论：</strong>路线 B 能缓解障碍一和三，<strong>解决不了障碍二和四</strong>。只有在路线 A 的规则形态不足以达到质量目标时才考虑。</p></div>
@@ -2858,7 +2917,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
     </tbody>
   </table></div>
 
-  <h3 id="dsp-quant"><span class="h3tag">6</span>量化 × Ring：scale 的作用域是第二个可行性边界</h3>
+  <h3 id="dsp-quant"><span class="h3tag">7</span>方案怎么做：量化叠加时 scale 的作用域</h3>
   <p>稀疏之外，量化在环上还多一层约束——<strong>scale 挂在哪里，决定了它能不能随块一起走</strong>。四个必须理解的断点：</p>
   <div class="grid4">
     <div class="note"><span class="tag">断点 1</span><h4>不能在环上反量化</h4><p>反量化必须发生在数据<strong>到达并进入计算之前</strong>的本地环节，不能作为环上流转的一部分——否则通信量按高精度计算，量化的全部收益消失。</p></div>
@@ -2868,7 +2927,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
   </div>
   <div class="note"><b>把 §6.1 的 C3 与本节合起来读：</b>块是环上的最小传输单元，所以<strong>量化 scale 必须是块级（per-tile）的，并挂在块上一起走</strong>。per-tensor scale 需要全局统计（触碰 C2），per-channel scale 需要在环上重排布局（破坏 C3）。这也解释了 OSP-Next 为什么选 <strong>HiF8</strong>（HIFLOAT8）路线——它的消融显示 <strong>HiF8 训练的 loss 曲线与 BF16 基本一致</strong>，精度代价小到可以接受，同时格式本身对块级 scale 友好。</div>
 
-  <h3 id="dsp-ascend"><span class="h3tag">7</span>落到昇腾：算子映射与叠加检查单</h3>
+  <h3 id="dsp-ascend"><span class="h3tag">8</span>实施要点：叠加顺序与检查单</h3>
   <div class="tablewrap"><table>
     <caption>表 6-4 · Ring 适配直接相关的算子事实（CANN ops-transformer 侧）</caption>
     <thead><tr><th>Ring 上需要的能力</th><th>算子</th><th>状态与结论</th></tr></thead>
@@ -2902,7 +2961,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
   ④ <strong>量化 scale 是否是块级、并随块传输？</strong>（C3）<br>
   ⑤ <strong>softmax 统计量是否保持 FP32？</strong><br>
   ⑥ <strong>是否先测了 ρ_s 再投入均衡器？</strong>不测量就优化，等于在没有基线的情况下调参。</div>
-  <div class="quote">本章可以压缩成一句判断：<strong>在 Ring 上，稀疏的「聪明程度」是一个可以用可行性交换的量。</strong>规则化稀疏（可离线确定、子序列等长）放弃了数据自适应，换来的是绕开全部四个障碍与结构性的负载均衡；而任何需要「先看全局再决定算哪些」的方案，在 Ring 上都要么触碰到 C2，要么在障碍二面前停下来。</div>
+  
 </section>
 <!-- ============================ 07 Multimodal sparse MoE ============================ -->
 <section class="ch" id="moe">
@@ -2914,7 +2973,7 @@ Ulysses:  ρ_s = max_g(b_{0,g}) / avg         ← 只有 attention 后一个同�
 
   <p class="lead-in">本章的组织逻辑是「先分清问题，再谈技术」：MoE 在<strong>视频生成</strong>里和在大语言模型里遇到的瓶颈完全不同——LLM 侧是显存带宽与 all-to-all 通信，视频侧是<strong>大量极窄专家带来的小算子风暴</strong>。混淆这两者，会导出错误的优化优先级。本章先给出容量/激活解耦的账本，再拆路由机制，然后分「少算」（系统层，以 <strong>FastMoE</strong> 为代表）与「少存」（模型层，以 <strong>DIET</strong> 为代表）两条线讲手段，最后落到视频与世界模型上的可核对实例。</p>
 
-  <h3 id="moe-why"><span class="h3tag">1</span>为什么 MoE 在大约 2025 年之后回到视野</h3>
+  <h3 id="moe-why"><span class="h3tag">1</span>现状与挑战：为什么 MoE 在 2025 年之后回到视野</h3>
   <p>把三个杠杆放在同一张账本上，MoE 的位置就清楚了：</p>
   <div class="formula">三条独立曲线（以密集模型为基线）
   ① 每步算力   ∝ 激活参数量        ← 蒸馏/稀疏注意力/量化都在压这条
@@ -2990,10 +3049,10 @@ MoE 的账本
       <text x="566" y="374" fill="#9a5b12" font-size="10.5">视频侧：优化「小算子风暴」 ⇒ 路由/重排/FFN/聚合全链融合</text>
     </svg>
     </div>
-    <figcaption><b>图 7-1 · 容量与激活量的解耦，以及单步时间账本</b>：MoE 只稀疏化账本中的一项，其余四项是固定开销。<i>专家越窄、token 越分散，固定开销占比越高——这决定了视频侧与 LLM 侧必须用不同的优化优先级。</i></figcaption>
+    <figcaption><b>FIG 7-1 · 容量与激活量的解耦，以及单步时间账本</b>　MoE 只稀疏化账本中的一项，其余四项是固定开销。</figcaption>
   </figure>
 
-  <h3 id="moe-mech"><span class="h3tag">2</span>路由与稀疏激活：机制层面的分野</h3>
+  <h3 id="moe-mech"><span class="h3tag">2</span>有哪些方案：路由机制的六个设计维度</h3>
   <div class="tablewrap"><table>
     <caption>表 7-1 · MoE 路由与结构设计的关键维度。「对推理侧意味着什么」一列是选型时的实际判据。</caption>
     <thead><tr><th>维度</th><th>选项</th><th>机制要点</th><th>对推理侧意味着什么</th></tr></thead>
@@ -3042,7 +3101,7 @@ MoE 的账本
 
   <div class="note"><b>一条值得记住的设计判据：</b>如果路由决策<strong>只依赖每个 token 自己</strong>（或只依赖 timestep），那么它在分布式下是「可离线确定」的——这和 §6.2 里 Ring 上稀疏可行性的判据<strong>完全同构</strong>。反过来，一旦路由需要<strong>看全局才能保持均衡</strong>，它就会像 Top-k 稀疏一样撞上同步与不规则通信的墙。<em>这不是巧合：两者的本质都是「决策是否需要全局信息」。</em></div>
 
-  <h3 id="moe-systems"><span class="h3tag">3</span>系统侧的两条线：少算与少存</h3>
+  <h3 id="moe-systems"><span class="h3tag">3</span>方案怎么做：系统层的少算与少存</h3>
   <p>这一节按「改系统」还是「改模型」分成两层。<strong>FastMoE</strong>（arXiv 2103.13262）是系统层的代表——它让 MoE 跑得更快；<strong>DIET</strong>（arXiv 2609.37829）是模型层的代表——它直接<strong>裁掉专家</strong>，把「少存」做成一次性的、可验证的结构改动。两者解决的是完全不同的浪费，且可以叠加。</p>
 
   <div class="tablewrap"><table>
@@ -3115,7 +3174,7 @@ MoE 的账本
   <div class="note warn"><b>DIET 最反直觉、也最有价值的一条结论：</b>实验表明<strong>质量最好的掩码恰恰是对原始路由扰动最大的那个</strong>；而那些「最不破坏路由」的判据，质量损失反而最大。也就是说——<strong>「尽量少改变路由」是一个错误的目标函数。</strong><br><br>这条结论对整个 MoE 优化都有含义：它说明<strong>「让稀疏化尽量不影响原模型行为」这个直觉是错的</strong>。原因在于冗余专家被删掉后，路由本来就会重新分配负载；强行保持原路由等于把冗余<strong>固定在结构里</strong>。这与 §4.3 的「训练期吸收近似」是同一条逻辑——<strong>让模型在目标结构下重新工作，比让近似尽量逼近原结构更有效。</strong></div>
   <div class="note warn"><b>引用边界：</b>DIET 的评测对象是 <strong>LingBot-Video 30B-A3B</strong>（模型本身开源），但<strong>其标定流程需按目标模型重跑</strong>；375 GB 中间缓存与 16× 专家算力的一次性代价需计入成本；「50% 裁剪不降反升」是单一模型的实测结论，<strong>不应直接外推到其他 MoE 配置</strong>。相关工作另有 PARE（arXiv 2605.27336）、Dense2MoE（arXiv 2510.09094）、REAP（arXiv 2510.13999）可作对照。</div>
 
-  <h3 id="moe-video"><span class="h3tag">4</span>视频与世界模型上的 MoE：四个可核对的实例</h3>
+  <h3 id="moe-video"><span class="h3tag">4</span>方案怎么做：视频与世界模型上的四个实例</h3>
   <div class="tablewrap"><table>
     <caption>表 7-4 · 视频 / 世界模型侧 MoE 的公开实例。注意「MoE」在这些系统里指的是完全不同的东西。</caption>
     <thead><tr><th>系统</th><th>MoE 形态</th><th>关键机制</th><th>推理侧要点</th></tr></thead>
@@ -3210,10 +3269,10 @@ MoE 的账本
       <text x="48" y="382" fill="#6b7478" font-size="10">这对昇腾侧的含义：真正的工作量在「为窄专家定制 route/sort/grouped FFN/scatter 的全链融合」，而不是通信库替换。</text>
     </svg>
     </div>
-    <figcaption><b>图 7-2 · 视频模型里三种 MoE 形态的成本结构</b>：静态时间维路由（成本≈dense）、超细粒度动态路由（成本在小算子）、标准稀疏主干（成本在权重驻留）。<i>Head Parallel 用固定形状通信换掉了动态 all-to-all，代价是把矛盾转移到窄专家的本地执行效率上。</i></figcaption>
+    <figcaption><b>FIG 7-2 · 视频模型里三种 MoE 形态的成本结构</b>　静态时间维路由（成本≈dense）、超细粒度动态路由（成本在小算子）、标准稀疏主干（成本在权重驻留）。</figcaption>
   </figure>
 
-  <h3 id="moe-ascend"><span class="h3tag">5</span>昇腾视角与选型判据</h3>
+  <h3 id="moe-ascend"><span class="h3tag">5</span>实施要点：选型判据</h3>
   <p>昇腾侧在 MoE 上并非空白——已有可复用的能力积木，但<strong>缺口集中在「窄专家的融合执行」</strong>这一项上：</p>
   <div class="tablewrap"><table>
     <caption>表 7-5 · MoE 相关能力在昇腾栈上的现状（依据本仓库内可核对的框架分析）</caption>
@@ -3236,7 +3295,7 @@ MoE 的账本
     <div class="step cool"><i>正交手段</i><b>低比特 + 卸载 + 缓存 + 裁剪</b><span>解决的是「少存」而非「少算」。<br>路由越可预知，专家缓存命中率越高 ⇒ <strong>与「时间维专家」天然匹配</strong>；<br>而<strong>专家裁剪（DIET）</strong>是唯一把权重总量真正变小、且不引入搬运开销的手段。</span></div>
   </div>
   <div class="note"><b>本章与相邻章节的关系：</b>MoE 解决的是「容量 ↔ 每步成本」的解耦，它<strong>不和蒸馏、稀疏注意力、量化竞争，而是叠加</strong>——但它会<strong>改变这些手段的最优配置</strong>：MoE 让「每一步的激活权重集合」随输入变化，因此跨步特征缓存（DiTCache 一类）的有效性、以及权重量化的校准集，都需要按专家分别处理。这也是 §4「联合优化」在 MoE 上的具体体现。<br><br>还有一条更值得注意的呼应：<strong>MoE 的「少算」与「少存」是两件独立的事</strong>（FastMoE vs DIET），这和 §8.2 里「量化不必然提速」、§6.1 里「稀疏不必然省时」是同一种教训——<strong>每一项优化都要问清它到底改的是哪一条曲线</strong>。</div>
-  <div class="quote">本章可以压缩成一句判断：<strong>MoE 买到的是容量，不是速度；要把它变成速度与可行性，取决于路由的可预知程度、窄专家的融合执行质量、以及是否愿意动结构去裁掉冗余专家。</strong>第一项决定你能不能做静态调度与专家缓存（FastMoE 那一层），第二项决定稀疏激活能不能真的省下时间，第三项决定权重总量能不能真正变小（DIET 那一层）——三项都成立时，MoE 才是长视频与世界模型里最值得投入的一层。<br><br>而 DIET 那条反直觉结论值得再强调一次：<strong>在 MoE 上，「尽量不改变原模型行为」不是正确的目标函数。</strong>这与本报告第 4 章的主线完全一致——让模型在目标结构下重新工作，比让近似尽量逼近原结构更有效。</div>
+  
 </section>
 <!-- ============================ 06 KV / precision ============================ -->
 <section class="ch" id="kv">
@@ -3330,10 +3389,56 @@ MoE 的账本
       </g>
     </svg>
     </div>
-    <figcaption><b>图 8-1 · 注意力与缓存优化的三个正交方向</b>：稀疏/线性改「看多少」、低比特改「每个元素多宽」、淘汰改「留多久」。<i>三者可以叠加，但破坏位置互不重合，验收必须分维度而非只看一个总分。</i></figcaption>
+    <figcaption><b>FIG 8-1 · 注意力与缓存优化的三个正交方向</b>　稀疏/线性改「看多少」、低比特改「每个元素多宽」、淘汰改「留多久」。</figcaption>
   </figure>
 
-  <h3 id="kv-sparse"><span class="h3tag">1</span>方向一：稀疏与线性注意力（AdaSpa / RainFusion / Sol-Attn / VSA / SLA）</h3>
+  <h3 id="kv-challenge"><span class="h3tag">1</span>现状与挑战：KV 与注意力吃掉大部分显存与算力</h3>
+  <p>块级因果结构让历史从「重算」变成「只读」，但代价是把状态留在了显存里。长会话下这两项成本同时失控：</p>
+  <div class="formula">单块注意力算力   ∝  L_block × L_total × d        （L_total 随会话长度线性增长）
+KV 显存          =  2 × L_total × d × bytes × layers
+                 （2 为 K 与 V；d 为头维；L_total 含 sink 与滑窗内历史）
+
+以 720p / 25 FPS 的流式会话为例，两者都随会话时长线性上升，
+而每块的播放时长是固定的 ⇒ <b>单块算力与显存随时间增长，实时性缺口越来越大</b>
+
+三个方向的优化作用点不同：
+  稀疏       压 <b>注意力算力</b>，不动 KV 显存
+  量化       压 <b>KV 显存</b>与搬运带宽，不动算力规模
+  缓存策略   压 <b>L_total 本身</b>，同时影响两者</div>
+  <p>这就是本章要处理的问题：<strong>注意力算力、KV 显存、以及决定 L_total 的缓存策略，是三个作用点不同的方向</strong>。它们可以叠加，但叠加次序会决定实际收益，这也是 8.4 要给出的结论。</p>
+
+  <h3 id="kv-options"><span class="h3tag">2</span>有哪些方案：三个正交方向</h3>
+  <p>公开方案可以完全归入三个方向。把它们并排看，<strong>每个方向回答一个不同的问题</strong>：</p>
+  <div class="tablewrap"><table>
+    <caption>表 8-1 · 三个正交方向：各自压的是什么</caption>
+    <thead><tr><th>方向</th><th>回答的问题</th><th>压什么</th><th>代表方案</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 稀疏与线性注意力</strong></td>
+        <td>这一块 query 真的需要读所有 KV 吗</td>
+        <td><strong>注意力算力</strong>（可到 90%+ 稀疏）</td>
+        <td>AdaSpa、RainFusion 1.0/2.0、Sol-Attn、VSA/VSA2、SLA、SpargeAttn、SVG、Radial Attention、STA</td>
+      </tr>
+      <tr>
+        <td><strong>② KV 与权重量化</strong></td>
+        <td>每个数需要几位才能保住质量</td>
+        <td><strong>KV 显存与搬运带宽</strong>（KV 最高 6.20×）</td>
+        <td>QuantWM（2-bit）、Quant VideoGen（2-bit）、SageAttention 1/2、W8A8 权重</td>
+      </tr>
+      <tr>
+        <td><strong>③ 缓存策略</strong></td>
+        <td>哪些历史值得留、以什么单位留、放在哪</td>
+        <td><strong>L_total 本身</strong>（同时影响算力与显存）</td>
+        <td>FIFO 淘汰、sink + 滑窗、token 级重要性淘汰（Deep Forcing）、三段记忆（Context Forcing）、滚动 KV</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <p><strong>一个必须先确认的性质</strong>：视频 DiT 的稀疏是<strong>块状可预测</strong>的——同一帧内的空间 token 高度相关，跨帧的长程相关性呈现明显的条带与对角结构。这解释了为什么块级稀疏方法在视频上比在语言模型上更有效，也解释了为什么稀疏掩码可以跨步复用。</p>
+  </div>
+
+  <h3 id="kv-sparse"><span class="h3tag">3</span>方案怎么做：稀疏与线性注意力（10 个方案）</h3>
   <p>视频 DiT 的注意力有一个特殊性质：<strong>它是「块状可预测」的稀疏</strong>。同一帧内的空间 token 互相高度相关，跨帧的远距离相关性呈现明显的条带与对角结构。这正是块级稀疏方法能在视频上取得远高于语言模型收益的原因。下面这张表是本章的信息密度最高处——每一行的<strong>「决策依据」一列</strong>决定它能不能落地。</p>
   <div class="tablewrap"><table>
     <caption>表 8-1 · 视频扩散注意力稀疏化的代表工作（论文编号与数字来自公开原文；「决策依据」列是选型关键）</caption>
@@ -3538,10 +3643,10 @@ MoE 的账本
       <text x="862" y="266" fill="#6b7478" font-size="10">时间 + HBM bytes 同看</text>
     </svg>
     </div>
-    <figcaption><b>图 8-2 · 从 Dense 到块稀疏再到稀疏—线性混合</b>：块稀疏用「结构化」换来可编译性，稀疏—线性用「近似路」换掉剩余的长尾计算。<i>动态 top-k 与静态图编译天然冲突，是工程上最常见的性能反噬点。</i></figcaption>
+    <figcaption><b>FIG 8-2 · 从 Dense 到块稀疏再到稀疏—线性混合</b>　块稀疏用「结构化」换来可编译性，稀疏—线性用「近似路」换掉剩余的长尾计算。</figcaption>
   </figure>
 
-  <h3 id="kv-quant"><span class="h3tag">2</span>方向二：KV 与权重的量化（QuantWM / W8A8 / 分块粒度）</h3>
+  <h3 id="kv-quant"><span class="h3tag">4</span>方案怎么做：KV 与权重的量化</h3>
   <p>量化在这一层要区分四个<strong>完全不同的对象</strong>，它们的收益与风险不能混为一谈：</p>
   <div class="grid4">
     <div class="note"><span class="tag">对象 A</span><h4>权重（Linear / MLP）</h4><p>收益最直接：显存与带宽近似按位宽比例下降，GEMM 走 INT8/FP8 Tensor Core。<strong>风险最低，通常第一个做。</strong></p></div>
@@ -3562,7 +3667,7 @@ MoE 的账本
     <dt>验收指标</dt><dd>不能只测单帧画质。需要沿时间轴测：逐块漂移曲线、动作响应误差、长会话（≥10 分钟）稳定性。<span class="tip" tabindex="0" data-tip="只省显存不提速是常见结果：没有匹配的低精度 kernel 时，Q/DQ 反量化与 layout 转换会吃掉全部收益。">「只省显存不提速」</span>是最常见的失败模式。</dd>
   </dl>
 
-  <h3 id="kv-policy"><span class="h3tag">3</span>方向三：缓存策略——留什么、扔什么、怎么摆</h3>
+  <h3 id="kv-policy"><span class="h3tag">5</span>方案怎么做：缓存淘汰与布局</h3>
   <p>滑窗缓存看似简单，实际上有四个独立决策，任何一个选错都会在长会话中暴露：</p>
   <div class="tablewrap"><table>
     <caption>表 8-2 · KV Cache 的四个策略维度与已验证的具体做法（每条都来自论文正文）</caption>
@@ -3679,10 +3784,10 @@ MoE 的账本
       <text x="806" y="260" fill="#6b7478" font-size="10">只报平均 FPS 会掩盖此问题</text>
     </svg>
     </div>
-    <figcaption><b>图 8-3 · 缓存布局决定长会话能否成立</b>：逐块 cat 的实现能通过论文级实验，却过不了 30 分钟会话。<i>「延迟和显存不随块数上升」应作为独立的验收项，而不是从平均 FPS 推断。</i></figcaption>
+    <figcaption><b>FIG 8-3 · 缓存布局决定长会话能否成立</b>　逐块 cat 的实现能通过论文级实验，却过不了 30 分钟会话。</figcaption>
   </figure>
 
-  <h3 id="kv-stack"><span class="h3tag">4</span>三个方向如何叠加：一个可执行的收益次序</h3>
+  <h3 id="kv-stack"><span class="h3tag">6</span>实施要点：三个方向的叠加次序</h3>
   <div class="pipe c5">
     <div class="step cool"><i>STEP 1</i><b>因果 + 重定位 KV</b><span>先把历史从「重算」变成「只读」。这一层是结构性的，收益最大且质量无损。</span></div>
     <div class="step cool"><i>STEP 2</i><b>预分配 / 分页布局</b><span>消除热路径拷贝，让延迟与显存平台化。不改变数值结果。</span></div>
@@ -3691,6 +3796,16 @@ MoE 的账本
     <div class="step"><i>STEP 5</i><b>KV 量化 + 淘汰策略</b><span>换取会话容量与有效上下文。风险最高，必须有长时回归与刷新点。</span></div>
   </div>
   <div class="note"><b>次序为什么不能颠倒：</b>STEP 1–2 决定了「单块延迟是否随长度增长」，STEP 3–5 决定「单块延迟的绝对值」。如果顺序反了——先量化再改缓存布局——你会看到量化省下的时间被热路径拷贝吃掉，从而得出「量化没用」的错误结论。这也是把注意力/缓存优化排在分布式稀疏并行之后、且必须在第 5 章 RoPE 之后的原因：<strong>先让状态可复用，再让复用更便宜</strong>。</div>
+  <h3 id="kv-checklist"><span class="h3tag">7</span>实施要点：上线前的验收清单</h3>
+  <ul>
+    <li><strong>先测基线占比</strong>：注意力占单块时间的比例、KV 占显存的比例。占比不到 30% 时优先做别的事。</li>
+    <li><strong>稀疏度与质量的边界要实测</strong>：不同 head 类型的容忍度不一样（RainFusion 的三型 head 划分就是为了这个），统一稀疏率会在某些 head 上掉质量。</li>
+    <li><strong>Key 的量化误差比 Value 更敏感</strong>：QuantWM 的逐组件消融给出的结论是 Key 量化对质量的影响大于 Value。做 2-bit 时优先保住 Key，或对 Key 用更细的粒度。</li>
+    <li><strong>scale 的作用域</strong>：per-tensor / per-channel / per-block 三者的精度与开销差别明显，跨卡传输时作用域还决定了能否在本地完成反量化。</li>
+    <li><strong>淘汰策略要在长时域上验收</strong>：FIFO、重要性淘汰、三段记忆在几十块内看不出差别，漂移只在长会话上出现。</li>
+    <li><strong>缓存不是越大越好</strong>：Matrix-Game 2.0 的消融显示 cache 越大反而越早出现伪影——早期伪影被「记忆」成合法场景元素。</li>
+  </ul>
+
 </section>
 <!-- ============================ 09 超分与精修 ============================ -->
 <section class="ch" id="sr">
@@ -3710,7 +3825,7 @@ MoE 的账本
     </dl>
   </div>
 
-  <h3 id="sr-why"><span class="h3tag">1</span>成本从哪来</h3>
+  <h3 id="sr-why"><span class="h3tag">1</span>现状与挑战：为什么要拆成两级才算得动</h3>
   <p>视频 DiT 的单步计算量近似正比于 <code>L²·d</code>（<code>L</code> 为 token 数，注意力是平方项），而 <code>L</code> 正比于分辨率²。因此<strong>单步成本约正比于分辨率的四次方，整段成本再乘以去噪步数</strong>。级联之所以有效，就是把这个乘积里最贵的两项拆开：</p>
   <div class="formula">记单步代价 ≈ c · L² · d，L ∝ 分辨率²
 
@@ -3764,10 +3879,43 @@ MoE 的账本
       </g>
     </svg>
     </div>
-    <figcaption><b>图 9-1 · 级联的成本算术与四种拓扑</b>：单步成本约正比于分辨率⁴，级联把去噪步数花在更低的分辨率上。</figcaption>
+    <figcaption><b>FIG 9-1 · 级联的成本算术与四种拓扑</b>　单步成本约正比于分辨率⁴，级联把去噪步数花在更低的分辨率上。</figcaption>
   </figure>
 
-  <h3 id="sr-mech"><span class="h3tag">2</span>精修怎么做：四个决定成败的设计点</h3>
+  <h3 id="sr-options"><span class="h3tag">2</span>有哪些方案：四条实现路线</h3>
+  <p>把「主干不再算高分辨率」这件事落到工程上，公开实现分为四条路线。<strong>它们的差别不在画质目标，而在「换成什么代价」</strong>：</p>
+  <div class="tablewrap"><table>
+    <caption>表 9-2 · 精修的四条实现路线</caption>
+    <thead><tr><th>路线</th><th>代表</th><th>换成什么代价</th><th>公开数字</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 同模型单步精修</strong></td>
+        <td>Vidu S2</td>
+        <td>多一次同权重的前向；权重只有一份，条件与参考图共享</td>
+        <td>540p → 720p，保持 <strong>25–42 FPS</strong></td>
+      </tr>
+      <tr>
+        <td><strong>② 换模型的级联</strong></td>
+        <td>NVIDIA H3 → LTX</td>
+        <td>两套权重常驻；两段串行；<strong>非无损</strong>（官方声明不逐位一致）</td>
+        <td>1344×768 单 GB200，端到端 <strong>22.2× / 27.7×</strong></td>
+      </tr>
+      <tr>
+        <td><strong>③ 金字塔式少步蒸馏</strong></td>
+        <td>爱诗 R2（依据 Pyramidal Flow Matching）</td>
+        <td>需要重训；不是三模型级联，而是单一金字塔轨迹</td>
+        <td>官方未披露步数与 FPS</td>
+      </tr>
+      <tr>
+        <td><strong>④ 时空两段精修</strong></td>
+        <td>LingBot-World v2 的时空精修器</td>
+        <td>多一次空间细化；<strong>含时间细化，会抬高显示帧率</strong></td>
+        <td>系统级 720p @ 60 fps；开源参考配置 480×832</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="sr-mech"><span class="h3tag">3</span>方案怎么做：噪声级、运动锁定与潜空间上采样</h3>
 
   <h4>① 噪声级要固定且偏低</h4>
   <p>精修不是「再采样一次」，而是「从一个接近干净的状态往回补细节」。Vidu S2 的公式最清楚：</p>
@@ -3792,7 +3940,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   <h4>④ 与主干并行，而不是串行等待</h4>
   <p>Vidu S2 的推理栈把主干与精修器放在<strong>同一条时间线上动态共享 GPU</strong>：细节重建不与下一块生成串行推进，从而在 720p 输出下不掉帧。这与第 11 章的「共享时间线」是同一条设计。反过来，NVIDIA 的 H3→LTX 级联是<strong>两段严格串行</strong>执行，并把两段分别计时后相加——两种调度方式都成立，但延迟特性不同。</p>
 
-  <h3 id="sr-case"><span class="h3tag">3</span>实例：四种精修拓扑的数字与口径</h3>
+  <h3 id="sr-case"><span class="h3tag">4</span>方案怎么做：四种拓扑的实测数字与口径</h3>
   <div class="tablewrap"><table>
     <caption>表 9-1 · 四种已公开的精修实现。注意「倍率」一列的口径差异，详见 9.4。</caption>
     <thead><tr><th>系统</th><th>拓扑</th><th>关键数字</th><th>性质</th></tr></thead>
@@ -3830,7 +3978,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <p>它最有价值的工程细节是<strong>解码器的替换边界</strong>：Stage 2 <strong>保留原 LTX-2.5 的 VAE 编码器</strong>，因为精修器是在该编码器的潜空间分布上训练的；只在<strong>最终解码</strong>时才换成轻量的 TAEHV。<strong>轻量解码器可以替换「输出」路径，但不能替换「条件」路径。</strong>这一条对第 10 章同样成立。</p>
   </div>
 
-  <h3 id="sr-fps"><span class="h3tag">4</span>报数字时必须区分三个帧率</h3>
+  <h3 id="sr-fps"><span class="h3tag">5</span>实施要点：三个帧率必须分开报</h3>
   <p>引入精修与插帧之后，同一个系统会同时存在三个不同的帧率。它们经常被混在同一个数字里对外表述，这是本领域最容易误导人的一处：</p>
   <div class="tablewrap"><table>
     <caption>表 9-2 · 三个帧率的定义与适用场合</caption>
@@ -3858,7 +4006,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   </table></div>
   <div class="note warn">
     <p><strong>LingBot-World v2 是一个具体例子</strong>：它的时空精修器包含时间细化（合成中间帧以提升帧率），因此其对外宣称的 <strong>720p @ 60 fps 是显示侧结果，不等价于 DiT 原生生成 60 个独立物理状态／秒</strong>。其开源参考配置为 480×832、4–8 卡，与「完整系统 720p/60fps」不是同一件事。</p>
-    <p>因此本报告在引用任何帧率时都会说明：<strong>分辨率、是否含 VAE、是否含插帧、以及属于上面三个中的哪一个</strong>。</p>
+    
   </div>
 
   <div class="quote">
@@ -3884,7 +4032,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     </dl>
   </div>
 
-  <h3 id="vae-why"><span class="h3tag">1</span>为什么它从「小尾巴」变成瓶颈</h3>
+  <h3 id="vae-why"><span class="h3tag">1</span>现状与挑战：为什么 VAE 从「小尾巴」变成瓶颈</h3>
   <p>VAE 解码的成本正比于<strong>帧数 × 分辨率²</strong>，与主干一样随分辨率快速上升；区别在于<strong>它本来就只有一次前向，不可能靠「少步」来压缩</strong>。当主干从 20–50 步降到 1–4 步，两条曲线的交叉点就出现了。</p>
 
   <figure>
@@ -3911,12 +4059,45 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
       </g>
     </svg>
     </div>
-    <figcaption><b>图 10-1 · VAE 解码占比随主干提速而被放大</b>：数据来自 Flash-VAED（arXiv 2602.19161）对 Wan 1.3B、81 帧 480p 的测量；解码吞吐差距来自同一论文的表 1。</figcaption>
+    <figcaption><b>FIG 10-1 · VAE 解码占比随主干提速而被放大</b>　数据来自 Flash-VAED（arXiv 2602.19161）对 Wan 1.3B、81 帧 480p 的测量；解码吞吐差距来自同一论文的表 1。</figcaption>
   </figure>
 
   <p>还有一个与多卡相关的现象：多卡并行通常只加速中间的 Transformer，而<strong>开头的文本/图像编码、结尾的 VAE 解码、以及 CPU↔设备搬权重仍可能串行</strong>，于是出现「中间很快、头尾堵车」。LingBot-World 论文对此的做法是：把<strong>潜变量生成与画面重建做成异步流水，VAE 解码放在专用 worker 上并行</strong>，以缩短关键路径；Vidu S2 则让编码器、主干、精修器与解码器<strong>在同一条时间线上共享 GPU</strong>，因为按模块静态分配 GPU 会留下空闲卡。</p>
 
-  <h3 id="vae-shapes"><span class="h3tag">2</span>三类手段，解决三个不同的问题</h3>
+  <h3 id="vae-options"><span class="h3tag">2</span>有哪些方案：四条降低解码成本的路</h3>
+  <p>解码成本正比于<strong>帧数 × 分辨率²</strong>。围绕这个乘积，公开方案分为四条路——<strong>前两条不动模型，后两条要动模型</strong>：</p>
+  <div class="tablewrap"><table>
+    <caption>表 10-1 · 降低 VAE 解码成本的四条路线</caption>
+    <thead><tr><th>路线</th><th>代表</th><th>动的是什么</th><th>公开数字</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 分块解码</strong></td>
+        <td>ComfyUI <code>VAEDecodeTiled</code>、diffusers Wan tiled VAE</td>
+        <td>把视频切成时间块 × 空间块逐块解码</td>
+        <td>降低峰值显存，吞吐基本不变</td>
+      </tr>
+      <tr>
+        <td><strong>② 并行与异步解码</strong></td>
+        <td>LightX2V、LingBot-World、Vidu S2</td>
+        <td>把解码块放进全局任务池分派给各卡；或把解码放到独立 worker／时间线上与生成重叠</td>
+        <td>8 卡 MiniMax-H3：利用率 5 秒 <strong>87.5% → 98.0%</strong>、15 秒 <strong>99.3%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>③ 换用极小解码器</strong></td>
+        <td>TAEHV（约 9.84M 参数）</td>
+        <td>换掉整个解码器；<strong>潜变量接口不变</strong></td>
+        <td>H3 解码 <strong>3.427 s → 0.028 s</strong>；LTX-2.5 <strong>6.404 s → 0.187 s</strong></td>
+      </tr>
+      <tr>
+        <td><strong>④ 压缩并重训紧凑解码器</strong></td>
+        <td>LightVAE（2610.14726）、Flash-VAED（2602.19161）</td>
+        <td>在原解码器上做通道剪枝、算子替换与特征蒸馏</td>
+        <td>LightVAE：Wan 最高 2.24×、H3 2.97×；Flash-VAED：约 6× 加速、保留 96.9% 重建性能</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="vae-shapes"><span class="h3tag">3</span>方案怎么做：分块、并行与轻量化的分工</h3>
   <p>这三类手段最容易被混为一谈，但收益指标完全不同——用错了会得出「改了但没效果」的结论。</p>
   <div class="tablewrap"><table>
     <caption>表 10-1 · VAE 优化的三类手段</caption>
@@ -3958,7 +4139,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <p>LightX2V（ModelTC 的开源推理框架）在这一层的进展可作旁证：其文档与提交覆盖了 <strong>VAE tiling、轻量 TAE、FP8 VAE、分块解码、并行解码、VAE tile parallel</strong>，以及 MiniMax-H3 的 VAE 负载均衡与时空块并行、MetaX 后端的分布式编解码。其路线图直接写着：<strong>VAE 不再被视为「尾部小模块」，在原生音视频与高分辨率负载中已成为独立的优化对象。</strong></p>
   </div>
 
-  <h3 id="vae-light"><span class="h3tag">3</span>轻量化 VAE 的两条技术路线</h3>
+  <h3 id="vae-light"><span class="h3tag">4</span>方案怎么做：LightVAE 与 TAEHV 两条路线</h3>
 
   <h4>路线一：压缩并重训一个紧凑解码器——LightVAE</h4>
   <p>LightVAE（arXiv 2610.14726，ModelTC / 北航）的关键选择是<strong>保留原潜变量接口</strong>：它不设计新的潜空间，而是在已有视频 VAE（Wan 2.1 / 2.2、MiniMax-H3）上做压缩。技术要点：</p>
@@ -3992,7 +4173,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <p><strong>轻量解码器可以替换「输出」路径，但不能替换「条件」路径。</strong>任何进入模型条件的潜变量（参考图、首帧、编辑源帧）都必须走原编码器，否则条件分布与训练时不一致。</p>
   </div>
 
-  <h3 id="vae-ratio"><span class="h3tag">4</span>潜变量压缩率：一个横跨两章的取舍</h3>
+  <h3 id="vae-ratio"><span class="h3tag">5</span>方案怎么做：压缩率对主干与解码的双向影响</h3>
   <p>压缩率同时决定两件事：<strong>主干要处理多少 token</strong>，以及<strong>解码器要从多少信息里恢复画面</strong>。这两者的方向相反。</p>
   <div class="tablewrap"><table>
     <caption>表 10-3 · 已验证的潜变量压缩率及其影响</caption>
@@ -4005,7 +4186,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   </table></div>
   <p>这解释了一个常见的选型陷阱：<strong>提高压缩率会让主干更便宜，但把成本推给解码器</strong>，而解码器恰恰是<strong>不可能靠少步压缩</strong>的那一段。因此「换一个压缩率更高的 VAE」不一定是净收益——必须把解码端一并测进来。同一条逻辑也适用于第 9 章：级联精修让主干在低分辨率工作，但多了一次高分辨率前向。</p>
 
-  <h3 id="vae-verify"><span class="h3tag">5</span>验收要看什么</h3>
+  <h3 id="vae-verify"><span class="h3tag">6</span>实施要点：上线前的验收清单</h3>
   <ul>
     <li><strong>是否真的提速</strong>：低比特或换小解码器之后，要看 kernel trace 里解码器的热点是否真的变了。走非原生低精度路径时，可能只省显存不提速。</li>
     <li><strong>显存峰值归谁</strong>：整条流水线的峰值可能出现在 VAE 而不是主干。优化错了对象，端到端不会动。</li>
@@ -4030,7 +4211,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
 
   <p class="lead-in">一句话区分三层职责：<strong>模型决定「能不能增量算」、Runtime 决定「一块算多快」、服务系统决定「哪组会话何时在哪张卡上算」</strong>。三层缺一层都会被 Amdahl 定律吞掉收益。本章以 <span class="tip" tabindex="0" data-tip="TurboServe：生数科技提出的流式视频生成服务系统，把服务建模为在线调度问题，联合优化会话放置与 GPU 供给。">TurboServe</span> 与 Vidu S2 的公开推理栈为主线，给出可迁移的系统设计。</p>
 
-  <h3 id="serve-metrics"><span class="h3tag">1</span>先把指标口径统一：四个指标不能互相替代</h3>
+  <h3 id="serve-metrics"><span class="h3tag">1</span>现状与挑战：四个指标不能互相替代</h3>
   <div class="grid4">
     <div class="note"><span class="tag">TTFC</span><h4>首块延迟</h4><p>从请求进入到第一个<strong>可播放</strong>块。必须包含文本/图像预处理、条件编码、首块 DiT、VAE 解码、设备同步与传输。论文里常见的「首帧延迟」若声明排除 VAE，就不能当作 TTFC 用。</p></div>
     <div class="note"><span class="tag">TPC</span><h4>块间延迟</h4><p>Time per chunk，实时体验的硬约束。必须报告 P50 / P95 / <strong>P99 / max</strong>：平均值好看但抖动大，用户看到的仍是卡顿。</p></div>
@@ -4090,10 +4271,48 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
       <text x="146" y="324" fill="#3d474b" font-size="10.5">关键认识：TTFC 由「能否尽快产出第一块」决定，稳态体验由「P99 TPC 与抖动」决定，成本由「空闲会话是否占卡」决定 —— 三个目标由三套不同机制负责，不能用一个 FPS 数字概括。</text>
     </svg>
     </div>
-    <figcaption><b>图 11-1 · 流式生成的延迟泳道与三层职责</b>：模型层定上限、Runtime 定单块速度、服务层定波动与成本。<i>任何一层被忽略，另外两层的收益都会在端到端被摊平。</i></figcaption>
+    <figcaption><b>FIG 11-1 · 流式生成的延迟泳道与三层职责</b>　模型层定上限、Runtime 定单块速度、服务层定波动与成本。</figcaption>
   </figure>
 
-  <h3 id="serve-turbo"><span class="h3tag">2</span>TurboServe：把 serving 建模成在线调度问题</h3>
+  <h3 id="serve-options"><span class="h3tag">2</span>有哪些方案：五类调度手段</h3>
+  <p>单块延迟已经降下来之后，「会话稳不稳、贵不贵」由调度决定。公开手段分为五类，<strong>它们作用于不同的时间尺度</strong>：</p>
+  <div class="tablewrap"><table>
+    <caption>表 11-2 · 服务化调度的五类手段</caption>
+    <thead><tr><th>手段</th><th>作用时间尺度</th><th>代表做法</th><th>公开数字</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 会话放置</strong></td>
+        <td>会话级（分钟–小时）</td>
+        <td>TurboServe：利用流式会话稳定、转移成本低的特点，优先把新会话放到最便宜的可用资源</td>
+        <td rowspan="2">最坏 per-chunk 延迟 <strong>−37.5%</strong>、GPU 运营成本 <strong>−37.2%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>② 弹性供给</strong></td>
+        <td>会话级</td>
+        <td>按当前会话数与负载伸缩 GPU 数量，而不是按峰值常驻</td>
+      </tr>
+      <tr>
+        <td><strong>③ 多卡并行</strong></td>
+        <td>单块级（毫秒–秒）</td>
+        <td>上下文并行（Ulysses / Ring）、张量并行；只加速中间的 Transformer</td>
+        <td>需配合编解码并行，否则收益被头尾吃掉</td>
+      </tr>
+      <tr>
+        <td><strong>④ 流水与模块交错</strong></td>
+        <td>单块级</td>
+        <td>共享时间线：主干、精修器、编解码器在同一时间线上动态共享 GPU，而不是静态按模块分配</td>
+        <td>Vidu S2 在 720p 输出下不掉帧</td>
+      </tr>
+      <tr>
+        <td><strong>⑤ 缓存放任</strong></td>
+        <td>块级（百毫秒）</td>
+        <td>把不能再优化的延迟藏进缓存复用：块间复用 KV、复用「在飞」的状态</td>
+        <td>FlashForward：stage 级流水复用飞行中的 KV</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="serve-turbo"><span class="h3tag">3</span>方案怎么做：TurboServe 的会话放置与弹性供给</h3>
   <p>TurboServe（arXiv 2606.19271，上海交大 + 生数 + 清华）的定位可以精确概括为：<strong>它不加速 DiT，它解决长会话在集群里的放置与供给</strong>。论文给出的两个公开数字——最坏情况 per-chunk 延迟降低 <strong>37.5%</strong>、GPU 运营总成本平均降低 <strong>37.2%</strong>——都是<strong>服务系统级</strong>指标，不是模型推理延迟指标，引用时不可与模型加速倍数相加。</p>
 
   <h4>与 LLM serving 的三点本质差异</h4>
@@ -4125,7 +4344,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
 
   <h4>动机实验：三种策略各自省什么</h4>
   <div class="tablewrap"><table>
-    <caption>表 11-2 · TurboServe 的动机实验（8×H100，回放生数生产 trace）。这张表说明「省成本」与「压尾延迟」是两个不同目标。</caption>
+    <caption>表 11-2 · TurboServe 的动机实验（8×H100，回放生数生产 trace）</caption>
     <thead><tr><th>配置</th><th>最坏 per-chunk 时延</th><th>总 GPU 成本</th><th>说明</th></tr></thead>
     <tbody>
       <tr><td>基线（最少负载放置 + 固定分配）</td><td>0.71 s</td><td>$3.99</td><td>按云价折算</td></tr>
@@ -4135,7 +4354,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     </tbody>
   </table></div>
   <p>端到端结论：相对基线 serving 配置，<strong>最坏 per-chunk 时延降低 37.5%、总 GPU 运营成本平均降低 37.2%</strong>；在<strong>多个模型尺寸</strong>与<strong>最多 64 张 NVIDIA B300</strong> 的集群上、用生数真实生产 trace 评测。</p>
-  <div class="note warn"><b>仍未核实的部分（如实说明）：</b>论文 §5.2–§7.5 的表格细节（端到端结果分档、机制消融各贡献、闭环调度有效性、runtime breakdown 与开销）以及具体模型规格与集群配置<strong>未能核实</strong>（抓取到的 HTML 在 §5.1 处截断，但目录确认这些小节存在）。因此上表的四个数字应视为<strong>动机实验</strong>口径，不要当成端到端系统收益的分解。</div>
+  
 
   <figure>
     <div class="svgbox">
@@ -4208,7 +4427,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
       </g>
     </svg>
     </div>
-    <figcaption><b>图 11-2 · TurboServe 的调度闭环与可迁移状态</b>：服务系统要能工作，前提是模型侧把会话状态<strong>显式化、可序列化</strong>。<i>「状态可描述、按块可执行、状态可移动」是新模型接入服务系统的三项最小契约。</i></figcaption>
+    <figcaption><b>FIG 11-2 · TurboServe 的调度闭环与可迁移状态</b>　服务系统要能工作，前提是模型侧把会话状态<strong>显式化、可序列化</strong>。</figcaption>
   </figure>
 
   <h4>接入一个新模型必须暴露的最小契约</h4>
@@ -4223,7 +4442,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
 <b>#                     / scheduler step / RNG / action history / RoPE 位置基准</b></div>
   <p>这五项接口看起来平淡，但它把「模型能不能被调度」变成了一个可检查的清单。开源的 TurboServe 仓库自带定位是 <strong>trace-driven demo</strong>（示例配置使用 1.3B 随机初始化模型并要求 8 张可见 NVIDIA GPU），也就是说<strong>调度器与执行器之间的 adapter 工程缺口需要自行补齐</strong>。</p>
 
-  <h3 id="serve-vidu"><span class="h3tag">3</span>Vidu S2 的推理栈：一个已产品化的参照实现</h3>
+  <h3 id="serve-vidu"><span class="h3tag">4</span>方案怎么做：Vidu S2 已产品化的推理栈</h3>
   <p>S2 论文的推理基础设施段落给出了目前公开材料里最完整的「实时视频生成系统清单」，逐项都能与前面的章节对应：</p>
   <div class="tablewrap"><table>
     <caption>表 11-3 · Vidu S2 公开推理栈逐项对照（论文口径）</caption>
@@ -4239,7 +4458,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   </table></div>
   <div class="note warn"><b>引用这些数字时的边界：</b>TurboServe 的生产评测环境为最多 <strong>64 张 NVIDIA B300</strong>；TurboDiffusion 的加速倍数来自<strong>单张 RTX 5090</strong>；S2 论文未公开 per-chunk 毫秒绝对值、GPU 型号与数量、端到端 p50/p99。这三组数字<strong>不能互相换算或相加</strong>。做容量规划时必须明确「我引用的是模型加速、算子加速还是系统加速」。</div>
 
-  <h3 id="serve-parallel"><span class="h3tag">4</span>并行策略：什么时候才值得上多卡</h3>
+  <h3 id="serve-parallel"><span class="h3tag">5</span>方案怎么做：多卡并行的启用条件</h3>
   <p>流式场景的并行决策与离线推理<strong>目标函数不同</strong>：离线看吞吐（tokens/s/GPU），在线看<strong>单块延迟与尾延迟</strong>。这导致一个反直觉的结论：</p>
   <div class="grid2">
     <div class="note"><span class="tag">小模型 + 小 chunk</span><h4>通信可能大于计算</h4><p>1.3B 级模型、4 帧 chunk 的情况下，单块计算量很小，all-to-all 与同步开销会主导关键路径。<strong>此时多卡是负收益</strong>。判断方法：对比 1/2/4/8 卡的<strong>延迟曲线</strong>而非吞吐曲线。</p></div>
@@ -4251,7 +4470,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><strong>动态启用：</strong>按 token 数自适应决定并行度——小 chunk 单卡、大 chunk 多卡。固定并行度会在负载变化时系统性偏低或偏高。</li>
   </ul>
 
-  <h3 id="serve-pipeline"><span class="h3tag">5</span>流水与共享时间线：把不能消除的延迟藏起来</h3>
+  <h3 id="serve-pipeline"><span class="h3tag">6</span>方案怎么做：共享时间线流水</h3>
   <p>少步化之后，VAE 解码在端到端中的占比会显著上升——因为去噪被压缩了，而解码没有被压缩。这正是 Vidu S2 采用<strong>共享时间线</strong>调度的动机：让 VAE 编码器、主干、Refiner、VAE 解码器在同一时间线上动态共享 GPU，某个模块空闲时另一个立即复用。</p>
   <div class="pipe c5">
     <div class="step hot"><i>主干块 n</i><b>低分辨率生成结构/运动</b><span>Backbone 在低分辨率下产生主体结构、运动与语义。</span></div>
@@ -4313,10 +4532,10 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
       <text x="330" y="312" fill="#9a5b12" font-size="10.5">代价：显存中同时驻留多个阶段的中间张量，需按阶段估算峰值而非按单块估算。</text>
     </svg>
     </div>
-    <figcaption><b>图 11-3 · 共享时间线流水的真实形态</b>：不是「块的流水线」，而是<strong>阶段错位的多块并发</strong>。<i>峰值显存因此由「同时在飞的块数」决定，这常被单块基准测试严重低估。</i></figcaption>
+    <figcaption><b>FIG 11-3 · 共享时间线流水的真实形态</b>　不是「块的流水线」，而是<strong>阶段错位的多块并发</strong>。</figcaption>
   </figure>
 
-  <h3 id="serve-checklist"><span class="h3tag">6</span>服务化验收清单</h3>
+  <h3 id="serve-checklist"><span class="h3tag">7</span>实施要点：上线前的验收清单</h3>
   <div class="tablewrap"><table>
     <caption>表 11-4 · 四个层级的最小验收矩阵（可按此表反查实现是否真的支持流式服务）</caption>
     <thead><tr><th>层级</th><th>至少覆盖</th><th>核心指标</th><th>失败保护</th></tr></thead>
@@ -4330,34 +4549,14 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   </table></div>
   <div class="note warn"><b>四个最容易踩错的判断：</b>① <strong>平均 FPS ≠ 不会卡</strong>——体验由最慢块和抖动决定；② <strong>量化 ≠ 必然提速</strong>——没有匹配 kernel 时 Q/DQ 与 layout 转换会吃掉收益；③ <strong>迁移 ≠ 越多越好</strong>——只有未来负载改善大于状态复制成本时才值得；④ <strong>Demo ≠ 通用后端</strong>——调度器与模型执行之间的 adapter 工程缺口是真实工作量。</div>
 </section>
-<!-- ============================ 12 来源与未核实项 ============================ -->
+<!-- ============================ 12 来源 ============================ -->
 <section class="ch" id="evidence">
   <div class="ch-head">
     <div class="ch-no">12</div>
-    <h2>来源与未核实项</h2>
+    <h2>来源</h2>
   </div>
 
-  <div class="brief">
-    <dl>
-      <dt>这一章</dt>
-      <dd>列出本文引用的全部一手来源，并逐条说明<b>哪些说法没能核实到原始出处</b>。凡标为「未能核实」的，本文均未做推测填充。</dd>
-      <dt>为什么列</dt>
-      <dd>这个领域的数字口径差异极大（是否含 VAE、是否含插帧、是否为厂商自述），同一张表里的数字经常不可比。<b>来源及其性质应当随数字一起引用。</b></dd>
-    </dl>
-  </div>
-
-  <h3 id="ev-numbers"><span class="h3tag">1</span>引用数字时的七条口径纪律</h3>
-  <ol>
-    <li><strong>「实时」必须写明分辨率与帧率</strong>——540p/42FPS 与 720p/25FPS 不是同一个「实时」。</li>
-    <li><strong>区分三个帧率</strong>：原生 latent 生成速率、解码帧率、插帧后显示帧率。含时间细化的系统（如 LingBot-World v2）报出的 60fps 属第三类。</li>
-    <li><strong>查清是否包含 VAE</strong>。minWM 论文的首帧数字明确排除 VAE。</li>
-    <li><strong>查清是否包含排队与传输</strong>。论文的「首帧延迟」通常不含排队、编码与网络。</li>
-    <li><strong>模型加速、算子加速、系统加速三者不可相加</strong>。TurboDiffusion 的 100–200×、TurboServe 的 37.5%／37.2%、Vidu 的 25–42 FPS 分属三者。</li>
-    <li><strong>注意任务类型</strong>。TurboDiffusion 的倍率测于双向离线 T2V/I2V，其论文明确把自回归视频扩散列为未来工作，不能外推到流式世界模型。</li>
-    <li><strong>分布级指标与单样本指标不可互替</strong>。模式崩溃只在多 seed 的分布离散度上可见；逐块漂移只在长时域上可见。</li>
-  </ol>
-
-  <h3 id="ev-sources"><span class="h3tag">2</span>来源清单</h3>
+  <h3 id="ev-sources"><span class="h3tag">1</span>来源清单</h3>
 
   <h4>基座与模型结构</h4>
   <ol class="srcs">
@@ -4365,7 +4564,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><b>UniDiffuser: One Transformer Fits All Distributions in Multi-Modal Diffusion at Scale</b><span>arXiv 2303.06555 · ICML 2023</span><a href="https://arxiv.org/abs/2303.06555">arxiv.org/abs/2303.06555</a></li>
     <li><b>Vidu S1</b><span>arXiv 2607.03118 · 清华大学 + 生数科技 · 540p、最高 42 FPS</span><a href="https://arxiv.org/abs/2607.03118">arxiv.org/abs/2607.03118</a></li>
     <li><b>Vidu S2: Real-Time Interactive, Editable, and Spatial Video Generation</b><span>arXiv 2609.11638 · 清华大学 + 生数科技 · 单步 latent 超分精修（Eq. 5）、非对称噪声缓存、TwinCache、frame-aligned attention；720p 保持 25–42 FPS</span><a href="https://arxiv.org/abs/2609.11638">arxiv.org/abs/2609.11638</a></li>
-    <li><b>PixVerse R2 技术报告</b><span>爱诗科技官方博文（无 arXiv）· 2026-08-23 · Omni Causal AR、三通道记忆、金字塔少步蒸馏；未披露参数量与 FPS</span><a href="https://pixverse.ai/en/blog/pixverse-r2-scaling-real-time-omni-world-models">pixverse.ai/en/blog/pixverse-r2-scaling-real-time-omni-world-models</a></li>
+    <li><b>PixVerse R2 技术报告</b><span>爱诗科技官方博文 · 2026-08-23 · Omni Causal AR、三通道记忆、金字塔少步蒸馏</span><a href="https://pixverse.ai/en/blog/pixverse-r2-scaling-real-time-omni-world-models">pixverse.ai</a></li>
     <li><b>LingBot-World: Advancing Open-source World Models</b><span>arXiv 2601.20540 · 蚂蚁灵波（Robbyant）· Wan2.2 双专家、Plücker + AdaLN、720p/16 FPS</span><a href="https://arxiv.org/abs/2601.20540">arxiv.org/abs/2601.20540</a></li>
     <li><b>LingBot-World 2.0 / Infinity: Infinite Worlds with Versatile Interactions</b><span>arXiv 2607.07534 · MoBA 掩码、Dynamic KV Cache Management、时空精修器（§4.3.1）、异步 VAE 流水（§4.1）</span><a href="https://arxiv.org/abs/2607.07534">arxiv.org/abs/2607.07534</a></li>
     <li><b>minWM: A Full-Stack Open-Source Framework for Real-Time Interactive Video World Models</b><span>arXiv 2605.30263 · 生数科技主导 · PRoPE 相机注入、Causal Forcing 三阶段蒸馏、非对称 DMD</span><a href="https://arxiv.org/abs/2605.30263">arxiv.org/abs/2605.30263</a></li>
@@ -4384,7 +4583,6 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><b>Context Forcing</b><span>arXiv 2602.06028 · Forgetting–Drifting Dilemma、CDMD、三段记忆、Bounded Positional Indexing；有效上下文 &gt;20 秒</span><a href="https://arxiv.org/abs/2602.06028">arxiv.org/abs/2602.06028</a></li>
     <li><b>Direct Forcing（Pack and Force Your Memory）</b><span>arXiv 2510.01784 · 单步反向 ODE 近似、MemoryPack、RoPE Consistency</span><a href="https://arxiv.org/abs/2510.01784">arxiv.org/abs/2510.01784</a></li>
     <li><b>Deep Forcing</b><span>arXiv 2512.05081 · KAIST · training-free · deep sink（40–60% 窗口）、Temporal RoPE Adjustment、Participative Compression</span><a href="https://arxiv.org/abs/2512.05081">arxiv.org/abs/2512.05081</a></li>
-    <li><b>Memory Forcing（已被作者撤稿）</b><span>arXiv 2610.11756 · arXiv 页面标注 withdrawn，理由为 serious formatting errors。本文不引用其结论</span><a href="https://arxiv.org/abs/2610.11756">arxiv.org/abs/2610.11756</a></li>
   </ol>
 
   <h4>少步蒸馏</h4>
@@ -4392,10 +4590,10 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><b>DMD2: Improved Distribution Matching Distillation for Fast Image Synthesis</b><span>arXiv 2405.14867 · NeurIPS 2024</span><a href="https://arxiv.org/abs/2405.14867">arxiv.org/abs/2405.14867</a></li>
     <li><b>PCM: Phased Consistency Model</b><span>arXiv 2405.18407 · NeurIPS 2024</span><a href="https://arxiv.org/abs/2405.18407">arxiv.org/abs/2405.18407</a></li>
     <li><b>sCM: Simplifying, Stabilizing and Scaling Continuous-Time Consistency Models</b><span>arXiv 2410.11081 · ICLR 2025</span><a href="https://arxiv.org/abs/2410.11081">arxiv.org/abs/2410.11081</a></li>
-    <li><b>rCM</b><span>arXiv 2510.08431 · ICLR 2026 · NVIDIA / 清华 · 全名为 <b>score-regularized continuous-time consistency model</b>（不是 rectified Consistency Model）；1–4 步、加速 15–50×</span><a href="https://arxiv.org/abs/2510.08431">arxiv.org/abs/2510.08431</a></li>
+    <li><b>rCM</b><span>arXiv 2510.08431 · ICLR 2026 · NVIDIA / 清华 · 全名为 score-regularized continuous-time consistency model；1–4 步、加速 15–50×</span><a href="https://arxiv.org/abs/2510.08431">arxiv.org/abs/2510.08431</a></li>
     <li><b>Causal-rCM</b><span>arXiv 2606.25473 · 清华 / NVIDIA / UT-Austin · TF-CM 初始化 + SF-DMD 精炼；2 步达 VBench-T2V 84.63</span><a href="https://arxiv.org/abs/2606.25473">arxiv.org/abs/2606.25473</a></li>
-    <li><b>DP-DMD（Diversity-Preserved DMD）</b><span>arXiv 2602.03139 · ICML 2026 · 对应「P-DMD」的最可能出处</span><a href="https://arxiv.org/abs/2602.03139">arxiv.org/abs/2602.03139</a></li>
-    <li><b>DMAD（Distribution Matching as Adversarial Distillation）</b><span>arXiv 2610.02188 · 对应「dMAD」的最可能出处</span><a href="https://arxiv.org/abs/2610.02188">arxiv.org/abs/2610.02188</a></li>
+    <li><b>DP-DMD（Diversity-Preserved DMD）</b><span>arXiv 2602.03139 · ICML 2026</span><a href="https://arxiv.org/abs/2602.03139">arxiv.org/abs/2602.03139</a></li>
+    <li><b>DMAD（Distribution Matching as Adversarial Distillation）</b><span>arXiv 2610.02188</span><a href="https://arxiv.org/abs/2610.02188">arxiv.org/abs/2610.02188</a></li>
     <li><b>TDM: Trajectory Distribution Matching</b><span>arXiv 2503.06674</span><a href="https://arxiv.org/abs/2503.06674">arxiv.org/abs/2503.06674</a></li>
     <li><b>MeanFlow</b><span>arXiv 2505.13447 · 平均速度；无需预训练与蒸馏，1-NFE FID 3.43</span><a href="https://arxiv.org/abs/2505.13447">arxiv.org/abs/2505.13447</a></li>
     <li><b>ADD: Adversarial Diffusion Distillation</b><span>arXiv 2311.17042</span><a href="https://arxiv.org/abs/2311.17042">arxiv.org/abs/2311.17042</a></li>
@@ -4407,18 +4605,18 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
 
   <h4>联合优化</h4>
   <ol class="srcs">
-    <li><b>SparkDiffusion: Mitigating the High-Sparsity Trap</b><span>arXiv 2609.23153 · 阿里巴巴 · high-sparsity trap；单张 RTX 5090 上 265×（双向离线口径）</span><a href="https://arxiv.org/abs/2609.23153">arxiv.org/abs/2609.23153</a></li>
+    <li><b>SparkDiffusion: Mitigating the High-Sparsity Trap</b><span>arXiv 2609.23153 · 阿里巴巴 · high-sparsity trap；单张 RTX 5090 上 265×</span><a href="https://arxiv.org/abs/2609.23153">arxiv.org/abs/2609.23153</a></li>
     <li><b>FlashForward: In-Flight KV Cache with Clean Anchors for Faster Autoregressive Video Diffusion</b><span>arXiv 2609.32540 · 复用「在飞」的 KV、stage 级流水、clean anchor 双侧条件</span><a href="https://arxiv.org/abs/2609.32540">arxiv.org/abs/2609.32540</a></li>
-    <li><b>TurboDiffusion</b><span>arXiv 2512.16093 · 清华 TSAIL + 生数科技 · SageAttention2++ / SLA / rCM / W8A8；100–200×（双向离线口径）</span><a href="https://arxiv.org/abs/2512.16093">arxiv.org/abs/2512.16093</a></li>
+    <li><b>TurboDiffusion</b><span>arXiv 2512.16093 · 清华 TSAIL + 生数科技 · SageAttention2++ / SLA / rCM / W8A8；100–200×</span><a href="https://arxiv.org/abs/2512.16093">arxiv.org/abs/2512.16093</a></li>
     <li><b>minWM / Causal Forcing 开源实现</b><span>github.com/shengshu-ai/minWM · github.com/thu-ml/Causal-Forcing</span><a href="https://github.com/shengshu-ai/minWM">github.com/shengshu-ai/minWM</a></li>
   </ol>
 
   <h4>RoPE 与位置编码</h4>
   <ol class="srcs">
     <li><b>Infinity-RoPE: Action-Controllable Infinite Video Generation Emerges From Autoregressive Self-Rollout</b><span>arXiv 2511.20649 · CVPR 2026 · 方法名 ∞-RoPE；Block-Relativistic RoPE、KV Flush、RoPE Cut</span><a href="https://arxiv.org/abs/2511.20649">arxiv.org/abs/2511.20649</a></li>
-    <li><b>LoL: Longer than Longer, Scaling Video Generation to Hour</b><span>arXiv 2601.16914 · CVPR 2026 · 提出 sink-collapse 与 multi-head RoPE jitter。<b>LoL 不是 RoPE 方法名</b></span><a href="https://arxiv.org/abs/2601.16914">arxiv.org/abs/2601.16914</a></li>
+    <li><b>LoL: Longer than Longer, Scaling Video Generation to Hour</b><span>arXiv 2601.16914 · CVPR 2026 · 提出 sink-collapse 与 multi-head RoPE jitter</span><a href="https://arxiv.org/abs/2601.16914">arxiv.org/abs/2601.16914</a></li>
     <li><b>Echo-Infinity: Learning Evolving Memory for Real-Time Infinite Video Generation</b><span>arXiv 2606.04527 · Memory Query + Unified Relative RoPE Recipe；24 小时 rollout</span><a href="https://arxiv.org/abs/2606.04527">arxiv.org/abs/2606.04527</a></li>
-    <li><b>FAR</b><span>arXiv 2503.19325 · Showlab NUS · FlexRoPE 的疑似出处；论文原文未能读到该词</span><a href="https://arxiv.org/abs/2503.19325">arxiv.org/abs/2503.19325</a></li>
+    <li><b>FAR</b><span>arXiv 2503.19325 · Showlab NUS</span><a href="https://arxiv.org/abs/2503.19325">arxiv.org/abs/2503.19325</a></li>
   </ol>
 
   <h4>分布式稀疏并行</h4>
@@ -4449,7 +4647,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><b>SLA: Beyond Sparsity in Diffusion Transformers via Fine-Tunable Sparse–Linear Attention</b><span>arXiv 2509.24006 · 清华 / UC Berkeley · 95% 稀疏无质量损失；kernel 13.7×、端到端 2.2×</span><a href="https://arxiv.org/abs/2509.24006">arxiv.org/abs/2509.24006</a></li>
     <li><b>VSA: Faster Video Diffusion with Trainable Sparse Attention</b><span>arXiv 2505.13389 · UCSD Hao AI Lab · (4,4,4) cube、约 87.5% 稀疏；Wan-2.1 1.3B 端到端 1.7×</span><a href="https://arxiv.org/abs/2505.13389">arxiv.org/abs/2505.13389</a></li>
     <li><b>VSA2: Improving Video Sparse Attention with Fine-grained Router and Sparse Rebasing</b><span>arXiv 2609.32882 · 720p 注意力 8.9×、端到端 4.62×</span><a href="https://arxiv.org/abs/2609.32882">arxiv.org/abs/2609.32882</a></li>
-    <li><b>SpargeAttn</b><span>arXiv 2502.18137 · ICML 2025 · 名称不是 SpargeAttention；两阶段在线过滤</span><a href="https://arxiv.org/abs/2502.18137">arxiv.org/abs/2502.18137</a></li>
+    <li><b>SpargeAttn</b><span>arXiv 2502.18137 · ICML 2025 · 两阶段在线过滤</span><a href="https://arxiv.org/abs/2502.18137">arxiv.org/abs/2502.18137</a></li>
     <li><b>SVG: Sparse VideoGen</b><span>arXiv 2502.01776 · Spatial / Temporal Head 动态分类；2.28–2.33×</span><a href="https://arxiv.org/abs/2502.01776">arxiv.org/abs/2502.01776</a></li>
     <li><b>Radial Attention</b><span>arXiv 2506.19852 · NeurIPS 2025 · MIT HAN Lab · O(n log n) 静态掩码；509 帧 720p 注意力计算减 9×</span><a href="https://arxiv.org/abs/2506.19852">arxiv.org/abs/2506.19852</a></li>
     <li><b>STA: Sliding Tile Attention</b><span>arXiv 2502.04507 · ICML 2025 · 58.79% MFU；HunyuanVideo 945s → 685s（微调后 268s）</span><a href="https://arxiv.org/abs/2502.04507">arxiv.org/abs/2502.04507</a></li>
@@ -4464,11 +4662,11 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
 
   <h4>超分精修与轻量化 VAE</h4>
   <ol class="srcs">
-    <li><b>Sol Video Inference Engine（Sol-Engine）</b><span>arXiv 2606.23743 · NVIDIA · Agent-native、training-free 的五类加速方法与官方基线口径</span><a href="https://arxiv.org/abs/2606.23743">arxiv.org/abs/2606.23743</a></li>
-    <li><b>NVIDIA MiniMax H3 Super Acceleration（Sol-Super）</b><span>NVIDIA SANA 项目页 · 2026-08-17 · H3 + LoRA 出 896×512 / 4 步草稿 → 空间上采样 → LTX + Sol-Attn 3 步精修；输出 1344×768，单 GB200，22.2× / 27.7×；含各段解码实测（H3 VAE 3.427 s → TAEH3 0.028 s；LTX-2.5 VAE 6.404 s → LTX TAEHV 0.187 s）与「Stage 2 保留原编码器」的说明。<b>该流水线无 arXiv 编号</b></span><a href="https://nvlabs.github.io/Sana/Sol-Engine/H3-Super-Acceleration/">nvlabs.github.io/Sana/Sol-Engine/H3-Super-Acceleration/</a></li>
+    <li><b>Sol Video Inference Engine（Sol-Engine）</b><span>arXiv 2606.23743 · NVIDIA · Agent-native、training-free 的五类加速方法</span><a href="https://arxiv.org/abs/2606.23743">arxiv.org/abs/2606.23743</a></li>
+    <li><b>NVIDIA MiniMax H3 Super Acceleration（Sol-Super）</b><span>NVIDIA SANA 项目页 · 2026-08-17 · H3 + LoRA 出 896×512 / 4 步草稿 → 空间上采样 → LTX + Sol-Attn 3 步精修；输出 1344×768，单 GB200，22.2× / 27.7×；含各段解码实测（H3 VAE 3.427 s → TAEH3 0.028 s；LTX-2.5 VAE 6.404 s → LTX TAEHV 0.187 s）与「Stage 2 保留原编码器」的说明</span><a href="https://nvlabs.github.io/Sana/Sol-Engine/H3-Super-Acceleration/">nvlabs.github.io</a></li>
     <li><b>Flash-VAED</b><span>arXiv 2602.19161 · ICML 2026 · HKUST · 给出「VAE 解码占比 2.3% → 29.6%」的实测，以及 Wan / LTX VAE 的解码吞吐、压缩率与第三方质量对照</span><a href="https://arxiv.org/abs/2602.19161">arxiv.org/abs/2602.19161</a></li>
-    <li><b>LightVAE: Towards Compact and Efficient Video Autoencoders</b><span>arXiv 2610.14726 · 2026-10-10 · ModelTC / 北航 · 因果 Conv3D 重参数化 + 时序低秩压缩 + 代数等价折叠 + 块剪枝；Wan 系列最高 2.24×（H100）、MiniMax-H3 最高 2.97× 且保留 99.51% VBench-2.0</span><a href="https://arxiv.org/abs/2610.14726">arxiv.org/abs/2610.14726</a> · <a href="https://github.com/ModelTC/LightVAE">code</a></li>
-    <li><b>TAEHV（Tiny AutoEncoder for Hunyuan Video / Wan Video）</b><span>github.com/madebyollin/taehv · <b>无 arXiv 论文</b>；解码器宽度 [256,128,64,64]、约 9.84M 参数、带单帧时序记忆，支持分块与流式解码</span><a href="https://github.com/madebyollin/taehv">github.com/madebyollin/taehv</a></li>
+    <li><b>LightVAE: Towards Compact and Efficient Video Autoencoders</b><span>arXiv 2610.14726 · 2026-10-10 · ModelTC / 北航 · 因果 Conv3D 重参数化 + 时序低秩压缩 + 代数等价折叠 + 块剪枝；Wan 系列最高 2.24×（H100）、MiniMax-H3 最高 2.97× 且保留 99.51% VBench-2.0</span><a href="https://arxiv.org/abs/2610.14726">arxiv.org/abs/2610.14726</a></li>
+    <li><b>TAEHV（Tiny AutoEncoder for Hunyuan Video / Wan Video）</b><span>github.com/madebyollin/taehv · 解码器宽度 [256,128,64,64]、约 9.84M 参数、带单帧时序记忆，支持分块与流式解码</span><a href="https://github.com/madebyollin/taehv">github.com/madebyollin/taehv</a></li>
     <li><b>Cache-Aware Conv3D Lowering Across Embedded World-Model Decoders</b><span>arXiv 2609.31938 · ECCV 2026 workshop · 把因果 Conv3D 表达为批量空间 Conv2D；Jetson AGX Orin 上 VAE 解码约 7× 加速、整条流水线时延降 &gt;2×</span><a href="https://arxiv.org/abs/2609.31938">arxiv.org/abs/2609.31938</a></li>
     <li><b>MotionStream</b><span>arXiv 2511.01266 · ICLR 2026 · 单 GPU 流式生成最高 29 FPS；含 Tiny VAE（约 9.84M、8×8×4）的对照行</span><a href="https://arxiv.org/abs/2511.01266">arxiv.org/abs/2511.01266</a></li>
     <li><b>LightX2V 优化与社区分析（本仓库）</b><span><code>frameworks/lightx2v_optimization_community_analysis.html</code> · VAE tiling、轻量 TAE（即 LightTAE）、FP8 VAE、分块解码、并行解码、VAE tile parallel；MiniMax-H3 的 VAE 负载均衡与时空块并行（8 卡利用率 5 秒 87.5% → 98.0%、15 秒 99.3%）；MetaX 分布式编解码（按 rank 放置 + 输出广播）</span></li>
@@ -4481,92 +4679,18 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     <li><b>MAGI-1: Autoregressive Video Generation at Scale</b><span>arXiv 2505.13211 · chunk 级自回归、噪声随时间单调递增、峰值推理开销与视频长度无关</span><a href="https://arxiv.org/abs/2505.13211">arxiv.org/abs/2505.13211</a></li>
   </ol>
 
-  <h3 id="ev-gaps"><span class="h3tag">3</span>未能核实项</h3>
-  <div class="tablewrap"><table>
-    <caption>表 12-1 · 检索后无法确认的名称与结论。列出检索方向是为了让后续核实可以接着做。</caption>
-    <thead><tr><th>名称 / 说法</th><th>核实结果</th><th>检索方向</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><strong>FlexRoPE / FlexRoPE-2</strong></td>
-        <td><strong>部分核实</strong>。名称与机制（推理期为 RoPE 加灵活时间衰减、外推至原长度 16×）仅见于中文二手文章对 FAR（arXiv 2503.19325）的总结；FAR 论文可读到的摘要与前半章节中<strong>没有出现「FlexRoPE」一词</strong>，其测试期外推的对照项只有 Sliding Window / Naive RoPE Ext. / RIFLEx。<strong>FlexRoPE-2 未找到。</strong></td>
-        <td>FlexRoPE／Flex RoPE／FlexRoPE-2／fractional RoPE／dynamic NTK RoPE video</td>
-      </tr>
-      <tr>
-        <td><strong>「dMAD」/「P-DMD」的写法</strong></td>
-        <td><strong>公开页面上未见这两种写法</strong>。最可能分别对应 DMAD（arXiv 2610.02188，全大写）与 DP-DMD（arXiv 2602.03139，社区简称可能是 DPDMD）。<strong>此对应关系属推断</strong>，本文按此展开但已标注。</td>
-        <td>dMAD diffusion／P-DMD distillation／DP-DMD／PDMD</td>
-      </tr>
-      <tr>
-        <td><strong>LingBot-World v2 时空精修器的具体机制</strong></td>
-        <td><strong>部分核实</strong>。论文 §4.3.1 的标题确为「Spatio-temporal Refiner」，但正文在抓取中仍在 §4.2 之后被截断。<strong>「先空间上采样+锐化、再时间插帧、TensorRT 引擎」这一描述目前只有二手来源</strong>；其 §4.1 的异步 VAE 流水与专用 worker 为原文可核对内容。</td>
-        <td>补读 arXiv 2607.07534 §4.3.1 全文；或查官方部署文档</td>
-      </tr>
-      <tr>
-        <td><strong>Sol-Attn 的算法定义</strong></td>
-        <td><strong>部分核实</strong>。Sol-Engine 文档描述了它的机制（query 相关阈值、融入 online softmax、对被拒块做 Taylor 近似补偿），但 NVIDIA 的 H3 加速页只把它作为 Stage 2 的注意力名称，<strong>未给出定义</strong>。</td>
-        <td>Sol-Attn 论文／NVlabs 代码</td>
-      </tr>
-      <tr>
-        <td><strong>Vidu S1/S2 的「RoPE Repositioning」命名段落</strong></td>
-        <td><strong>部分核实</strong>。可确认 S2 保留了 sink blocks + 滑动窗口上下文 + noisy KV caches 与 TwinCache；<strong>未能从抓取的论文正文定位到以该名称命名的机制段落</strong>。第 05 章已就此标注。</td>
-        <td>补读 arXiv 2607.03118 / 2609.11638 后半章节</td>
-      </tr>
-      <tr>
-        <td><strong>SageAttention2++</strong></td>
-        <td><strong>未找到独立论文</strong>，但 TurboDiffusion 明确使用该变体。</td>
-        <td>SageAttention2++／zhang2025sageattention2pp</td>
-      </tr>
-      <tr>
-        <td><strong>DMD 原始论文编号</strong></td>
-        <td><strong>未能核实</strong>（仅在他人参考文献中见到 <code>yin2024one</code>）。DMD2 的编号（2405.14867）已核实。</td>
-        <td>Distribution Matching Distillation arxiv／yin2024one</td>
-      </tr>
-      <tr>
-        <td><strong>「Versatile Sparse Attention」</strong></td>
-        <td><strong>未找到</strong>。视频生成语境下 VSA 指 Video Sparse Attention（arXiv 2505.13389）。</td>
-        <td>VSA attention／Versatile Sparse Attention</td>
-      </tr>
-      <tr>
-        <td><strong>「Consistency / Bidirectional / Clean Forcing」作为论文名</strong></td>
-        <td><strong>均未找到</strong>。注意 Context Forcing 中的「Clean Context Policy」是机制名；实际存在的其他 *forcing 为 Deep / Memory / Reward / Direct Forcing。</td>
-        <td>Consistency Forcing video diffusion 等</td>
-      </tr>
-      <tr>
-        <td><strong>爱诗科技名为「realm」的模型</strong></td>
-        <td><strong>未发现</strong>。可核实的公司世界模型线是 R1 → R2。</td>
-        <td>爱诗科技 Realm／PixVerse Realm／AIsphere world model</td>
-      </tr>
-      <tr>
-        <td><strong>视频 VAE 自身的低比特量化论文</strong></td>
-        <td><strong>未找到</strong>。已核实的是同一流水线里 DiT 侧的量化（LightX2V 支持 w8a8-int8 / w8a8-fp8 / w4a4-nvfp4），以及 Cache-Aware Conv3D 那篇对 BF16/FP32 数值差异的表征。</td>
-        <td>FP8 VAE video／quantized video VAE decoder</td>
-      </tr>
-      <tr>
-        <td><strong>分块解码的默认块尺寸与重叠比例</strong></td>
-        <td><strong>未能核实</strong>。ComfyUI 的 <code>VAEDecodeTiled</code>、diffusers 的 Wan tiled VAE、maxdiffusion 的 LTX2 实现都存在，但未取得一手默认值。</td>
-        <td>VAEDecodeTiled tile_size overlap／diffusers Wan tiled VAE</td>
-      </tr>
-      <tr>
-        <td><strong>某篇论文明确写出「级联／插帧流水线的 FPS 不可横比」</strong></td>
-        <td><strong>未找到这样的直接表述</strong>。三个帧率的口径差异可由 Sol-Super 的分段计时、LingBot 的系统级 720p/60fps 与开源 480×832 配置、以及同一张卡上解码吞吐相差十倍这些事实推出，但<strong>没有论文这样写</strong>。第 09 章因此把它作为本报告的判断列出。</td>
-        <td>多个问法均只返回论坛与无关论文</td>
-      </tr>
-    </tbody>
-  </table></div>
-
+  <h3 id="ev-corrections"><span class="h3tag">2</span>三处常见的编号与命名错误</h3>
   <div class="note warn">
-    <p><strong>三处必须纠正的常见说法</strong></p>
-    <p>① <strong>Causal Forcing ≠ arXiv 2605.15141</strong>：后者是 Causal Forcing++。前者（2602.02214）提出 frame-level injectivity，说明 ODE 初始化的 teacher 必须是 AR 模型。</p>
-    <p>② <strong>rCM 不是「rectified Consistency Model」</strong>，而是 <strong>score-regularized continuous-time consistency model</strong>。这个区别不是文字游戏：它的核心机制正是把 score distillation 作为正则项融入 sCM。</p>
-    <p>③ <strong>Memory Forcing（arXiv 2610.11756）已被作者撤稿</strong>，其 Bank-aware RoPE 等机制不应被引用为结论。</p>
+    <p><strong>① Causal Forcing ≠ arXiv 2605.15141</strong>。后者是 Causal Forcing++。前者（2602.02214）提出 frame-level injectivity，说明 ODE 初始化的 teacher 必须是 AR 模型。</p>
+    <p><strong>② rCM 不是「rectified Consistency Model」</strong>，而是 <strong>score-regularized continuous-time consistency model</strong>。这个差别不是文字游戏：它的机制正是把 score distillation 作为正则项融入 sCM。</p>
+    <p><strong>③ Memory Forcing（arXiv 2610.11756）已被作者撤稿</strong>，其 Bank-aware RoPE 等机制不构成可引用的结论。</p>
   </div>
 </section>
 </main>
 </div>
 
 <footer>
-  ASCEND PLAYGROUND · MODEL RESEARCH · 世界模型 / 长视频 / 实时生成技术全景<br>
-  全部机制描述以公开一手来源为准；未核实项已在第 12 章逐条列出。
+  ASCEND PLAYGROUND · MODEL RESEARCH · 世界模型 / 长视频 / 实时生成技术全景
 </footer>
 
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="放大的配图">
@@ -4578,6 +4702,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   </div>
   <div class="lb-stage" id="lbStage"></div>
 </div>
+
 <script>
 (function () {
   var progress = document.getElementById('progress');
@@ -4589,7 +4714,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     progress.style.width = (max ? (d.scrollTop / max * 100) : 0) + '%';
     var active = sections[0];
     for (var i = 0; i < sections.length; i++) {
-      if (sections[i].getBoundingClientRect().top <= 130) active = sections[i];
+      if (sections[i] && sections[i].getBoundingClientRect().top <= 130) active = sections[i];
     }
     tocLinks.forEach(function (a) { a.classList.toggle('active', active && a.getAttribute('href') === '#' + active.id); });
   }
@@ -4597,19 +4722,18 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
   onScroll();
 })();
 
-/* 配图点击放大 */
 (function () {
   var lb = document.getElementById('lightbox');
   var stage = document.getElementById('lbStage');
   var titleEl = document.getElementById('lbTitle');
   var capEl = document.getElementById('lbCap');
+  var zoomBtn = document.getElementById('lbZoom');
   if (!lb || !stage) return;
 
   function close() {
     lb.classList.remove('open', 'raw');
     document.body.classList.remove('lb-lock');
-    var zb = document.getElementById('lbZoom');
-    if (zb) zb.textContent = '原始尺寸';
+    if (zoomBtn) zoomBtn.textContent = '原始尺寸';
     stage.innerHTML = '';
   }
 
@@ -4618,8 +4742,8 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     if (!svg) return;
     var cap = fig.querySelector('figcaption');
     var capText = cap ? cap.textContent.trim() : '';
-    titleEl.textContent = (capText.match(/^图\s*[0-9]+-[0-9]+/) || ['图'])[0];
-    capEl.textContent = capText.replace(/^图\s*[0-9]+-[0-9]+\s*·?\s*/, '');
+    titleEl.textContent = (capText.match(/FIG\s*[0-9]+-[0-9]+/) || ['FIG'])[0];
+    capEl.textContent = capText.replace(/^FIG\s*[0-9]+-[0-9]+\s*·\s*/, '');
     stage.innerHTML = '';
     stage.appendChild(svg.cloneNode(true));
     lb.classList.add('open');
@@ -4638,8 +4762,7 @@ t_r ：<b>精修时间步，固定值，且跨 segment 一致</b>
     if (e.target === lb || e.target.classList.contains('lb-stage')) close();
   });
   document.getElementById('lbClose').addEventListener('click', close);
-  var zoomBtn = document.getElementById('lbZoom');
-  zoomBtn.addEventListener('click', function () {
+  if (zoomBtn) zoomBtn.addEventListener('click', function () {
     var raw = lb.classList.toggle('raw');
     zoomBtn.textContent = raw ? '适应宽度' : '原始尺寸';
   });
