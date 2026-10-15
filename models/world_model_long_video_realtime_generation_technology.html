@@ -46,18 +46,19 @@ h1{margin:0 0 20px;font:700 clamp(2rem,4.6vw,3.4rem)/1.22 var(--serif);letter-sp
 .pill b{color:var(--ink);font-weight:700}
 
 /* ---------- layout ---------- */
-.layout{max-width:var(--max);margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:38px;padding:36px 22px 80px}
-.toc{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;border-left:2px solid var(--line)}
-.toc-title{color:var(--ink);font:700 .68rem/1.4 var(--mono);letter-spacing:.08em;margin:18px 0 8px;padding-left:10px}
+/* 单栏版式：目录上移为顶部导航条，正文与配图共享整幅宽度 */
+.layout{max-width:var(--max);margin:auto;display:block;padding:20px 22px 80px}
+.toc{position:sticky;z-index:30;top:52px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;max-height:60vh;overflow:auto;margin:0 0 26px;padding:11px 14px;background:rgba(255,255,255,.97);border:1px solid var(--line);backdrop-filter:blur(10px)}
+.toc-title{flex:0 0 100%;color:var(--ink);font:700 .7rem/1.35 var(--mono);letter-spacing:.08em;margin:8px 0 1px}
 .toc-title:first-child{margin-top:0}
-.toc a{display:block;padding:4px 8px 4px 10px;color:var(--ink2);font-size:.8rem;line-height:1.5;text-decoration:none;border-left:2px solid transparent;margin-left:-2px}
+.toc a{display:block;padding:1px 0;color:var(--ink2);font-size:.78rem;line-height:1.45;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
 .toc a:hover{color:var(--accent)}
-.toc a.sub{padding-left:22px;font-size:.75rem;color:var(--muted)}
-.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700}
+.toc a.sub{font-size:.72rem;color:var(--muted)}
+.toc a.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
 main{min-width:0}
 
 /* ---------- chapters ---------- */
-.ch{padding-bottom:56px;margin-bottom:56px;border-bottom:1px solid var(--line);scroll-margin-top:62px}
+.ch{padding-bottom:56px;margin-bottom:56px;border-bottom:1px solid var(--line);scroll-margin-top:116px}
 .ch:last-of-type{border-bottom:0}
 .ch-head{margin-bottom:24px;padding-bottom:14px;border-bottom:2px solid var(--rule)}
 .ch-no{color:var(--accent);font:700 .78rem/1.6 var(--mono);letter-spacing:.08em}
@@ -79,20 +80,10 @@ figure{margin:26px 0 32px;border:1px solid var(--line2);background:#fff}
 figure svg{display:block;width:100%;height:auto}
 figcaption{padding:12px 16px;border-top:2px solid var(--rule);color:var(--ink2);font-size:.88rem;line-height:1.75}
 figcaption b{color:var(--ink);font-weight:700}
-.svgbox{overflow-x:auto;cursor:zoom-in}
+.svgbox{overflow-x:auto}
 .svgbox svg{min-width:780px}
-
-#lightbox{position:fixed;inset:0;z-index:200;display:none;background:#fff;grid-template-rows:auto minmax(0,1fr)}
-#lightbox.open{display:grid}
-#lightbox .lb-bar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:2px solid var(--rule);background:var(--tint);font:700 .76rem/1.5 var(--mono);color:var(--accent)}
-#lightbox .lb-bar .lb-cap{color:var(--ink2);font:400 .86rem/1.6 var(--sans);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#lightbox button{padding:5px 11px;border:1px solid var(--line2);background:#fff;color:var(--ink);font:600 .74rem/1.4 var(--mono);cursor:pointer}
-#lightbox button:hover{border-color:var(--accent);color:var(--accent)}
-#lightbox .lb-zoom{margin-left:auto}
-#lightbox .lb-stage{overflow:auto;padding:18px}
-#lightbox .lb-stage svg{width:100%;height:auto;min-width:0}
-#lightbox.raw .lb-stage svg{width:2200px;max-width:none}
-body.lb-lock{overflow:hidden}
+/* 配图直接渲染为整幅宽度，不再需要点击放大 */
+figure.wide{width:100%;max-width:none}
 
 /* ---------- tables ---------- */
 .tablewrap{overflow:auto;margin:20px 0;border:1px solid var(--line2)}
@@ -147,10 +138,15 @@ dl.kv dd:last-of-type{border-bottom:0}
 footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8rem/1.9 var(--mono);text-align:center}
 
 @media(max-width:920px){
- .layout{grid-template-columns:1fr;gap:0;padding:20px 16px 60px}
- .toc{display:none}
+ .layout{padding:16px 16px 60px}
  .pipe.c4,.pipe.c3,.grid2{grid-template-columns:1fr}
-   table{min-width:640px}
+ table{min-width:640px}
+ .toc{top:52px}
+}
+@media(max-width:640px){
+ .layout{padding:12px 12px 48px}
+ .toc{max-height:46vh;gap:4px 10px;padding:9px 11px}
+ figure.wide .svgbox svg{min-width:640px}
 }
 @media print{
  .topbar,.toc,.progress{display:none}
@@ -285,7 +281,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p class="lead">实时世界模型是一个<strong>四段串联</strong>的系统：每一段都为下一段设定约束，同时把「不可能」变成「可能」。顺序颠倒会导致优化失去目标函数——这正是本文按「先训练、后推理」组织的原因。</p>
  </div></div>
 
- <figure id="map-flow">
+ <figure class="wide" id="map-flow">
  <div class="svgbox">
  <svg viewBox="0 0 1080 470" role="img" aria-label="实时生成技术的四段依赖链与各章位置">
  <defs>
@@ -387,7 +383,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </figure>
 
  <h3 id="map-timeline"><span class="h3tag">1</span>技术演进时间线（按产生顺序）</h3>
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="2022 至 2026 年世界模型、长视频与实时生成技术演进时间线">
  <rect width="1080" height="420" fill="#ffffff"/>
@@ -467,7 +463,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p>要做实时世界模型，必须同时满足三个互相牵制的要求：<strong>能增量生成</strong>（不能等整段视频算完再提交）、<strong>能接受实时控制</strong>（相机、动作、参考图在生成中途到达）、<strong>能长时间不漂移</strong>（几十分钟会话里身份与场景保持一致）。这三个要求都落在结构上——不是训练技巧或工程调度能补的。</p>
  <p>理解这四家的选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
 
- <figure id="base-evo">
+ <figure class="wide" id="base-evo">
  <div class="svgbox">
  <svg viewBox="0 0 1060 420" role="img" aria-label="视频生成模型的四次架构转向与本研究覆盖的四个模型">
  <rect width="1060" height="420" fill="#ffffff"/>
@@ -599,7 +595,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="note"><b>为什么谱系对迁移工作重要：</b>「一切都是 token」意味着<strong>新增一种条件不需要改主干结构</strong>，只需要定义该条件的 token 化方式与位置编码。<strong>而「不同模态各自的时间步」意味着音视频联合建模可以通过拼接模态维实现</strong>——这正是 Vidu S1/S2 的 <code>x₀ = [v₀ ; a₀]</code> 的理论来源。读懂这两条，后面四家的结构差异就都变成「参数选择」而非「架构创新」。</div>
 
 <!-- ===== 图 1-1 重绘（U-ViT 主干 / UniDiffuser 时间步调度） ===== -->
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 430" role="img" aria-label="U-ViT 主干结构与 UniDiffuser 的多模态时间步调度">
  <rect width="1060" height="430" fill="#ffffff"/>
@@ -701,7 +697,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </table></div>
  
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="爱诗 R2 的两过程框架与三通道多时间尺度记忆">
  <defs><marker id="ar-r2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
@@ -795,7 +791,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="note"><span class="tag">作者自述局限</span><h4>长期记忆仍不成立</h4><p>离开上下文窗口后<strong>再次访问的区域会被「重新生成」而不是「回忆」</strong>——世界在<strong>观感上</strong>持久，但<strong>身份上</strong>不持久。作者正探索 dynamic KV-cache scheduling 来保留更大更相关的历史。</p><p class="p"><strong>「无限时长」与「无限记忆」是两件不同的事</strong>，2026 年的产品级系统只做到了前者。</p></div>
  </div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="LingBot-World 的 MoBA 掩码与双专家因果化">
  <rect width="1080" height="420" fill="#ffffff"/>
@@ -864,7 +860,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <h4>Phase 1 · 相机可控微调：PRoPE 如何把几何注入注意力</h4>
 
 <!-- ===== 替代文字公式：PRoPE 把相机几何注入自注意力 ===== -->
-  <figure>
+  <figure class="wide">
     <div class="svgbox">
     <svg viewBox="0 0 1060 470" role="img" aria-label="PRoPE 如何把相机几何注入自注意力">
       <rect width="1060" height="470" fill="#ffffff"/>
@@ -945,7 +941,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </div>
  <p><strong>相机可控贯穿全流程</strong>：Stage 1 从相机可控双向模型初始化并在相机数据上训练；Stage 2 采 ODE 数据与 CD 训练都带相机条件；Stage 3 自 rollout 与 <code>s_real</code>/<code>s_fake</code> 全部接收同一相机条件。这是本节最值得学的一条流程设计原则：<strong>条件不能只在最后一步注入，否则蒸馏会把条件抹掉。</strong></p>
 <!-- ===== 图 1-5 minWM：PRoPE 注入 + 三阶段因果化 + 流式执行 ===== -->
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 470" role="img" aria-label="minWM 的 PRoPE 相机注入、三阶段因果化与流式推理拓扑">
  <rect width="1060" height="470" fill="#ffffff"/>
@@ -1059,7 +1055,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </div>
  <div class="note"><b>代码成熟度提示（重要）：</b>论文/README 的主路径是 <strong>4-step chunk-wise</strong>。仓库 HEAD 已可见 HY 路线的文本与视觉 KV cache，但<strong>通过 <code>torch.cat</code> 逐块扩展视觉 KV</strong>；README 仍把更广义的「inference acceleration」标为 TBD。<strong>因此「有 KV cache」不等于「已有生产级、长时有界的 rolling / paged KV」</strong>——这正是 §10.3 反复强调的那道分水岭。</div>
 <!-- ===== 图 1-6 四种注意力掩码对照 ===== -->
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 400" role="img" aria-label="四种注意力掩码对照：双向、块级因果、MoBA、固定规则稀疏">
  <rect width="1060" height="400" fill="#ffffff"/>
@@ -1205,7 +1201,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p>这就是 forcing 类方法的目标函数来源：<strong>不是提高单块质量，而是提高「在自己生成的历史条件下继续生成」的稳定性</strong>。它天然是一项<strong>后训练</strong>任务——必须建立在已经具备块级因果接口的模型之上。</p>
   <p>具体地说，训练期做的是 <code>x̂_n = f(x_{&lt;n}, c_n)</code>，历史是<strong>真值</strong>；推理期做的是 <code>x̂_n = f(x̂_{&lt;n}, c_n)</code>，历史是<strong>自己的采样</strong>。设单块误差为 <code>ε_n</code>，则它满足 <code>ε_n ≤ ‖∂f/∂x‖·ε_{n−1} + η</code>——只要这个雅可比范数大于 1，误差就<strong>指数放大</strong>。视频与语言的关键差别在于误差落在哪里：LLM 的误差落在离散 token 上，解码器有采样温度与重复惩罚等纠偏机制；视频 DiT 的误差落在连续 latent 上，会通过 VAE 解码放大成可见伪影。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 440" role="img" aria-label="暴露偏差导致的跨块误差累积，以及 forcing 的三个修补点">
  <rect width="1060" height="440" fill="#ffffff"/>
@@ -1428,7 +1424,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </table></div>
 
  <h3 id="forcing-srf"><span class="h3tag">5</span>Self-Replay Forcing 的三步循环</h3>
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 470" role="img" aria-label="Self-Replay Forcing 三步流程与 Self-Forcing 的对比">
  <rect width="1060" height="470" fill="#ffffff"/>
@@ -1527,7 +1523,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  
  <div class="note"><b>反过来读这条公式：</b>当 NFE 从 50 压到 4，主干占比下降、<strong>VAE 与调度开销的占比相对上升</strong>。这正是 §9.5 必须做 DiT–VAE 异步流水的原因——蒸馏把瓶颈从算力搬到了流水线上。</div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 470" role="img" aria-label="前向散度与反向散度的互补，以及三族蒸馏的归位">
  <defs>
@@ -1661,7 +1657,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  ③ <strong>「SpargeAttention」的正确名称是 SpargeAttn</strong>，且它是 <strong>training-free 通用稀疏+量化</strong>方法（两阶段在线过滤：先快速预测注意力图跳过部分 matmul，再用<strong>零额外开销的在线 softmax-aware filter</strong> 进一步跳过）。</div>
 
  <h3 id="distill-collapse"><span class="h3tag">3</span>各族的分布匹配机制</h3>
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="模式崩溃在视频上的表现与四类补救手段">
  <rect width="1080" height="400" fill="#ffffff"/>
@@ -1792,7 +1788,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
   <p><strong>关键在于这四个预算不是独立可调的。</strong>最典型的是块粒度：它同时是稀疏注意力的选择单元（VSA 默认 4×4×4 的 cube、SLA 的块级三分类）、量化的 per-block scale 单元（QuantWM 的 2-bit Key 聚类、TurboDiffusion 的 block-wise W8A8）、以及 kernel 的 tiling 与访存单元（决定能否走 Tensor Core 或块稀疏快路）。三者共享同一个超参数，<strong>只能联合决定</strong>。</p>
   <p>另一类耦合来自误差的传播方向：稀疏改变注意力的数值分布，会让量化校准集失效；少步化提高每步的信息承载量，任何近似误差都更难被后续步骤平滑；自回归又把误差带进下一步的输入，单块误差于是变成会话级漂移。</p>
  
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 430" role="img" aria-label="三层优化与共享的耦合点">
  <rect width="1080" height="430" fill="#ffffff"/>
@@ -1958,7 +1954,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </div>
  <p>三者不是替代关系，而是一条<strong>收益递减的次序</strong>：形态 A 收益最大但要重训；形态 B 不需要重训但需要动态执行能力；形态 C 不改变数值结果，是最后一道「免费」收益。工程上常见的错误顺序是<strong>先做 C 再做 A</strong>——把调度优化建立在尚未被算法层压低的成本上，结果 Amdahl 定律让 C 的收益看起来「不显著」，从而错误地放弃了真正的大头。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 340" role="img" aria-label="训练期、推理期、调度期三种合作的收益与成本">
  <rect width="1080" height="340" fill="#ffffff"/>
@@ -2022,7 +2018,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <p class="lead">本章讨论为什么流式视频模型几乎都要动 RoPE、动的是哪几类、以及 Infinity RoPE / LoL / Flex 这几条路线各自解决什么。要点先给：<strong>RoPE 问题不是「能不能外推」，而是「缓存复用与相对位置正确性能否同时成立」</strong>。多数工程事故不是模型不会外推，而是缓存与位置编码的施加时机错了。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 380" role="img" aria-label="视频 DiT 中的位置编码分解：时间轴、空间轴与缓存的相对位置">
  <defs>
@@ -2135,7 +2131,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </dl>
  <p>这条设计把 RoPE 从「模型结构里的一个固定层」变成「推理运行时的一个显式状态转换」。对迁移工作的直接含义是：<strong>RoPE 位置表、缓存布局、注意力 kernel 三者必须一起设计</strong>，不能分别移植。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 300" role="img" aria-label="RoPE 重定位：窗口滑动前后相对位置的变化">
  <rect width="1080" height="300" fill="#ffffff"/>
@@ -2178,7 +2174,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <figcaption><b>FIG 5-2 · RoPE 重定位的前后对比</b>　滑窗缓存里最容易被忽略的一条——</figcaption>
  </figure>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="Infinity-RoPE 的移动参考系、KV Flush 与 RoPE Cut">
  <defs>
@@ -2395,7 +2391,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </table></div>
 
 <!-- ===== 替代文字公式：Ring 的流水线本质与通信重叠条件 ===== -->
-  <figure>
+  <figure class="wide">
     <div class="svgbox">
     <svg viewBox="0 0 1060 500" role="img" aria-label="Ring Attention 的流水线本质、通信重叠条件与显存模型">
       <rect width="1060" height="500" fill="#ffffff"/>
@@ -2486,7 +2482,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
   <p>由此得到两点：一个 token 该进哪条真子序列<strong>只由它自己的坐标决定</strong>，因此映射可以离线预先算成一张固定索引表，运行时不需要跨 rank 协商；而且它与序列切分<strong>可交换</strong>——先切分再各自重排，与先重排再切分，结果一致。<strong>这就是「可以分配给不同 rank 各自算」的合法性来源。</strong>流程上只有一次通信：本地重排 → 一次 All-to-All 完成换轴 → 本地置换与反向重排。</p>
  <div class="note"><b>因果块稀疏掩码，永远是因果稠密掩码的子集。</b>也就是说，一个 query 块需要的所有 K/V 块，因果 ring 本来就都会送到它手上。<strong>Ring 并没有「送错块」的问题——它的问题是把所有块都算了。</strong><br><br>推论：<strong>Ring + 块稀疏的改造目标不是「怎么把需要的块送到」，而是「送到之后怎么决定算哪几个」。</strong>这个视角转换会让后面所有分析清晰很多。</div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="稀疏决策依据与 Ring 可行性判定">
  <rect width="1080" height="420" fill="#ffffff"/>
@@ -2640,7 +2636,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <div class="note"><b>FVAttn 不能直接搬到 Ring 上——这是结构问题，不是实现细节。</b>FVAttn 明确写了它的前提是 Ulysses 风格：「each GPU holds <strong>complete sequences for a subset of attention heads</strong>」。在这个前提下每个 rank 的 Q 是完整的，所以它可以 ① 在掩码 materialize 后看到自己负责 head 的真实负载；② 用「<strong>迁移 head</strong>」而不是「迁移块」来做均衡——因为 head 是完整可搬运的单元。<br><br>而在 <strong>Ring 上，每个 rank 只有一段 Q，没有「完整的 head」可以搬运</strong>。所以 FVAttn 的调度单元在 Ring 上<strong>不存在</strong>。</div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 430" role="img" aria-label="Ring 与 Ulysses 的切分维度差异，以及均衡成本排序">
  <rect width="1080" height="430" fill="#ffffff"/>
@@ -2826,7 +2822,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p>把三个杠杆放在同一张账本上，MoE 的位置就清楚了：</p>
 
 <!-- ===== 替代文字公式：MoE 把容量与每步成本解耦 ===== -->
-  <figure>
+  <figure class="wide">
     <div class="svgbox">
     <svg viewBox="0 0 1060 460" role="img" aria-label="MoE 把模型容量与每步成本解耦，以及需要计入的三项代价">
       <rect width="1060" height="460" fill="#ffffff"/>
@@ -2908,7 +2904,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  
  <div class="note"><b>关键认识：MoE 买到的是「容量」，不是「速度」。</b>它把每步算力从总参数量上解耦，但<strong>权重总量并没有减少</strong>——只是不需要每次都用上。因此 MoE 的收益必须与「少存」手段（专家卸载、专家缓存、低比特）配合，才能同时改善曲线 ②。这也是本章把「少算」与「少存」分成两节的原因：<strong>它们是两个不同的工程问题，用错了手段会得出「MoE 没用」的结论。</strong></div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="MoE 的容量与激活解耦，以及稀疏度对算力/显存的影响">
  <rect width="1080" height="400" fill="#ffffff"/>
@@ -3123,7 +3119,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </table></div>
  <div class="note"><b>引用这一节时必须区分三种「MoE」：</b>① <strong>时间维专家</strong>（Wan2.2 / LingBot，按 timestep 切换，静态路由，成本模型接近 dense）；② <strong>token-choice 细粒度专家</strong>（MAGI-2，动态路由，成本主要在本地窄专家与小算子）；③ <strong>标准稀疏 MoE 主干</strong>（LingBot-Video，容量/激活解耦）。三者的优化优先级完全不同——把 ① 的结论（「MoE 不增推理成本」）套到 ② 上会严重误判。</div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="三种 MoE 形态在视频模型中的成本结构对比">
  <rect width="1080" height="420" fill="#ffffff"/>
@@ -3227,7 +3223,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <p class="lead">本章围绕一条主线组织：<strong>FlashAttention 把 IO 复杂度做对了之后，注意力优化就没有免费的午餐了</strong>——只能沿着「少看一些」（稀疏/线性）、「少放一些」（KV 量化/淘汰）、「少搬一些」（布局与调度）三个方向同时吃收益，而这三者对精度的破坏位置完全不同。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 430" role="img" aria-label="FlashAttention 及其三个方向的优化分支">
  <defs>
@@ -3316,7 +3312,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p>块级因果结构让历史从「重算」变成「只读」，但代价是把状态留在了显存里。长会话下这两项成本同时失控：</p>
 
 <!-- ===== 替代文字公式：KV 与注意力的成本增长曲线 ===== -->
-  <figure>
+  <figure class="wide">
     <div class="svgbox">
     <svg viewBox="0 0 1060 420" role="img" aria-label="长会话下注意力算力与 KV 显存的增长，以及三个方向的压降点">
       <rect width="1060" height="420" fill="#ffffff"/>
@@ -3524,7 +3520,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="note"><b>选型的第一性判据：排序型还是阈值型。</b>把上表压成一句话——<strong>真正的分水岭不是「数据依赖 vs 位置依赖」，而是「排序 vs 阈值」</strong>。排序型（top-k / top-p / bottom-k）必须物化一整行分数才能定名次，因此<em>不可流式</em>；阈值型（单个块到达即可判定「过 / 不过」）空间 O(1)、天然可流式。Sol-Attn 从排序型迁移到阈值型的动机写得非常直白：它批评 top-k「enforcing a uniform budget」、top-p「risking severe budget imbalance」，并指出两者「both materialize the proxy score map … before sparse attention begins」。<strong>这条判据在单卡上决定 kernel 友好度，在序列并行下决定可行性，在选择稀疏方案时应当作为第一个筛选条件。</strong></div>
  <div class="note"><b>关于 SLA 的一个细节：</b>它的三分类中只有 <strong>critical 路由</strong>（需要全局排名）是分布式的障碍；<strong>marginal 项的线性注意力部分是天然可加的</strong>——<code>H_i = Σ φ(K_j)ᵀV_j</code>、<code>Z_i = Σ rowsum(φ(K_j)ᵀ)</code> 都是对 j 的求和量，各 rank 累加本地量、最后做一次归约即可，甚至完全避开 LSE 合并。这意味着 SLA 的「一半可以救」：把 top-k<sub>h</sub>% / bottom-k<sub>l</sub>% 改成双阈值（<code>P_c &gt; τ_high</code> 为 critical，<code>P_c &lt; τ_low</code> 为 negligible）即可流式化。这是一个很好的例子：<strong>稀疏方法能否落地，往往取决于分类判据的数学形式，而不是它的加速比数字。</strong></div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 340" role="img" aria-label="块稀疏注意力与稀疏-线性混合的机制对比">
  <rect width="1080" height="340" fill="#ffffff"/>
@@ -3697,7 +3693,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <div class="note"><b>工程上最高频的一个坑：</b>很多开源实现的「KV Cache」是<strong>逐块 <code>torch.cat</code> 拼接</strong>。它在 77 帧的论文实验里看不出问题，但在真实长会话中表现为「每块延迟缓慢上升 + 周期性显存抖动」，最终 OOM。<strong>有 KV Cache ≠ 有长时有界的 KV Cache</strong>——这是判断一个实现能否上线的第一道分水岭。</div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 320" role="img" aria-label="逐块拼接缓存与预分配分页缓存的对比">
  <rect width="1080" height="320" fill="#ffffff"/>
@@ -3777,7 +3773,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <h3 id="sr-why"><span class="h3tag">1</span>为什么要拆成两级才算得动</h3>
  <p>视频 DiT 的单步计算量近似正比于 <code>L²·d</code>（<code>L</code> 为 token 数，注意力是平方项），而 <code>L</code> 正比于分辨率²。因此<strong>单步成本约正比于分辨率的四次方，整段成本再乘以去噪步数</strong>。级联之所以有效，就是把这个乘积里最贵的两项拆开：</p>
  
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 300" role="img" aria-label="高分辨率多步与级联精修的成本对比">
  <rect width="1060" height="300" fill="#ffffff"/>
@@ -3959,7 +3955,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <h3 id="vae-why"><span class="h3tag">1</span>VAE 为什么从「小尾巴」变成瓶颈</h3>
  <p>VAE 解码的成本正比于<strong>帧数 × 分辨率²</strong>，与主干一样随分辨率快速上升；区别在于<strong>它本来就只有一次前向，不可能靠「少步」来压缩</strong>。当主干从 20–50 步降到 1–4 步，两条曲线的交叉点就出现了。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 250" role="img" aria-label="主干提速前后 VAE 解码在总延迟中的占比变化">
  <rect width="1060" height="250" fill="#ffffff"/>
@@ -4149,7 +4145,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="note"><span class="tag">$/min</span><h4>会话成本</h4><p>长会话下 GPU 常驻、空闲占用与过度预留比单次吞吐更决定成本。这一项才是服务系统真正优化的目标函数。</p></div>
  </div>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 350" role="img" aria-label="流式生成的端到端时间线与三层职责">
  <defs><marker id="ar-s" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
@@ -4286,7 +4282,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p>端到端结论：相对基线 serving 配置，<strong>最坏 per-chunk 时延降低 37.5%、总 GPU 运营成本平均降低 37.2%</strong>；在<strong>多个模型尺寸</strong>与<strong>最多 64 张 NVIDIA B300</strong> 的集群上、用生数真实生产 trace 评测。</p>
  
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="TurboServe 的 observe-place-provision-execute 闭环">
  <defs><marker id="ar-t" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
@@ -4405,7 +4401,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </div>
  <p>S2 还披露了一项与流水线紧密耦合的设计——<strong>非对称噪声缓存</strong>：主干关注<strong>高噪声</strong>缓存以传播粗运动与长程时序结构（对高频伪影不敏感），Refiner 关注<strong>低噪声、高分辨率</strong>缓存以保留局部外观与身份线索。两者分工明确，把<strong>时序传播与细节恢复解耦</strong>。这与 <span class="tip" tabindex="0" data-tip="TwinCache：同一历史状态同时维护一份中间去噪步的 noisy cache 与一份最终步的 clean cache，按阶段切换使用。">TwinCache</span>（中间步用 noisy cache 构成隐式低通先验，最后一步切 clean cache 恢复细节）是同一条设计思想的两个阶段。</p>
 
- <figure>
+ <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1080 330" role="img" aria-label="共享时间线下的主干-精修-VAE 异步流水">
  <rect width="1080" height="330" fill="#ffffff"/>
@@ -4611,16 +4607,6 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
   ASCEND PLAYGROUND · MODEL RESEARCH · 世界模型 / 长视频 / 实时生成技术全景
 </footer>
 
-<div id="lightbox" role="dialog" aria-modal="true" aria-label="放大的配图">
-  <div class="lb-bar">
-    <b id="lbTitle">图</b>
-    <span class="lb-cap" id="lbCap"></span>
-    <button class="lb-zoom" id="lbZoom" type="button">原始尺寸</button>
-    <button class="lb-close" id="lbClose" type="button">关闭 (Esc)</button>
-  </div>
-  <div class="lb-stage" id="lbStage"></div>
-</div>
-
 <script>
 (function () {
   var progress = document.getElementById('progress');
@@ -4638,55 +4624,6 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
   }
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
-})();
-
-(function () {
-  var lb = document.getElementById('lightbox');
-  var stage = document.getElementById('lbStage');
-  var titleEl = document.getElementById('lbTitle');
-  var capEl = document.getElementById('lbCap');
-  var zoomBtn = document.getElementById('lbZoom');
-  if (!lb || !stage) return;
-
-  function close() {
-    lb.classList.remove('open', 'raw');
-    document.body.classList.remove('lb-lock');
-    if (zoomBtn) zoomBtn.textContent = '原始尺寸';
-    stage.innerHTML = '';
-  }
-
-  function open(fig) {
-    var svg = fig.querySelector('svg');
-    if (!svg) return;
-    var cap = fig.querySelector('figcaption');
-    var capText = cap ? cap.textContent.trim() : '';
-    titleEl.textContent = (capText.match(/FIG\s*[0-9]+-[0-9]+/) || ['FIG'])[0];
-    capEl.textContent = capText.replace(/^FIG\s*[0-9]+-[0-9]+\s*·\s*/, '');
-    stage.innerHTML = '';
-    stage.appendChild(svg.cloneNode(true));
-    lb.classList.add('open');
-    document.body.classList.add('lb-lock');
-    stage.scrollTop = 0;
-    stage.scrollLeft = 0;
-  }
-
-  document.querySelectorAll('figure').forEach(function (fig) {
-    var box = fig.querySelector('.svgbox');
-    if (!box) return;
-    box.addEventListener('click', function () { open(fig); });
-  });
-
-  lb.addEventListener('click', function (e) {
-    if (e.target === lb || e.target.classList.contains('lb-stage')) close();
-  });
-  document.getElementById('lbClose').addEventListener('click', close);
-  if (zoomBtn) zoomBtn.addEventListener('click', function () {
-    var raw = lb.classList.toggle('raw');
-    zoomBtn.textContent = raw ? '适应宽度' : '原始尺寸';
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && lb.classList.contains('open')) close();
-  });
 })();
 </script>
 </body>
