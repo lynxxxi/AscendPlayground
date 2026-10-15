@@ -442,7 +442,7 @@
     const sections=[...document.querySelectorAll('main section')],links=[...document.querySelectorAll('.side a')];
     function onScroll(){const max=document.documentElement.scrollHeight-innerHeight;progress.style.width=(max>0?scrollY/max*100:0)+'%';topBtn.classList.toggle('show',scrollY>700);let id=sections[0]?.id;for(const s of sections)if(s.getBoundingClientRect().top<180)id=s.id;links.forEach(a=>a.classList.toggle('active',a.hash==='#'+id))}
     addEventListener('scroll',onScroll,{passive:true});onScroll();topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
-    const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}}),{threshold:.06});document.querySelectorAll('.reveal').forEach(x=>observer.observe(x));
+    const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}}),{threshold:0,rootMargin:'0px 0px -6% 0px'});document.querySelectorAll('.reveal').forEach(x=>observer.observe(x));
     const filters=[...document.querySelectorAll('.filter')],opts=[...document.querySelectorAll('.opt')];filters.forEach(btn=>btn.onclick=()=>{filters.forEach(x=>x.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;opts.forEach(x=>x.classList.toggle('hidden',f!=='all'&&!x.dataset.cat.split(' ').includes(f)))});
     const glossary={
       guide:['怎样使用术语注释','蓝色虚线词都是可交互注释。电脑上可以悬停或点击，手机上直接点击；按 Esc、点关闭按钮或点击空白处即可收起。解释优先回答“它是什么、这里为什么用它”。'],
