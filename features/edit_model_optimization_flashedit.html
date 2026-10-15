@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Edit 图像编辑模型入门与优化研究：从任务背景和 FlashEdit 的 COSI 训练流程，到 BG-Shield、SSCA、部署与评测路线。">
-  <title>Edit 模型优化手册｜FlashEdit 技术拆解</title>
+  <meta name="description" content="Edit 模型推理优化手册：系统整理编辑模型独有的加速技术——反演路径加速、免反演直连、注意力与特征注入、少步与一步编辑训练、缓存与跨轮复用、指令侧优化、掩码感知计算、精度数值、服务路由共九条技术线，并以 FlashEdit 作为解耦架构样本。">
+  <title>Edit 模型推理优化手册｜编辑模型独有的加速技术全景</title>
   <style>
     :root {
       --paper:#f2efe7; --ink:#171816; --soft:#d8d3c7; --muted:#6f7069;
@@ -29,7 +29,7 @@
     .deck{font-size:clamp(19px,1.65vw,27px);max-width:880px;margin:35px 0 0}.hero-card{background:var(--dark);color:var(--paper);padding:32px;border-top:9px solid var(--acid);transform:rotate(-1deg)}
     .hero-card .big{font:900 clamp(65px,8vw,120px)/.8 var(--sans);color:var(--acid)}.hero-card p{color:#aeb4aa;margin:18px 0 28px;font-size:15px}
     .metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #454842}.metric{padding:18px 0;border-bottom:1px solid #454842}.metric:nth-child(odd){border-right:1px solid #454842}.metric:nth-child(even){padding-left:17px}.metric b{display:block;font:900 25px/1 var(--sans)}.metric span{font:10px var(--mono);color:#969c92}
-    .layout{display:grid;grid-template-columns:205px minmax(0,1fr);gap:5vw}.side{position:sticky;top:0;align-self:start;padding:70px 0;max-height:100vh;overflow:auto}.side b{font:10px var(--mono);letter-spacing:.15em;color:var(--muted)}
+    .layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:5vw}.side{position:sticky;top:0;align-self:start;padding:70px 0;max-height:100vh;overflow:auto}.side b{font:10px var(--mono);letter-spacing:.15em;color:var(--muted)}
     .side a{display:block;padding:9px 12px;border-left:1px solid var(--soft);font:700 12px var(--sans);text-decoration:none;color:#82837d}.side a.active,.side a:hover{color:var(--red);border-color:var(--red);transform:translateX(3px)}
     main{min-width:0}section{padding:90px 0;border-bottom:1px solid var(--ink);scroll-margin-top:16px}.head{display:grid;grid-template-columns:80px 1fr;gap:22px;margin-bottom:45px}.no{font:800 12px var(--mono);color:var(--red);padding-top:10px}h2{font-size:clamp(45px,6.7vw,92px)}
     .lede{max-width:900px;margin:0 0 48px 102px;font-size:19px;color:#4d4f49}.verdict{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}
@@ -61,60 +61,74 @@
     .term-tip{position:fixed;z-index:90;width:min(370px,calc(100vw - 24px));padding:19px 44px 19px 20px;background:var(--dark);color:var(--paper);border-top:5px solid var(--acid);box-shadow:12px 14px 0 rgba(23,24,22,.2);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .16s,transform .16s,visibility .16s}.term-tip.show{opacity:1;visibility:visible;transform:none}.term-tip .tip-kicker{display:block;color:var(--acid);font:800 9px var(--mono);letter-spacing:.14em;text-transform:uppercase}.term-tip h3{margin:7px 0 9px;font:900 25px/1 var(--sans);letter-spacing:-.02em}.term-tip p{margin:0;color:#c2c7bd;font-size:13px;line-height:1.65}.term-tip .tip-close{position:absolute;right:12px;top:11px;border:0;background:transparent;color:#9ca198;font:22px/1 var(--mono);cursor:pointer}.term-tip .tip-close:hover{color:var(--acid)}
     .reading-note{display:flex;align-items:center;gap:14px;margin:28px 0 0;padding:14px 18px;border:1px solid var(--ink);background:rgba(216,255,66,.32);font-size:13px}.reading-note b{font:900 14px var(--sans)}.reading-note .demo{white-space:nowrap;border-bottom:1px dotted var(--blue);color:var(--blue);font:800 11px var(--mono)}
     footer{padding:36px 0 65px;display:flex;justify-content:space-between;font:10px var(--mono);color:var(--muted)}.top{position:fixed;right:24px;bottom:24px;width:46px;height:46px;background:var(--dark);color:var(--acid);border:0;cursor:pointer;opacity:0;transform:translateY(8px);transition:.2s;z-index:60}.top.show{opacity:1;transform:none}.reveal{opacity:0;transform:translateY(20px);transition:.55s ease}.reveal.visible{opacity:1;transform:none}
-    @media(max-width:1000px){.hero{grid-template-columns:1fr}.hero-card{max-width:600px}.layout{grid-template-columns:1fr}.side{display:none}.stack{grid-template-columns:1fr 1fr}.verdict{grid-template-columns:1fr 1fr}.vcard,.vcard.wide{grid-column:auto}.layers{grid-template-columns:120px 1fr}.layers>div:nth-child(4){grid-column:2}.pipeline{grid-template-columns:1fr}.node,.node:nth-child(2){grid-column:auto}.node+.node{border-left:1px solid var(--ink);border-top:0}.node:not(:last-child):after{right:22px;top:auto;bottom:-18px;transform:rotate(90deg)}.train-loop{grid-template-columns:repeat(2,1fr)}.train-step:last-child{grid-column:span 2}.train-step:not(:last-child):after{display:none}.mask-system{grid-template-columns:1fr 1fr}.mask-card:first-child{grid-column:span 2;min-height:auto}.mask-visual{max-width:460px}}
-    @media(max-width:680px){.wrap{width:calc(100% - 24px)}.bar span:last-child{display:none}.hero{min-height:auto;padding:70px 0 45px}h1{font-size:clamp(58px,18vw,88px);overflow-wrap:anywhere}.deck{overflow-wrap:anywhere}.hero-card{width:100%;transform:none}section{padding:65px 0}.head{grid-template-columns:45px 1fr;gap:8px}.lede{margin-left:0}.verdict,.opt-grid,.bars,.roadmap,.sources,.stack,.tensions,.train-roles,.disclosure,.code-note{grid-template-columns:1fr}.layers{grid-template-columns:1fr}.layers>div:nth-child(4){grid-column:auto}.detail{grid-template-columns:1fr;padding:0 8px 28px}.warning{grid-template-columns:1fr}.barrow{grid-template-columns:82px 1fr 50px}.hero:after{display:none}footer{flex-direction:column;gap:8px}.glossary-fab{left:12px;bottom:12px}.term-tip{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;width:auto;max-height:48vh;overflow:auto}.reading-note{align-items:flex-start;flex-direction:column;gap:6px}.task-io{grid-template-columns:1fr}.io-arrow{min-height:55px;transform:rotate(90deg)}.flow-line{grid-template-columns:1fr}.flow-line .arrow{transform:rotate(90deg);text-align:center}.train-loop{grid-template-columns:1fr}.train-step:last-child{grid-column:auto}.mask-truth{grid-template-columns:1fr}.mask-system{grid-template-columns:1fr}.mask-card:first-child{grid-column:auto}.mask-card{min-height:auto}}
+    /* v2: 编辑模型推理优化专用组件 */
+    .bottleneck{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}.bn{background:var(--paper);padding:26px;min-height:270px}.bn .bno{font:900 46px/.8 var(--sans);color:var(--red)}.bn h3{font-size:27px;margin:22px 0 10px}.bn p{margin:0;color:var(--muted);font-size:13.5px}.bn .cost{margin-top:16px;padding-top:12px;border-top:1px solid var(--soft);font:11px/1.6 var(--mono);color:var(--blue)}
+    .cost-split{display:grid;grid-template-columns:1.05fr .95fr;gap:1px;background:var(--ink);border:1px solid var(--ink);margin:38px 0}.cost-split>div{background:var(--paper);padding:28px}.cost-split h3{font-size:30px;margin-bottom:14px}.cost-split p{font-size:14px;color:var(--muted)}
+    .coststack{display:grid;gap:10px;margin-top:20px}.costrow{display:grid;grid-template-columns:150px 1fr 108px;gap:12px;align-items:center;font:11px var(--mono)}.costrow .ctrack{height:16px;background:var(--soft);border:1px solid var(--ink)}.costrow .cfill{height:100%;background:var(--dark)}.costrow.paid .cfill{background:var(--red)}.costrow.free .cfill{background:#197345}.costrow .cval{color:var(--muted)}
+    .families{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink);margin-top:34px}.fam{background:var(--paper);padding:24px;min-height:230px}.fam .fno{font:900 38px/.8 var(--sans);color:var(--blue)}.fam h3{font-size:25px;margin:20px 0 10px}.fam p{margin:0;color:var(--muted);font-size:13px}.fam .fam-tag{margin-top:14px;display:block;font:800 9px var(--mono);letter-spacing:.08em;color:var(--red)}
+    .causal{margin:38px 0;border:1px solid var(--ink);border-top:8px solid var(--blue);padding:28px;background:#faf8f2}.causal h3{font-size:33px;margin-bottom:14px}.causal p{margin:0 0 22px;color:var(--muted);font-size:15px}.causal-chain{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}.causal-node{background:var(--paper);padding:20px;min-height:230px}.causal-node .cn{font:900 11px var(--mono);color:var(--red)}.causal-node h3{font-size:22px;margin:12px 0 8px}.causal-node p{font-size:12px;color:var(--muted);margin:0}.causal-node .rem{display:block;margin-top:14px;padding-top:10px;border-top:1px solid var(--soft);font:10px/1.6 var(--mono);color:#197345}
+    .dual-cost{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink);margin-top:34px}.dual-cost>article{background:var(--paper);padding:24px}.dual-cost h3{font-size:24px;margin-bottom:10px}.dual-cost p,.dual-cost li{font-size:13px;color:var(--muted)}.dual-cost ul{padding-left:17px;margin:12px 0 0}
+    .route{display:grid;gap:1px;background:var(--ink);border:1px solid var(--ink);margin-top:34px}.route-node{background:var(--paper);padding:22px 24px;display:grid;grid-template-columns:190px 1fr;gap:22px}.route-node.wide{grid-template-columns:190px 1fr 1fr}.route-node .who{font:800 12px var(--mono);color:var(--red)}.route-node b{font:900 20px var(--sans);display:block;margin-bottom:6px}.route-node p{margin:0;font-size:13px;color:var(--muted)}.route-node .costs{font:11px/1.7 var(--mono);color:var(--blue)}
+    .evidence-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink);margin-top:30px}.evidence-legend>div{background:var(--paper);padding:22px}.evidence-legend h3{font-size:24px;margin-bottom:10px}.evidence-legend p{margin:0;font-size:13px;color:var(--muted)}.grade{display:inline-block;font:900 12px var(--mono);padding:3px 9px;border:1px solid currentColor;margin-bottom:12px}.grade.a{color:#197345}.grade.b{color:#8a6a00}.grade.c{color:var(--red)}
+    .quote{border:1px solid var(--ink);border-left:8px solid var(--red);padding:22px 26px;margin:30px 0;background:#faf8f2;font-size:15px;color:#3d3f39}.quote b{font:900 13px var(--mono);color:var(--red);display:block;margin-bottom:8px}
+    @media(max-width:1000px){.hero{grid-template-columns:1fr}.hero-card{max-width:600px}.layout{grid-template-columns:1fr}.side{display:none}.stack{grid-template-columns:1fr 1fr}.verdict{grid-template-columns:1fr 1fr}.vcard,.vcard.wide{grid-column:auto}.layers{grid-template-columns:120px 1fr}.layers>div:nth-child(4){grid-column:2}.pipeline{grid-template-columns:1fr}.node,.node:nth-child(2){grid-column:auto}.node+.node{border-left:1px solid var(--ink);border-top:0}.node:not(:last-child):after{right:22px;top:auto;bottom:-18px;transform:rotate(90deg)}.train-loop{grid-template-columns:repeat(2,1fr)}.train-step:last-child{grid-column:span 2}.train-step:not(:last-child):after{display:none}.mask-system{grid-template-columns:1fr 1fr}.mask-card:first-child{grid-column:span 2;min-height:auto}.mask-visual{max-width:460px}.bottleneck,.families,.evidence-legend,.dual-cost{grid-template-columns:1fr 1fr}.causal-chain{grid-template-columns:1fr 1fr}.cost-split{grid-template-columns:1fr}.route-node,.route-node.wide{grid-template-columns:1fr}}
+    @media(max-width:680px){.wrap{width:calc(100% - 24px)}.bar span:last-child{display:none}.hero{min-height:auto;padding:70px 0 45px}h1{font-size:clamp(58px,18vw,88px);overflow-wrap:anywhere}.deck{overflow-wrap:anywhere}.hero-card{width:100%;transform:none}section{padding:65px 0}.head{grid-template-columns:45px 1fr;gap:8px}.lede{margin-left:0}.verdict,.opt-grid,.bars,.roadmap,.sources,.stack,.tensions,.train-roles,.disclosure,.code-note{grid-template-columns:1fr}.layers{grid-template-columns:1fr}.layers>div:nth-child(4){grid-column:auto}.detail{grid-template-columns:1fr;padding:0 8px 28px}.warning{grid-template-columns:1fr}.barrow{grid-template-columns:82px 1fr 50px}.hero:after{display:none}footer{flex-direction:column;gap:8px}.glossary-fab{left:12px;bottom:12px}.term-tip{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;width:auto;max-height:48vh;overflow:auto}.reading-note{align-items:flex-start;flex-direction:column;gap:6px}.task-io{grid-template-columns:1fr}.io-arrow{min-height:55px;transform:rotate(90deg)}.flow-line{grid-template-columns:1fr}.flow-line .arrow{transform:rotate(90deg);text-align:center}.train-loop{grid-template-columns:1fr}.train-step:last-child{grid-column:auto}.mask-truth{grid-template-columns:1fr}.mask-system{grid-template-columns:1fr}.mask-card:first-child{grid-column:auto}.mask-card{min-height:auto}.bottleneck,.families,.evidence-legend,.dual-cost,.causal-chain{grid-template-columns:1fr}.costrow{grid-template-columns:96px 1fr 74px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
   </style>
 </head>
 <body>
   <div class="progress" aria-hidden="true"></div>
   <header class="mast">
-    <div class="wrap bar"><div class="signal"><i></i> Ascend Playground / Model Systems</div><span>Research cut · 2026.08.24 · expanded v1.3</span></div>
+    <div class="wrap bar"><div class="signal"><i></i> Ascend Playground / Model Systems</div><span>Research cut · 2026.10.15 · expanded v2.0</span></div>
     <div class="wrap hero">
-      <div><div class="kicker">Field note 031 / generative image editing</div><h1>Edit 模型<span class="stroke">优化手册</span></h1><p class="deck">从“更多采样步”转向“目标解耦”：以 FlashEdit 为核心，拆解图像编辑模型在<button type="button" class="term" data-term="inversion">反演</button>、结构保持、语义绑定、训练数据与部署系统上的优化杠杆。</p><div class="reading-note"><span class="demo">虚线术语°</span><span><b>给第一次阅读的你：</b>遇到带蓝色虚线和 ° 的词，悬停或点击即可看到通俗解释；手机上会从底部弹出。</span></div></div>
-      <aside class="hero-card" aria-label="FlashEdit 核心指标"><div class="big">&lt;0.2s</div><p>FlashEdit 在 NVIDIA A6000 / <button type="button" class="term" data-term="piebench">PIE-Bench</button> 设置下的论文报告编辑延迟。它是作者测试值，不是跨硬件承诺。</p><div class="metrics"><div class="metric"><b>150.84×</b><span>vs <button type="button" class="term" data-term="ddim">DDIM</button> + <button type="button" class="term" data-term="p2p">P2P</button></span></div><div class="metric"><b>1 + 1</b><span>反演 + 编辑前向</span></div><div class="metric"><b>25.33</b><span>背景 <button type="button" class="term" data-term="psnr">PSNR</button></span></div><div class="metric"><b>22.29</b><span><button type="button" class="term" data-term="clipedited">CLIP-Edited</button></span></div></div></aside>
+      <div><div class="kicker">Field note 031 / edit-model inference optimization</div><h1>Edit 模型<span class="stroke">推理优化</span></h1><p class="deck">编辑模型的加速不是“把采样步数砍小”一件事。源图、目标提示词与保留约束带来了<button type="button" class="term" data-term="inversion">反演</button>、双路计算、循环误差与局部性四类独有成本；本页把它们拆成九条可验证的技术线，FlashEdit 只作为“解耦架构”的一个样本。</p><div class="reading-note"><span class="demo">虚线术语°</span><span><b>给第一次阅读的你：</b>遇到带蓝色虚线和 ° 的词，悬停或点击即可看到通俗解释；手机上会从底部弹出。</span></div></div>
+      <aside class="hero-card" aria-label="编辑模型推理优化的核心判断"><div class="big">5 → 1</div><p>一次编辑请求里，被浪费的算力有五类：重建源图的反演步、必须重算的双路分支、跨轮重复的编码、全序列注意力、以及保守的精度与缓存策略。优化的顺序，就是按“用户能否察觉”排序，逐条收回它们。</p><div class="metrics"><div class="metric"><b>NFE</b><span>反演 + 编辑前向</span></div><div class="metric"><b>掩码</b><span>决定局部性上限</span></div><div class="metric"><b>多轮</b><span>缓存收益最高</span></div><div class="metric"><b>精度</b><span>闭环误差放大器</span></div></div></aside>
     </div>
   </header>
 
   <div class="wrap layout">
-    <nav class="side" aria-label="页内目录"><b>INDEX / 目录</b><a href="#verdict">01 核心判断</a><a href="#background">02 任务背景</a><a href="#training">03 怎么训练</a><a href="#anatomy">04 FlashEdit 解剖</a><a href="#evidence">05 证据与边界</a><a href="#landscape">06 优化技术谱系</a><a href="#stack">07 工程优化栈</a><a href="#evaluation">08 评测设计</a><a href="#roadmap">09 落地路线</a><a href="#sources">10 来源</a></nav>
+    <nav class="side" aria-label="页内目录"><b>INDEX / 目录</b><a href="#verdict">01 核心判断</a><a href="#background">02 任务背景</a><a href="#training">03 怎么训练</a><a href="#anatomy">04 FlashEdit 解剖</a><a href="#cost">05 独有瓶颈</a><a href="#landscape">06 技术谱系</a><a href="#tradeoff">07 约束机制</a><a href="#stack">08 工程优化栈</a><a href="#evaluation">09 评测设计</a><a href="#roadmap">10 落地路线</a><a href="#sources">11 来源</a></nav>
     <main>
       <section id="verdict">
-        <div class="head"><span class="no">01 / 10</span><h2>先看结论</h2></div><p class="lede">Edit 模型不是单一“画质问题”，而是保真、可编辑、局部性、延迟四个目标的约束优化。FlashEdit 最值得借鉴的是分治架构，不是孤立的 150× 数字。</p>
+        <div class="head"><span class="no">01 / 11</span><h2>先看结论</h2></div><p class="lede">编辑模型不是单一“画质问题”，而是保真、可编辑、局部性、延迟四个目标的约束优化。它的加速空间也不只来自采样器，而来自“哪些信息必须重新计算、哪些可以复用”的重新划分。</p>
         <div class="verdict reveal">
-          <article class="vcard"><span class="index">01</span><h3>先解耦，再加速</h3><p>让噪声只承担可编辑性，让视觉适配器携带身份；把背景保持从损失函数的软愿望，变成注意力路径上的结构约束。</p></article>
-          <article class="vcard"><span class="index">02</span><h3>优化单位变了</h3><p>传统优化单位是 <button type="button" class="term" data-term="denoisingstep">denoising step</button>；FlashEdit 的优化单位是“信息职责”：噪声、图像特征、背景记忆、目标 <button type="button" class="term" data-term="token">token</button> 各司其职。</p></article>
-          <article class="vcard"><span class="index">03</span><h3>一步不是免费午餐</h3><p>单步模型把在线计算转移到训练、蒸馏与数据覆盖。大幅结构变化、精细文字、遮挡关系和开放域长尾仍需回退到多步或重生成模型。</p></article>
-          <article class="vcard wide"><span class="index">04</span><h3>FlashEdit 适合局部属性编辑</h3><p>颜色、材质、局部对象替换等“有明确编辑区域、背景应冻结”的任务最匹配。全局风格迁移与大布局变化会和 <button type="button" class="term" data-term="bgshield">BG‑Shield</button> 的强保持先验发生冲突。</p></article>
-          <article class="vcard wide"><span class="index">05</span><h3>生产系统应做双路路由</h3><p>快速路径用一步/少步局部编辑；复杂路径用高容量 instruction editor 或 flow-based 方法。由编辑范围、结构变化和文字/人脸敏感度自动选择。</p></article>
+          <article class="vcard"><span class="index">01</span><h3>先解耦，再加速</h3><p>让噪声只承担可编辑性，让<button type="button" class="term" data-term="visualadapter">视觉适配器</button>携带身份，让背景保持从损失函数的软愿望变成注意力路径上的结构约束。结构定清楚之后，每一步裁剪才有安全边界。</p></article>
+          <article class="vcard"><span class="index">02</span><h3>优化对象是信息路由</h3><p>传统 T2I 的优化单位是 <button type="button" class="term" data-term="denoisingstep">denoising step</button>；编辑模型的优化单位是“信息的去留”：源图 latent、背景 <button type="button" class="term" data-term="kv">K/V</button>、文本 <button type="button" class="term" data-term="embedding">embedding</button>、反演噪声，各自可以被记住、复用或重算。</p></article>
+          <article class="vcard"><span class="index">03</span><h3>编辑有四类独有成本</h3><p>反演步、双路分支、循环误差敏感、局部性约束。它们不出现在纯 T2I 里，也解释了为什么<button type="button" class="term" data-term="clip">CLIP</button> 或 FID 上的通用加速结论不能直接搬到编辑任务。</p></article>
+          <article class="vcard"><span class="index">04</span><h3>九条技术线，先选路线</h3><p>反演路径加速、免反演直连、注意力与特征注入、少步/一步编辑训练、缓存与跨轮复用、指令与条件侧、<button type="button" class="term" data-term="mask">掩码</button>感知计算、精度与数值、服务路由与验证。选错路线，后面所有优化都会被推翻。</p></article>
+          <article class="vcard"><span class="index">05</span><h3>FlashEdit 的价值是架构</h3><p>可借鉴的是“时间—空间—语义”三层分治：<button type="button" class="term" data-term="cosi">COSI</button> 管时间、<button type="button" class="term" data-term="bgshield">BG‑Shield</button> 管空间、<button type="button" class="term" data-term="ssca">SSCA</button> 管语义。150× 是作者在特定硬件与基线下的报告值，不是跨硬件承诺。</p></article>
+          <article class="vcard"><span class="index">06</span><h3>一步与低精度都不是免费</h3><p>单步把在线计算转移到训练、蒸馏与数据覆盖；低精度在编辑任务里会沿“反演—重建”闭环放大，先坏掉的往往不是画质均值，而是保留区与身份。</p></article>
+          <article class="vcard wide"><span class="index">07</span><h3>越靠近用户，收益越大</h3><p>多轮编辑缓存、按编辑类型路由、掩码感知的局部计算，通常比“再省半步”回报更高。因为编辑是交互式任务：同源多改、快速试错，缓存命中率和路由准确率直接决定体验。</p></article>
+          <article class="vcard wide"><span class="index">08</span><h3>生产系统应做双路路由</h3><p>快速路径承接一步/少步局部编辑与潜在空间算术；复杂路径交给高容量 instruction editor、in-context DiT 或 flow-based 方法。由编辑范围、结构变化、文字与人脸敏感度自动选择，并保留一致性校验与回退。</p></article>
         </div>
-        <div class="warning reveal"><b>复现状态</b><p>截至 2026-08-24，官方 GitHub 仓库页面仅展示 README 与素材目录，未见可运行训练/推理代码或权重。最新 arXiv 为 v6（2026-05-18），摘要已使用 <button type="button" class="term" data-term="cosi">COSI</button>（Cycle-Consistent One-Step Inversion），而早期正文/仓库仍出现 <button type="button" class="term" data-term="osie">OSIE</button>。本页按最新摘要称 COSI，并保留版本差异说明。</p></div>
+        <div class="warning reveal"><b>复现状态</b><p>截至 2026-10-15，FlashEdit 官方 GitHub 仓库仍只见 README 与素材目录，论文写的是“代码将公开”，尚未提供可运行的训练/推理代码或权重。其 arXiv 版本历史本身也需要留意：v1（2025-09-26）之后 v2/v3 曾被<strong>撤回</strong>，v4 起恢复并重写摘要，方法名由 <button type="button" class="term" data-term="osie">OSIE</button> 改为 <button type="button" class="term" data-term="cosi">COSI</button>，当前最新为 v6（2026-05-18）。本页按 v6 表述，并把它的 150× 当作<strong>无代码可核对的自报值</strong>，而不是本页的主结论数字。</p></div>
       </section>
 
+
       <section id="background">
-        <div class="head"><span class="no">02 / 10</span><h2>这个任务在解决什么</h2></div>
-        <p class="lede">FlashEdit 解决的不是“凭空画一张图”，而是<button type="button" class="term" data-term="localizedediting">局部文本图像编辑</button>：给定一张真实图片，按一句新描述修改指定区域，同时让其余内容看起来像从未被碰过。</p>
+        <div class="head"><span class="no">02 / 11</span><h2>这个任务在解决什么</h2></div>
+        <p class="lede">编辑模型解决的不是“凭空画一张图”，而是<button type="button" class="term" data-term="localizedediting">局部文本图像编辑</button>：给定一张真实图片，按一句新描述修改指定区域，同时让其余内容看起来像从未被碰过。正是这个“什么都不许变”的约束，制造了 T2I 优化里不存在的成本结构。</p>
         <div class="task-io reveal">
-          <article class="io-box"><span class="label">INPUT / 四个条件</span><h3>模型拿到什么</h3><ul><li><b>源图片 x<sub>src</sub></b>：需要修改的真实图</li><li><button type="button" class="term" data-term="sourceprompt">源提示词 c<sub>src</sub></button>：原图是什么</li><li><button type="button" class="term" data-term="targetprompt">目标提示词 c<sub>tgt</sub></button>：想改成什么</li><li><button type="button" class="term" data-term="mask">编辑掩码 M</button>：允许修改的区域</li></ul></article>
+          <article class="io-box"><span class="label">INPUT / 四个条件</span><h3>模型拿到什么</h3><ul><li><b>源图片 x<sub>src</sub></b>：需要修改的真实图</li><li><button type="button" class="term" data-term="sourceprompt">源提示词 c<sub>src</sub></button>：原图是什么</li><li><button type="button" class="term" data-term="targetprompt">目标提示词 c<sub>tgt</sub></button>：想改成什么</li><li><button type="button" class="term" data-term="mask">编辑掩码 M</button>：允许修改的区域（可选，但局部编辑几乎必须有）</li></ul></article>
           <div class="io-arrow" aria-hidden="true">→</div>
-          <article class="io-box output"><span class="label">OUTPUT / 一个结果</span><h3>模型必须同时做到</h3><ul><li>掩码内符合目标描述</li><li>掩码外尽量逐像素保持</li><li>主体身份与布局不漂移</li><li>足够快，能支持交互预览</li></ul></article>
+          <article class="io-box output"><span class="label">OUTPUT / 一个结果</span><h3>模型必须同时做到</h3><ul><li>掩码内符合目标描述</li><li>掩码外尽量逐像素保持</li><li>主体身份与布局不漂移</li><li>足够快，能支持交互预览与多轮试改</li></ul></article>
         </div>
         <div class="classic-flow reveal">
           <span class="label">STANDARD PIPELINE / 传统路径</span><h3>为什么中间多了一个“反演”</h3>
           <div class="flow-line"><span class="step">真实源图</span><span class="arrow">→</span><span class="step"><button type="button" class="term" data-term="vae">VAE</button> <button type="button" class="term" data-term="latent">latent</button> z₀</span><span class="arrow">→</span><span class="step">反演噪声 ε</span><span class="arrow">→</span><span class="step">按目标文字去噪</span></div>
-          <p><button type="button" class="term" data-term="diffusionmodel">扩散生成模型</button>本来只会从随机噪声出发。要编辑一张已经存在的图，必须先找到一个能“重新生成它”的内部起点，这就是反演。随后保持同一起点、把源提示词换成目标提示词，模型才有机会在保留原构图的同时改变语义。传统方法反演和编辑都要走很多步，慢；一步方法虽然快，却失去了多步过程逐渐纠错的机会。</p>
+          <p><button type="button" class="term" data-term="diffusionmodel">扩散生成模型</button>本来只会从随机噪声出发。要编辑一张已经存在的图，必须先找到一个能“重新生成它”的内部起点，这就是反演。随后保持同一起点、把源提示词换成目标提示词，模型才有机会在保留原构图的同时改变语义。<strong>这一步在 T2I 里完全不存在</strong>：它是编辑任务的入场费，也是后面所有加速讨论的第一块成本。</p>
         </div>
         <div class="tensions reveal">
           <article class="tension"><span class="dial">01</span><div><h3><button type="button" class="term" data-term="reconstruction">重建</button> ↔ <button type="button" class="term" data-term="editability">可编辑性</button></h3><p>噪声若把原图记得过死，重建很准但改不动；若太像普通随机噪声，容易改，却可能丢失人物身份、布局和背景细节。</p></div></article>
-          <article class="tension"><span class="dial">02</span><div><h3>局部修改 ↔ 全局注意力</h3><p>用户只想改猫的眼睛，但 self-attention 会让每个图像位置互相通信，新颜色可能扩散到脸和背景。</p></div></article>
+          <article class="tension"><span class="dial">02</span><div><h3>局部修改 ↔ 全局注意力</h3><p>用户只想改猫的眼睛，但 self-attention 会让每个图像位置互相通信，新颜色可能扩散到脸和背景。注意力的全局性是编辑精度的主要敌人。</p></div></article>
           <article class="tension"><span class="dial">03</span><div><h3>目标语义 ↔ 原图结构</h3><p>“变成绿色”要足够强才能生效，但过强会压制“猫”“眼睛”等结构词，产生<button type="button" class="term" data-term="semanticleakage">语义泄漏</button>。</p></div></article>
-          <article class="tension"><span class="dial">04</span><div><h3>速度 ↔ 自我纠错</h3><p>多步扩散能在后续步骤修正早期误差；一步模型只有一次机会，小小的起点偏差会直接变成背景闪动或结构漂移。</p></div></article>
+          <article class="tension"><span class="dial">04</span><div><h3>速度 ↔ 自我纠错</h3><p>多步扩散能在后续步骤修正早期误差；一步模型只有一次机会，起点偏差会直接变成背景闪动或结构漂移。压缩步数等于拆掉纠错机制。</p></div></article>
         </div>
-        <div class="warning reveal"><b>适用边界</b><p>FlashEdit 的论文任务是<strong>带掩码的局部文本编辑</strong>。它不是通用聊天式编辑器，也没有证明能稳定完成大幅姿态变化、复杂对象增删或整图重构。BG‑Shield 中的“背景”实际指<strong>掩码外的保留区域</strong>；如果要改天空，就应把天空放进编辑掩码。</p></div>
+        <div class="warning reveal"><b>适用边界</b><p>本页讨论的是<strong>条件图像编辑</strong>（掩码或指令驱动）。它不等于通用聊天式重绘，也没有证明能稳定完成大幅姿态变化、整图重构或精确文字渲染。<button type="button" class="term" data-term="bgshield">BG‑Shield</button> 中的“背景”实际指<strong>掩码外的保留区域</strong>；如果要改天空，就应把天空放进编辑掩码。</p></div>
       </section>
 
       <section id="training">
-        <div class="head"><span class="no">03 / 10</span><h2>FlashEdit 怎么训练</h2></div>
+        <div class="head"><span class="no">03 / 11</span><h2>FlashEdit 怎么训练</h2></div>
         <p class="lede">最新 v6 的训练重点不是重新训练完整编辑器，而是让<button type="button" class="term" data-term="inversionnetwork">反演网络 I<sub>θ</sub></button>学会与固定的<button type="button" class="term" data-term="onestepgenerator">一步生成器 G</button>互为稳定的近似逆映射。BG‑Shield 与 SSCA 在论文中是注意力路径上的结构操作，没有单独训练损失。</p>
         <div class="train-roles reveal">
           <article class="role trainable"><span class="state">TRAIN / 更新参数</span><h3>反演网络 I<sub>θ</sub></h3><p>输入图像 latent、文字条件和视觉特征，预测一步生成器所需的噪声 ε<sub>inv</sub>。COSI 的循环损失主要优化它。</p></article>
@@ -141,104 +155,285 @@
       </section>
 
       <section id="anatomy">
-        <div class="head"><span class="no">04 / 10</span><h2>FlashEdit 三层控制</h2></div><p class="lede">时间、空间、语义依次收紧。每层解决一种错误传播路径，三者叠加才形成“快而不漂”的局部编辑。</p>
+        <div class="head"><span class="no">04 / 11</span><h2>FlashEdit 三层控制</h2></div><p class="lede">时间、空间、语义依次收紧。每层解决一种错误传播路径，三者叠加才形成“快而不漂”的局部编辑。这三层也是后面所有编辑模型优化的通用坐标：任何新技术都可以问它作用在哪一层。</p>
         <div class="pipeline reveal"><div class="node"><span class="label">Input</span><b>源图 + 两段提示词 + 掩码 M</b><small>掩码由管线输入，不是 BG‑Shield / SSCA 自己预测</small></div><div class="node"><span class="label"><button type="button" class="term" data-term="cosi">COSI</button> / 早期称 OSIE</span><b>一步反演 + 一步编辑</b><small><button type="button" class="term" data-term="visualadapter">视觉适配器</button>承载身份，噪声保持可塑性</small></div><div class="node"><span class="label">Output</span><b>局部编辑结果</b><small>背景 <button type="button" class="term" data-term="kv">K/V</button> 回放，目标 token 稀疏注入</small></div></div>
         <div class="mask-truth reveal">
           <div class="answer">先有掩码，<br>后有控制。</div>
           <div><span class="label">KEY CORRECTION / 关键澄清</span><h3>BG‑Shield 和 SSCA 都不负责找出图中要编辑的区域</h3><p>最新 v6 把 <button type="button" class="term" data-term="binarymask">二值掩码 M</button>列为与源图、源提示词、目标提示词并列的输入。M=1 的位置组成可编辑集合 F，M=0 的位置组成保留集合 B。两个模块共享这张掩码，但做的是两件不同的事：BG‑Shield 决定<strong>图像特征从哪里读取</strong>，SSCA 决定<strong>编辑区域应该读取哪些文字 token</strong>。</p></div>
         </div>
         <div class="mask-system reveal">
-          <article class="mask-card"><span class="label">00 / MASK SOURCE</span><h3>区域从哪里来</h3><div class="mask-visual" aria-label="红色区域表示 M 等于 1，需要编辑；灰色区域表示 M 等于 0，需要保留"></div><div class="mask-source-list"><span>产品形态：用户涂抹 / 选框</span><span>工程形态：分割模型 / 检测器 / 外部掩码</span><span class="paper-state">论文评测：称为 self-guided mask，但生成算法未披露</span></div><p>因此，FlashEdit 论文目前不能回答“仅给一句话，怎样自动画出 M”。它只验证了所用 <button type="button" class="term" data-term="selfguidedmask">self-guided mask</button> 与 PIE‑Bench 的 GT mask 指标接近。</p></article>
-          <article class="mask-card"><span class="label">01 / BG-SHIELD</span><h3>按 M 分配图像记忆</h3><ol><li>若 M 来自像素空间，工程上先将它对齐到当前注意力层的 <button type="button" class="term" data-term="tokengrid">token 网格</button>，得到 F 与 B。</li><li><b>源分支：</b>只缓存 B 位置的 K<sub>src</sub> / V<sub>src</sub>。</li><li><b>目标分支：</b>B 位置放回源 K/V，F 位置使用目标 K/V。</li><li>高斯模糊 M 得到软掩码 A，在边缘做羽化，降低接缝。</li></ol><div class="mini-formula">F = { i | Mᵢ = 1 }<br>B = { i | Mᵢ = 0 }<br>K_full[B] ← K_src[B]<br>K_full[F] ← K_tgt[F]</div><p><b>它“选择”的不是区域。</b>区域已由 M 给定；它只是按区域决定使用源图记忆还是编辑分支特征。</p></article>
-          <article class="mask-card"><span class="label">02 / SSCA</span><h3>在 F 内选择文字 token</h3><ol><li>只取 F 中的图像 query：Q<sub>l,F</sub>。</li><li>对每个文字 token j，累加它与所有 F query 的相似度，得到 <button type="button" class="term" data-term="relevancescore">R<sub>j</sub></button>。</li><li>每个应用层独立保留得分最高的 k=10 个文字 token。</li><li>仅为 F 计算稀疏 cross-attention；散射回完整特征图时，B 位置写 0，再通过残差连接合入。</li></ol><div class="mini-formula">Rⱼ = Σᵢ∈F (Qᵢ · Kⱼᵀ) / √d<br>T* = TopK(R, k=10)<br>A_SSCA[B] = 0</div><p><b>SSCA 真正“选”的是文字。</b>例如在眼睛掩码内，从整句中选出 “green / eyes / cat” 等最相关 token，而不是重新寻找眼睛在哪里。</p></article>
+          <article class="mask-card"><span class="label">00 / MASK SOURCE</span><h3>区域从哪里来</h3><div class="mask-visual" aria-label="红色区域表示 M 等于 1，需要编辑；灰色区域表示 M 等于 0，需要保留"></div><div class="mask-source-list"><span>产品形态：用户涂抹 / 选框</span><span>工程形态：分割模型 / 检测器 / 外部掩码</span><span class="paper-state">论文评测：称为 self-guided mask，但生成算法未披露</span></div><p>因此，FlashEdit 论文目前不能回答“仅给一句话，怎样自动画出 M”。它只验证了所用 <button type="button" class="term" data-term="selfguidedmask">self-guided mask</button> 与 PIE‑Bench 的 GT mask 指标接近。<strong>对推理优化而言这一点很关键</strong>：掩码质量决定了所有局部性技术（含掩码裁剪、背景缓存、区域注意力）的成本上限。</p></article>
+          <article class="mask-card"><span class="label">01 / BG-SHIELD</span><h3>按 M 分配图像记忆</h3><ol><li>若 M 来自像素空间，工程上先将它对齐到当前注意力层的 <button type="button" class="term" data-term="tokengrid">token 网格</button>，得到 F 与 B。</li><li><b>源分支：</b>只缓存 B 位置的 K<sub>src</sub> / V<sub>src</sub>。</li><li><b>目标分支：</b>B 位置放回源 K/V，F 位置使用目标 K/V。</li><li>高斯模糊 M 得到软掩码 A，在边缘做羽化，降低接缝。</li></ol><div class="mini-formula">F = { i | Mᵢ = 1 }<br>B = { i | Mᵢ = 0 }<br>K_full[B] ← K_src[B]<br>K_full[F] ← K_tgt[F]</div><p><b>它“选择”的不是区域。</b>区域已由 M 给定；它只是按区域决定使用源图记忆还是编辑分支特征。工程上这也是一种缓存：保留区 K/V 只要源图和模型版本不变，就能跨轮复用。</p></article>
+          <article class="mask-card"><span class="label">02 / SSCA</span><h3>在 F 内选择文字 token</h3><ol><li>只取 F 中的图像 query：Q<sub>l,F</sub>。</li><li>对每个文字 token j，累加它与所有 F query 的相似度，得到 <button type="button" class="term" data-term="relevancescore">R<sub>j</sub></button>。</li><li>每个应用层独立保留得分最高的 k=10 个文字 token。</li><li>仅为 F 计算稀疏 cross-attention；散射回完整特征图时，B 位置写 0，再通过残差连接合入。</li></ol><div class="mini-formula">Rⱼ = Σᵢ∈F (Qᵢ · Kⱼᵀ) / √d<br>T* = TopK(R, k=10)<br>A_SSCA[B] = 0</div><p><b>SSCA 真正“选”的是文字。</b>例如在眼睛掩码内，从整句中选出 “green / eyes / cat” 等最相关 token。<strong>但它不是一项省算力的技术</strong>：把 <button type="button" class="term" data-term="attentionmap">注意力图</button> 在 B 位置置零属于“算完再屏蔽”，QK<sup>T</sup> 与全尺寸 <button type="button" class="term" data-term="softmax">softmax</button> 都已经发生，FLOPs 不会因此减少。真正减少计算的是 token 级裁剪（少算 token），而不是注意力掩码。区分清楚这两件事，才不会把局部性技术误当成加速技术。</p></article>
         </div>
-        <div class="table-scroll reveal"><table class="selection-compare"><thead><tr><th>问题</th><th>BG‑Shield</th><th>SSCA</th></tr></thead><tbody><tr><td>谁给出空间区域？</td><td colspan="2">共同使用输入掩码 M；两个模块都不预测 M</td></tr><tr><td>模块内部做什么选择？</td><td>把 M=0 的位置接回源图 K/V；M=1 使用目标特征</td><td>在 M=1 的 query 内，为每层选择 top‑10 文本 token</td></tr><tr><td>主要解决什么？</td><td>掩码外背景、身份与结构被意外改变</td><td>属性词互相竞争、颜色或材质泄漏</td></tr><tr><td>掩码错了会怎样？</td><td>漏掉的区域会被错误冻结；多画的区域失去保护</td><td>错误区域会选择错误 token，正确目标区域得不到文字指导</td></tr></tbody></table></div>
+        <div class="table-scroll reveal"><table class="selection-compare"><thead><tr><th>问题</th><th>BG‑Shield</th><th>SSCA</th></tr></thead><tbody><tr><td>谁给出空间区域？</td><td colspan="2">共同使用输入掩码 M；两个模块都不预测 M</td></tr><tr><td>模块内部做什么选择？</td><td>把 M=0 的位置接回源图 K/V；M=1 使用目标特征</td><td>在 M=1 的 query 内，为每层选择 top‑10 文本 token</td></tr><tr><td>主要解决什么？</td><td>掩码外背景、身份与结构被意外改变</td><td>属性词互相竞争、颜色或材质泄漏</td></tr><tr><td>对推理成本的影响</td><td>增加一份源分支 K/V 缓存（显存），但可跨轮复用</td><td><strong>基本不省算力</strong>：注意力图置零是“算完再屏蔽”，QK<sup>T</sup> 与 softmax 的规模不变</td></tr><tr><td>掩码错了会怎样？</td><td>漏掉的区域会被错误冻结；多画的区域失去保护</td><td>错误区域会选择错误 token，正确目标区域得不到文字指导</td></tr></tbody></table></div>
         <div class="layers reveal">
           <div class="axis">CONTROL<br>GRANULARITY →</div><div><span class="label">Temporal / 时间</span><h3><button type="button" class="term" data-term="cosi">COSI</button></h3><p>用近似双射闭环与 <button type="button" class="term" data-term="cycleconsistency">cycle consistency</button>，让一步反演落在生成器可稳定重建的流形上。</p></div><div><span class="label">Spatial / 空间</span><h3><button type="button" class="term" data-term="bgshield">BG‑Shield</button></h3><p>源分支缓存背景 K/V；目标分支重组前景特征，并用高斯羽化软融合边界。</p></div><div><span class="label">Semantic / 语义</span><h3><button type="button" class="term" data-term="ssca">SSCA</button></h3><p>在 <button type="button" class="term" data-term="softmax">softmax</button> 前选出 <button type="button" class="term" data-term="topk">top‑k</button> 相关文本 token，只在掩码内计算并散射回特征图。</p></div>
         </div>
         <div class="deep reveal">
           <details open><summary><span class="no">A</span><h3>COSI：让反演与生成器闭环一致</h3></summary><div class="detail"><div><p><b>冲突：</b>一步生成器的有效解空间很窄，几乎没有后续步骤纠错。反演噪声即使能重建出看似正确的图，只要没有落在生成器学到的流形上，换成目标提示词后误差就会被放大。</p><p><b>做法：</b>先由 I<sub>θ</sub> 预测 ε<sub>inv</sub>，经固定 G 一步重建，再把重建送回 I<sub>θ</sub>。要求再次得到的噪声与 ε<sub>inv</sub> 一致，直接对齐正在使用的生成器，而不是只模仿外部教师。</p></div><div class="formula">ε_inv = Iθ(z₀, c, cᵢ)<br>ẑ₀ = G(ε_inv, c)<br>ε_back = sg(Iθ(ẑ₀, c, cᵢ))<br><br>L_cyc = E[‖ε_inv − ε_back‖²]</div></div></details>
-          <details><summary><span class="no">B</span><h3>BG‑Shield：缓存保留区，而非事后修图</h3></summary><div class="detail"><p><b>源分支：</b>在 <button type="button" class="term" data-term="selfattention">self-attention</button> 中缓存 M=0 的保留位置 B 对应的 K*<sub>B</sub>, V*<sub>B</sub>。<br><br><b>目标分支：</b>B 位置复用源缓存，M=1 的可编辑位置 F 使用当前目标 K/V，再让目标 <button type="button" class="term" data-term="qkv">Q 对重组后的完整 K/V</button> 做注意力。高斯模糊掩码形成过渡带，降低硬边与光照断层。</p><p><b>工程代价：</b>需要源/目标双分支以及 <button type="button" class="term" data-term="attentionprocessor">attention processor</button> 改造；显存开销与被注入层数、token 数成正比。若掩码漏检，所谓“保证”只在错误掩码定义下成立。</p></div></details>
-          <details><summary><span class="no">C</span><h3>SSCA：在 softmax 竞争前清场</h3></summary><div class="detail"><p><b>根因：</b>所有词元同时竞争时，强属性词可能压制主体词，并把颜色/材质泄漏到背景。仅对 <button type="button" class="term" data-term="attentionmap">attention map</button> 后缩放，干预已发生得太晚。</p><p><b>机制：</b>先固定掩码给出的 F，再用 F 内图像 <button type="button" class="term" data-term="querykey">query 与文本 key</button> 的聚合相似度，在每个应用层选择得分最高的 10 个文字 token；仅为 F query 计算稀疏 <button type="button" class="term" data-term="crossattention">cross-attention</button>，B 位置写零。它没有重新预测空间区域。</p></div></details>
+          <details><summary><span class="no">B</span><h3>BG‑Shield：缓存保留区，而非事后修图</h3></summary><div class="detail"><p><b>源分支：</b>在 <button type="button" class="term" data-term="selfattention">self-attention</button> 中缓存 M=0 的保留位置 B 对应的 K*<sub>B</sub>, V*<sub>B</sub>。<br><br><b>目标分支：</b>B 位置复用源缓存，M=1 的可编辑位置 F 使用当前目标 K/V，再让目标 <button type="button" class="term" data-term="qkv">Q 对重组后的完整 K/V</button> 做注意力。高斯模糊掩码形成过渡带，降低硬边与光照断层。</p><p><b>工程代价：</b>需要源/目标双分支以及 <button type="button" class="term" data-term="attentionprocessor">attention processor</button> 改造；显存开销与被注入层数、token 数成正比。它同时是把“背景记忆”变成可复用资产的接口：缓存命中时，多轮同源编辑不必重新编码源图。</p></div></details>
+          <details><summary><span class="no">C</span><h3>SSCA：在 softmax 竞争前清场</h3></summary><div class="detail"><p><b>根因：</b>所有词元同时竞争时，强属性词可能压制主体词，并把颜色/材质泄漏到背景。仅对 <button type="button" class="term" data-term="attentionmap">attention map</button> 后缩放，干预已发生得太晚。</p><p><b>机制：</b>先固定掩码给出的 F，再用 F 内图像 <button type="button" class="term" data-term="querykey">query 与文本 key</button> 的聚合相似度，在每个应用层选择得分最高的 10 个文字 token；仅为 F query 计算稀疏 <button type="button" class="term" data-term="crossattention">cross-attention</button>，B 位置写零。它没有重新预测空间区域，也不改变采样步数。</p></div></details>
+        </div>
+      </section>
+
+      <section id="cost">
+        <div class="head"><span class="no">05 / 11</span><h2>编辑模型独有的成本结构</h2></div>
+        <p class="lede">如果只用 T2I 的眼光看编辑，会得出“换少步模型即可”的结论。但编辑请求里有一整套 T2I 不存在的计算：先把源图送回噪声空间、再同时维护源与目标两路条件、并在每一步都担心误差会不会被闭环放大。</p>
+        <div class="bottleneck reveal">
+          <article class="bn"><span class="bno">01</span><h3>反演入场费</h3><p>要在保留原图的前提下改图，就得先解出“能重建这张图的噪声”。负提示反演一类近似方法把 512 分辨率、50 步的反演压到五秒量级，相对需要逐时间步优化的 null-text 反演快 30 倍以上，但它仍然是<strong>为一台你已经拥有的图片付费</strong>。只要重建路径还在，这段计算就不为新内容服务。</p><span class="cost">可减少：预计算复用 / 学习式反演网络 / 免反演直连</span></article>
+          <article class="bn"><span class="bno">02</span><h3>双路分支</h3><p>源条件与目标条件都要进网络：U‑Net 系编辑模型常常跑两条分支再做特征重组；in‑context DiT 系则把源图与目标图拼成一条两倍长的 token 序列。前者付出双份前向，后者付出平方级注意力。</p><span class="cost">可减少：批内融合 / 源侧缓存 / token 与分辨率策略</span></article>
+          <article class="bn"><span class="bno">03</span><h3>循环误差敏感</h3><p>编辑是“反演 → 重建 → 再编辑”的闭环。任何一步的数值误差都会被后续步骤当作真实信号继续放大，表现为背景闪动、身份漂移、颜色溢出。这使量化、缓存、少步近似的安全边界比 T2I 窄得多。</p><span class="cost">可减少：闭环一致性损失 / 精度策略 / 误差校验</span></article>
+          <article class="bn"><span class="bno">04</span><h3>局部性约束，也是最大的省算力入口</h3><p>注意力天生全局：掩码内改变会通过 self-attention 传向掩码外。<strong>但反过来看，这正是编辑相对生成最独特的红利</strong>：既然大部分图像必须保持原样，就没有理由对它做完整前向。把算力预算按掩码重新分配——区域内保留全部 token、区域外做高频选择与低频降采样——是编辑专属的加速方向，在生成任务里并不存在。</p><span class="cost">可减少：掩码感知注意力 / token 预算分配 / 背景 K/V 复用</span></article>
+          <article class="bn"><span class="bno">05</span><h3>多轮与同源复用</h3><p>真实编辑是交互式的：同一张图反复改、上一轮结果就是下一轮源图，而且相邻两轮的指令往往只在局部语义上不同。这个模式在 T2I 里不存在，却让“源图编码、文本编码、反演噪声、背景特征”都成为可缓存资产，是编辑服务里收益最高的一块。</p><span class="cost">可减少：源级缓存 / 语义感知区域复用 / 增量编辑</span></article>
+          <article class="bn"><span class="bno">06</span><h3>评价维度更多</h3><p>生成质量之外还要衡量保留区保真、编辑遵循、身份与结构保持。任何加速手段都可能只在这四个维度中的某一个上变差，因此单一指标（FID、CLIP）无法判断优化是否安全。</p><span class="cost">必须配套：区域指标 + 分层消融 + 延迟 P95</span></article>
+        </div>
+        <div class="cost-split reveal">
+          <div>
+            <span class="label">COST ATTRIBUTION / 一次经典编辑请求花在哪</span>
+            <h3>“为原图付钱”的部分，往往超过一半</h3>
+            <p>下面的分解描述的是<strong>多步编辑管线的结构性来源</strong>，不是某个实现的实测时间。它回答一个优化问题：哪些开销在原理上可以被消除或摊销，哪些即使换了硬件也躲不掉。</p>
+            <div class="coststack">
+              <div class="costrow paid"><span>反演步</span><div class="ctrack"><div class="cfill" style="width:92%"></div></div><span class="cval">结构性</span></div>
+              <div class="costrow paid"><span>双路条件前向</span><div class="ctrack"><div class="cfill" style="width:74%"></div></div><span class="cval">结构性</span></div>
+              <div class="costrow"><span>编辑去噪步</span><div class="ctrack"><div class="cfill" style="width:56%"></div></div><span class="cval">不可省</span></div>
+              <div class="costrow"><span>源图编码 / 解码</span><div class="ctrack"><div class="cfill" style="width:34%"></div></div><span class="cval">可缓存</span></div>
+              <div class="costrow free"><span>掩码与路由</span><div class="ctrack"><div class="cfill" style="width:8%"></div></div><span class="cval">近零成本</span></div>
+            </div>
+          </div>
+          <div>
+            <h3>读法</h3>
+            <p><b>结构性成本</b>指它是任务定义带来的，只能通过改变算法路线来消除：学习式反演网络、免反演直连、或者干脆把重建目标换成“区域重建 + 全局缓存”。</p>
+            <p><b>可缓存成本</b>指它只依赖源图与模型版本，与目标提示词无关。同一源图的多轮编辑里，这部分应当只付一次；缓存键必须覆盖模型版本、分辨率、源图与掩码。</p>
+            <p><b>近零成本</b>指路由与掩码判定本身：一次区域统计、一次相似度比较的代价，远小于一次主干前向。它的价值不在省算力，而在把请求送到正确的路径上，避免用重型编辑器处理平凡编辑。</p>
+            <p class="method">注：具体占比随模型架构（U‑Net / DiT）、引导方式、分辨率与实现而变化。这里给出的是“能不能被消除”的分类，而不是跨实现的百分比承诺。</p>
+          </div>
+        </div>
+        <div class="quote reveal"><b>为什么不能直接照搬 T2I 的加速结论</b>T2I 的缓存与近似假设“条件在整个采样过程中不变，且只有一条轨迹”。编辑任务同时存在源、目标两组条件，还要保证两者差值只落在掩码内。当 prompt 在分支之间切换时，跨步缓存的复用判据本身就可能失效；当近似让保留区偏移一个像素，用户会立刻看见。这就是编辑优化的额外约束。</div>
+        <div class="quote reveal"><b>一个被反复验证的编辑专属观察：两个区域的“轨迹形状”不一样</b>被编辑区域的去噪轨迹是弯的，需要多步迭代；未被编辑区域在给定参考图的条件下轨迹接近直线，可以一步预测到位。RegionE 正是把这条观察直接变成算力：早期先把图像分成编辑区与未编辑区，未编辑区用一步预测、编辑区保留局部迭代去噪，再加区域 KV 缓存与速度衰减缓存，在 Step1X‑Edit / FLUX.1 Kontext / Qwen‑Image‑Edit 上报告 2.57× / 2.41× / 2.06× 加速。这类“按区域难度分配算力”的做法，在纯文本生成任务里没有对应结构。</div>
+        <div class="table-scroll reveal" style="margin-top:34px"><table class="matrix"><thead><tr><th>公开的编辑专属测量</th><th>场景</th><th>测到了什么</th><th>读法</th></tr></thead><tbody>
+          <tr><td>HiLo‑Token<br><small>Adobe · 2026</small></td><td>Photoshop 类生成式编辑，数百条代表性样本</td><td>DiT 模块占端到端延迟平均 <strong>73%</strong>，且这是把 50 步蒸馏到 8 步之后的结果；按掩码比例分档（小 6.38% / 中 15.92% / 大 35.36%）可取得 3.13× / 2.59× / 1.67× 的 DiT 加速</td><td>提示两件事：主干仍是瓶颈；而<strong>掩码越小、局部计算的红利越大</strong>。收益随编辑面积递减，所以路由与掩码统计值得先做。</td></tr>
+          <tr><td>EEdit<br><small>ICCV 2025</small></td><td>基于反演的编辑（提示词编辑、拖拽、图像合成）</td><td>把冗余分成空间（未编辑区域）与时间（反演过程）两部分处理：空间局部性缓存 + token 索引预处理 + 反演步跳过，平均 <strong>2.46×</strong> 加速且报告无性能下降</td><td>这是“编辑专属冗余”最直接的证据：同一套方法在纯生成任务里没有对应的冗余可利用。</td></tr>
+          <tr><td>RegionCache<br><small>IJCAI 2026</small></td><td>多轮编辑，PixArt‑α 主干</td><td>按相邻两轮提示词的语义重叠 + 交叉注意力定位可复用区域，端到端 <strong>1.43×–2.55×</strong></td><td>多轮场景的复用必须“语义感知”：只按空间位置复用会不安全，只按相似度复用会漏掉可复用区域。</td></tr>
+          <tr><td>RegionE<br><small>2025</small></td><td>instruction 编辑（Step1X‑Edit / FLUX.1 Kontext / Qwen‑Image‑Edit）</td><td>先分区：未编辑区按“轨迹近直线”一步预测，编辑区保留局部迭代；配区域 KV 缓存与自适应速度衰减缓存，报告 <strong>2.57× / 2.41× / 2.06×</strong> 加速</td><td>把“两个区域难度不同”这一编辑特有结构直接换成算力。它不依赖掩码输入，而是先估计出区域，因此对掩码不可靠的场景更友好。</td></tr>
+          <tr><td>AnchorCache<br><small>2026</small></td><td>in‑context DiT 编辑（源图与目标图同序列）</td><td>对参考图像 token 做精确 K/V 复用，报告 DiT 侧最高 <strong>6.40×</strong> 加速，收益随参考上下文增长</td><td>序列越长，参考 token 的重复计算越浪费，这解释了 in‑context 架构的优化重点在序列而非步数。<strong>代价</strong>：需要一次蒸馏训练，不是纯免训练方案。</td></tr>
+          <tr><td>KV-Edit<br><small>2025</small></td><td>免训练 DiT 编辑，需用户给出区域</td><td>背景 token 不重新生成而是保留其 K/V，并把 KV cache 的显存空间复杂度优化到 <strong>O(1)</strong>，配合免反演路径</td><td>“背景不重算”有两种实现代价：算力与显存。这篇主要解显存，说明长会话下的瓶颈未必是 FLOPs。</td></tr>
+          <tr><td>Cache‑DiT / 跨步缓存实测<br><small>工程口径</small></td><td>同一套缓存库分别跑编辑模型与同族生成模型</td><td>同一套缓存方案下，编辑模型 <strong>2.38×</strong>（51.5s → 21.6s）高于同族生成模型的 <strong>1.85×</strong>；NPU 上编辑模型 142.38s → 64.07s。<strong>但编辑需要更保守的参数</strong>（触发阈值下调、预热步数增加）</td><td>“编辑复用面大于生成”的实测证据：可复用的中间量更多，缓存收益更大，代价是安全边界更窄。</td></tr>
+          <tr><td>FlashPS<br><small>EuroSys 2026</small></td><td>面向编辑的服务架构（同模板 + 掩码复用）</td><td>跨请求复用未编辑区域的中间激活，配合计算与缓存加载的双负载均衡，报告吞吐最高 <strong>3×</strong>、平均延迟最多降低 <strong>14.7×</strong>；新请求只需一步去噪即可加入运行批</td><td>目前唯一公开的编辑服务架构，但场景是同模板复用型编辑，任意图任意指令下命中率会低得多。缓存加载带宽会成为新瓶颈。</td></tr>
+        </tbody></table></div>
+        <div class="warning reveal"><b>读数提醒</b><p>上表数字来自各自论文与作者自建评测集（Adobe 的生产数据、PixArt‑α 等），硬件与基线各不相同，<strong>不可横向比较、也不可直接外推</strong>。它们的作用是证明“编辑专属冗余真实存在且量级可观”，而不是给出承诺值。</p></div>
+      </section>
+
+
+      <section id="landscape">
+        <div class="head"><span class="no">06 / 11</span><h2>技术谱系：九条编辑专属加速线</h2></div>
+        <p class="lede">不要把所有 Edit 优化都归入“加速”，也不要把 T2I 的加速原样搬过来。下面按<strong>它到底减少了什么</strong>分类：反演路径、免反演、注意力注入、少步训练、缓存复用、指令侧、掩码计算、精度数值、服务路由。每一条都注明代价与适用边界。</p>
+        <div class="controls" role="group" aria-label="按优化资源筛选"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="fewstep">减少调用次数</button><button class="filter" data-filter="perstep">降低单步开销</button><button class="filter" data-filter="memory">显存 / 内存</button><button class="filter" data-filter="reuse">跨轮复用</button><button class="filter" data-filter="quality">保真与局部性</button><button class="filter" data-filter="train">训练成本</button></div>
+        <div class="opt-grid reveal">
+          <article class="opt" data-cat="fewstep quality"><div class="opt-top"><h3>① 反演路径加速</h3><span class="pill hi">1 → 1</span></div><p>把“几十步反向过程求一个起点”压平，手段分四类：<strong>免优化的近似</strong>（负提示反演用一次前向替代逐时间步优化，报告比 null-text 反演快 30 倍以上）、<strong>成对耦合的精确反演</strong>（EDICT、BDIA 一类，可逆但计算翻倍）、<strong>学习式反演网络</strong>（一次前向直接预测噪声，需要额外训练）、以及<strong>直接跳过</strong>（EEdit 在反演过程中跳过冗余步并复用 latent）。</p><p>最后还有一层与算法无关的优化：把反演结果按源图预计算并缓存，多轮编辑只付一次。</p><dl><dt>收益</dt><dd>削掉编辑管线的入场费</dd><dt>风险</dt><dd>近似反演在强编辑下精度下降；精确反演常因双倍计算抵消收益；学习式反演引入额外训练与域外退化</dd></dl></article>
+          <article class="opt" data-cat="fewstep"><div class="opt-top"><h3>② 免反演与直连路径</h3><span class="pill good">NO INVERSION</span></div><p>根本不解“源图对应哪个噪声”，而是构造从源条件到目标条件的直接路径：一致性模型上的虚拟反演（InfEdit/DDCM 一类），或为流模型构造源分布到目标分布的 ODE 直连（FlowEdit 一类）。</p><dl><dt>收益</dt><dd>去掉一整段重建计算，也不再受反演误差影响</dd><dt>边界</dt><dd>依赖模型具备一致性/流性质；路径是启发式设计，不是最优传输保证</dd></dl></article>
+          <article class="opt" data-cat="quality perstep"><div class="opt-top"><h3>③ 注意力与特征注入控制局部性</h3><span class="pill hi">LOCALITY</span></div><p>不增加前向次数，而是改写注意力路径：复用源图 cross-attention 图（<button type="button" class="term" data-term="p2p">P2P</button>/Prompt-to-Prompt 一族）、跨分支互注意力替换、注入源图空间特征与自注意力、在掩码内做 token 选择与剪枝。</p><dl><dt>收益</dt><dd>结构、身份与背景保持；部分做法顺带减少注意力计算</dd><dt>风险</dt><dd>掩码错误、边界接缝、对主干内部结构强耦合</dd></dl></article>
+          <article class="opt" data-cat="fewstep quality train"><div class="opt-top"><h3>④ 少步 / 一步编辑模型</h3><span class="pill">FEW STEP</span></div><p>两条实现路线：<strong>免训练复用</strong>现成的一步或少步 T2I 主干 + 编辑注意力控制（TurboEdit 一类），或<strong>专门训练</strong>一步编辑器与一对反演/编辑映射（SwiftEdit、FlashEdit 一类）。</p><dl><dt>收益</dt><dd>延迟主导项直接下降一个数量级</dd><dt>边界</dt><dd>把成本挪到训练与数据覆盖；强结构编辑、文字、遮挡关系仍需回退</dd></dl></article>
+          <article class="opt" data-cat="quality train fewstep"><div class="opt-top"><h3>⑤ 编辑目标下的蒸馏与一致性训练</h3><span class="pill">DISTILL</span></div><p>把少步化（一致性模型、分布匹配蒸馏）用在编辑任务上时，教师信号不再只是“生成得像”，还要包含保持区域与身份。循环一致性损失、区域加权的重建损失、保留区监督是编辑蒸馏相对 T2I 蒸馏多出来的部分。</p><dl><dt>收益</dt><dd>在算力不变的前提下换到更少步</dd><dt>边界</dt><dd>蒸馏目标里漏掉哪个约束，就会在哪个维度退化</dd></dl></article>
+          <article class="opt" data-cat="perstep memory reuse"><div class="opt-top"><h3>⑥ 缓存与跨轮复用</h3><span class="pill">CACHE</span></div><p>编辑请求带有大量<strong>与目标提示词无关</strong>的中间量：源图 latent、文本 embedding、反演噪声、背景 <button type="button" class="term" data-term="kv">K/V</button>。把它们按源图维度缓存，多轮编辑只付一次；再叠加扩散缓存（复用某些步或某些层的特征）降低单步开销。</p><p><strong>但编辑会让通用缓存的“有效性判据”失效。</strong>以 <button type="button" class="term" data-term="diffusioncache">扩散缓存</button> 为例：它判断“这一步能不能复用上一步”，依据通常是 latent 与时间步的差异，而这个判据里<strong>没有文本条件</strong>。编辑的源分支与目标分支恰好同 latent、同时间步、不同文本——判据区分不了，于是缓存收益缩水甚至出错。现有做法给出两条出路：用<strong>语义重叠</strong>判断可复用区域，或用<strong>早期步的激活差异</strong>判断某个 token 是否会被编辑，后者与文本怎么变无关，因此更稳。</p><p>多轮场景还要再多做一步判断：相邻两轮的指令往往只改一处，可复用区域应当由提示词的语义重叠加上交叉注意力定位共同决定（RegionCache 在 PixArt‑α 上报告 1.43×–2.55× 端到端加速），而不是只按像素位置复用。</p><dl><dt>收益</dt><dd>多轮场景延迟与算力双降；同一套缓存方案在编辑模型上实测收益高于同族生成模型</dd><dt>风险</dt><dd>缓存键漏项会静默给出错误结果；前景/被编辑区域的 K/V 不应缓存——把它冻在旧步的表示上，会从“性能权衡”变成“结果被改写”</dd></dl></article>
+          <article class="opt" data-cat="perstep reuse"><div class="opt-top"><h3>⑦ 指令与条件侧的编辑专属优化</h3><span class="pill good">CONDITION</span></div><p>用轻量改写模型替代重型 MLLM 规划器、把指令结构化、复用源提示词的 embedding、只对变化的词元重算条件。它把“理解意图”和“生成图像”解耦，避免为一句简单的颜色替换启动完整多模态推理。</p><dl><dt>收益</dt><dd>削掉流水线里最容易被忽视的前置延迟</dd><dt>边界</dt><dd>复杂指令仍需要高容量编辑器；改写错误会把误差直接写进条件</dd></dl></article>
+          <article class="opt" data-cat="perstep memory quality"><div class="opt-top"><h3>⑧ 掩码感知的局部计算</h3><span class="pill hi">MASK-AWARE</span></div><p>既然 M=0 的区域必须保持源图，就不必对它做完整前向：把计算限制在掩码、掩码膨胀带和受影响层，其余位置直接沿用源 latent 或源特征。工程上还有<button type="button" class="term" data-term="croppedit">裁剪编辑</button>、局部分辨率分桶、只对掩码内 query 计算注意力。</p><p>这条线在 2026 年已有生产级验证：HiLo‑Token 在掩码内保留全部 token，在掩码外做<button type="button" class="term" data-term="frequencyselection">高频选择</button>加 16× 降采样的低频表征，报告 DiT 侧 3.13× / 2.59× / 1.67× 加速（小 / 中 / 大掩码）；EEdit 则以“空间局部性缓存 + token 索引预处理”跳过未编辑区域的重复计算。</p><dl><dt>收益</dt><dd>局部编辑时单步开销大幅下降，<strong>掩码越小收益越大</strong></dd><dt>风险</dt><dd>裁剪与膨胀不当会产生接缝；对光照、阴影等长程效果不适用；掩码漏检会让区域被永久冻结</dd></dl></article>
+          <article class="opt" data-cat="perstep memory"><div class="opt-top"><h3>⑨ 精度、数值与误差校验</h3><span class="pill">PRECISION</span></div><p>编辑任务对低精度更敏感：误差会沿“反演—重建—再编辑”闭环累积，且用户对保留区变化极其敏感。可行做法是逐层敏感性扫描、文本编码器与 VAE 保持较高精度、仅对主干做量化、只在安全层启用低精度，并配套保留区误差校验。</p><p><strong>但必须说清楚证据强度：</strong>公开的量化论文（视频/DiT 量化、扩散 PTQ 等）几乎全部在文本生成图像或视频任务上评测，<strong>没有一篇在摘要层面声明评测对象是文本引导编辑，也没有报告保留区保真度</strong>。唯一方向相反的证据来自把编辑建立在二值量化生成模型上的工作：它发现量化表示“精确可达”，反而让反演获得精确监督。结论应写成“方向取决于误差结构”：确定可复现的误差可能被反演利用，随样本漂移的统计误差才会伤背景。<strong>因此在编辑上做量化，必须自建编辑校准集与保留区验收，不能引用 T2I 结论。</strong></p><dl><dt>收益</dt><dd>同硬件下降低带宽与算力开销</dd><dt>风险</dt><dd>均值指标可能看不出问题，必须在保留区与身份指标上验收</dd></dl></article>
+        </div>
+        <div class="families reveal">
+          <article class="fam"><span class="fno">A</span><h3>按“编辑类型”先选路线</h3><p>局部属性（换色、换材质、局部替换）最省；结构变化（增删对象、改姿态）需要更贵的路径；全局重绘与文字渲染基本回到重生成模型。路由决定了后面所有优化的天花板。</p><span class="fam-tag">ROUTING FIRST</span></article>
+          <article class="fam"><span class="fno">B</span><h3>按“掩码可信度”选强度</h3><p>用户涂抹的掩码可信度高，可以激进地裁剪计算；自动分割产生的掩码有漏检风险，应当适度膨胀并在保留区做额外校验。掩码质量是局部性技术的成本上限。</p><span class="fam-tag">MASK CONFIDENCE</span></article>
+          <article class="fam"><span class="fno">C</span><h3>按“交互次数”选缓存</h3><p>单次编辑只有算子级空间；同一源图的多轮编辑才有缓存价值。先问“这张图会被改几次”，再决定投入多少工程去维护源级缓存与失效策略。</p><span class="fam-tag">MULTI-TURN FIRST</span></article>
+        </div>
+        <div class="route reveal">
+          <div class="route-node wide"><span class="who">EDIT CLASS / 局部属性</span><div><b>掩码内改颜色、材质、局部对象替换</b><p>背景必须冻结，编辑区域有明确边界，且用户往往在同一张图上反复微调。</p></div><div><b>推荐组合</b><p>一步/少步编辑 + 掩码感知局部计算 + 背景 K/V 缓存 + 源级缓存复用。</p><span class="costs">成本量级：单次前向级；多轮时接近增量编辑</span></div></div>
+          <div class="route-node wide"><span class="who">EDIT CLASS / 结构变化</span><div><b>增删对象、改变姿态、替换主体</b><p>需要重新组织空间关系，掩码内的信息不足以约束结果，保留区也会被间接影响。</p></div><div><b>推荐组合</b><p>少步但保留纠错步数的编辑器；注意力注入控制结构；必要时回退多步或重生成。</p><span class="costs">成本量级：数步到十几步；不要在这里赌一步模型</span></div></div>
+          <div class="route-node wide"><span class="who">EDIT CLASS / 全局与文字</span><div><b>整体风格迁移、整图重构、图上文字编辑</b><p>“保留区”几乎不存在，或对细节精度要求极高（文字、人脸、商品标识）。</p></div><div><b>推荐组合</b><p>高容量 instruction editor / in‑context DiT；用缓存与低精度换吞吐，而不是用少步换延迟。</p><span class="costs">成本量级：回到通用大模型推理问题</span></div></div>
+        </div>
+        <div class="table-scroll reveal" style="margin-top:38px"><table class="matrix"><thead><tr><th>方案族</th><th>需要反演？</th><th>需要训练？</th><th>依赖掩码精度？</th><th>局部性怎么保证</th><th>主要失效模式</th></tr></thead><tbody>
+          <tr><td>经典多步反演 + 注意力控制</td><td>是（多步）</td><td>否</td><td>中</td><td>注意力图复用与替换</td><td>慢；强编辑与保留强耦合</td></tr>
+          <tr><td>精确 / 耦合反演</td><td>是（成对计算）</td><td>否</td><td>低</td><td>重建精度高，编辑仍靠提示词</td><td>计算量翻倍，收益被抵消</td></tr>
+          <tr><td>免反演直连（流/一致性）</td><td>否</td><td>否（依赖模型性质）</td><td>中</td><td>由路径与引导隐式约束</td><td>路径是启发式，强编辑易漂移</td></tr>
+          <tr><td>一步编辑 + 反演网络</td><td>一次前向</td><td>是</td><td>高（BG 类模块）</td><td>掩码分区 + 背景特征回放</td><td>数据覆盖不足的编辑类型退化</td></tr>
+          <tr><td>掩码感知局部计算</td><td>取决于主干</td><td>通常否</td><td>很高</td><td>只算掩码与膨胀带</td><td>接缝、光照断层、长程不一致</td></tr>
+          <tr><td>Token 预算重分配</td><td>可缓存 / 可跳过</td><td>通常否</td><td>很高</td><td>区域内侧全保留、外侧按频率选 token</td><td>掩码比例大时收益迅速衰减</td></tr>
+          <tr><td>语义感知区域复用</td><td>可缓存</td><td>否</td><td>中</td><td>由提示词语义重叠 + 注意力定位可复用区</td><td>语义判断错误导致复用不该复用的区域</td></tr>
+          <tr><td>缓存与跨轮复用</td><td>可缓存</td><td>否</td><td>中</td><td>保留区特征与 latent 直接沿用</td><td>缓存键失效导致静默错误</td></tr>
+          <tr><td>低精度 / 量化</td><td>视管线</td><td>否（校准）</td><td>低</td><td>不保证；误差在闭环内放大</td><td>保留区与身份先坏，均值指标看不出来</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section id="tradeoff">
+        <div class="head"><span class="no">07 / 11</span><h2>约束机制：为什么快与准在编辑里更难兼得</h2></div>
+        <p class="lede">这一节把前面反复出现的“误差放大”“局部性”“保留区”讲成一条因果链。理解了这条链，就能判断一个加速手段是安全的、需要护栏的、还是根本不适用于编辑。</p>
+        <div class="causal reveal">
+          <h3>一条错误怎样变成用户可见的瑕疵</h3>
+          <p>起点的小偏差不会停在原地。它沿采样轨迹被反复解释、被注意力扩散、最后被解码器放大成肉眼可见的变化——而编辑任务的验收标准，恰恰是“不该变的地方一点都没变”。</p>
+          <div class="causal-chain">
+            <article class="causal-node"><span class="cn">LINK 01</span><h3>起点偏差</h3><p>反演得到的噪声与“真实起点”存在差距（近似求解、学习式预测、低精度数值）。</p><span class="rem">缓解：闭环一致性训练、精确反演、起点误差校验</span></article>
+            <article class="causal-node"><span class="cn">LINK 02</span><h3>轨迹偏离</h3><p>偏差在后续去噪步被当作真实信号继续演化；步数越少，可用于纠错的机会越少。</p><span class="rem">缓解：保留少量纠错步、按编辑类型分配步数</span></article>
+            <article class="causal-node"><span class="cn">LINK 03</span><h3>跨区扩散</h3><p>全局 self-attention 把编辑区域的变化输送到保留区域，形成颜色溢出、光照断层。</p><span class="rem">缓解：掩码分区注意力、背景 K/V 回放、羽化过渡</span></article>
+            <article class="causal-node"><span class="cn">LINK 04</span><h3>数值噪声</h3><p>低精度算子与激进缓存引入的误差混入同一闭环，与语义误差难以区分。</p><span class="rem">缓解：逐层精度扫描、缓存有效性判据、回退机制</span></article>
+            <article class="causal-node"><span class="cn">LINK 05</span><h3>可见瑕疵</h3><p>最终表现为背景闪动、身份漂移、接缝、文字糊化——评分均值不变，但用户立刻察觉。</p><span class="rem">验收：保留区指标 + 身份指标 + 人工抽查</span></article>
+          </div>
+        </div>
+        <div class="dual-cost reveal">
+          <article><h3>U‑Net 系编辑：双分支的账</h3><p>这类实现通常让源条件与目标条件各跑一遍主干，再在注意力层做特征重组（背景回放、注意力替换）。</p><ul><li>成本形态：前向次数 ≈ 2×步数，显存随注入层数与 token 数上升。</li><li>优化抓手：源分支结果可缓存（它与目标提示词无关）；批内融合两条分支；只在必要层注入。</li><li>隐患：双分支同步要求严格的版本与掩码一致性，缓存命中判断错一次就会给出错误背景。</li></ul></article>
+          <article><h3>in‑context DiT 系编辑：序列的账</h3><p>源图与目标图被拼进同一条 token 序列，模型像“看图改图”一样工作。指令遵循更强，但序列变长。</p><ul><li>成本形态：token 数近似翻倍，注意力开销按序列长度平方增长，显存是主要瓶颈。</li><li>优化抓手：分辨率与 token 预算分桶、参考 token 的合并或早退、文本条件复用、注意力核与序列切分。</li><li>隐患：为了省 token 而丢参考细节，会直接表现为身份漂移。</li></ul></article>
+          <article><h3>掩码感知：省的是计算，赌的是掩码</h3><p>局部计算把“不必重算”的区域直接沿用源 latent 或源特征。它的收益与掩码面积近似成正比，这一点已被公开测量证实：同一套 token 预算策略在 6.4% 小掩码上报告 3.13× 加速，在 35.4% 大掩码上降到 1.67×。</p><ul><li>成本形态：单步开销随编辑面积下降，但需要额外做掩码对齐、膨胀、羽化与边界校验。</li><li>优化抓手：按掩码面积分桶批处理；小掩码走增量路径，大掩码回到全图路径；区域内全保留、区域外按空间频率选 token。</li><li>隐患：掩码漏检的区域会被永久冻结，用户第一次看到“改不动”的投诉通常来自这里；掩码越大，这条线的收益越接近零。</li></ul></article>
+        </div>
+        <div class="warning reveal"><b>不变的判断规则</b><p>任何加速手段都要能回答三个问题：它改变的是<strong>起点</strong>、<strong>轨迹</strong>还是<strong>读取路径</strong>？它引入的误差是否落在掩码内？当它失效时，管线是否有可检测的信号并回退？答不出这三点，就不应该进入生产路径。</p></div>
+      </section>
+
+
+      <section id="stack">
+        <div class="head"><span class="no">08 / 11</span><h2>工程优化栈：编辑场景的正确次序</h2></div><p class="lede">编辑请求的成本结构决定了优化次序：先按编辑类型分流，再尽量复用与目标提示词无关的中间量，然后压缩编辑器的调用次数，最后才是算子与精度。反过来做，等于在错误的路径上追求极致。</p>
+        <div class="stack reveal">
+          <article><span class="tag">R0 / ROUTING</span><h3>先分流，再优化</h3><p>按编辑类型、掩码面积、结构变化幅度把请求分级，让平凡编辑走廉价路径。</p><ul><li>潜在空间算术 / 局部替换 → 毫秒级路径</li><li>局部属性编辑 → 一步/少步编辑器</li><li>结构变化与文字 → 高容量编辑器</li></ul><span class="priority">最高 ROI，风险最低</span></article>
+          <article><span class="tag">R1 / REUSE</span><h3>复用与目标无关的量</h3><p>源图 latent、视觉特征、文本 embedding、反演噪声、背景 K/V：这些只依赖源图与模型版本。</p><ul><li>以源图为维度的缓存键与失效策略</li><li>多轮编辑复用上一轮结果作为新源</li><li>掩码、提示词与模型版本必须进入缓存键</li><li>多轮复用要按语义重叠判断可复用区域</li></ul><span class="priority">多轮场景收益最大</span></article>
+          <article><span class="tag">R2 / CALLS</span><h3>压缩编辑器调用</h3><p>减少总前向次数：少步/一步编辑、免反演直连、缓存跨步特征，并保留必要的纠错步。</p><ul><li>固定质量预算比较 NFE 与区域指标</li><li>按编辑类型与掩码面积分配步数，而非一刀切</li><li>把<button type="button" class="term" data-term="tokenbudget">词元预算</button>改成“区域内全保留、区域外按频率选”</li></ul><span class="priority">主导单次延迟</span></article>
+          <article><span class="tag">R3 / KERNELS</span><h3>贴合编辑的张量形状</h3><p>双分支、双条件、变长序列与掩码稀疏性，使编辑的形状组合与 T2I 不同，需要针对性优化。</p><ul><li>融合 QKV / norm / RoPE / attention</li><li>固定 shape 分桶、内存池、异步 VAE</li><li>BF16 基线 → 逐层低精度扫描</li></ul><span class="priority">最后一公里</span></article>
+        </div>
+        <div class="dual-cost reveal" style="margin-top:38px">
+          <article><h3>缓存键必须包含什么</h3><p>缓存键漏项是编辑服务里最危险的静默故障：返回的不是慢，而是错的。</p><ul><li>模型与权重版本、量化方式、VAE 版本</li><li>分辨率与形状桶、是否分块编解码</li><li><strong>掩码哈希、源提示词与目标提示词（成对）</strong></li><li>采样器与步数、引导尺度、随机种子</li><li>适配器 / LoRA 版本；多租户下还要带租户标识</li></ul></article>
+          <article><h3>编辑的排产约束</h3><p>编辑管线有源头就存在的结构约束，直接决定架构选择。</p><ul><li>每步前向次数不是 2，而可能是 <strong>4–6 次</strong>（源/目标 × 有条件/无条件，部分编辑器还有参考图分支）。这会让依赖“前向次数奇偶”的缓存记账错配。</li><li>“缓存后端”与“连续批处理 / 序列并行”在现实现中<strong>互斥</strong>：押缓存命中率，还是押高并发吞吐，需要按流量结构二选一。</li><li>缓存加载带宽会成为新瓶颈，排产要同时均衡计算负载与缓存加载负载。</li></ul></article>
+          <article><h3>动手前先确认的一件事</h3><p>已公开的工程事故形态很简单：当请求没有显式携带采样步数等参数时，跨请求缓存<strong>不刷新</strong>，于是上一个请求的中间结果被用到了下一个请求上。表现是“偶发但确定的错误编辑”，很难从画质指标上发现。</p><ul><li>把“缓存是否刷新”做成可观测项，而不是隐含行为。</li><li>用交替不同掩码 / 提示词的对抗用例，断言缓存路径与无缓存路径逐像素一致（在容差内）。</li><li>统计陈旧命中次数，把它当成一级告警指标。</li></ul></article>
+        </div>
+        <div class="dual-cost reveal" style="margin-top:38px">
+          <article><h3>该做的顺序</h3><ul><li>先把延迟按阶段拆开（源编码 / 反演 / 编辑去噪 / 解码），再谈优化。</li><li>先做缓存与路由这类不影响画质的手段，再动模型与精度。</li><li>每次只改一个变量，并在同一套编辑集与同一计时口径下比较。</li><li>把 P95 与缓存命中率当成一级指标，而不是只看均值。</li><li>优先处理小掩码请求：它们占交互编辑的大多数，也是局部计算收益最大的档位。</li></ul></article>
+          <article><h3>常见错误</h3><ul><li>在没搞清编辑类型分布前就换少步模型，结果长尾全崩。</li><li>用 T2I 的量化方案直接压编辑模型，保留区先坏。</li><li>把跨步缓存特征原样套到编辑上，忽略条件在分支间切换。</li><li>缓存键漏掉掩码或模型版本，静默返回过期结果。</li><li>只按像素位置复用多轮编辑的中间结果，忽略两轮指令的语义差异。</li></ul></article>
+          <article><h3>验收护栏</h3><ul><li>保留区指标（掩码外 PSNR/LPIPS/SSIM）必须与优化前逐项对比。</li><li>身份与结构指标（人脸、商品主体）单独报告。</li><li>低精度与激进缓存要有可回退开关与失败检测。</li><li>每个编辑类别都要有代表性样本，禁止只报总均值。</li></ul></article>
+        </div>
+        <div class="table-scroll reveal" style="margin-top:38px"><table class="matrix"><thead><tr><th>优化动作</th><th>针对性机制</th><th>先看哪个指标</th><th>最容易踩的坑</th></tr></thead><tbody>
+          <tr><td>源级缓存</td><td>源图 latent / 文本 embedding / 背景 K/V 复用</td><td>多轮 P50 延迟、缓存命中率</td><td>缓存键漏项导致静默错误</td></tr>
+          <tr><td>掩码裁剪计算</td><td>只算掩码与膨胀带，其余沿用源 latent</td><td>单步耗时随掩码面积的变化</td><td>接缝与光照断层</td></tr>
+          <tr><td>Token 预算重分配</td><td>区域内全保留、区域外高频选择 + 低频降采样</td><td>逐掩码比例档位的 DiT 耗时</td><td>大掩码档位收益迅速衰减</td></tr>
+          <tr><td>语义感知区域复用</td><td>提示词语义重叠 + 交叉注意力定位可复用区</td><td>多轮端到端加速比、保留区指标</td><td>语义判断错误导致不安全复用</td></tr>
+          <tr><td>参考 token K/V 复用</td><td>in‑context 编辑中锁定参考图的 K/V</td><td>序列变长时的 DiT 耗时曲线</td><td>参考特征被过度压缩导致身份漂移</td></tr>
+          <tr><td>少步 / 一步编辑</td><td>蒸馏、反演网络、一步生成器</td><td>按编辑类别切片的编辑遵循与保留区指标</td><td>长尾编辑类型退化</td></tr>
+          <tr><td>跨步缓存</td><td>复用某些步或层的中间特征</td><td>保留区 LPIPS、身份指标</td><td>条件切换后缓存判据失效</td></tr>
+          <tr><td>低精度 / 量化</td><td>逐层敏感性扫描 + 保留区校准集</td><td>保留区误差、身份漂移</td><td>均值指标掩盖局部劣化</td></tr>
+          <tr><td>请求路由</td><td>按编辑类型与掩码面积分流</td><td>分流准确率、回退率、P95</td><td>误判把难任务送进廉价路径</td></tr>
+        </tbody></table></div>
+        <div class="evidence-legend reveal">
+          <div><span class="grade a">A 已验证</span><h3>论文或官方代码明确支持</h3><p>例如 COSI 的循环损失形式、BG‑Shield 的掩码分区 K/V 复用、SSCA 的 top‑k 文本 token 选择、PIE‑Bench 的评测设置。这些内容按原文表述。</p></div>
+          <div><span class="grade b">B 可迁移</span><h3>机制清楚，但在编辑场景需实测</h3><p>例如把扩散缓存、序列并行、低精度方案迁移到编辑管线。机制成立，收益与副作用必须在自己的编辑集上验证。</p></div>
+          <div><span class="grade c">C 推导</span><h3>本页基于结构的工程推导</h3><p>例如“按编辑类型分步数”“掩码面积分桶”“缓存键必须包含掩码”。它们来自任务结构而非某篇论文的实测，落地前需要自测。</p></div>
         </div>
       </section>
 
       <section id="evidence">
-        <div class="head"><span class="no">05 / 10</span><h2>证据与边界</h2></div><p class="lede">以下是 FlashEdit 论文在 PIE-Bench 上的作者报告值。背景指标只在非编辑区计算；<button type="button" class="term" data-term="clipedited">CLIP‑Edited</button> 衡量掩码区域与目标文本的对齐，不等同于人类偏好。</p>
+        <div class="head"><span class="no">09 / 11</span><h2>证据与边界</h2></div><p class="lede">以下是 FlashEdit 论文在 PIE-Bench 上的作者报告值。背景指标只在非编辑区计算；<button type="button" class="term" data-term="clipedited">CLIP‑Edited</button> 衡量掩码区域与目标文本的对齐，不等同于人类偏好。跨论文的数字不可直接排序。</p>
         <div class="table-scroll reveal"><table class="matrix"><thead><tr><th>方法</th><th>采样范式</th><th><button type="button" class="term" data-term="psnr">PSNR ↑</button></th><th><button type="button" class="term" data-term="lpips">LPIPS×10³ ↓</button></th><th><button type="button" class="term" data-term="mse">MSE×10⁴ ↓</button></th><th><button type="button" class="term" data-term="ssim">SSIM×10² ↑</button></th><th><button type="button" class="term" data-term="clipedited">CLIP Edited ↑</button></th><th>相对速度</th></tr></thead><tbody>
           <tr><td><button type="button" class="term" data-term="ddim">DDIM</button> + <button type="button" class="term" data-term="p2p">P2P</button></td><td>多步反演 + 多步编辑</td><td>17.87</td><td>208.80</td><td>219.88</td><td>71.14</td><td>22.44</td><td>1.00×</td></tr>
           <tr><td>TurboEdit</td><td>8 <button type="button" class="term" data-term="nfe">NFE</button> 反演 + 4 NFE/编辑</td><td>22.51</td><td>107.27</td><td>9.32</td><td>80.09</td><td>21.82</td><td>19.68×</td></tr>
           <tr><td>SwiftEdit</td><td>一步反演 + 一步编辑</td><td>23.31</td><td>71.54</td><td>6.18</td><td>82.25</td><td>21.91</td><td>113.01×</td></tr>
           <tr><td class="hi">FlashEdit</td><td><span class="pill hi">ONE STEP</span></td><td><b>25.33</b></td><td><b>62.25</b></td><td><b>4.28</b></td><td><b>83.32</b></td><td><b>22.29</b></td><td><b>150.84×</b></td></tr>
         </tbody></table></div>
-        <div class="bars reveal"><div class="chart"><h3>相对速度 / DDIM+P2P</h3><div class="barrow"><span>TurboEdit</span><div class="track"><div class="fill" style="width:13%"></div></div><b>19.68×</b></div><div class="barrow"><span>SwiftEdit</span><div class="track"><div class="fill" style="width:75%"></div></div><b>113.01×</b></div><div class="barrow hot"><span>FlashEdit</span><div class="track"><div class="fill" style="width:100%"></div></div><b>150.84×</b></div></div><div class="chart"><h3>读数纪律</h3><p>速度比依赖 A6000、实现、分辨率、提示词编码是否计时以及 <button type="button" class="term" data-term="warmup">warm-up</button>；不能直接外推到 Ascend、消费卡或服务端并发。官方仓库未提供代码，当前无法独立核对端到端计时口径。</p></div></div>
-      </section>
-
-      <section id="landscape">
-        <div class="head"><span class="no">06 / 10</span><h2>优化技术谱系</h2></div><p class="lede">不要把所有 Edit 优化都归入“加速”。下面按瓶颈过滤：每种方法改善的目标、引入的代价和最适用场景不同。</p>
-        <div class="controls" role="group" aria-label="优化类型筛选"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="latency">延迟</button><button class="filter" data-filter="quality">质量</button><button class="filter" data-filter="train">训练</button><button class="filter" data-filter="system">系统</button></div>
-        <div class="opt-grid reveal">
-          <article class="opt" data-cat="latency quality train"><div class="opt-top"><h3>一步蒸馏 / 反演</h3><span class="pill hi">FlashEdit</span></div><p>用一致性、分布匹配或教师先验把多步轨迹压进一次前向；再以视觉支路弥补身份信息。交互延迟最低，训练门槛最高。</p><dl><dt>代表</dt><dd>FlashEdit、SwiftEdit</dd><dt>风险</dt><dd>开放域长尾、强结构编辑、教师偏差</dd></dl></article>
-          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>少步迭代纠错</h3><span class="pill">FEW STEP</span></div><p>保留少量 <button type="button" class="term" data-term="nfe">NFE</button>，让重建误差逐步纠正。速度不及一步，但常提供更平滑的质量—延迟旋钮。</p><dl><dt>代表</dt><dd>TurboEdit：8 NFE 反演 + 4 NFE/编辑</dd><dt>适合</dt><dd>批量复用同一源图、多次修改</dd></dl></article>
-          <article class="opt" data-cat="latency quality"><div class="opt-top"><h3>无反演路径</h3><span class="pill good">NO INVERSION</span></div><p><button type="button" class="term" data-term="infedit">InfEdit</button> 用虚拟反演/一致性采样；<button type="button" class="term" data-term="flowedit">FlowEdit</button> 为 <button type="button" class="term" data-term="rectifiedflow">rectified flow</button> 构造源分布到目标分布的直接 <button type="button" class="term" data-term="ode">ODE</button>，避免绕行高斯噪声。</p><dl><dt>收益</dt><dd>减少反演误差与架构耦合</dd><dt>代价</dt><dd>仍可能多步；路径是启发式而非<button type="button" class="term" data-term="optimaltransport">最优传输</button>保证</dd></dl></article>
-          <article class="opt" data-cat="quality"><div class="opt-top"><h3>注意力与掩码控制</h3><span class="pill hi">LOCALITY</span></div><p>缓存/注入源特征、统一 self/cross attention 控制、token 剪枝与空间门控。最直接地控制“该改哪里、哪里别动”。</p><dl><dt>代表</dt><dd>BG‑Shield、SSCA、<button type="button" class="term" data-term="uac">UAC</button>、P2P</dd><dt>风险</dt><dd>掩码错误、边界接缝、对模型内部结构敏感</dd></dl></article>
-          <article class="opt" data-cat="quality train"><div class="opt-top"><h3>数据与渐进对齐</h3><span class="pill">DATA</span></div><p>构建“源图—指令—目标图”三元组，按编辑类型与难度平衡；从 T2I 的重生成能力逐步对齐到保真编辑。</p><dl><dt>代表</dt><dd>SeedEdit、Step1X‑Edit</dd><dt>关键</dt><dd>反向编辑、长尾任务、元信息与指令改写</dd></dl></article>
-          <article class="opt" data-cat="quality train"><div class="opt-top"><h3>奖励与偏好优化</h3><span class="pill">ALIGN</span></div><p>把指令遵循、身份保持、美感、<button type="button" class="term" data-term="ocr">OCR</button>、局部一致性拆成专门奖励；联合 <button type="button" class="term" data-term="diffusionloss">diffusion loss</button>，避免只追求单一 CLIP 指标。</p><dl><dt>代表</dt><dd>SeedEdit 3.0 的 diffusion + reward 联合学习</dd><dt>风险</dt><dd>奖励投机、指标冲突、标注偏差</dd></dl></article>
-          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>低精度与编译</h3><span class="pill">RUNTIME</span></div><p><button type="button" class="term" data-term="bf16">BF16/FP16</button> 基线，逐层评估 <button type="button" class="term" data-term="fp8int8">FP8/INT8</button>；融合 <button type="button" class="term" data-term="qkv">QKV</button>、norm、RoPE、attention 与 <button type="button" class="term" data-term="vae">VAE</button> 算子，减少 launch 和带宽开销。</p><dl><dt>先做</dt><dd>固定 shape、图编译、算子 <button type="button" class="term" data-term="profiling">profiling</button></dd><dt>后做</dt><dd>混合精度敏感层保留、量化校准</dd></dl></article>
-          <article class="opt" data-cat="latency system"><div class="opt-top"><h3>缓存与请求复用</h3><span class="pill">SERVING</span></div><p>源图 VAE <button type="button" class="term" data-term="latent">latent</button>、视觉特征、文本 <button type="button" class="term" data-term="embedding">embedding</button>、背景 K/V 可跨同源编辑复用；动态批处理按分辨率和编辑路由分桶。</p><dl><dt>FlashEdit</dt><dd>BG memory 天然适合多轮同图编辑</dd><dt>约束</dt><dd>缓存版本、掩码与 prompt 必须纳入 <button type="button" class="term" data-term="cachekey">cache key</button></dd></dl></article>
-        </div>
-      </section>
-
-      <section id="stack">
-        <div class="head"><span class="no">07 / 10</span><h2>工程优化栈</h2></div><p class="lede">最有效的顺序通常是：先减少模型调用次数，再减少每次调用的数据移动与算子开销，最后才追逐极限量化。</p>
-        <div class="stack reveal">
-          <article><span class="tag">L0 / PRODUCT</span><h3>任务路由</h3><p>将编辑按范围与结构变化分级。</p><ul><li>局部属性 → FlashEdit 类快速路</li><li>对象增删 → 少步/通用 editor</li><li>布局重构 → 强重生成模型</li></ul><span class="priority">最高 ROI</span></article>
-          <article><span class="tag">L1 / MODEL</span><h3>调用压缩</h3><p>一步蒸馏、少步 <button type="button" class="term" data-term="consistencysampling">consistency</button>、无反演 flow path。</p><ul><li>固定质量预算比较 NFE</li><li>训练时覆盖真实噪声分布</li><li>保留复杂样例回退</li></ul><span class="priority">主导延迟</span></article>
-          <article><span class="tag">L2 / GRAPH</span><h3>数据复用</h3><p>缓存不变条件，避免双分支重复计算。</p><ul><li>VAE / 文本 / 图像 embedding</li><li>背景 K/V 分层缓存</li><li><button type="button" class="term" data-term="staticshape">静态 shape</button> 与内存池</li></ul><span class="priority">多轮编辑关键</span></article>
-          <article><span class="tag">L3 / KERNEL</span><h3>硬件贴合</h3><p>在真实 edit shape 上优化算子。</p><ul><li><button type="button" class="term" data-term="fusedkernel">fused attention / norm / MLP</button></li><li>BF16 → FP8/INT8 逐层敏感性</li><li>VAE 与主干异步流水</li></ul><span class="priority">最后一公里</span></article>
-        </div>
+        <div class="bars reveal"><div class="chart"><h3>相对速度 / DDIM+P2P</h3><div class="barrow"><span>TurboEdit</span><div class="track"><div class="fill" style="width:13%"></div></div><b>19.68×</b></div><div class="barrow"><span>SwiftEdit</span><div class="track"><div class="fill" style="width:75%"></div></div><b>113.01×</b></div><div class="barrow hot"><span>FlashEdit</span><div class="track"><div class="fill" style="width:100%"></div></div><b>150.84×</b></div></div><div class="chart"><h3>读数纪律</h3><p>速度比依赖 A6000、实现、分辨率、提示词编码是否计时以及 <button type="button" class="term" data-term="warmup">warm-up</button>；不能直接外推到 Ascend、消费卡或服务端并发。官方仓库未提供代码，当前无法独立核对端到端计时口径。把这张表当作“同一论文内的相对比较”，而不是跨论文排行榜。</p><p style="margin-top:16px"><b>口径警告：</b>生成侧的蒸馏数字不能搬到编辑任务上。例如分布匹配蒸馏家族报告的数百倍加速属于文本生成图像，而它的论文明确说明该范式<em>不</em>要求与教师采样轨迹一一对应；编辑恰恰需要 (源图 → 目标图) 的配对关系。把“生成加速比”当作“编辑加速比”，是本领域最常见的一处口径混淆。</p></div></div>
+        <div class="quote reveal"><b>迁移到自己的场景时，要重做的三件事</b>一是把评测集换成自己的真实请求分布（编辑类型比例、掩码来源、分辨率、是否多轮）；二是把计时口径钉死（源编码、反演、编辑、解码分别计时，区分冷/热与缓存命中）；三是把“保留区是否真的没变”当作硬门槛，而不是把编辑分数当作唯一目标。</div>
       </section>
 
       <section id="evaluation">
-        <div class="head"><span class="no">08 / 10</span><h2>评测不能只看 <button type="button" class="term" data-term="clip">CLIP</button></h2></div><p class="lede">保真与编辑强度天然冲突。一个可信的优化实验必须同时报告四个维度，并按编辑类型切片，而不是用单一均值掩盖失败模式。</p>
+        <div class="head"><span class="no">10 / 11</span><h2>评测不能只看 <button type="button" class="term" data-term="clip">CLIP</button></h2></div><p class="lede">保真与编辑强度天然冲突。编辑模型的优化实验必须同时报告五个维度，并按编辑类型切片，否则无法判断“变快”是不是以“保留区悄悄变化”为代价。</p>
         <div class="table-scroll reveal"><table class="matrix"><thead><tr><th>维度</th><th>核心问题</th><th>推荐指标</th><th>必须切片</th></tr></thead><tbody>
-          <tr><td>背景保持</td><td>没要求改的地方是否真的没变？</td><td>Masked PSNR / SSIM / LPIPS / MSE</td><td>纹理、光照、人脸、文字、小物体</td></tr>
+          <tr><td>背景保持</td><td>没要求改的地方是否真的没变？</td><td>掩码外 PSNR / SSIM / LPIPS / MSE</td><td>纹理、光照、人脸、文字、小物体</td></tr>
           <tr><td>编辑遵循</td><td>目标属性/对象是否正确出现？</td><td>CLIP‑Edited、<button type="button" class="term" data-term="vlmjudge">VLM judge</button>、人类偏好</td><td>颜色、材质、增删、动作、布局</td></tr>
-          <tr><td>结构/身份</td><td>主体身份与几何是否保持？</td><td><button type="button" class="term" data-term="dino">DINO</button>、<button type="button" class="term" data-term="arcface">ArcFace</button>、关键点/分割 <button type="button" class="term" data-term="iou">IoU</button></td><td>人脸、商品、宠物、多主体遮挡</td></tr>
-          <tr><td>系统性能</td><td>用户实际等待多久、花多少资源？</td><td><button type="button" class="term" data-term="p50p95">P50/P95</button> <button type="button" class="term" data-term="e2e">E2E</button>、warm/cold、显存、吞吐</td><td>分辨率、批量、并发、缓存命中</td></tr>
+          <tr><td>结构 / 身份</td><td>主体身份与几何是否保持？</td><td><button type="button" class="term" data-term="dino">DINO</button>、<button type="button" class="term" data-term="arcface">ArcFace</button>、关键点 / 分割 <button type="button" class="term" data-term="iou">IoU</button></td><td>人脸、商品、宠物、多主体遮挡</td></tr>
+          <tr><td>编辑局部性</td><td>修改是否越过了掩码边界？</td><td>掩码外差异掩码比例、边界带误差、泄漏面积</td><td>不同掩码面积与膨胀系数</td></tr>
+          <tr><td>系统性能</td><td>用户实际等待多久、花多少资源？</td><td><button type="button" class="term" data-term="p50p95">P50/P95</button> <button type="button" class="term" data-term="e2e">E2E</button>、warm/cold、显存、吞吐、缓存命中率</td><td>分辨率、批量、并发、是否多轮</td></tr>
         </tbody></table></div>
-        <div class="warning reveal"><b>消融建议</b><p>至少测试 COSI → +BG‑Shield → +SSCA；再扫描掩码膨胀/羽化 σ、top‑k token、注入层范围与精度。报告 <button type="button" class="term" data-term="pareto">Pareto 前沿</button>：在相同背景保真下比较编辑分数，在相同编辑分数下比较延迟。</p></div>
+        <div class="bars reveal">
+          <div class="chart"><h3>一个可复用的消融顺序</h3><div class="barrow"><span>基线</span><div class="track"><div class="fill" style="width:20%"></div></div><b>多步</b></div><div class="barrow"><span>+ 反演加速</span><div class="track"><div class="fill" style="width:40%"></div></div><b>—</b></div><div class="barrow"><span>+ 少步/一步</span><div class="track"><div class="fill" style="width:60%"></div></div><b>—</b></div><div class="barrow hot"><span>+ 局部计算 / 缓存</span><div class="track"><div class="fill" style="width:85%"></div></div><b>—</b></div></div>
+          <div class="chart"><h3>每个加速项必须回答</h3><p>它让哪个维度的指标变化了多少？变化是否只出现在允许变化的区域？当它失效时，系统是否知道？把这三问写进实验记录，比任何单一分数都重要。报告 <button type="button" class="term" data-term="pareto">Pareto 前沿</button>：在相同保留区保真下比较编辑分数，在相同编辑分数下比较延迟。</p></div>
+        </div>
+        <div class="warning reveal"><b>消融建议</b><p>至少测试 <button type="button" class="term" data-term="cosi">COSI</button> → +BG‑Shield → +SSCA；再扫描掩码膨胀 / 羽化 σ、top‑k token、注入层范围与精度设置。所有对比都要固定评测集与计时口径，并单独报告自动掩码与 <button type="button" class="term" data-term="gtmask">GT mask</button> 的差异。</p></div>
+        <div class="table-scroll reveal" style="margin-top:36px"><table class="matrix"><thead><tr><th>公开基准</th><th>它擅长暴露什么</th><th>什么时候必须用它</th></tr></thead><tbody>
+          <tr><td>PIE‑Bench</td><td>掩码外保真三件套（PSNR / LPIPS / SSIM）与结构距离，编辑类型可切片</td><td>任何局部编辑的保留区回归测试，是这类工作的默认标尺</td></tr>
+          <tr><td>ImgEdit‑Bench</td><td>指令遵循、编辑质量、细节保持；含<strong>多轮编辑</strong>套件</td><td>验证跨轮缓存是否让后续轮次变差——这类问题只在多轮里出现</td></tr>
+          <tr><td>GEdit‑Bench</td><td>来自真实用户指令的指令遵循，靠 <button type="button" class="term" data-term="vlmjudge">VLM</button> 评测</td><td>检查“加速之后还听不听得懂复杂指令”</td></tr>
+          <tr><td>EditBench</td><td>文本引导 inpainting，自然图与生成图，以人工评估为主</td><td>需要人评结论支撑、而非只看自动指标时</td></tr>
+          <tr><td>RISEBench</td><td>需要<em>推理</em>的编辑（时序、因果、空间、逻辑），人评 + 模型裁判双轨</td><td>评估高难编辑的回退策略是否正确触发</td></tr>
+          <tr><td>Complex‑Edit</td><td>复杂度可控的指令分层，可定位“在什么复杂度上先崩”</td><td>给路由划边界：多复杂的指令必须走昂贵路径</td></tr>
+        </tbody></table></div>
+        <div class="quote reveal"><b>为什么“只报延迟”和“只报 FID”都不够</b>延迟无法区分“省掉了无效计算”与“省掉了必要计算”；而分布级指标对“背景被悄悄改了 1%”几乎不敏感——后者恰恰是编辑的致命失败模式。公开的量化报告已经给出直接证据：聚合质量分在 8 位与 4 位变体之间几乎无差异，差异只出现在与高精度参考的保真度（PSNR / SSIM / LPIPS）与文字渲染上。因此编辑模型的验收必须落到<strong>区域指标 + 保真度参考对比</strong>上。</div>
       </section>
 
       <section id="roadmap">
-        <div class="head"><span class="no">09 / 10</span><h2>三阶段落地路线</h2></div><p class="lede">由于 FlashEdit 官方代码尚不可用，最稳妥的策略是先建立可测基线，再复刻机制，最后做硬件特化；每阶段都有明确退出门。</p>
+        <div class="head"><span class="no">10B / 路线</span><h2>三阶段落地路线</h2></div><p class="lede">由于 FlashEdit 官方代码尚不可用，而多数编辑加速技术依赖具体主干，稳妥策略是：先建立可测基线与成本拆分，再按技术线做有护栏的复刻，最后做硬件特化与缓存体系。</p>
         <div class="roadmap reveal">
-          <article><h3>基线与数据切片</h3><p>先用公开可运行的 SwiftEdit / TurboEdit / FlowEdit 建立速度—质量基线，并固定 PIE‑Bench + 自有真实请求集。</p><ul><li>统一 512/1024 分辨率与计时边界</li><li>记录源图复用与单次编辑两种模式</li><li>人工标注局部/结构/全局三类任务</li></ul><span class="gate">GATE：指标可重复，P95 方差 &lt; 5%</span></article>
-          <article><h3>机制复刻</h3><p>在一步基础模型上逐项实现视觉适配器、cycle loss、背景 K/V 重组、<button type="button" class="term" data-term="maskfeathering">mask feathering</button> 与 top‑k SSCA。</p><ul><li>每个模块独立消融</li><li>检查掩码错误的灾难性边界</li><li>对比自动掩码与 <button type="button" class="term" data-term="gtmask">GT mask</button></li></ul><span class="gate">GATE：同等编辑分数下背景指标显著提升</span></article>
-          <article><h3>Ascend / 服务化</h3><p>导出静态图，围绕双分支 attention 与 VAE 做 profiling；优先条件缓存与算子融合，再进入低精度。</p><ul><li>源图级 cache key 与失效策略</li><li>BF16 → FP8/INT8 敏感层扫描</li><li>按任务风险自动路由/回退</li></ul><span class="gate">GATE：满足 P95、显存和失败率 <button type="button" class="term" data-term="slo">SLO</button></span></article>
+          <article><h3>基线与成本拆分</h3><p>选可运行的开源编辑器（多步、少步、免反演各一），在统一评测集与计时口径下建立速度—质量基线。</p><ul><li>把延迟拆成源编码 / 反演 / 编辑 / 解码四段</li><li>固定 PIE‑Bench 子集 + 自有真实请求集</li><li>标注编辑类型与掩码来源，形成路由规则初稿</li></ul><span class="gate">GATE：指标可重复，P95 方差 &lt; 5%</span></article>
+          <article><h3>按技术线复刻与护栏</h3><p>逐条实现：反演加速、注意力注入、掩码感知局部计算、源级缓存，每项独立消融。</p><ul><li>每个模块报告保留区指标与身份指标</li><li>检查掩码错误下的灾难性边界</li><li>对比自动掩码与 GT mask 的差距</li></ul><span class="gate">GATE：同等编辑分数下，保留区指标不退化</span></article>
+          <article><h3>硬件特化与服务化</h3><p>导出静态图，围绕双分支与变长序列做 profiling；先做缓存与算子融合，再进入低精度。</p><ul><li>源级缓存键、失效与容量策略</li><li>BF16 → 低精度逐层敏感性扫描</li><li>按任务风险自动路由 / 回退 / 验证</li></ul><span class="gate">GATE：满足 P95、显存与失败率 <button type="button" class="term" data-term="slo">SLO</button></span></article>
         </div>
       </section>
 
+
       <section id="sources">
-        <div class="head"><span class="no">10 / 10</span><h2>一手来源</h2></div><p class="lede">优先使用论文、作者项目页与官方仓库。所有数字保留原测试语境；训练细节按最新 v6 复核，页面更新于 2026-08-24。</p>
+        <div class="head"><span class="no">11 / 11</span><h2>一手来源</h2></div><p class="lede">优先使用论文、作者项目页与官方仓库。所有数字保留原测试语境；编辑模型优化的技术线按论文与代码可用性分别标注，页面更新于 2026-10-15。</p>
         <div class="sources reveal">
-          <a href="https://arxiv.org/abs/2509.22244v6" target="_blank" rel="noopener"><span><b>FlashEdit</b><small>arXiv v6 · 2026-05-18</small></span><span>↗</span></a>
-          <a href="https://github.com/JunyiWuCode/FlashEdit" target="_blank" rel="noopener"><span><b>FlashEdit 官方仓库</b><small>当前仅 README / assets</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2412.04301" target="_blank" rel="noopener"><span><b>SwiftEdit</b><small>CVPR 2025 · one-step</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2509.22244v6" target="_blank" rel="noopener"><span><b>FlashEdit</b><small>arXiv v6 · COSI / BG‑Shield / SSCA · 2026‑05‑18（v2/v3 曾撤回）</small></span><span>↗</span></a>
+          <a href="https://github.com/JunyiWuCode/FlashEdit" target="_blank" rel="noopener"><span><b>FlashEdit 官方仓库</b><small>当前仅 README / assets，无训练推理代码</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2412.04301" target="_blank" rel="noopener"><span><b>SwiftEdit</b><small>CVPR 2025 · 一步反演 + 一步编辑</small></span><span>↗</span></a>
           <a href="https://github.com/Qualcomm-AI-research/SwiftEdit" target="_blank" rel="noopener"><span><b>SwiftEdit 代码</b><small>Qualcomm AI Research</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2408.08332" target="_blank" rel="noopener"><span><b>TurboEdit</b><small>few-step iterative inversion</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2412.08629" target="_blank" rel="noopener"><span><b>FlowEdit</b><small>ICCV 2025 · inversion-free flow</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2312.04965" target="_blank" rel="noopener"><span><b>InfEdit</b><small>CVPR 2024 · DDCM + UAC</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2506.05083" target="_blank" rel="noopener"><span><b>SeedEdit 3.0</b><small>data curation + reward loss</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2504.17761" target="_blank" rel="noopener"><span><b>Step1X‑Edit</b><small>MLLM + diffusion decoder</small></span><span>↗</span></a>
-          <a href="https://arxiv.org/abs/2402.17525" target="_blank" rel="noopener"><span><b>Diffusion Editing Survey</b><small>method & evaluation taxonomy</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2408.08332" target="_blank" rel="noopener"><span><b>TurboEdit</b><small>ECCV 2024 · 8 NFE 反演（一次性）+ 4 NFE/次编辑</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2412.08629" target="_blank" rel="noopener"><span><b>FlowEdit</b><small>ICCV 2025 · 免反演流编辑</small></span><span>↗</span></a>
+          <a href="https://github.com/fallenshock/FlowEdit" target="_blank" rel="noopener"><span><b>FlowEdit 代码</b><small>官方实现</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2312.04965" target="_blank" rel="noopener"><span><b>InfEdit</b><small>CVPR 2024 · DDCM 虚拟反演 + UAC</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2210.11427" target="_blank" rel="noopener"><span><b>Null-text Inversion</b><small>CVPR 2023 · 逐时间步优化无条件嵌入</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2305.16807" target="_blank" rel="noopener"><span><b>Negative-prompt Inversion</b><small>WACV 2025 · 用负提示免优化近似反演</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2503.10270" target="_blank" rel="noopener"><span><b>EEdit</b><small>ICCV 2025 · 空间局部性缓存 + 反演步跳过</small></span><span>↗</span></a>
+          <a href="https://github.com/yuriYanZeXuan/EEdit" target="_blank" rel="noopener"><span><b>EEdit 代码</b><small>官方实现</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2606.13898" target="_blank" rel="noopener"><span><b>HiLo-Token</b><small>2026 · 掩码自适应 token 压缩，生产级测量</small></span><span>↗</span></a>
+          <a href="https://www.ijcai.org/proceedings/2026/150" target="_blank" rel="noopener"><span><b>RegionCache</b><small>IJCAI 2026 · 多轮编辑的语义感知区域复用</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2608.21229" target="_blank" rel="noopener"><span><b>AnchorCache</b><small>2026 · in-context DiT 的参考 token K/V 复用</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2605.15661" target="_blank" rel="noopener"><span><b>VAGS</b><small>2026 · 速度自适应引导尺度，免训练无额外前向</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2211.12446" target="_blank" rel="noopener"><span><b>EDICT</b><small>CVPR 2023 · 耦合变换实现精确反演（每步双份计算）</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2307.10829" target="_blank" rel="noopener"><span><b>BDIA</b><small>ECCV 2024 · 双向积分近似，精确反演的低开销替代</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2403.14602" target="_blank" rel="noopener"><span><b>ReNoise</b><small>ECCV 2024 · 迭代重噪提升反演精度（对少步模型友好）</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2312.12540" target="_blank" rel="noopener"><span><b>Guided Newton-Raphson Inversion</b><small>ICLR 2025 · 把反演当求根，少步模型亚秒级反演</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2108.01073" target="_blank" rel="noopener"><span><b>SDEdit</b><small>ICLR 2022 · 部分加噪起步，编辑最朴素的步数削减旋钮</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2208.01626" target="_blank" rel="noopener"><span><b>Prompt-to-Prompt</b><small>ICLR 2023 · 交叉注意力图替换</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2310.01506" target="_blank" rel="noopener"><span><b>Direct Inversion / PIE-Bench</b><small>ICLR 2024 · 源/目标分支解耦，免优化反演 + 700 图基准</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2304.08465" target="_blank" rel="noopener"><span><b>MasaCtrl</b><small>ICCV 2023 · 互自注意力，无需反演</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2306.02379" target="_blank" rel="noopener"><span><b>Plug-and-Play Diffusion Features</b><small>CVPR 2023 · 特征与注意力注入</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2205.11487" target="_blank" rel="noopener"><span><b>Classifier-Free Diffusion Guidance</b><small>CFG 的原始定义</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2211.09800" target="_blank" rel="noopener"><span><b>InstructPix2Pix</b><small>指令式图像编辑 · 训练数据与条件设计</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2211.11031" target="_blank" rel="noopener"><span><b>Plug-and-Play Image Restoration</b><small>免训练图像到图像路径</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2310.01506" target="_blank" rel="noopener"><span><b>LCM / 一致性蒸馏</b><small>把多步轨迹压进少数步</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2311.18828" target="_blank" rel="noopener"><span><b>DMD / 分布匹配蒸馏</b><small>一步生成器的蒸馏范式</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2312.00858" target="_blank" rel="noopener"><span><b>DeepCache</b><small>跨步复用主干特征</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2410.05137" target="_blank" rel="noopener"><span><b>PAB / Pyramid Attention Broadcast</b><small>广播注意力以减少重复计算</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2404.05268" target="_blank" rel="noopener"><span><b>ViDiT-Q</b><small>视频/DiT 量化 · 精度敏感性问题</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2411.04746" target="_blank" rel="noopener"><span><b>RF-Solver / Taming Rectified Flow</b><small>ICML 2025 · 流模型反演与编辑，反演特征共享</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2412.07517" target="_blank" rel="noopener"><span><b>FireFlow</b><small>整流流快速反演求解器 · 8 步反演 + 编辑</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2311.16711" target="_blank" rel="noopener"><span><b>LEDITS++</b><small>CVPR 2024 · 免调参反演 + 隐式掩码（省掉分割模型）</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2502.17363" target="_blank" rel="noopener"><span><b>KV-Edit</b><small>2025 · 背景 token 保留不重生成，KV 显存优化到 O(1)</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2510.25590" target="_blank" rel="noopener"><span><b>RegionE</b><small>2025 · 未编辑区一步预测 + 编辑区局部迭代</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2602.01609" target="_blank" rel="noopener"><span><b>ToPi</b><small>2026 · in-context DiT 的免训练 token 剪枝</small></span><span>↗</span></a>
+          <a href="https://doi.org/10.1145/3767295.3769379" target="_blank" rel="noopener"><span><b>FlashPS</b><small>EuroSys 2026 · 跨请求复用未编辑区域激活的编辑服务架构</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2411.19108" target="_blank" rel="noopener"><span><b>TeaCache</b><small>CVPR 2025 · 以时间步调制 latent 差异作为复用判据</small></span><span>↗</span></a>
+          <a href="https://github.com/vipshop/cache-dit" target="_blank" rel="noopener"><span><b>Cache‑DiT</b><small>开源扩散缓存库 · 编辑模型上需更保守的阈值与预热</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2310.01506" target="_blank" rel="noopener"><span><b>PIE-Bench 评测协议</b><small>700 图 / 10 类编辑 · 指标口径见 Direct Inversion 正文</small></span><span>↗</span></a>
+          <a href="https://github.com/cure-lab/PnPInversion" target="_blank" rel="noopener"><span><b>PnPInversion 代码</b><small>免训练反演与编辑的工程参考实现（CVPR 2024）</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2411.05007" target="_blank" rel="noopener"><span><b>SVDQuant</b><small>ICLR 2025 · 4 位权重 + 低秩分支吸收离群值</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2505.20275" target="_blank" rel="noopener"><span><b>ImgEdit / ImgEdit-Bench</b><small>NeurIPS 2025 · 含多轮编辑套件的基准</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2212.06909" target="_blank" rel="noopener"><span><b>Imagen Editor / EditBench</b><small>CVPR 2023 · 文本引导 inpainting 与人工评估</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2504.02826" target="_blank" rel="noopener"><span><b>RISEBench</b><small>NeurIPS 2025 · 需要推理的编辑基准</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2504.13143" target="_blank" rel="noopener"><span><b>Complex-Edit</b><small>2025 · 复杂度可控的编辑指令与评测</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2211.12572" target="_blank" rel="noopener"><span><b>Plug-and-Play Diffusion Features</b><small>CVPR 2023 · 源图特征与自注意力注入</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2211.09794" target="_blank" rel="noopener"><span><b>Null-text Inversion</b><small>CVPR 2023 · 逐时间步优化无条件嵌入</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2207.12598" target="_blank" rel="noopener"><span><b>Classifier-Free Guidance</b><small>NEURIPS 2022 · 引导的原始定义</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2506.05083" target="_blank" rel="noopener"><span><b>SeedEdit 3.0</b><small>数据整理 + 奖励联合优化</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2504.17761" target="_blank" rel="noopener"><span><b>Step1X‑Edit</b><small>MLLM 规划 + 扩散解码器</small></span><span>↗</span></a>
+          <a href="https://arxiv.org/abs/2402.17525" target="_blank" rel="noopener"><span><b>Diffusion Editing Survey</b><small>方法与评测分类体系</small></span><span>↗</span></a>
         </div>
-        <p class="method">方法说明：FlashEdit 的性能表取自论文 Table 1 / Table 3；延迟与加速比为作者在 NVIDIA A6000 上的报告值。不同论文的硬件、分辨率、实现和计时边界不同，因此本页不把跨论文绝对延迟直接排序。对尚未公开实现的模块，工程建议属于基于论文结构的推导，已与已验证事实分开表述。</p>
+        <p class="method">方法说明：FlashEdit 的性能表取自论文 Table 1 / Table 3；延迟与加速比为作者在 NVIDIA A6000 上的报告值。不同论文的硬件、分辨率、实现和计时边界不同，因此本页不把跨论文绝对延迟直接排序。技术谱系中的机制描述以论文与官方实现为依据；标注为 <strong>C 推导</strong> 的工程建议属于基于结构的推断，已在正文中与已验证事实分开表述。2026 年的编辑专属优化工作（token 预算重分配、语义感知区域复用、参考 token 复用）目前多为单篇论文的自建评测，尚无跨实现的独立复现，引用时按“作者报告值”理解。缓存、量化、路由等条目在不同主干上的收益差异较大，落地前必须在本场景实测。</p>
       </section>
     </main>
   </div>
 
-  <footer class="wrap"><span>ASCEND PLAYGROUND / EDIT MODEL SYSTEMS</span><span>ANNOTATED EDITION · 2026.08.24</span></footer>
+  <footer class="wrap"><span>ASCEND PLAYGROUND / EDIT MODEL SYSTEMS</span><span>ANNOTATED EDITION · v2.0 · 2026.10.15</span></footer>
   <button class="glossary-fab" type="button" data-term="guide" aria-haspopup="dialog" aria-expanded="false">术语注释</button>
   <aside class="term-tip" id="term-tip" role="dialog" aria-live="polite" aria-label="术语解释"><button class="tip-close" type="button" aria-label="关闭术语解释">×</button><span class="tip-kicker">TERM NOTE / 浮动注释</span><h3></h3><p></p></aside>
   <button class="top" aria-label="返回顶部" title="返回顶部">↑</button>
@@ -252,7 +447,7 @@
     const glossary={
       guide:['怎样使用术语注释','蓝色虚线词都是可交互注释。电脑上可以悬停或点击，手机上直接点击；按 Esc、点关闭按钮或点击空白处即可收起。解释优先回答“它是什么、这里为什么用它”。'],
       diffusionmodel:['Diffusion model / 扩散模型','训练时学习怎样去除人为加入的噪声；生成时从随机噪声开始，反复去噪得到图片。一步模型把原本多次去噪压缩成一次。'],
-      localizedediting:['Localized text-guided editing / 局部文本编辑','输入一张现有图片、一段目标文字和允许修改的区域，只重画指定区域并尽量保持其他像素。FlashEdit 论文主要研究的就是这个受约束任务。'],
+      localizedediting:['Localized text-guided editing / 局部文本编辑','输入一张现有图片、一段目标文字和允许修改的区域，只重画指定区域并尽量保持其他像素。本页讨论的主要是这类受约束任务。'],
       sourceprompt:['Source prompt / 源提示词','描述原图内容的文字，例如“橙色猫坐在沙发上”。它帮助模型把原图中的对象与文字 token 对齐。'],
       targetprompt:['Target prompt / 目标提示词','描述编辑后应出现内容的文字，例如“黑色猫坐在沙发上”。源、目标提示词之间的差异就是编辑意图。'],
       reconstruction:['Reconstruction / 重建','把源图反演后再生成一次，结果与源图一致的能力。重建好说明模型记住了原图，但不代表它一定容易被修改。'],
@@ -331,7 +526,55 @@
       pareto:['Pareto frontier / 帕累托前沿','一组无法在不牺牲某个目标的情况下继续改善另一目标的方案。这里用来找“同等质量下最快”或“同等延迟下最好”的配置。'],
       maskfeathering:['Mask feathering / 掩码羽化','把掩码硬边变成渐变过渡区，让编辑区域和原背景更自然地融合，减少明显接缝。'],
       gtmask:['GT mask / 真值掩码','Ground-Truth mask，由人工标注或可靠数据直接提供的正确编辑区域，用来判断自动掩码本身造成了多少误差。'],
-      slo:['SLO / 服务目标','Service Level Objective，服务承诺的可量化目标，例如 95% 请求在 1 秒内完成、失败率低于 0.1%。']
+      slo:['SLO / 服务目标','Service Level Objective，服务承诺的可量化目标，例如 95% 请求在 1 秒内完成、失败率低于 0.1%。'],
+      inversionpath:['Inversion path / 反演路径','从源图出发、反向沿采样轨迹求出噪声起点的整段计算。它是编辑任务独有的“入场费”，也是反演加速技术的作用对象。'],
+      exactinversion:['Exact inversion / 精确反演','通过成对耦合或可逆数值积分，让“反演再生成”能近似无损地回到原图。代价通常是每次计算相当于两倍前向。'],
+      couplinginversion:['Coupling inversion / 耦合反演','同时维护两条相互耦合的轨迹，使其中一条的前向与另一条的反向严格对应，从而获得可逆性。EDICT 是典型做法。'],
+      zeroorderapprox:['Zero-order approximation / 零阶近似','不去解完整反向过程，而用当前状态或一步估计直接近似反演结果。速度快，但在强编辑下精度下降明显。'],
+      ddcm:['DDCM','Denoising Diffusion Consistent Model。它让模型在不同噪声水平上保持一致，从而支持不需显式反向过程的“虚拟反演”。'],
+      noinversion:['Inversion-free / 免反演','不计算源图的噪声起点，而是直接构造从源条件到目标条件的路径或采样规则。它移除了整段重建计算，也不再受反演误差影响。'],
+      directpath:['Direct path / 直连路径','在源分布与目标分布之间直接定义一条传输路径，跳过中间的高斯噪声绕行。路径设计通常是启发式的，没有最优性保证。'],
+      dualbranch:['Dual branch / 双分支','同时运行源条件分支与目标条件分支，再在注意力层重组特征。它带来双份前向或双份显存开销，是编辑模型的主要结构性成本之一。'],
+      maskaware:['Mask-aware computation / 掩码感知计算','利用“掩码外必须保持源图”这一事实，跳过或简化掩码外区域的计算，例如只对掩码与膨胀带做前向。'],
+      croppedit:['Crop editing / 裁剪编辑','只把编辑区域的图块送入模型，结果再贴回原图。它大幅降低分辨率与算力，但容易产生接缝与光照不一致。'],
+      latentblending:['Latent blending / 隐空间混合','在 latent 空间把编辑结果与源图 latent 按掩码加权合并，使保留区逐像素沿用源图。实现简单，但硬边需要羽化处理。'],
+      boundaryband:['Boundary band / 边界带','掩码边缘附近的过渡区域。编辑造成的误差最容易在这里显现，因此它既是羽化对象，也是评测时的重点检查区域。'],
+      editstrength:['Edit strength / 编辑强度','控制编辑信号注入幅度或引导尺度的超参数。强度越高越容易改到位，也越容易越过掩码边界。'],
+      guidancescale:['Guidance scale / 引导尺度','无分类器引导里控制条件影响力的系数。编辑任务常需要比生成任务更细的调度，以兼顾“改得动”和“不乱改”。'],
+      attentioninjection:['Attention injection / 注意力注入','把源图计算出的注意力图或特征写回目标分支，从而在不重新训练的前提下约束结构与外观。'],
+      featureinjection:['Feature injection / 特征注入','把源图的中间层特征（空间特征、自注意力、K/V）引入目标分支，让生成过程复用源图的结构信息。'],
+      mutualselfattention:['Mutual self-attention / 互自注意力','在目标分支的自注意力中读取源分支的 Key/Value，使两边空间结构对齐。它让免反演编辑也能保持布局。'],
+      spatialgating:['Spatial gating / 空间门控','用掩码或相似度分数控制文字条件在空间上的作用范围，防止属性词影响不该改的位置。'],
+      tokenpruning:['Token pruning / 词元剪枝','丢弃相关性低的文字 token 或图像 token，只计算保留部分。它同时改善局部性并减少注意力计算量。'],
+      distillsampling:['Distillation / 蒸馏','让少步学生模型学会多步教师的输出。用在编辑任务上时，教师信号还必须包含保留区与身份的约束，否则会牺牲局部一致性。'],
+      dmd:['DMD / Distribution Matching Distillation','分布匹配蒸馏：让少步学生模型的输出分布逼近多步教师模型的分布，常用于一步或两步生成器。'],
+      diffusioncache:['Diffusion cache / 扩散缓存','跨采样步复用模型内部特征（整块或部分层），以减少重复计算。它的前提是相邻步或相邻层结果高度相似。'],
+      kvreuse:['K/V reuse / K/V 复用','把注意力层的 Key/Value 缓存下来供后续步骤或后续请求复用。在编辑任务里，源图与背景的 K/V 与目标提示词无关，很适合缓存。'],
+      amortization:['Amortization / 摊销','把一次昂贵计算的结果留给后续多次使用。例如把反演噪声按源图缓存，多轮编辑只付一次反演成本。'],
+      multiedit:['Multi-turn editing / 多轮编辑','用户在同一张图或同一会话里连续提出多次修改。上一轮结果成为下一轮源图，因此缓存与增量计算的价值远高于单次请求。'],
+      incremental:['Incremental editing / 增量编辑','只重算相对上一轮发生变化的部分，其余特征与 latent 直接复用。收益大，但要求严格的失效判断与版本管理。'],
+      profilecost:['Cost decomposition / 成本拆分','把端到端延迟按阶段（编码、反演、去噪、解码）分别计量，先找出占主导的环节，再决定优化对象。'],
+      routing:['Routing / 路由','按编辑类型、掩码面积、结构变化幅度把请求分到不同成本的路径上，避免用重型编辑器处理简单编辑。'],
+      fallback:['Fallback / 回退','当快速路径的结果未通过校验时，改走更高质量但更慢的路径重新执行。它是低延迟与可靠性之间的安全阀。'],
+      speculative:['Speculative / 推测式执行','先用廉价方法生成草稿，再用校验或精修确认，从而在多数请求上省下完整计算。'],
+      verifier:['Verifier / 校验器','判断编辑结果是否满足约束的轻量模块，例如检查保留区差异、掩码内编辑是否生效、身份特征是否漂移。'],
+      calibration:['Calibration / 校准','量化或近似方案中用来统计激活分布、确定缩放参数的过程。编辑任务的校准集应包含真实编辑请求，并单独关注保留区。'],
+      activationoutlier:['Activation outlier / 激活离群值','少数数值远大于其余部分的激活，会压缩低精度表示的有效范围，是量化掉点的主要原因之一。'],
+      sequencelength:['Sequence length / 序列长度','注意力要处理的 token 数量。in-context 编辑把源图与目标图拼在一起，序列接近翻倍，注意力开销随长度平方增长。'],
+      positionindex:['Position index / 位置索引','告诉注意力机制每个 token 在序列中的位置。in-context 编辑需要额外设计源图与目标图各自的位置编号方式。'],
+      tokenmerging:['Token merging / 词元合并','把相似度高的 token 合并成一个参与计算，以降低序列长度与显存。它能在保留细节与节省算力之间做取舍。'],
+      tokenbudget:['Token budget / 词元预算','一次前向允许处理的 token 总数。编辑任务可以按掩码重新分配这份预算：区域内保留全部 token，区域外只保留高频细节与低频整体结构。'],
+      frequencyselection:['High-frequency selection / 高频选择','按空间频率挑选掩码外的 token：纹理、边缘等高频位置信息量大，优先保留；平坦区域用降采样后的少量 token 代表。'],
+      semanticoverlap:['Semantic overlap / 语义重叠','相邻两轮编辑指令在语义上的共同部分。重叠越大，说明图像中可安全复用的区域越多，是多轮缓存的关键判据。'],
+      reuseschedule:['Reuse schedule / 复用调度','决定缓存区域可以被安全复用多久的策略。它通常同时看语义相似度与上下文一致性，避免“复用到不该复用的时候”。'],
+      spatiallocality:['Spatial locality / 空间局部性','编辑只改变图像的一小部分，其余区域在两轮之间保持稳定。正是这份稳定性让跳过未编辑区域的计算成为可能。'],
+      temporalredundancy:['Temporal redundancy / 时间冗余','反演与去噪过程中相邻步骤高度相似所带来的重复计算。跳过冗余步或复用中间 latent 是编辑加速的常见做法。'],
+      refcache:['Reference caching / 参考缓存','在 in-context 编辑中把参考图像的 K/V 缓存起来复用。参考上下文越长，重复计算越多，这项优化的收益越明显。'],
+      resolutionbucket:['Resolution bucket / 分辨率分桶','把请求按分辨率分组分别编译与批处理，避免动态形状带来的编译与调度开销。'],
+      identitydrift:['Identity drift / 身份漂移','编辑后主体的身份特征发生变化，例如人脸、商品纹理或宠物花纹不再像原主体。它常由过度编辑或参考信息丢失引起。'],
+      regionmetrics:['Region metrics / 区域指标','只在掩码内或只在掩码外计算的指标。编辑任务必须分开统计，否则整图均值会掩盖保留区的劣化。'],
+      leakage:['Leakage / 泄漏','编辑效果越过了掩码边界，出现在本应保持不变的区域。它是局部编辑最典型的失败模式。'],
+      verificationset:['Verification set / 验收集','固定用于对比优化前后效果的一组源图、掩码、指令与参考结果。没有它，任何加速都无法被证明是安全的。']
     };
     const tip=document.querySelector('#term-tip'),tipTitle=tip.querySelector('h3'),tipText=tip.querySelector('p'),tipClose=tip.querySelector('.tip-close'),fab=document.querySelector('.glossary-fab');
     const termButtons=[...document.querySelectorAll('.term')];let activeTerm=null,pinned=false;fab.textContent='术语注释 · '+new Set(termButtons.map(x=>x.dataset.term)).size;
