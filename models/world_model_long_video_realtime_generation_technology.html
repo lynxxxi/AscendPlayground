@@ -46,9 +46,9 @@ h1{margin:0 0 20px;font:700 clamp(2rem,4.6vw,3.4rem)/1.22 var(--serif);letter-sp
 .pill b{color:var(--ink);font-weight:700}
 
 /* ---------- layout ---------- */
-/* 单栏版式：目录上移为顶部导航条，正文与配图共享整幅宽度 */
+/* 单栏版式：目录随页面滚走（不吸附），正文与配图共享整幅宽度 */
 .layout{max-width:var(--max);margin:auto;display:block;padding:20px 22px 80px}
-.toc{position:sticky;z-index:30;top:52px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;max-height:60vh;overflow:auto;margin:0 0 26px;padding:11px 14px;background:rgba(255,255,255,.97);border:1px solid var(--line);backdrop-filter:blur(10px)}
+.toc{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;margin:0 0 30px;padding:0 0 16px;border-bottom:1px solid var(--line)}
 .toc-title{flex:0 0 100%;color:var(--ink);font:700 .7rem/1.35 var(--mono);letter-spacing:.08em;margin:8px 0 1px}
 .toc-title:first-child{margin-top:0}
 .toc a{display:block;padding:1px 0;color:var(--ink2);font-size:.78rem;line-height:1.45;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
@@ -58,7 +58,7 @@ h1{margin:0 0 20px;font:700 clamp(2rem,4.6vw,3.4rem)/1.22 var(--serif);letter-sp
 main{min-width:0}
 
 /* ---------- chapters ---------- */
-.ch{padding-bottom:56px;margin-bottom:56px;border-bottom:1px solid var(--line);scroll-margin-top:116px}
+.ch{padding-bottom:56px;margin-bottom:56px;border-bottom:1px solid var(--line);scroll-margin-top:72px}
 .ch:last-of-type{border-bottom:0}
 .ch-head{margin-bottom:24px;padding-bottom:14px;border-bottom:2px solid var(--rule)}
 .ch-no{color:var(--accent);font:700 .78rem/1.6 var(--mono);letter-spacing:.08em}
@@ -141,11 +141,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  .layout{padding:16px 16px 60px}
  .pipe.c4,.pipe.c3,.grid2{grid-template-columns:1fr}
  table{min-width:640px}
- .toc{top:52px}
 }
 @media(max-width:640px){
  .layout{padding:12px 12px 48px}
- .toc{max-height:46vh;gap:4px 10px;padding:9px 11px}
+ .toc{gap:4px 10px;padding:9px 11px}
  figure.wide .svgbox svg{min-width:640px}
 }
 @media print{
