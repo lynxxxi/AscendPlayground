@@ -194,12 +194,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="toc-title">一、模型结构</div>
  <a href="#base">01 · 模型结构</a>
 <a class="sub" href="#base-evolution">1.1 实时交互的三个要求如何倒逼结构演进</a>
-<a class="sub" href="#base-uvit">1.2 四家模型共同的祖先 U-ViT 与共同骨架</a>
+<a class="sub" href="#base-uvit">1.2 三家模型共同的祖先 U-ViT 与共同骨架</a>
 <a class="sub" href="#base-vidu">1.3 生数 Vidu S1 / S2：联合音视频因果 DiT</a>
 <a class="sub" href="#base-r2">1.4 爱诗 PixVerse R2：单一因果骨干 + 三通道记忆</a>
 <a class="sub" href="#base-lingbot">1.5 蚂蚁灵波 LingBot-World：双专家与 MoBA 掩码</a>
-<a class="sub" href="#base-minwm">1.6 minWM：把已有双向底座改造成世界模型</a>
-<a class="sub" href="#base-matrix">1.7 四家结构横向对照</a>
+<a class="sub" href="#base-matrix">1.6 三家结构横向对照</a>
 
  <div class="toc-title">二、训练方法</div>
  <a href="#forcing">02 · Forcing：让模型扛住自己的历史</a>
@@ -209,6 +208,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 <a class="sub" href="#forcing-family">2.4 forcing 家族机制对照</a>
 <a class="sub" href="#forcing-srf">2.5 Self-Replay Forcing 的三步循环</a>
 <a class="sub" href="#forcing-cost">2.6 训练侧成本与验收</a>
+<a class="sub" href="#base-minwm">2.7 minWM：把已有双向底座改造成世界模型的全流程后训练范例</a>
  <a href="#distill">03 · 蒸馏：把去噪步数压到 1–4 步</a>
 <a class="sub" href="#distill-budget">3.1 步数由延迟预算决定</a>
 <a class="sub" href="#distill-families">3.2 前向散度与反向散度两条路线</a>
@@ -457,18 +457,18 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 <section class="ch" id="base">
  <div class="ch-head">
  <div class="ch-no">01</div>
- <h2>模型结构：四家实时世界模型的骨架</h2>
+ <h2>模型结构：三家实时世界模型的骨架</h2>
  </div>
 
-  <p class="lead">本章拆解四个已在运行的实时视频与世界模型的<strong>网络结构与信息流</strong>：生数 Vidu S1/S2、爱诗科技 PixVerse R2、蚂蚁灵波 LingBot-World，以及改造框架 minWM。要看的是它们由什么主干构成、条件从哪里注入、注意力允许谁看见谁、状态如何被复用。<strong>四家最终收敛到同一个骨架</strong>——潜空间、联合 DiT、块级因果注意力、可复用状态、少步蒸馏——差异只剩四个选择：条件怎么注入、记忆怎么做、因果化怎么做、分辨率从哪里换回来。</p>
+  <p class="lead">本章拆解三个已在运行的实时视频与世界模型的<strong>网络结构与信息流</strong>：生数 Vidu S1/S2、爱诗科技 PixVerse R2、蚂蚁灵波 LingBot-World。把现成双向底座改造成世界模型的 minWM 属于后训练范畴，已移到<a href="#base-minwm">第 02 章 2.7</a>。要看的是它们由什么主干构成、条件从哪里注入、注意力允许谁看见谁、状态如何被复用。<strong>三家最终收敛到同一个骨架</strong>——潜空间、联合 DiT、块级因果注意力、可复用状态、少步蒸馏——差异只剩四个选择：条件怎么注入、记忆怎么做、因果化怎么做、分辨率从哪里换回来。</p>
 
  <h3 id="base-evolution"><span class="h3tag">1</span>实时交互的三个要求如何倒逼结构演进</h3>
  <p>要做实时世界模型，必须同时满足三个互相牵制的要求：<strong>能增量生成</strong>（不能等整段视频算完再提交）、<strong>能接受实时控制</strong>（相机、动作、参考图在生成中途到达）、<strong>能长时间不漂移</strong>（几十分钟会话里身份与场景保持一致）。这三个要求都落在结构上——不是训练技巧或工程调度能补的。</p>
- <p>理解这四家的选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
+ <p>理解这三家的选择，需要先知道它们继承了什么。视频生成模型的架构在过去四年经历了<strong>三次转向</strong>，每次转向都改变了「什么可以被复用、什么必须重算」：</p>
 
  <figure class="wide" id="base-evo">
  <div class="svgbox">
- <svg viewBox="0 0 1060 420" role="img" aria-label="视频生成模型的四次架构转向与本研究覆盖的四个模型">
+ <svg viewBox="0 0 1060 420" role="img" aria-label="视频生成模型的架构转向与本研究覆盖的三个模型">
  <rect width="1060" height="420" fill="#ffffff"/>
  <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">三次架构转向：每一次都改变了「什么可以复用」</text>
 
@@ -531,7 +531,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <line x1="24" y1="222" x2="1036" y2="222" stroke="#d8dee0"/>
 
- <text x="24" y="248" font-size="11" font-weight="700" fill="#101619">本文覆盖的四个模型，各自继承了什么、又各自换了什么</text>
+ <text x="24" y="248" font-size="11" font-weight="700" fill="#101619">本章覆盖的三个模型，各自继承了什么、又各自换了什么</text>
  <g font-size="9">
  <rect x="24" y="260" width="240" height="76" fill="#ffffff" stroke="#0b6b74"/>
  <text x="38" y="280" font-weight="700" fill="#101619">生数 Vidu S1 / S2</text>
@@ -552,19 +552,19 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="542" y="328" fill="#28343a">＋ 相机 Plücker + AdaLN 注入</text>
 
  <rect x="780" y="260" width="256" height="76" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="794" y="280" font-weight="700" fill="#101619">minWM（改造框架）</text>
- <text x="794" y="298" fill="#28343a">继承：任意现成双向底座</text>
- <text x="794" y="314" fill="#28343a">换成：PRoPE 相机注入 + 三阶</text>
- <text x="794" y="328" fill="#28343a">段因果化蒸馏</text>
+ <text x="794" y="280" font-weight="700" fill="#101619">minWM（改造框架 → 2.7）</text>
+ <text x="794" y="298" fill="#28343a">不在本章：它是后训练</text>
+ <text x="794" y="314" fill="#28343a">流水线，不是基座主干</text>
+ <text x="794" y="328" fill="#28343a">详见第 02 章 2.7</text>
  </g>
 
  <rect x="24" y="348" width="1012" height="60" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="38" y="368" font-size="9.5" font-weight="700" fill="#101619">本章的阅读顺序</text>
- <text x="38" y="386" font-size="9.5" fill="#28343a">1.1 先讲 U-ViT / UniDiffuser 留下的两个设计遗产（下面所有模型都用到了它们）；1.2–1.5 逐个拆四家模型；1.6 横向对照。</text>
+ <text x="38" y="386" font-size="9.5" fill="#28343a">1.1 先讲 U-ViT / UniDiffuser 留下的两个设计遗产（下面所有模型都用到了它们）；1.2–1.5 逐个拆三家模型；1.6 横向对照。</text>
  <text x="38" y="402" font-size="9.5" fill="#4d5b61">如果只关心某一家，可以直接跳到 1.2–1.5 对应小节，各节自足。</text>
  </svg>
  </div>
- <figcaption><b>FIG 1-0 · 三次架构转向与本文覆盖的四个模型</b>　从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
+ <figcaption><b>FIG 1-0 · 架构转向与本章覆盖的三个模型</b>　从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
  </figure>
 
  <div class="note">
@@ -573,8 +573,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <p><strong>② 哪些计算可以留到下一块复用？</strong>也就是状态存在哪里、以什么粒度淘汰。这决定了长会话的成本曲线。</p>
  </div>
 
- <h3 id="base-uvit"><span class="h3tag">2</span>四家模型共同的祖先 U-ViT 与共同骨架</h3>
- <p>先说这两个工作各自解决了什么，再看今天四家模型从它们身上继承了什么。</p>
+ <h3 id="base-uvit"><span class="h3tag">2</span>三家模型共同的祖先 U-ViT 与共同骨架</h3>
+ <p>先说这两个工作各自解决了什么，再看今天三家模型从它们身上继承了什么。</p>
  <div class="grid2">
  <div class="note">
  <span class="tag">U-ViT · 2022-09 · arXiv 2209.12152</span>
@@ -858,206 +858,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <figcaption><b>FIG 1-4 · LingBot-World 的 MoBA 掩码与双专家因果化</b>　MoBA 用「补一个双向块」的方式防止纯因果训练退化；双专家则展示了 MoE 在推理侧不增成本的一种用法。</figcaption>
  </figure>
 
- <h3 id="base-minwm"><span class="h3tag">6</span>minWM：把已有双向底座改造成世界模型</h3>
- <p>minWM（arXiv 2605.30263，生数主导）的定位不是某个模型，而是一条<strong>可复现的改造流水线</strong>：把现有双向 T2V/TI2V 基础模型转成「相机可控 + 少步 + 自回归」的实时交互世界模型。它以 Wan2.1-T2V-1.3B（cross-attention 注入条件）与 HY1.5-TI2V-8B（MMDiT 风格）两种代表骨架做了实例化，因此<strong>它的价值在于「换底座也能复用」</strong>。</p>
- <h4>Phase 1 · 相机可控微调：PRoPE 如何把几何注入注意力</h4>
-
-<!-- ===== 替代文字公式：PRoPE 把相机几何注入自注意力 ===== -->
-  <figure class="wide">
-    <div class="svgbox">
-    <svg viewBox="0 0 1060 470" role="img" aria-label="PRoPE 如何把相机几何注入自注意力">
-      <rect width="1060" height="470" fill="#ffffff"/>
-      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">PRoPE：把相机几何写成注意力里的一个变换</text>
-      <text x="24" y="46" font-size="10" fill="#4d5b61">思路：与其把相机参数当作额外条件喂进去，不如让 token 之间的交互天然依赖两台相机之间的相对关系。</text>
-
-      <!-- step 1 -->
-      <rect x="24" y="62" width="322" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="84" font-size="10.5" font-weight="700" fill="#101619">① 每帧的相机参数抬升为 4×4 投影矩阵</text>
-      <g font-size="9.5">
-        <rect x="42" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
-        <text x="98" y="116" text-anchor="middle">内参 Kᵢ</text>
-        <rect x="162" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
-        <text x="218" y="116" text-anchor="middle">位姿 Tᵢ</text>
-        <text x="282" y="117" font-size="12" fill="#4d5b61">→</text>
-      </g>
-      <rect x="42" y="138" width="232" height="30" fill="#e6f3f4" stroke="#0b6b74"/>
-      <text x="158" y="158" text-anchor="middle" font-size="10">P̃ᵢ ：4×4，齐次坐标下可相乘</text>
-      <text x="42" y="190" font-size="9.5" fill="#4d5b61">两台相机的相对关系 = P̃₁ 与 P̃₂ 相乘</text>
-      <text x="42" y="204" font-size="9.5" fill="#0b6b74">⇒ 相对量天然可表示，绝对量被自动消掉</text>
-
-      <text x="362" y="140" font-size="14" fill="#4d5b61">→</text>
-
-      <!-- step 2 -->
-      <rect x="394" y="62" width="316" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="412" y="84" font-size="10.5" font-weight="700" fill="#101619">② 组成每个 token 的块对角变换</text>
-      <rect x="412" y="96" width="280" height="58" fill="#ffffff" stroke="#d8dee0"/>
-      <g font-size="9">
-        <text x="424" y="116">时间轴之外的 8 维：投影矩阵 P̃</text>
-        <text x="424" y="132">空间两轴：仍用 RoPE（x、y 各自旋转）</text>
-        <text x="424" y="147" fill="#4d5b61">整体写成 diag( I ⊗ P̃ , RoPE(x) , RoPE(y) )</text>
-      </g>
-      <text x="412" y="178" font-size="9.5" fill="#0b6b74">只占用 9 个维度，其余维度保持原样</text>
-      <text x="412" y="196" font-size="9.5" fill="#4d5b61">⇒ 不改动原有注意力的形状，可直接接进现成 kernel</text>
-
-      <text x="726" y="140" font-size="14" fill="#4d5b61">→</text>
-
-      <!-- step 3 -->
-      <rect x="758" y="62" width="278" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
-      <text x="776" y="84" font-size="10.5" font-weight="700" fill="#101619">③ 在注意力两端各施加一次</text>
-      <text x="776" y="108" font-size="9.5" fill="#28343a">query 乘 D，key 与 value 乘 D⁻¹</text>
-      <text x="776" y="132" font-size="9.5" fill="#0b6b74">⇒ 相乘后 D 部分抵消，只留下</text>
-      <text x="776" y="148" font-size="9.5" fill="#0b6b74">　 两个 token 之间的相对投影变换</text>
-      <text x="776" y="174" font-size="9.5" fill="#28343a">这就是 GTA 形式：</text>
-      <text x="776" y="190" font-size="9.5" fill="#28343a">把变换「夹」在注意力的两侧</text>
-      <text x="776" y="206" font-size="9" fill="#4d5b61">注意力矩阵本身不变，只被重新参数化</text>
-
-      <!-- outcome -->
-      <rect x="24" y="232" width="1012" height="102" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="254" font-size="10.5" font-weight="700" fill="#101619">为什么这样做而不是「把相机参数当条件向量」</text>
-      <g font-size="9.5">
-        <text x="42" y="278" fill="#28343a">条件向量回答的是「这一帧的相机在哪」，而生成需要的是「这两帧之间相机移动了多少」。</text>
-        <text x="42" y="298" fill="#28343a">PRoPE 让相对量直接出现在注意力公式里，模型不必再从绝对量里学差值，</text>
-        <text x="42" y="318" fill="#0b6b74">因此同一个权重可以迁移到没见过的相机轨迹上，这也是它被选作 minWM 第 1 阶段的原因。</text>
-      </g>
-
-      <!-- notes -->
-      <rect x="24" y="350" width="1012" height="98" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="372" font-size="10.5" font-weight="700" fill="#101619">实现侧的三条约束</text>
-      <g font-size="9.5">
-        <text x="42" y="396" fill="#28343a">① 注意力算子里要能插入 per-token 的线性变换，标准 FlashAttention 接口需要扩展；</text>
-        <text x="42" y="416" fill="#28343a">② 变换与 RoPE 共用维度 ⇒ 两者的维度分配需要一起定，改动其一会破坏另一方；</text>
-        <text x="42" y="436" fill="#28343a">③ 相机条件必须贯穿全部训练阶段（含蒸馏），否则蒸馏会把刚学到的几何控制抹掉。</text>
-      </g>
-    </svg>
-    </div>
-    <figcaption><b>FIG 1-7 · PRoPE 的几何注入路径</b>　从相机内参外参到 4×4 投影矩阵，再到块对角变换与注意力两侧的夹逼，最终让 token 交互依赖相对投影变换。</figcaption>
-  </figure>
- 
- <p>关键在于「<strong>不是</strong>把动作简单拼到 latent 上」：PRoPE 用投影矩阵把相机内外参转化为 token 间的<strong>相对射影变换</strong>，因此保留了原有生成结构，同时让空间 token 感知相机运动。工程含义是：需要支持 Q/K/V 前后的结构化变换与 RoPE 融合，避免大量小算子与 layout 往返。</p>
-
- <h4>Phase 2 · Causal Forcing 三阶段蒸馏</h4>
- <div class="pipe c4">
- <div class="step"><i>STAGE 1</i><b>AR 扩散训练（Teacher Forcing）</b><span>把干净视频与其加噪副本拼接 + 因果注意力掩码；得到具备 AR 能力但仍多步、且因 exposure bias 质量低于双向模型的模型。</span></div>
- <div class="step emph"><i>STAGE 2a</i><b>causal ODE 初始化</b><span>用 AR 扩散模型在其 PF-ODE 轨迹上采样；在预定义少步时间步集合 S 上随机取 t，令少步模型回归 <code>G_θ(x_t^i, x_gt^{&lt;i}, t) → x_0^i</code>（历史前缀用真实数据）。</span></div>
- <div class="step emph"><i>STAGE 2b</i><b>causal CD 初始化（CF++）</b><span>把 2a 换成理论上等价的 causal consistency distillation：用 AR teacher 从 <code>x_t^i</code> 走<strong>一步 ODE</strong> 得到 <code>x̂_{t−Δt}^i</code>，与 EMA student <code>G_{θ⁻}</code> 做加权距离。<strong>免去离线 ODE 数据的生成时间与存储开销。</strong></span></div>
- <div class="step"><i>STAGE 3</i><b>asymmetric DMD</b><span>student 自 rollout 生成完整序列 → 加噪 → 用<strong>冻结双向模型</strong> <code>s_real</code> 与<strong>在线训练</strong> <code>s_fake</code> 的分数差做 DMD 梯度，把少步 AR 学生对齐到高质量双向 teacher 的分布。</span></div>
- </div>
- <p><strong>相机可控贯穿全流程</strong>：Stage 1 从相机可控双向模型初始化并在相机数据上训练；Stage 2 采 ODE 数据与 CD 训练都带相机条件；Stage 3 自 rollout 与 <code>s_real</code>/<code>s_fake</code> 全部接收同一相机条件。这是本节最值得学的一条流程设计原则：<strong>条件不能只在最后一步注入，否则蒸馏会把条件抹掉。</strong></p>
-<!-- ===== 图 1-5 minWM：PRoPE 注入 + 三阶段因果化 + 流式执行 ===== -->
- <figure class="wide">
- <div class="svgbox">
- <svg viewBox="0 0 1060 470" role="img" aria-label="minWM 的 PRoPE 相机注入、三阶段因果化与流式推理拓扑">
- <rect width="1060" height="470" fill="#ffffff"/>
- <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">minWM：把已有双向视频底座改造成相机可控的少步自回归世界模型</text>
- <text x="24" y="44" font-size="10" fill="#4d5b61">它不是新模型，而是一条改造流水线；已实例化在 Wan2.1-T2V-1.3B（cross-attention 条件）与 HY1.5-TI2V-8B（MMDiT）两种底座上</text>
-
- <!-- Phase 1 -->
- <rect x="24" y="58" width="500" height="176" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="44" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 1 · 相机可控微调：PRoPE 注入几何</text>
-
- <g font-size="9">
- <rect x="44" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="92" y="107" text-anchor="middle">内参 Kᵢ</text><text x="92" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">每帧相机参数</text>
- <rect x="148" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="196" y="107" text-anchor="middle">外参 Tᵢ^cw</text><text x="196" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">位姿</text>
- <text x="256" y="113" font-size="13">→</text>
- <rect x="284" y="92" width="220" height="34" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="394" y="107" text-anchor="middle">抬升为投影矩阵 P̃ᵢ ∈ R⁴ˣ⁴</text>
- <text x="394" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">P̃ᵢ = [[Kᵢ 0]Tᵢ^cw ; e₄ᵀ]</text>
- </g>
-
- <rect x="44" y="138" width="460" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="54" y="152" font-size="9">块对角变换 D_t = diag( I ⊗ P̃_{i(t)} , diag(RoPE(x_t), RoPE(y_t)) )</text>
- <text x="54" y="166" font-size="9" fill="#4d5b61">时间轴之外的 8 维承载投影矩阵，空间两轴仍用 RoPE</text>
-
- <rect x="44" y="180" width="460" height="46" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="54" y="196" font-size="9.5" font-weight="700" fill="#101619">以 GTA 形式注入自注意力</text>
- <text x="54" y="212" font-size="9">Attn_PRoPE(Q,K,V) = D ⊙ Attn( Dᵀ⊙Q , D⁻¹⊙K , D⁻¹⊙V )</text>
- <text x="54" y="224" font-size="8.6" fill="#4d5b61">⇒ token 间交互依赖相对投影变换 P̃_{i(t₁)}P̃_{i(t₂)}⁻¹，同时编码相对内参与位姿，且不破坏原注意力结构</text>
-
- <!-- Phase 2 -->
- <rect x="540" y="58" width="496" height="176" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="560" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 2 · 三阶段因果化与少步蒸馏</text>
- <g font-size="9">
- <rect x="560" y="90" width="212" height="40" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="666" y="105" text-anchor="middle">Stage 1 · Teacher Forcing</text>
- <text x="666" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">干净历史 + 带噪当前块 + 因果掩码</text>
- <rect x="784" y="90" width="232" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="900" y="105" text-anchor="middle">Stage 2 · ODE / causal CD 初始化</text>
- <text x="900" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">用 AR teacher 做少步初始化</text>
- <rect x="560" y="138" width="212" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="666" y="153" text-anchor="middle">Stage 3 · 非对称 DMD</text>
- <text x="666" y="167" text-anchor="middle" font-size="8.6" fill="#4d5b61">学生自滚动；双向教师作 real score</text>
- <text x="784" y="164" font-size="9" fill="#28343a">相机条件贯穿三个阶段 ——</text>
- <text x="784" y="178" font-size="9" fill="#28343a">否则蒸馏会把条件抹掉</text>
- </g>
- <text x="560" y="196" font-size="9" fill="#4d5b61">训练配置：480×832、77 帧、AR chunk = 4 latent frames、蒸馏 4 步</text>
- <text x="560" y="212" font-size="9" fill="#4d5b61">有效 batch 下限：&lt;4 学不到；8 不稳；16 可完成全流程</text>
- <text x="560" y="228" font-size="9" fill="#0b6b74">单 A800、排除 VAE：首帧 269.055 s → 1.137 s（Wan，236.64×）</text>
-
- <line x1="24" y1="254" x2="1036" y2="254" stroke="#d8dee0"/>
-
- <!-- streaming topology -->
- <text x="24" y="278" font-size="11" font-weight="700" fill="#101619">流式推理拓扑（单块循环）</text>
- <g font-size="9">
- <rect x="24" y="290" width="150" height="52" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="99" y="308" text-anchor="middle">CPU 控制线程</text>
- <text x="99" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">接收键鼠 / 相机轨迹</text>
- <text x="99" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">提前生成下一块 PRoPE 参数</text>
- <text x="182" y="320" font-size="13">→</text>
-
- <rect x="200" y="290" width="180" height="52" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="290" y="308" text-anchor="middle">NPU Stream A</text>
- <text x="290" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">4-step causal DiT</text>
- <text x="290" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">读只增 / 滚动 KV</text>
- <text x="388" y="320" font-size="13">→</text>
-
- <rect x="406" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="496" y="308" text-anchor="middle">NPU Stream B</text>
- <text x="496" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">上一块 VAE decode</text>
- <text x="496" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">与后处理</text>
- <text x="594" y="320" font-size="13">→</text>
-
- <rect x="612" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="702" y="308" text-anchor="middle">输出线程</text>
- <text x="702" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">按帧显示 / 编码</text>
- <text x="702" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">向推理端提供背压</text>
- </g>
-
- <rect x="812" y="290" width="224" height="52" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="924" y="308" text-anchor="middle" font-size="9.5">会话状态显式管理</text>
- <text x="924" y="324" text-anchor="middle" font-size="8.6" fill="#4d5b61">KV 页 · RoPE offset · 随机状态</text>
- <text x="924" y="337" text-anchor="middle" font-size="8.6" fill="#4d5b61">动作时间戳</text>
-
- <rect x="24" y="356" width="1012" height="46" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="44" y="376" font-size="9.5" font-weight="700" fill="#0b6b74">两个必须计入的边界</text>
- <text x="44" y="394" font-size="9">① 论文的首帧数字明确排除 VAE：真实首帧应包含文本/图像预处理、DiT、VAE、设备同步与传输；② 仓库当前用 torch.cat 逐块扩展视觉 KV，</text>
- <text x="44" y="406" font-size="9">README 仍把更广义的 inference acceleration 标为 TBD ⇒ <tspan font-weight="700">有 KV cache ≠ 有长时有界的 rolling / paged KV</tspan></text>
-
- <rect x="24" y="414" width="1012" height="46" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="44" y="434" font-size="9.5" font-weight="700" fill="#101619">这条流水线里最值得抄走的两条经验</text>
- <text x="44" y="452" font-size="9">① 相机数据比算法更难：直接使用感知估计位姿学不到可靠控制，改用「重建 + 按指定轨迹重渲染」才成功；② 条件必须贯穿所有训练阶段。</text>
- </svg>
- </div>
- <figcaption><b>FIG 1-5 · minWM 的改造流水线与流式拓扑</b>　上半是 PRoPE 几何注入与三阶段因果化，下半是单块流式循环的目标执行拓扑。</figcaption>
- </figure>
-
- <h4>公开数字与消融（含最有价值的两条负面结论）</h4>
- <div class="tablewrap"><table>
- <caption>表 1-3 · minWM 的公开实测（单张 A800、首帧时延、<strong>不含 VAE</strong>）与关键消融</caption>
- <thead><tr><th>骨架</th><th>多步双向</th><th>多步 AR</th><th>少步 AR（4 步）</th><th>累计加速</th></tr></thead>
- <tbody>
- <tr><td>Wan2.1-T2V-1.3B</td><td>269.055 s</td><td>28.651 s（9.39×）</td><td><strong><strong>1.137 s</strong></strong></td><td><strong><strong>236.64×</strong></strong></td></tr>
- <tr><td>HY1.5-TI2V-8B</td><td>771.041 s</td><td>81.014 s（9.52×）</td><td><strong><strong>3.446 s</strong></strong></td><td><strong><strong>223.75×</strong></strong></td></tr>
- </tbody>
- </table></div>
- <div class="grid3">
- <div class="note"><span class="tag">消融 · 数据比算法更难</span><h4>直接用估计位姿学不会相机控制</h4><p>直接使用 <strong>SpatialVid</strong>（感知估计位姿）在现有设置下<strong>学不到可靠相机控制</strong>（怀疑是位姿噪声 / 轨迹不一致），加过滤也不行。改用 <strong>DL3DV 重建 + 按指定轨迹重渲染</strong>后成功；开源版用 <strong>OpenVid 图像 + WorldPlay 按指定轨迹生成视频</strong>同样有效。</p><p class="p">可控制性约 <strong>5K 步</strong>开始出现、<strong>8K 步</strong>较强；1–2K 步完全不可控。</p></div>
- <div class="note"><span class="tag">消融 · 有效 batch 下限</span><h4>batch &lt; 4 学不到</h4><p>最小 batch size：<strong>&lt; 4 学不到；8 明显改善但不稳；16 可完成全流程且可控性高</strong>。这直接约束 DP / 梯度累积设计——小集群上很难复现这套配方。</p></div>
- <div class="note"><span class="tag">训练配方（可直接对照）</span><h4>480×832 · 77 帧 · chunk 4 · 4 步</h4><p>Wan2.1：batch 32、lr 2e-6、5K/4K/2K/200 步。HY1.5：batch 32、lr 1e-5、双向 8K 步（Stage 1 从 5K 步模型初始化）、Stage1 4K、Stage2 1.5K、Stage3 500。</p></div>
- </div>
- <div class="note"><b>代码成熟度提示（重要）：</b>论文/README 的主路径是 <strong>4-step chunk-wise</strong>。仓库 HEAD 已可见 HY 路线的文本与视觉 KV cache，但<strong>通过 <code>torch.cat</code> 逐块扩展视觉 KV</strong>；README 仍把更广义的「inference acceleration」标为 TBD。<strong>因此「有 KV cache」不等于「已有生产级、长时有界的 rolling / paged KV」</strong>——这正是 §10.3 反复强调的那道分水岭。</div>
-<!-- ===== 图 1-6 四种注意力掩码对照 ===== -->
+ <!-- ===== 图 1-5 四种注意力掩码对照 ===== -->
  <figure class="wide">
  <div class="svgbox">
  <svg viewBox="0 0 1060 400" role="img" aria-label="四种注意力掩码对照：双向、块级因果、MoBA、固定规则稀疏">
@@ -1167,13 +968,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="24" y="382" font-size="10" fill="#4d5b61">训练侧的要求也随之不同：①②需要 forcing 后训练来承受自生成历史（第 02 章），④还需要 Sparse Adaptation 之类的退火过程才能训练稳定。</text>
  </svg>
  </div>
- <figcaption><b>FIG 1-6 · 四种注意力掩码对照</b>　从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
+ <figcaption><b>FIG 1-5 · 四种注意力掩码对照</b>　从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
  </figure>
 
- <h3 id="base-matrix"><span class="h3tag">7</span>四家结构横向对照</h3>
+ <h3 id="base-matrix"><span class="h3tag">6</span>三家结构横向对照</h3>
  <div class="tablewrap"><table>
- <caption>表 1-4 · 四家实时世界模型的结构选择对照。空白项表示公开材料未披露。</caption>
- <thead><tr><th>维度</th><th>生数 Vidu S1/S2</th><th>爱诗 PixVerse R2</th><th>灵波 LingBot-World v2</th><th>minWM（框架）</th></tr></thead>
+ <caption>表 1-4 · 三家实时世界模型的结构选择对照。空白项表示公开材料未披露；minWM 属后训练框架，见 <a href="#base-minwm">2.7</a>。</caption>
+ <thead><tr><th>维度</th><th>生数 Vidu S1/S2</th><th>爱诗 PixVerse R2</th><th>灵波 LingBot-World v2</th></tr></thead>
  <tbody>
  <tr><td>主干来源</td><td>自研 U-ViT 谱系 + 联合音视频 DiT</td><td>未披露参数量/层数</td><td>Wan2.2 双专家（28B 总 / 每步 14B），v2 转因果预训练</td><td>复用既有底座：Wan2.1-1.3B / HY1.5-8B</td></tr>
  <tr><td>条件注入方式</td><td>参考图作为条件 token <strong>序列拼接</strong>进入同一 DiT；音频沿模态维拼接</td><td>text / 多模态参考 / audio / actions 四类随时到达</td><td>相机 = Plücker + <strong>AdaLN</strong>；文本 = <strong>chunk-wise prompts</strong></td><td>相机 = <strong>PRoPE</strong>（相对射影变换注入注意力）</td></tr>
@@ -1196,7 +997,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
   <p class="lead">模型改成块级因果结构之后，训练时看到的是真实视频的历史，推理时看到的却是自己生成的历史。不做处理，误差会沿时间维累积，表现为<strong>几块之后身份漂移、动作断裂、背景突变</strong>。<strong>Forcing 类后训练专门修补这个落差</strong>，它是「能否长跑」的分水岭：<strong>经过 forcing 后训练的模型可以把稳定生成从几十秒拉到分钟级</strong>。代价是它是训练侧最贵的一类后训练——DMD 路径要同时驻留三个模型。</p>
 
- <p class="lead">本章按四段展开：<strong>2.1 说清问题从哪来</strong>（暴露偏差为什么在视频上更严重）；<strong>2.2 给出方案的设计空间</strong>（两个调节旋钮如何穷举所有 forcing 变体）；<strong>2.3 给出目前收敛的四阶段流水线</strong>；<strong>2.4–2.6 逐个方案展开</strong>（12 个方法的机制对照、Self-Replay Forcing 的拆解、以及训练成本）。</p>
+ <p class="lead">本章按四段展开：<strong>2.1 说清问题从哪来</strong>（暴露偏差为什么在视频上更严重）；<strong>2.2 给出方案的设计空间</strong>（两个调节旋钮如何穷举所有 forcing 变体）；<strong>2.3 给出目前收敛的四阶段流水线</strong>；<strong>2.4–2.7 逐个方案展开</strong>（12 个方法的机制对照、Self-Replay Forcing 的拆解、训练成本，以及 minWM 这一条把三阶段串起来、并让条件贯穿全流程的完整后训练范例）。</p>
 
  <h3 id="forcing-gap"><span class="h3tag">1</span>暴露偏差：视频比语言更致命</h3>
  <p>把流式生成写成自回归形式：第 <code>n</code> 块的生成依赖前 <code>n−1</code> 块的输出，而这些输出又是模型自己采样得到的。于是训练与推理看到的输入分布不一样：</p>
@@ -1508,6 +1309,206 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </tbody>
  </table></div>
  <p>部署侧不重复实现 forcing，只做两件事：<strong>确认拿到的 checkpoint 确实经过 forcing 后训练</strong>（否则长会话必然崩）；<strong>建立与论文同口径的逐块漂移曲线</strong>作为回归基线。</p>
+
+<h3 id="base-minwm"><span class="h3tag">7</span>minWM：把已有双向底座改造成世界模型的全流程后训练范例</h3>
+ <p>minWM（arXiv 2605.30263，生数主导）的定位不是某个模型，而是一条<strong>可复现的改造流水线</strong>：把现有双向 T2V/TI2V 基础模型转成「相机可控 + 少步 + 自回归」的实时交互世界模型。它以 Wan2.1-T2V-1.3B（cross-attention 注入条件）与 HY1.5-TI2V-8B（MMDiT 风格）两种代表骨架做了实例化，因此<strong>它的价值在于「换底座也能复用」</strong>。</p>
+ <h4>Phase 1 · 相机可控微调：PRoPE 如何把几何注入注意力</h4>
+
+<!-- ===== 替代文字公式：PRoPE 把相机几何注入自注意力 ===== -->
+  <figure class="wide">
+    <div class="svgbox">
+    <svg viewBox="0 0 1060 470" role="img" aria-label="PRoPE 如何把相机几何注入自注意力">
+      <rect width="1060" height="470" fill="#ffffff"/>
+      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">PRoPE：把相机几何写成注意力里的一个变换</text>
+      <text x="24" y="46" font-size="10" fill="#4d5b61">思路：与其把相机参数当作额外条件喂进去，不如让 token 之间的交互天然依赖两台相机之间的相对关系。</text>
+
+      <!-- step 1 -->
+      <rect x="24" y="62" width="322" height="150" fill="#ffffff" stroke="#a9b4b8"/>
+      <text x="42" y="84" font-size="10.5" font-weight="700" fill="#101619">① 每帧的相机参数抬升为 4×4 投影矩阵</text>
+      <g font-size="9.5">
+        <rect x="42" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
+        <text x="98" y="116" text-anchor="middle">内参 Kᵢ</text>
+        <rect x="162" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
+        <text x="218" y="116" text-anchor="middle">位姿 Tᵢ</text>
+        <text x="282" y="117" font-size="12" fill="#4d5b61">→</text>
+      </g>
+      <rect x="42" y="138" width="232" height="30" fill="#e6f3f4" stroke="#0b6b74"/>
+      <text x="158" y="158" text-anchor="middle" font-size="10">P̃ᵢ ：4×4，齐次坐标下可相乘</text>
+      <text x="42" y="190" font-size="9.5" fill="#4d5b61">两台相机的相对关系 = P̃₁ 与 P̃₂ 相乘</text>
+      <text x="42" y="204" font-size="9.5" fill="#0b6b74">⇒ 相对量天然可表示，绝对量被自动消掉</text>
+
+      <text x="362" y="140" font-size="14" fill="#4d5b61">→</text>
+
+      <!-- step 2 -->
+      <rect x="394" y="62" width="316" height="150" fill="#ffffff" stroke="#a9b4b8"/>
+      <text x="412" y="84" font-size="10.5" font-weight="700" fill="#101619">② 组成每个 token 的块对角变换</text>
+      <rect x="412" y="96" width="280" height="58" fill="#ffffff" stroke="#d8dee0"/>
+      <g font-size="9">
+        <text x="424" y="116">时间轴之外的 8 维：投影矩阵 P̃</text>
+        <text x="424" y="132">空间两轴：仍用 RoPE（x、y 各自旋转）</text>
+        <text x="424" y="147" fill="#4d5b61">整体写成 diag( I ⊗ P̃ , RoPE(x) , RoPE(y) )</text>
+      </g>
+      <text x="412" y="178" font-size="9.5" fill="#0b6b74">只占用 9 个维度，其余维度保持原样</text>
+      <text x="412" y="196" font-size="9.5" fill="#4d5b61">⇒ 不改动原有注意力的形状，可直接接进现成 kernel</text>
+
+      <text x="726" y="140" font-size="14" fill="#4d5b61">→</text>
+
+      <!-- step 3 -->
+      <rect x="758" y="62" width="278" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
+      <text x="776" y="84" font-size="10.5" font-weight="700" fill="#101619">③ 在注意力两端各施加一次</text>
+      <text x="776" y="108" font-size="9.5" fill="#28343a">query 乘 D，key 与 value 乘 D⁻¹</text>
+      <text x="776" y="132" font-size="9.5" fill="#0b6b74">⇒ 相乘后 D 部分抵消，只留下</text>
+      <text x="776" y="148" font-size="9.5" fill="#0b6b74">　 两个 token 之间的相对投影变换</text>
+      <text x="776" y="174" font-size="9.5" fill="#28343a">这就是 GTA 形式：</text>
+      <text x="776" y="190" font-size="9.5" fill="#28343a">把变换「夹」在注意力的两侧</text>
+      <text x="776" y="206" font-size="9" fill="#4d5b61">注意力矩阵本身不变，只被重新参数化</text>
+
+      <!-- outcome -->
+      <rect x="24" y="232" width="1012" height="102" fill="#ffffff" stroke="#a9b4b8"/>
+      <text x="42" y="254" font-size="10.5" font-weight="700" fill="#101619">为什么这样做而不是「把相机参数当条件向量」</text>
+      <g font-size="9.5">
+        <text x="42" y="278" fill="#28343a">条件向量回答的是「这一帧的相机在哪」，而生成需要的是「这两帧之间相机移动了多少」。</text>
+        <text x="42" y="298" fill="#28343a">PRoPE 让相对量直接出现在注意力公式里，模型不必再从绝对量里学差值，</text>
+        <text x="42" y="318" fill="#0b6b74">因此同一个权重可以迁移到没见过的相机轨迹上，这也是它被选作 minWM 第 1 阶段的原因。</text>
+      </g>
+
+      <!-- notes -->
+      <rect x="24" y="350" width="1012" height="98" fill="#ffffff" stroke="#a9b4b8"/>
+      <text x="42" y="372" font-size="10.5" font-weight="700" fill="#101619">实现侧的三条约束</text>
+      <g font-size="9.5">
+        <text x="42" y="396" fill="#28343a">① 注意力算子里要能插入 per-token 的线性变换，标准 FlashAttention 接口需要扩展；</text>
+        <text x="42" y="416" fill="#28343a">② 变换与 RoPE 共用维度 ⇒ 两者的维度分配需要一起定，改动其一会破坏另一方；</text>
+        <text x="42" y="436" fill="#28343a">③ 相机条件必须贯穿全部训练阶段（含蒸馏），否则蒸馏会把刚学到的几何控制抹掉。</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>FIG 2-3 · PRoPE 的几何注入路径</b>　从相机内参外参到 4×4 投影矩阵，再到块对角变换与注意力两侧的夹逼，最终让 token 交互依赖相对投影变换。</figcaption>
+  </figure>
+ 
+ <p>关键在于「<strong>不是</strong>把动作简单拼到 latent 上」：PRoPE 用投影矩阵把相机内外参转化为 token 间的<strong>相对射影变换</strong>，因此保留了原有生成结构，同时让空间 token 感知相机运动。工程含义是：需要支持 Q/K/V 前后的结构化变换与 RoPE 融合，避免大量小算子与 layout 往返。</p>
+
+ <h4>Phase 2 · Causal Forcing 三阶段蒸馏</h4>
+ <div class="pipe c4">
+ <div class="step"><i>STAGE 1</i><b>AR 扩散训练（Teacher Forcing）</b><span>把干净视频与其加噪副本拼接 + 因果注意力掩码；得到具备 AR 能力但仍多步、且因 exposure bias 质量低于双向模型的模型。</span></div>
+ <div class="step emph"><i>STAGE 2a</i><b>causal ODE 初始化</b><span>用 AR 扩散模型在其 PF-ODE 轨迹上采样；在预定义少步时间步集合 S 上随机取 t，令少步模型回归 <code>G_θ(x_t^i, x_gt^{&lt;i}, t) → x_0^i</code>（历史前缀用真实数据）。</span></div>
+ <div class="step emph"><i>STAGE 2b</i><b>causal CD 初始化（CF++）</b><span>把 2a 换成理论上等价的 causal consistency distillation：用 AR teacher 从 <code>x_t^i</code> 走<strong>一步 ODE</strong> 得到 <code>x̂_{t−Δt}^i</code>，与 EMA student <code>G_{θ⁻}</code> 做加权距离。<strong>免去离线 ODE 数据的生成时间与存储开销。</strong></span></div>
+ <div class="step"><i>STAGE 3</i><b>asymmetric DMD</b><span>student 自 rollout 生成完整序列 → 加噪 → 用<strong>冻结双向模型</strong> <code>s_real</code> 与<strong>在线训练</strong> <code>s_fake</code> 的分数差做 DMD 梯度，把少步 AR 学生对齐到高质量双向 teacher 的分布。</span></div>
+ </div>
+ <p><strong>相机可控贯穿全流程</strong>：Stage 1 从相机可控双向模型初始化并在相机数据上训练；Stage 2 采 ODE 数据与 CD 训练都带相机条件；Stage 3 自 rollout 与 <code>s_real</code>/<code>s_fake</code> 全部接收同一相机条件。这是本节最值得学的一条流程设计原则：<strong>条件不能只在最后一步注入，否则蒸馏会把条件抹掉。</strong></p>
+<!-- ===== 图 2-4 minWM：PRoPE 注入 + 三阶段因果化 + 流式执行 ===== -->
+ <figure class="wide">
+ <div class="svgbox">
+ <svg viewBox="0 0 1060 470" role="img" aria-label="minWM 的 PRoPE 相机注入、三阶段因果化与流式推理拓扑">
+ <rect width="1060" height="470" fill="#ffffff"/>
+ <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">minWM：把已有双向视频底座改造成相机可控的少步自回归世界模型</text>
+ <text x="24" y="44" font-size="10" fill="#4d5b61">它不是新模型，而是一条改造流水线；已实例化在 Wan2.1-T2V-1.3B（cross-attention 条件）与 HY1.5-TI2V-8B（MMDiT）两种底座上</text>
+
+ <!-- Phase 1 -->
+ <rect x="24" y="58" width="500" height="176" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="44" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 1 · 相机可控微调：PRoPE 注入几何</text>
+
+ <g font-size="9">
+ <rect x="44" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="92" y="107" text-anchor="middle">内参 Kᵢ</text><text x="92" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">每帧相机参数</text>
+ <rect x="148" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="196" y="107" text-anchor="middle">外参 Tᵢ^cw</text><text x="196" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">位姿</text>
+ <text x="256" y="113" font-size="13">→</text>
+ <rect x="284" y="92" width="220" height="34" fill="#e6f3f4" stroke="#0b6b74"/>
+ <text x="394" y="107" text-anchor="middle">抬升为投影矩阵 P̃ᵢ ∈ R⁴ˣ⁴</text>
+ <text x="394" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">P̃ᵢ = [[Kᵢ 0]Tᵢ^cw ; e₄ᵀ]</text>
+ </g>
+
+ <rect x="44" y="138" width="460" height="34" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="54" y="152" font-size="9">块对角变换 D_t = diag( I ⊗ P̃_{i(t)} , diag(RoPE(x_t), RoPE(y_t)) )</text>
+ <text x="54" y="166" font-size="9" fill="#4d5b61">时间轴之外的 8 维承载投影矩阵，空间两轴仍用 RoPE</text>
+
+ <rect x="44" y="180" width="460" height="46" fill="#e6f3f4" stroke="#0b6b74"/>
+ <text x="54" y="196" font-size="9.5" font-weight="700" fill="#101619">以 GTA 形式注入自注意力</text>
+ <text x="54" y="212" font-size="9">Attn_PRoPE(Q,K,V) = D ⊙ Attn( Dᵀ⊙Q , D⁻¹⊙K , D⁻¹⊙V )</text>
+ <text x="54" y="224" font-size="8.6" fill="#4d5b61">⇒ token 间交互依赖相对投影变换 P̃_{i(t₁)}P̃_{i(t₂)}⁻¹，同时编码相对内参与位姿，且不破坏原注意力结构</text>
+
+ <!-- Phase 2 -->
+ <rect x="540" y="58" width="496" height="176" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="560" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 2 · 三阶段因果化与少步蒸馏</text>
+ <g font-size="9">
+ <rect x="560" y="90" width="212" height="40" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="666" y="105" text-anchor="middle">Stage 1 · Teacher Forcing</text>
+ <text x="666" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">干净历史 + 带噪当前块 + 因果掩码</text>
+ <rect x="784" y="90" width="232" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
+ <text x="900" y="105" text-anchor="middle">Stage 2 · ODE / causal CD 初始化</text>
+ <text x="900" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">用 AR teacher 做少步初始化</text>
+ <rect x="560" y="138" width="212" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
+ <text x="666" y="153" text-anchor="middle">Stage 3 · 非对称 DMD</text>
+ <text x="666" y="167" text-anchor="middle" font-size="8.6" fill="#4d5b61">学生自滚动；双向教师作 real score</text>
+ <text x="784" y="164" font-size="9" fill="#28343a">相机条件贯穿三个阶段 ——</text>
+ <text x="784" y="178" font-size="9" fill="#28343a">否则蒸馏会把条件抹掉</text>
+ </g>
+ <text x="560" y="196" font-size="9" fill="#4d5b61">训练配置：480×832、77 帧、AR chunk = 4 latent frames、蒸馏 4 步</text>
+ <text x="560" y="212" font-size="9" fill="#4d5b61">有效 batch 下限：&lt;4 学不到；8 不稳；16 可完成全流程</text>
+ <text x="560" y="228" font-size="9" fill="#0b6b74">单 A800、排除 VAE：首帧 269.055 s → 1.137 s（Wan，236.64×）</text>
+
+ <line x1="24" y1="254" x2="1036" y2="254" stroke="#d8dee0"/>
+
+ <!-- streaming topology -->
+ <text x="24" y="278" font-size="11" font-weight="700" fill="#101619">流式推理拓扑（单块循环）</text>
+ <g font-size="9">
+ <rect x="24" y="290" width="150" height="52" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="99" y="308" text-anchor="middle">CPU 控制线程</text>
+ <text x="99" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">接收键鼠 / 相机轨迹</text>
+ <text x="99" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">提前生成下一块 PRoPE 参数</text>
+ <text x="182" y="320" font-size="13">→</text>
+
+ <rect x="200" y="290" width="180" height="52" fill="#e6f3f4" stroke="#0b6b74"/>
+ <text x="290" y="308" text-anchor="middle">NPU Stream A</text>
+ <text x="290" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">4-step causal DiT</text>
+ <text x="290" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">读只增 / 滚动 KV</text>
+ <text x="388" y="320" font-size="13">→</text>
+
+ <rect x="406" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="496" y="308" text-anchor="middle">NPU Stream B</text>
+ <text x="496" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">上一块 VAE decode</text>
+ <text x="496" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">与后处理</text>
+ <text x="594" y="320" font-size="13">→</text>
+
+ <rect x="612" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="702" y="308" text-anchor="middle">输出线程</text>
+ <text x="702" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">按帧显示 / 编码</text>
+ <text x="702" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">向推理端提供背压</text>
+ </g>
+
+ <rect x="812" y="290" width="224" height="52" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="924" y="308" text-anchor="middle" font-size="9.5">会话状态显式管理</text>
+ <text x="924" y="324" text-anchor="middle" font-size="8.6" fill="#4d5b61">KV 页 · RoPE offset · 随机状态</text>
+ <text x="924" y="337" text-anchor="middle" font-size="8.6" fill="#4d5b61">动作时间戳</text>
+
+ <rect x="24" y="356" width="1012" height="46" fill="#eef2f3" stroke="#0b6b74"/>
+ <text x="44" y="376" font-size="9.5" font-weight="700" fill="#0b6b74">两个必须计入的边界</text>
+ <text x="44" y="394" font-size="9">① 论文的首帧数字明确排除 VAE：真实首帧应包含文本/图像预处理、DiT、VAE、设备同步与传输；② 仓库当前用 torch.cat 逐块扩展视觉 KV，</text>
+ <text x="44" y="406" font-size="9">README 仍把更广义的 inference acceleration 标为 TBD ⇒ <tspan font-weight="700">有 KV cache ≠ 有长时有界的 rolling / paged KV</tspan></text>
+
+ <rect x="24" y="414" width="1012" height="46" fill="#ffffff" stroke="#a9b4b8"/>
+ <text x="44" y="434" font-size="9.5" font-weight="700" fill="#101619">这条流水线里最值得抄走的两条经验</text>
+ <text x="44" y="452" font-size="9">① 相机数据比算法更难：直接使用感知估计位姿学不到可靠控制，改用「重建 + 按指定轨迹重渲染」才成功；② 条件必须贯穿所有训练阶段。</text>
+ </svg>
+ </div>
+ <figcaption><b>FIG 2-4 · minWM 的改造流水线与流式拓扑</b>　上半是 PRoPE 几何注入与三阶段因果化，下半是单块流式循环的目标执行拓扑。</figcaption>
+ </figure>
+
+ <h4>公开数字与消融（含最有价值的两条负面结论）</h4>
+ <div class="tablewrap"><table>
+ <caption>表 2-3 · minWM 的公开实测（单张 A800、首帧时延、<strong>不含 VAE</strong>）与关键消融</caption>
+ <thead><tr><th>骨架</th><th>多步双向</th><th>多步 AR</th><th>少步 AR（4 步）</th><th>累计加速</th></tr></thead>
+ <tbody>
+ <tr><td>Wan2.1-T2V-1.3B</td><td>269.055 s</td><td>28.651 s（9.39×）</td><td><strong><strong>1.137 s</strong></strong></td><td><strong><strong>236.64×</strong></strong></td></tr>
+ <tr><td>HY1.5-TI2V-8B</td><td>771.041 s</td><td>81.014 s（9.52×）</td><td><strong><strong>3.446 s</strong></strong></td><td><strong><strong>223.75×</strong></strong></td></tr>
+ </tbody>
+ </table></div>
+ <div class="grid3">
+ <div class="note"><span class="tag">消融 · 数据比算法更难</span><h4>直接用估计位姿学不会相机控制</h4><p>直接使用 <strong>SpatialVid</strong>（感知估计位姿）在现有设置下<strong>学不到可靠相机控制</strong>（怀疑是位姿噪声 / 轨迹不一致），加过滤也不行。改用 <strong>DL3DV 重建 + 按指定轨迹重渲染</strong>后成功；开源版用 <strong>OpenVid 图像 + WorldPlay 按指定轨迹生成视频</strong>同样有效。</p><p class="p">可控制性约 <strong>5K 步</strong>开始出现、<strong>8K 步</strong>较强；1–2K 步完全不可控。</p></div>
+ <div class="note"><span class="tag">消融 · 有效 batch 下限</span><h4>batch &lt; 4 学不到</h4><p>最小 batch size：<strong>&lt; 4 学不到；8 明显改善但不稳；16 可完成全流程且可控性高</strong>。这直接约束 DP / 梯度累积设计——小集群上很难复现这套配方。</p></div>
+ <div class="note"><span class="tag">训练配方（可直接对照）</span><h4>480×832 · 77 帧 · chunk 4 · 4 步</h4><p>Wan2.1：batch 32、lr 2e-6、5K/4K/2K/200 步。HY1.5：batch 32、lr 1e-5、双向 8K 步（Stage 1 从 5K 步模型初始化）、Stage1 4K、Stage2 1.5K、Stage3 500。</p></div>
+ </div>
+ <div class="note"><b>代码成熟度提示（重要）：</b>论文/README 的主路径是 <strong>4-step chunk-wise</strong>。仓库 HEAD 已可见 HY 路线的文本与视觉 KV cache，但<strong>通过 <code>torch.cat</code> 逐块扩展视觉 KV</strong>；README 仍把更广义的「inference acceleration」标为 TBD。<strong>因此「有 KV cache」不等于「已有生产级、长时有界的 rolling / paged KV」</strong>——这正是 §10.3 反复强调的那道分水岭。</div>
 </section>
 <!-- ============================ 03 Distillation ============================ -->
 <section class="ch" id="distill">
@@ -1516,7 +1517,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <h2>蒸馏：把去噪步数压到 1–4 步</h2>
  </div>
 
-  <p class="lead">扩散模型的生成时间正比于采样步数，<strong>步数是唯一能把延迟按数量级削减的杠杆</strong>，其余优化最多是数倍。本章处理的问题是：在 720p 实时这一约束下，步数能被压到几步，以及压下去之后质量从哪里补回来。<strong>典型收益是 15–50×，或从 20–50 步直接降到 1–4 步</strong>；四家产品级系统全部依赖少步蒸馏。</p>
+  <p class="lead">扩散模型的生成时间正比于采样步数，<strong>步数是唯一能把延迟按数量级削减的杠杆</strong>，其余优化最多是数倍。本章处理的问题是：在 720p 实时这一约束下，步数能被压到几步，以及压下去之后质量从哪里补回来。<strong>典型收益是 15–50×，或从 20–50 步直接降到 1–4 步</strong>；第 01 章的三家模型与 2.7 的 minWM，这四条产品级路线全部依赖少步蒸馏。</p>
 
  <p class="lead">本章按四段展开：<strong>3.1 先算清约束</strong>（为什么必须少步，以及能压到几步）；<strong>3.2 给出方案的设计空间</strong>（前向散度与反向散度两条互补路线，共四族方法）；<strong>3.3–3.4 逐个方案展开</strong>（模式崩溃的成因与四类补救、公开系统如何组合）；<strong>3.5 给出验收方法</strong>。</p>
 
@@ -2276,7 +2277,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </tbody>
  </table></div>
 
- <h4>命名对照：四家世界模型实际用的 RoPE 方案</h4>
+ <h4>命名对照：各家世界模型实际用的 RoPE 方案</h4>
  <p>这是本节最实用的一张表——它把「各家怎么处理长上下文位置」从传闻变成可核对的事实，同时也标出了<strong>哪一家其实没有公开命名方案</strong>：</p>
  <div class="tablewrap"><table>
  <caption>表 5-3 · 各家的命名方案对照</caption>
