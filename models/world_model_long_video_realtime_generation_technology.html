@@ -17,7 +17,7 @@
  --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
  --sans:"Noto Sans SC","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
  --serif:"Noto Serif SC","Songti SC",Georgia,serif;
- --max:1180px;
+ --max:1460px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:64px}
@@ -46,16 +46,16 @@ h1{margin:0 0 20px;font:700 clamp(2rem,4.6vw,3.4rem)/1.22 var(--serif);letter-sp
 .pill b{color:var(--ink);font-weight:700}
 
 /* ---------- layout ---------- */
-/* 单栏版式：目录随页面滚走（不吸附），正文与配图共享整幅宽度 */
-.layout{max-width:var(--max);margin:auto;display:block;padding:20px 22px 80px}
-.toc{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;margin:0 0 30px;padding:0 0 16px;border-bottom:1px solid var(--line)}
-.toc-title{flex:0 0 100%;color:var(--ink);font:700 .7rem/1.35 var(--mono);letter-spacing:.08em;margin:8px 0 1px}
+/* 左侧粘性目录栏 + 右侧正文；配图向右超出正文栏，占满剩余宽度 */
+.layout{max-width:var(--max);margin:auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:34px;padding:26px 22px 80px}
+.toc{position:sticky;top:68px;align-self:start;max-height:calc(100vh - 92px);overflow:auto;padding-right:10px;border-right:1px solid var(--line)}
+.toc-title{color:var(--ink);font:700 .7rem/1.4 var(--mono);letter-spacing:.08em;margin:12px 0 3px}
 .toc-title:first-child{margin-top:0}
-.toc a{display:block;padding:1px 0;color:var(--ink2);font-size:.78rem;line-height:1.45;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.toc a{display:block;padding:2px 8px 2px 0;margin-right:-11px;color:var(--ink2);font-size:.78rem;line-height:1.45;text-decoration:none;border-right:2px solid transparent}
 .toc a:hover{color:var(--accent)}
 .toc a.sub{font-size:.72rem;color:var(--muted)}
-.toc a.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
-main{min-width:0}
+.toc a.active{color:var(--accent);border-right-color:var(--accent);font-weight:700}
+main{min-width:0;position:relative}
 
 /* ---------- chapters ---------- */
 .ch{padding-bottom:56px;margin-bottom:56px;border-bottom:1px solid var(--line);scroll-margin-top:72px}
@@ -81,8 +81,7 @@ figure svg{display:block;width:100%;height:auto}
 figcaption{padding:12px 16px;border-top:2px solid var(--rule);color:var(--ink2);font-size:.88rem;line-height:1.75}
 figcaption b{color:var(--ink);font-weight:700}
 .svgbox{overflow-x:auto}
-.svgbox svg{min-width:780px}
-/* 配图直接渲染为整幅宽度，不再需要点击放大 */
+/* 配图直接以整幅宽度渲染，不再需要点击放大 */
 figure.wide{width:100%;max-width:none}
 
 /* ---------- tables ---------- */
@@ -138,19 +137,24 @@ dl.kv dd:last-of-type{border-bottom:0}
 footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8rem/1.9 var(--mono);text-align:center}
 
 @media(max-width:920px){
- .layout{padding:16px 16px 60px}
+ .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:20px 16px 60px}
+ .toc{display:none}
  .pipe.c4,.pipe.c3,.grid2{grid-template-columns:1fr}
  table{min-width:640px}
+ figure.wide{width:100%;max-width:none;margin-right:0}
+}
+@media(max-width:760px){
+ /* 窄屏下按比例缩会看不清，给下限并允许图内横向滑动 */
+ .svgbox svg{min-width:640px}
 }
 @media(max-width:640px){
- .layout{padding:12px 12px 48px}
- .toc{gap:4px 10px;padding:9px 11px}
- figure.wide .svgbox svg{min-width:640px}
+ .layout{padding:14px 12px 48px}
 }
 @media print{
  .topbar,.toc,.progress{display:none}
  .layout{display:block;padding:0}
  .ch{break-inside:avoid}
+ figure.wide{width:100%;max-width:none;margin:26px 0 32px}
  a{color:#000}
 }
 </style>
@@ -288,50 +292,50 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <marker id="ar-m2" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d5b61"/></marker>
  </defs>
  <rect width="1080" height="470" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">DEPENDENCY MAP · 四段串联与章节落点</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">DEPENDENCY MAP · 四段串联与章节落点</text>
 
  <!-- four stages -->
  <g>
  <rect x="30" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="30" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="48" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">A · 模型结构</text>
+ <text x="48" y="86" fill="#0b6b74" font-size="11.6">A · 模型结构</text>
  <text x="48" y="110" fill="#28343a" font-size="10.5">基座主干、条件注入方式、</text>
  <text x="48" y="128" fill="#28343a" font-size="10.5">块级因果掩码、参考图作为</text>
  <text x="48" y="146" fill="#28343a" font-size="10.5">条件 token、音视频联合状态</text>
  <text x="48" y="172" fill="#0b6b74" font-size="10.5">回答：能不能「增量算」？</text>
- <text x="48" y="194" fill="#0b6b74" font-family="monospace" font-size="11">→ 第 01 章</text>
+ <text x="48" y="194" fill="#0b6b74" font-size="11">→ 第 01 章</text>
  <text x="48" y="212" fill="#4d5b61" font-size="10">U-ViT · UniDiffuser · S2 · R2</text>
 
  <rect x="290" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="290" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="308" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">B · 后训练（训练侧）</text>
+ <text x="308" y="86" fill="#0b6b74" font-size="11.6">B · 后训练（训练侧）</text>
  <text x="308" y="110" fill="#28343a" font-size="10.5">forcing 修补训练—推理落差；</text>
  <text x="308" y="128" fill="#28343a" font-size="10.5">蒸馏把 NFE 压到 1–4 步；</text>
  <text x="308" y="146" fill="#28343a" font-size="10.5">两者与稀疏/量化联合优化</text>
  <text x="308" y="172" fill="#0b6b74" font-size="10.5">回答：会不会跑飞？快不快？</text>
- <text x="308" y="194" fill="#0b6b74" font-family="monospace" font-size="11">→ 第 02 / 03 / 04 章</text>
+ <text x="308" y="194" fill="#0b6b74" font-size="11">→ 第 02 / 03 / 04 章</text>
  <text x="308" y="212" fill="#4d5b61" font-size="10">Forcing · DMD/PCM/rCM · 联合优化</text>
 
  <rect x="550" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="550" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="568" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">C · 推理运行时</text>
+ <text x="568" y="86" fill="#0b6b74" font-size="11.6">C · 推理运行时</text>
  <text x="568" y="110" fill="#28343a" font-size="10.5">RoPE 重定位让缓存可复用；</text>
  <text x="568" y="128" fill="#28343a" font-size="10.5">分布式稀疏并行（跨卡可行性）；</text>
  <text x="568" y="146" fill="#28343a" font-size="10.5">稀疏 MoE、注意力稀疏、KV 量化；</text>
  <text x="568" y="164" fill="#28343a" font-size="10.5">超分精修与轻量化 VAE</text>
  <text x="568" y="186" fill="#0b6b74" font-size="10.5">回答：一块要花多少？跨卡还成立吗？</text>
- <text x="568" y="204" fill="#0b6b74" font-family="monospace" font-size="11">→ 第 05 – 11 章</text>
+ <text x="568" y="204" fill="#0b6b74" font-size="11">→ 第 05 – 11 章</text>
  <text x="568" y="218" fill="#4d5b61" font-size="9.5">RoPE · db-SP/FVAttn · FastMoE/DIET · VSA/SLA · 超分/VAE</text>
 
  <rect x="810" y="58" width="240" height="164" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="810" y="58" width="240" height="5" fill="#0b6b74"/>
- <text x="828" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">D · 服务化与落地</text>
+ <text x="828" y="86" fill="#0b6b74" font-size="11.6">D · 服务化与落地</text>
  <text x="828" y="110" fill="#28343a" font-size="10.5">异步 DiT–VAE 流水、合批、</text>
  <text x="828" y="128" fill="#28343a" font-size="10.5">会话放置与状态迁移、</text>
  <text x="828" y="146" fill="#28343a" font-size="10.5">弹性供给与成本控制；</text>
  <text x="828" y="164" fill="#28343a" font-size="10.5">迁移与落地判断</text>
  <text x="828" y="186" fill="#0b6b74" font-size="10.5">回答：多人长会话扛不扛得住？</text>
- <text x="828" y="204" fill="#0b6b74" font-family="monospace" font-size="11">→ 第 09 / 10 章</text>
+ <text x="828" y="204" fill="#0b6b74" font-size="11">→ 第 09 / 10 章</text>
  <text x="828" y="218" fill="#4d5b61" font-size="9.5">TurboServe · 生数加速栈 · 会话调度</text>
  </g>
 
@@ -341,7 +345,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="794" y1="140" x2="808" y2="140" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
 
  <!-- what each stage makes possible -->
- <g font-size="10" font-family="monospace">
+ <g font-size="10">
  <text x="30" y="248" fill="#4d5b61">结构让「增量」成为可能</text>
  <text x="290" y="248" fill="#4d5b61">后训练让「长跑」成为可能</text>
  <text x="550" y="248" fill="#4d5b61">运行时让「实时」成为可能</text>
@@ -351,28 +355,28 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- feedback arrows -->
  <path d="M930,226 L930,282 L152,282 L152,226" fill="none" stroke="#4d5b61" stroke-dasharray="5 4" marker-end="url(#ar-m2)"/>
- <text x="360" y="300" fill="#4d5b61" font-family="monospace" font-size="10.5">反向约束：服务层的目标（如 P99 块延迟、单会话成本）反过来决定后训练要压到几步、稀疏到什么比例</text>
+ <text x="360" y="300" fill="#4d5b61" font-size="10.5">反向约束：服务层的目标（如 P99 块延迟、单会话成本）反过来决定后训练要压到几步、稀疏到什么比例</text>
 
  <!-- the four levers -->
- <text x="30" y="344" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">四个正交杠杆（乘性，不可相加）</text>
+ <text x="30" y="344" fill="#4d5b61" font-size="12" letter-spacing="1.6">四个正交杠杆（乘性，不可相加）</text>
  <g>
  <rect x="30" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="382" fill="#0b6b74" font-family="monospace" font-size="11">① 减少主干调用次数</text>
+ <text x="48" y="382" fill="#0b6b74" font-size="11">① 减少主干调用次数</text>
  <text x="48" y="404" fill="#28343a" font-size="10.5">蒸馏：几十步 → 1–4 步</text>
  <text x="48" y="424" fill="#4d5b61" font-size="10">收益最大；需重训 + 长时回归</text>
 
  <rect x="290" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="308" y="382" fill="#0b6b74" font-family="monospace" font-size="11">② 消除历史重算</text>
+ <text x="308" y="382" fill="#0b6b74" font-size="11">② 消除历史重算</text>
  <text x="308" y="404" fill="#28343a" font-size="10.5">块因果 + KV + RoPE 重定位</text>
  <text x="308" y="424" fill="#4d5b61" font-size="10">质量无损；依赖运行时机制</text>
 
  <rect x="550" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="568" y="382" fill="#0b6b74" font-family="monospace" font-size="11">③ 压缩单步成本</text>
+ <text x="568" y="382" fill="#0b6b74" font-size="11">③ 压缩单步成本</text>
  <text x="568" y="404" fill="#28343a" font-size="10.5">稀疏 MoE / 注意力稀疏 / 低比特 / 分块量化</text>
  <text x="568" y="424" fill="#4d5b61" font-size="10">长上下文收益大；破坏远端细节</text>
 
  <rect x="810" y="358" width="240" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="828" y="382" fill="#0b6b74" font-family="monospace" font-size="11">④ 跨卡分摊 + 藏波动</text>
+ <text x="828" y="382" fill="#0b6b74" font-size="11">④ 跨卡分摊 + 藏波动</text>
  <text x="828" y="404" fill="#28343a" font-size="10.5">分布式稀疏并行 / 异步流水 / 合批 / 迁移</text>
  <text x="828" y="424" fill="#4d5b61" font-size="10">并行决定稀疏可行性；调度藏住剩余波动</text>
  </g>
@@ -386,28 +390,28 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="2022 至 2026 年世界模型、长视频与实时生成技术演进时间线">
  <rect width="1080" height="420" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">EVOLUTION TIMELINE · 结构 → 训练 → 运行时 → 服务化</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">EVOLUTION TIMELINE · 结构 → 训练 → 运行时 → 服务化</text>
 
  <line x1="70" y1="210" x2="1040" y2="210" stroke="#a9b4b8" stroke-width="2"/>
 
  <!-- lane guides -->
  <line x1="70" y1="96" x2="1040" y2="96" stroke="#eef0f1"/>
  <line x1="70" y1="324" x2="1040" y2="324" stroke="#eef0f1"/>
- <text x="74" y="90" fill="#4d5b61" font-family="monospace" font-size="10">训练侧 / 算法</text>
- <text x="74" y="340" fill="#4d5b61" font-family="monospace" font-size="10">推理侧 / 系统</text>
+ <text x="74" y="90" fill="#4d5b61" font-size="10">训练侧 / 算法</text>
+ <text x="74" y="340" fill="#4d5b61" font-size="10">推理侧 / 系统</text>
 
  <!-- era shading -->
  <rect x="70" y="60" width="230" height="300" fill="#0b6b74" opacity=".05"/>
  <rect x="300" y="60" width="290" height="300" fill="#0b6b74" opacity=".05"/>
  <rect x="590" y="60" width="250" height="300" fill="#0b6b74" opacity=".05"/>
  <rect x="840" y="60" width="200" height="300" fill="#0b6b74" opacity=".05"/>
- <text x="86" y="78" fill="#0b6b74" font-family="monospace" font-size="10">结构奠基期</text>
- <text x="316" y="78" fill="#0b6b74" font-family="monospace" font-size="10">长视频与因果化</text>
- <text x="606" y="78" fill="#0b6b74" font-family="monospace" font-size="10">少步实时</text>
- <text x="856" y="78" fill="#0b6b74" font-family="monospace" font-size="10">产品化与服务化</text>
+ <text x="86" y="78" fill="#0b6b74" font-size="10">结构奠基期</text>
+ <text x="316" y="78" fill="#0b6b74" font-size="10">长视频与因果化</text>
+ <text x="606" y="78" fill="#0b6b74" font-size="10">少步实时</text>
+ <text x="856" y="78" fill="#0b6b74" font-size="10">产品化与服务化</text>
 
  <!-- year ticks -->
- <g font-family="monospace" font-size="10.5" fill="#4d5b61">
+ <g font-size="10.5" fill="#4d5b61">
  <text x="76" y="234" text-anchor="middle">2022</text><line x1="76" y1="204" x2="76" y2="216" stroke="#a9b4b8"/>
  <text x="196" y="234" text-anchor="middle">2023</text><line x1="196" y1="204" x2="196" y2="216" stroke="#a9b4b8"/>
  <text x="316" y="234" text-anchor="middle">2024</text><line x1="316" y1="204" x2="316" y2="216" stroke="#a9b4b8"/>
@@ -441,7 +445,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <rect x="880" y="278" width="150" height="40" fill="#ffffff" stroke="#0b6b74"/><text x="955" y="296" fill="#28343a" text-anchor="middle">RoPE 重定位</text><text x="955" y="311" fill="#4d5b61" text-anchor="middle">缓存未旋转 K</text>
  </g>
 
- <text x="70" y="400" fill="#4d5b61" font-size="10.5" font-family="monospace"></text>
+ <text x="70" y="400" fill="#4d5b61" font-size="10.5"></text>
  </svg>
  </div>
  <figcaption><b>FIG 0-2 · 训练侧与推理侧的配对演进</b>　每一次推理侧的能力跃迁，都对应训练侧一次方法创新。</figcaption>
@@ -466,14 +470,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 420" role="img" aria-label="视频生成模型的四次架构转向与本研究覆盖的四个模型">
  <rect width="1060" height="420" fill="#ffffff"/>
- <text x="24" y="24" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">三次架构转向：每一次都改变了「什么可以复用」</text>
+ <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">三次架构转向：每一次都改变了「什么可以复用」</text>
 
  <!-- phase 1 -->
  <g transform="translate(24,40)">
  <rect x="0" y="0" width="240" height="150" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① 图像扩散时代</text>
- <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">2020 – 2022</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="14" y="22" font-size="10.5" font-weight="700" fill="#101619">① 图像扩散时代</text>
+ <text x="14" y="40" font-size="9.5" fill="#4d5b61">2020 – 2022</text>
+ <g font-size="9">
  <rect x="14" y="52" width="212" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="120" y="69" text-anchor="middle">U-Net 主干（卷积为主）</text>
  <rect x="14" y="84" width="212" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="120" y="101" text-anchor="middle">像素空间 或 潜空间扩散</text>
  <rect x="14" y="116" width="212" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="120" y="133" text-anchor="middle">一个模型一个任务</text>
@@ -485,14 +489,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- phase 2 -->
  <g transform="translate(296,40)">
  <rect x="0" y="0" width="240" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② 转向纯 Transformer</text>
- <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">2022 – 2023</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="14" y="22" font-size="10.5" font-weight="700" fill="#101619">② 转向纯 Transformer</text>
+ <text x="14" y="40" font-size="9.5" fill="#4d5b61">2022 – 2023</text>
+ <g font-size="9">
  <rect x="14" y="52" width="212" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="120" y="69" text-anchor="middle">U-ViT：一切都是 token</text>
  <rect x="14" y="84" width="212" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="120" y="101" text-anchor="middle">UniDiffuser：一模型多任务</text>
  <rect x="14" y="116" width="212" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="120" y="133" text-anchor="middle">条件也作为 token 进入主干</text>
  </g>
- <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0b6b74">⇒ 新增模态只需定义 token 化</text>
+ <text x="14" y="164" font-size="9" fill="#0b6b74">⇒ 新增模态只需定义 token 化</text>
  </g>
 
  <text x="546" y="118" font-size="16" fill="#4d5b61">→</text>
@@ -500,14 +504,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- phase 3 -->
  <g transform="translate(568,40)">
  <rect x="0" y="0" width="228" height="150" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ 视频 DiT 与因果化</text>
- <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">2023 – 2025</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="14" y="22" font-size="10.5" font-weight="700" fill="#101619">③ 视频 DiT 与因果化</text>
+ <text x="14" y="40" font-size="9.5" fill="#4d5b61">2023 – 2025</text>
+ <g font-size="9">
  <rect x="14" y="52" width="200" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="114" y="69" text-anchor="middle">时空 patch + 3D RoPE</text>
  <rect x="14" y="84" width="200" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="114" y="101" text-anchor="middle">双向注意力 → 块级因果掩码</text>
  <rect x="14" y="116" width="200" height="26" fill="#ffffff" stroke="#a9b4b8"/><text x="114" y="133" text-anchor="middle">KV Cache 让历史从重算变只读</text>
  </g>
- <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0b6b74">⇒ 第一次出现「可增量提交」</text>
+ <text x="14" y="164" font-size="9" fill="#0b6b74">⇒ 第一次出现「可增量提交」</text>
  </g>
 
  <text x="806" y="118" font-size="16" fill="#4d5b61">→</text>
@@ -515,20 +519,20 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- phase 4 -->
  <g transform="translate(828,40)">
  <rect x="0" y="0" width="208" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="14" y="22" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">④ 实时世界模型</text>
- <text x="14" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">2025 – 2026</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="14" y="22" font-size="10.5" font-weight="700" fill="#101619">④ 实时世界模型</text>
+ <text x="14" y="40" font-size="9.5" fill="#4d5b61">2025 – 2026</text>
+ <g font-size="9">
  <rect x="14" y="52" width="180" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="104" y="69" text-anchor="middle">音视频 / 动作联合建模</text>
  <rect x="14" y="84" width="180" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="104" y="101" text-anchor="middle">少步 + 低分主干 + 精修</text>
  <rect x="14" y="116" width="180" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="104" y="133" text-anchor="middle">多时间尺度记忆</text>
  </g>
- <text x="14" y="164" font-family="ui-monospace,monospace" font-size="9" fill="#0b6b74">⇒ 边生成边接受控制</text>
+ <text x="14" y="164" font-size="9" fill="#0b6b74">⇒ 边生成边接受控制</text>
  </g>
 
  <line x1="24" y1="222" x2="1036" y2="222" stroke="#d8dee0"/>
 
- <text x="24" y="248" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#101619">本文覆盖的四个模型，各自继承了什么、又各自换了什么</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="24" y="248" font-size="11" font-weight="700" fill="#101619">本文覆盖的四个模型，各自继承了什么、又各自换了什么</text>
+ <g font-size="9">
  <rect x="24" y="260" width="240" height="76" fill="#ffffff" stroke="#0b6b74"/>
  <text x="38" y="280" font-weight="700" fill="#101619">生数 Vidu S1 / S2</text>
  <text x="38" y="298" fill="#28343a">自研 U-ViT 谱系</text>
@@ -555,9 +559,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <rect x="24" y="348" width="1012" height="60" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="38" y="368" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#101619">本章的阅读顺序</text>
- <text x="38" y="386" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">1.1 先讲 U-ViT / UniDiffuser 留下的两个设计遗产（下面所有模型都用到了它们）；1.2–1.5 逐个拆四家模型；1.6 横向对照。</text>
- <text x="38" y="402" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">如果只关心某一家，可以直接跳到 1.2–1.5 对应小节，各节自足。</text>
+ <text x="38" y="368" font-size="9.5" font-weight="700" fill="#101619">本章的阅读顺序</text>
+ <text x="38" y="386" font-size="9.5" fill="#28343a">1.1 先讲 U-ViT / UniDiffuser 留下的两个设计遗产（下面所有模型都用到了它们）；1.2–1.5 逐个拆四家模型；1.6 横向对照。</text>
+ <text x="38" y="402" font-size="9.5" fill="#4d5b61">如果只关心某一家，可以直接跳到 1.2–1.5 对应小节，各节自足。</text>
  </svg>
  </div>
  <figcaption><b>FIG 1-0 · 三次架构转向与本文覆盖的四个模型</b>　从 U-Net 到纯 Transformer 解决了「条件怎么进来」，从双向到块级因果解决了「能不能增量」，从纯视频到音视频／动作联合解决了「怎么接受实时控制」。</figcaption>
@@ -599,10 +603,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <svg viewBox="0 0 1060 430" role="img" aria-label="U-ViT 主干结构与 UniDiffuser 的多模态时间步调度">
  <rect width="1060" height="430" fill="#ffffff"/>
 
- <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">U-ViT 主干：所有输入都当 token，浅层与深层之间加长跳连接</text>
+ <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">U-ViT 主干：所有输入都当 token，浅层与深层之间加长跳连接</text>
 
  <!-- input tokens -->
- <g font-family="ui-monospace,monospace" font-size="10">
+ <g font-size="10">
  <rect x="24" y="42" width="86" height="34" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="67" y="58" text-anchor="middle">时间步 t</text><text x="67" y="70" text-anchor="middle" font-size="9" fill="#4d5b61">1 个 token</text>
  <rect x="118" y="42" width="86" height="34" fill="#ffffff" stroke="#a9b4b8"/>
@@ -616,8 +620,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- transformer -->
  <rect x="500" y="34" width="240" height="330" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="620" y="54" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#101619">统一 Transformer</text>
- <g font-family="ui-monospace,monospace" font-size="9.5">
+ <text x="620" y="54" text-anchor="middle" font-size="10.5" fill="#101619">统一 Transformer</text>
+ <g font-size="9.5">
  <rect x="520" y="66" width="200" height="30" fill="#ffffff" stroke="#a9b4b8"/><text x="620" y="85" text-anchor="middle">浅层 block</text>
  <rect x="520" y="102" width="200" height="30" fill="#ffffff" stroke="#a9b4b8"/><text x="620" y="121" text-anchor="middle">…</text>
  <rect x="520" y="138" width="200" height="30" fill="#ffffff" stroke="#a9b4b8"/><text x="620" y="157" text-anchor="middle">中间层 block</text>
@@ -626,26 +630,26 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
  <!-- long skip -->
  <path d="M500 81 C470 81 470 229 500 229" fill="none" stroke="#0b6b74" stroke-width="1.6" stroke-dasharray="5 3"/>
- <text x="424" y="150" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">长跳连接</text>
- <text x="424" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">（拼接+投影）</text>
- <text x="506" y="256" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">消融结论：关键在长跳连接；U-Net 的下采样/上采样并非必需</text>
+ <text x="424" y="150" font-size="9.5" fill="#0b6b74">长跳连接</text>
+ <text x="424" y="164" font-size="9.5" fill="#0b6b74">（拼接+投影）</text>
+ <text x="506" y="256" font-size="9.5" fill="#4d5b61">消融结论：关键在长跳连接；U-Net 的下采样/上采样并非必需</text>
 
  <!-- output head -->
  <rect x="520" y="280" width="200" height="30" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="620" y="299" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5">线性投影 + 可选 3×3 卷积</text>
+ <text x="620" y="299" text-anchor="middle" font-size="9.5">线性投影 + 可选 3×3 卷积</text>
  <rect x="520" y="318" width="200" height="30" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="620" y="337" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5">预测噪声 / x₀</text>
- <text x="756" y="200" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">位置编码：1D 可学习</text>
- <text x="756" y="218" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">时间步与条件各自作为一个 token</text>
- <text x="756" y="240" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">为什么重要</text>
- <text x="756" y="260" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">主干不为任何单一模态设专用通道</text>
- <text x="756" y="278" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">⇒ 新增条件 = 定义 token 化方式</text>
- <text x="756" y="296" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">　 ＋位置编码，不需要改主干</text>
- <text x="756" y="320" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">参考图能进同一个 DiT，源头在这里</text>
+ <text x="620" y="337" text-anchor="middle" font-size="9.5">预测噪声 / x₀</text>
+ <text x="756" y="200" font-size="10" fill="#28343a">位置编码：1D 可学习</text>
+ <text x="756" y="218" font-size="10" fill="#28343a">时间步与条件各自作为一个 token</text>
+ <text x="756" y="240" font-size="10.5" font-weight="700" fill="#101619">为什么重要</text>
+ <text x="756" y="260" font-size="10" fill="#28343a">主干不为任何单一模态设专用通道</text>
+ <text x="756" y="278" font-size="10" fill="#28343a">⇒ 新增条件 = 定义 token 化方式</text>
+ <text x="756" y="296" font-size="10" fill="#28343a">　 ＋位置编码，不需要改主干</text>
+ <text x="756" y="320" font-size="10" fill="#4d5b61">参考图能进同一个 DiT，源头在这里</text>
 
  <line x1="24" y1="378" x2="1036" y2="378" stroke="#d8dee0"/>
  <!-- UniDiffuser -->
- <g font-family="ui-monospace,monospace" font-size="9.5">
+ <g font-size="9.5">
  <text x="24" y="400" font-size="10.5" font-weight="700" fill="#101619">UniDiffuser：给每个模态各自输入时间步，同一网络换 t 组合就换任务</text>
  <text x="24" y="420">文本 t=0 ＋ 图像 t=T → 文生图　｜　文本 t=T ＋ 图像 t=0 → 图生文　｜　两者都 t=T → 图文对联合生成</text>
  </g>
@@ -701,11 +705,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <svg viewBox="0 0 1080 400" role="img" aria-label="爱诗 R2 的两过程框架与三通道多时间尺度记忆">
  <defs><marker id="ar-r2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
  <rect width="1080" height="400" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">PIXVERSE R2 · 两过程框架 ＋ 三通道记忆</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">PIXVERSE R2 · 两过程框架 ＋ 三通道记忆</text>
 
  <!-- traditional chain -->
- <text x="30" y="62" fill="#4d5b61" font-family="monospace" font-size="10.5">传统链（被 R2 批评为冗长）</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="30" y="62" fill="#4d5b61" font-size="10.5">传统链（被 R2 批评为冗长）</text>
+ <g font-size="9.5">
  <rect x="30" y="72" width="112" height="28" fill="#ffffff" stroke="#a9b4b8"/><text x="86" y="90" fill="#4d5b61" text-anchor="middle">双向模型</text>
  <rect x="150" y="72" width="120" height="28" fill="#ffffff" stroke="#a9b4b8"/><text x="210" y="90" fill="#4d5b61" text-anchor="middle">AR 转换</text>
  <rect x="278" y="72" width="140" height="28" fill="#ffffff" stroke="#a9b4b8"/><text x="348" y="90" fill="#4d5b61" text-anchor="middle">任务专用蒸馏 teacher</text>
@@ -715,9 +719,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="676" y="90" fill="#0b6b74" font-size="10">问题：teacher 与 student 之间存在<tspan fill="#0b6b74">架构间隙</tspan></text>
 
  <!-- R2 two processes -->
- <text x="30" y="134" fill="#0b6b74" font-family="monospace" font-size="11">R2 的两过程</text>
+ <text x="30" y="134" fill="#0b6b74" font-size="11">R2 的两过程</text>
  <rect x="30" y="146" width="310" height="92" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="48" y="170" fill="#0b6b74" font-family="monospace" font-size="11">① Omni Causal AR 持续预训练</text>
+ <text x="48" y="170" fill="#0b6b74" font-size="11">① Omni Causal AR 持续预训练</text>
  <text x="48" y="192" fill="#28343a" font-size="10">沿单一时间方向推进的状态转移模型</text>
  <text x="48" y="210" fill="#28343a" font-size="10">四类输入随时到达：text / 多模态参考 / audio / actions</text>
  <text x="48" y="228" fill="#4d5b61" font-size="9.5">→ 产物：一个因果底座</text>
@@ -725,33 +729,33 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="340" y1="192" x2="382" y2="192" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-r2)"/>
 
  <rect x="390" y="146" width="330" height="92" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="408" y="170" fill="#0b6b74" font-family="monospace" font-size="11">② Real-Time Acceleration</text>
+ <text x="408" y="170" fill="#0b6b74" font-size="11">② Real-Time Acceleration</text>
  <text x="408" y="192" fill="#28343a" font-size="10">直接蒸馏<tspan fill="#0b6b74">同一个</tspan>因果底座</text>
  <text x="408" y="210" fill="#28343a" font-size="10">student ODE 初始化与 teacher 同源</text>
  <text x="408" y="228" fill="#4d5b61" font-size="9.5">→ 不另训 fast model，规避架构间隙</text>
 
  <rect x="740" y="146" width="310" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="758" y="170" fill="#0b6b74" font-family="monospace" font-size="11">Dynamic Chunk Generation</text>
+ <text x="758" y="170" fill="#0b6b74" font-size="11">Dynamic Chunk Generation</text>
  <text x="758" y="192" fill="#28343a" font-size="10">按控制信号的语义边界与时长切 chunk</text>
  <text x="758" y="210" fill="#28343a" font-size="10">设最大 chunk 上限约束算力</text>
  <text x="758" y="228" fill="#4d5b61" font-size="9.5">短 chunk → 响应；长 chunk → 事件结构</text>
 
  <!-- memory channels -->
- <text x="30" y="278" fill="#0b6b74" font-family="monospace" font-size="11.5">Multi-Timescale Memory · 三个通道</text>
+ <text x="30" y="278" fill="#0b6b74" font-size="11.6">Multi-Timescale Memory · 三个通道</text>
  <rect x="30" y="292" width="326" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="316" fill="#0b6b74" font-family="monospace" font-size="11">① Sink Memory</text>
+ <text x="48" y="316" fill="#0b6b74" font-size="11">① Sink Memory</text>
  <text x="48" y="338" fill="#28343a" font-size="10">角色身份、环境、风格、世界规则</text>
  <text x="48" y="356" fill="#28343a" font-size="10">持久锚点，不参与淘汰</text>
  <text x="48" y="376" fill="#4d5b61" font-size="9.5">生命周期：全程</text>
 
  <rect x="372" y="292" width="326" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="390" y="316" fill="#0b6b74" font-family="monospace" font-size="11">② Rolling History</text>
+ <text x="390" y="316" fill="#0b6b74" font-size="11">② Rolling History</text>
  <text x="390" y="338" fill="#28343a" font-size="10">近期运动、姿态、相机、环境变化</text>
  <text x="390" y="356" fill="#28343a" font-size="10">滑动窗口，有界预算</text>
  <text x="390" y="376" fill="#4d5b61" font-size="9.5">生命周期：窗口长度</text>
 
  <rect x="714" y="292" width="336" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="732" y="316" fill="#0b6b74" font-family="monospace" font-size="11">③ Object KV Cache ← 最值得注意</text>
+ <text x="732" y="316" fill="#0b6b74" font-size="11">③ Object KV Cache ← 最值得注意</text>
  <text x="732" y="338" fill="#28343a" font-size="10">压缩复用仍与未来相关的<tspan fill="#0b6b74">物体级</tspan>历史表示</text>
  <text x="732" y="356" fill="#28343a" font-size="10">索引单位从「时间位置」变为「物体」</text>
  <text x="732" y="376" fill="#4d5b61" font-size="9.5">生命周期：与物体相关性绑定</text>
@@ -794,11 +798,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="LingBot-World 的 MoBA 掩码与双专家因果化">
  <rect width="1080" height="420" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">LINGBOT-WORLD · MOBA 掩码与双专家因果化</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">LINGBOT-WORLD · MOBA 掩码与双专家因果化</text>
 
  <!-- teacher forcing mask -->
  <g>
- <text x="30" y="64" fill="#4d5b61" font-family="monospace" font-size="11">纯 Teacher Forcing 掩码（因果，下三角）</text>
+ <text x="30" y="64" fill="#4d5b61" font-size="11">纯 Teacher Forcing 掩码（因果，下三角）</text>
  <g>
  <rect x="30" y="76" width="180" height="180" fill="#ffffff" stroke="#d8dee0"/>
  <!-- lower triangle -->
@@ -815,7 +819,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- MoBA mask -->
  <g>
- <text x="296" y="64" fill="#0b6b74" font-family="monospace" font-size="11">MoBA 掩码 = TF 掩码 + 一个双向全注意力块</text>
+ <text x="296" y="64" fill="#0b6b74" font-size="11">MoBA 掩码 = TF 掩码 + 一个双向全注意力块</text>
  <g>
  <rect x="296" y="76" width="180" height="180" fill="#ffffff" stroke="#d8dee0"/>
  <g fill="#a9b4b8" opacity=".55">
@@ -832,12 +836,12 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- dual expert -->
  <g>
  <rect x="516" y="76" width="534" height="180" fill="#ffffff" stroke="#0b6b74"/>
- <text x="534" y="100" fill="#0b6b74" font-family="monospace" font-size="11">MoE 双专家：总计约 28B，每步只激活一个</text>
+ <text x="534" y="100" fill="#0b6b74" font-size="11">MoE 双专家：总计约 28B，每步只激活一个</text>
  <rect x="534" y="114" width="240" height="56" fill="#ffffff" stroke="#0b6b74"/>
- <text x="654" y="136" fill="#0b6b74" font-size="10.5" text-anchor="middle" font-family="monospace">high-noise 专家 ≈ 14B</text>
+ <text x="654" y="136" fill="#0b6b74" font-size="10.5" text-anchor="middle">high-noise 专家 ≈ 14B</text>
  <text x="654" y="156" fill="#28343a" font-size="10" text-anchor="middle">全局结构、粗布局、动作条件动态</text>
  <rect x="790" y="114" width="240" height="56" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="910" y="136" fill="#0b6b74" font-size="10.5" text-anchor="middle" font-family="monospace">low-noise 专家 ≈ 14B</text>
+ <text x="910" y="136" fill="#0b6b74" font-size="10.5" text-anchor="middle">low-noise 专家 ≈ 14B</text>
  <text x="910" y="156" fill="#28343a" font-size="10" text-anchor="middle">细节恢复</text>
  <text x="534" y="192" fill="#28343a" font-size="10">因果化时 student <tspan fill="#0b6b74">由 high-noise 专家初始化</tspan>：其实验表明该专家的动作条件动态建模更优</text>
  <text x="534" y="212" fill="#28343a" font-size="10">mixed-timestep 协议 + 加入 t=0 干净帧监督，用于弥合两个专家的专精差异</text>
@@ -846,7 +850,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- bottom band -->
  <rect x="30" y="336" width="1020" height="70" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="48" y="360" fill="#0b6b74" font-family="monospace" font-size="11">v2 部署栈：TensorRT Refiner 与「三种 fps」的口径问题</text>
+ <text x="48" y="360" fill="#0b6b74" font-size="11">v2 部署栈：TensorRT Refiner 与「三种 fps」的口径问题</text>
  <text x="48" y="382" fill="#28343a" font-size="10">Spatio-temporal Refiner 先空间再时间、编译为 TensorRT 多 GPU 并行 ⇒ <tspan fill="#0b6b74">展示输出的 60fps 不等价于 DiT 原生生成 60 个独立物理状态/秒</tspan>。</text>
  <text x="48" y="400" fill="#28343a" font-size="10">评测时必须分开报告：native latent 生成频率 / 解码帧率 / 插帧后显示帧率。</text>
  </svg>
@@ -863,13 +867,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
     <div class="svgbox">
     <svg viewBox="0 0 1060 470" role="img" aria-label="PRoPE 如何把相机几何注入自注意力">
       <rect width="1060" height="470" fill="#ffffff"/>
-      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">PRoPE：把相机几何写成注意力里的一个变换</text>
-      <text x="24" y="46" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">思路：与其把相机参数当作额外条件喂进去，不如让 token 之间的交互天然依赖两台相机之间的相对关系。</text>
+      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">PRoPE：把相机几何写成注意力里的一个变换</text>
+      <text x="24" y="46" font-size="10" fill="#4d5b61">思路：与其把相机参数当作额外条件喂进去，不如让 token 之间的交互天然依赖两台相机之间的相对关系。</text>
 
       <!-- step 1 -->
       <rect x="24" y="62" width="322" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="84" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① 每帧的相机参数抬升为 4×4 投影矩阵</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="42" y="84" font-size="10.5" font-weight="700" fill="#101619">① 每帧的相机参数抬升为 4×4 投影矩阵</text>
+      <g font-size="9.5">
         <rect x="42" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
         <text x="98" y="116" text-anchor="middle">内参 Kᵢ</text>
         <rect x="162" y="96" width="112" height="32" fill="#ffffff" stroke="#d8dee0"/>
@@ -877,40 +881,40 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
         <text x="282" y="117" font-size="12" fill="#4d5b61">→</text>
       </g>
       <rect x="42" y="138" width="232" height="30" fill="#e6f3f4" stroke="#0b6b74"/>
-      <text x="158" y="158" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10">P̃ᵢ ：4×4，齐次坐标下可相乘</text>
-      <text x="42" y="190" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">两台相机的相对关系 = P̃₁ 与 P̃₂ 相乘</text>
-      <text x="42" y="204" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 相对量天然可表示，绝对量被自动消掉</text>
+      <text x="158" y="158" text-anchor="middle" font-size="10">P̃ᵢ ：4×4，齐次坐标下可相乘</text>
+      <text x="42" y="190" font-size="9.5" fill="#4d5b61">两台相机的相对关系 = P̃₁ 与 P̃₂ 相乘</text>
+      <text x="42" y="204" font-size="9.5" fill="#0b6b74">⇒ 相对量天然可表示，绝对量被自动消掉</text>
 
       <text x="362" y="140" font-size="14" fill="#4d5b61">→</text>
 
       <!-- step 2 -->
       <rect x="394" y="62" width="316" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="412" y="84" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② 组成每个 token 的块对角变换</text>
+      <text x="412" y="84" font-size="10.5" font-weight="700" fill="#101619">② 组成每个 token 的块对角变换</text>
       <rect x="412" y="96" width="280" height="58" fill="#ffffff" stroke="#d8dee0"/>
-      <g font-family="ui-monospace,monospace" font-size="9">
+      <g font-size="9">
         <text x="424" y="116">时间轴之外的 8 维：投影矩阵 P̃</text>
         <text x="424" y="132">空间两轴：仍用 RoPE（x、y 各自旋转）</text>
         <text x="424" y="147" fill="#4d5b61">整体写成 diag( I ⊗ P̃ , RoPE(x) , RoPE(y) )</text>
       </g>
-      <text x="412" y="178" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">只占用 9 个维度，其余维度保持原样</text>
-      <text x="412" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">⇒ 不改动原有注意力的形状，可直接接进现成 kernel</text>
+      <text x="412" y="178" font-size="9.5" fill="#0b6b74">只占用 9 个维度，其余维度保持原样</text>
+      <text x="412" y="196" font-size="9.5" fill="#4d5b61">⇒ 不改动原有注意力的形状，可直接接进现成 kernel</text>
 
       <text x="726" y="140" font-size="14" fill="#4d5b61">→</text>
 
       <!-- step 3 -->
       <rect x="758" y="62" width="278" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
-      <text x="776" y="84" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ 在注意力两端各施加一次</text>
-      <text x="776" y="108" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">query 乘 D，key 与 value 乘 D⁻¹</text>
-      <text x="776" y="132" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 相乘后 D 部分抵消，只留下</text>
-      <text x="776" y="148" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">　 两个 token 之间的相对投影变换</text>
-      <text x="776" y="174" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">这就是 GTA 形式：</text>
-      <text x="776" y="190" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">把变换「夹」在注意力的两侧</text>
-      <text x="776" y="206" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">注意力矩阵本身不变，只被重新参数化</text>
+      <text x="776" y="84" font-size="10.5" font-weight="700" fill="#101619">③ 在注意力两端各施加一次</text>
+      <text x="776" y="108" font-size="9.5" fill="#28343a">query 乘 D，key 与 value 乘 D⁻¹</text>
+      <text x="776" y="132" font-size="9.5" fill="#0b6b74">⇒ 相乘后 D 部分抵消，只留下</text>
+      <text x="776" y="148" font-size="9.5" fill="#0b6b74">　 两个 token 之间的相对投影变换</text>
+      <text x="776" y="174" font-size="9.5" fill="#28343a">这就是 GTA 形式：</text>
+      <text x="776" y="190" font-size="9.5" fill="#28343a">把变换「夹」在注意力的两侧</text>
+      <text x="776" y="206" font-size="9" fill="#4d5b61">注意力矩阵本身不变，只被重新参数化</text>
 
       <!-- outcome -->
       <rect x="24" y="232" width="1012" height="102" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="254" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">为什么这样做而不是「把相机参数当条件向量」</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="42" y="254" font-size="10.5" font-weight="700" fill="#101619">为什么这样做而不是「把相机参数当条件向量」</text>
+      <g font-size="9.5">
         <text x="42" y="278" fill="#28343a">条件向量回答的是「这一帧的相机在哪」，而生成需要的是「这两帧之间相机移动了多少」。</text>
         <text x="42" y="298" fill="#28343a">PRoPE 让相对量直接出现在注意力公式里，模型不必再从绝对量里学差值，</text>
         <text x="42" y="318" fill="#0b6b74">因此同一个权重可以迁移到没见过的相机轨迹上，这也是它被选作 minWM 第 1 阶段的原因。</text>
@@ -918,8 +922,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
       <!-- notes -->
       <rect x="24" y="350" width="1012" height="98" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="372" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">实现侧的三条约束</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="42" y="372" font-size="10.5" font-weight="700" fill="#101619">实现侧的三条约束</text>
+      <g font-size="9.5">
         <text x="42" y="396" fill="#28343a">① 注意力算子里要能插入 per-token 的线性变换，标准 FlashAttention 接口需要扩展；</text>
         <text x="42" y="416" fill="#28343a">② 变换与 RoPE 共用维度 ⇒ 两者的维度分配需要一起定，改动其一会破坏另一方；</text>
         <text x="42" y="436" fill="#28343a">③ 相机条件必须贯穿全部训练阶段（含蒸馏），否则蒸馏会把刚学到的几何控制抹掉。</text>
@@ -944,95 +948,95 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 470" role="img" aria-label="minWM 的 PRoPE 相机注入、三阶段因果化与流式推理拓扑">
  <rect width="1060" height="470" fill="#ffffff"/>
- <text x="24" y="24" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">minWM：把已有双向视频底座改造成相机可控的少步自回归世界模型</text>
- <text x="24" y="44" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">它不是新模型，而是一条改造流水线；已实例化在 Wan2.1-T2V-1.3B（cross-attention 条件）与 HY1.5-TI2V-8B（MMDiT）两种底座上</text>
+ <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">minWM：把已有双向视频底座改造成相机可控的少步自回归世界模型</text>
+ <text x="24" y="44" font-size="10" fill="#4d5b61">它不是新模型，而是一条改造流水线；已实例化在 Wan2.1-T2V-1.3B（cross-attention 条件）与 HY1.5-TI2V-8B（MMDiT）两种底座上</text>
 
  <!-- Phase 1 -->
  <rect x="24" y="58" width="500" height="176" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="44" y="80" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">Phase 1 · 相机可控微调：PRoPE 注入几何</text>
+ <text x="44" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 1 · 相机可控微调：PRoPE 注入几何</text>
 
- <g font-family="ui-monospace,monospace" font-size="9">
+ <g font-size="9">
  <rect x="44" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="92" y="107" text-anchor="middle">内参 Kᵢ</text><text x="92" y="119" text-anchor="middle" font-size="8" fill="#4d5b61">每帧相机参数</text>
+ <text x="92" y="107" text-anchor="middle">内参 Kᵢ</text><text x="92" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">每帧相机参数</text>
  <rect x="148" y="92" width="96" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="196" y="107" text-anchor="middle">外参 Tᵢ^cw</text><text x="196" y="119" text-anchor="middle" font-size="8" fill="#4d5b61">位姿</text>
+ <text x="196" y="107" text-anchor="middle">外参 Tᵢ^cw</text><text x="196" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">位姿</text>
  <text x="256" y="113" font-size="13">→</text>
  <rect x="284" y="92" width="220" height="34" fill="#e6f3f4" stroke="#0b6b74"/>
  <text x="394" y="107" text-anchor="middle">抬升为投影矩阵 P̃ᵢ ∈ R⁴ˣ⁴</text>
- <text x="394" y="119" text-anchor="middle" font-size="8" fill="#4d5b61">P̃ᵢ = [[Kᵢ 0]Tᵢ^cw ; e₄ᵀ]</text>
+ <text x="394" y="119" text-anchor="middle" font-size="8.1" fill="#4d5b61">P̃ᵢ = [[Kᵢ 0]Tᵢ^cw ; e₄ᵀ]</text>
  </g>
 
  <rect x="44" y="138" width="460" height="34" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="54" y="152" font-family="ui-monospace,monospace" font-size="9">块对角变换 D_t = diag( I ⊗ P̃_{i(t)} , diag(RoPE(x_t), RoPE(y_t)) )</text>
- <text x="54" y="166" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">时间轴之外的 8 维承载投影矩阵，空间两轴仍用 RoPE</text>
+ <text x="54" y="152" font-size="9">块对角变换 D_t = diag( I ⊗ P̃_{i(t)} , diag(RoPE(x_t), RoPE(y_t)) )</text>
+ <text x="54" y="166" font-size="9" fill="#4d5b61">时间轴之外的 8 维承载投影矩阵，空间两轴仍用 RoPE</text>
 
  <rect x="44" y="180" width="460" height="46" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="54" y="196" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#101619">以 GTA 形式注入自注意力</text>
- <text x="54" y="212" font-family="ui-monospace,monospace" font-size="9">Attn_PRoPE(Q,K,V) = D ⊙ Attn( Dᵀ⊙Q , D⁻¹⊙K , D⁻¹⊙V )</text>
- <text x="54" y="224" font-family="ui-monospace,monospace" font-size="8.5" fill="#4d5b61">⇒ token 间交互依赖相对投影变换 P̃_{i(t₁)}P̃_{i(t₂)}⁻¹，同时编码相对内参与位姿，且不破坏原注意力结构</text>
+ <text x="54" y="196" font-size="9.5" font-weight="700" fill="#101619">以 GTA 形式注入自注意力</text>
+ <text x="54" y="212" font-size="9">Attn_PRoPE(Q,K,V) = D ⊙ Attn( Dᵀ⊙Q , D⁻¹⊙K , D⁻¹⊙V )</text>
+ <text x="54" y="224" font-size="8.6" fill="#4d5b61">⇒ token 间交互依赖相对投影变换 P̃_{i(t₁)}P̃_{i(t₂)}⁻¹，同时编码相对内参与位姿，且不破坏原注意力结构</text>
 
  <!-- Phase 2 -->
  <rect x="540" y="58" width="496" height="176" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="560" y="80" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">Phase 2 · 三阶段因果化与少步蒸馏</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="560" y="80" font-size="10.5" font-weight="700" fill="#101619">Phase 2 · 三阶段因果化与少步蒸馏</text>
+ <g font-size="9">
  <rect x="560" y="90" width="212" height="40" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="666" y="105" text-anchor="middle">Stage 1 · Teacher Forcing</text>
- <text x="666" y="119" text-anchor="middle" font-size="8.5" fill="#4d5b61">干净历史 + 带噪当前块 + 因果掩码</text>
+ <text x="666" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">干净历史 + 带噪当前块 + 因果掩码</text>
  <rect x="784" y="90" width="232" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
  <text x="900" y="105" text-anchor="middle">Stage 2 · ODE / causal CD 初始化</text>
- <text x="900" y="119" text-anchor="middle" font-size="8.5" fill="#4d5b61">用 AR teacher 做少步初始化</text>
+ <text x="900" y="119" text-anchor="middle" font-size="8.6" fill="#4d5b61">用 AR teacher 做少步初始化</text>
  <rect x="560" y="138" width="212" height="40" fill="#e6f3f4" stroke="#0b6b74"/>
  <text x="666" y="153" text-anchor="middle">Stage 3 · 非对称 DMD</text>
- <text x="666" y="167" text-anchor="middle" font-size="8.5" fill="#4d5b61">学生自滚动；双向教师作 real score</text>
+ <text x="666" y="167" text-anchor="middle" font-size="8.6" fill="#4d5b61">学生自滚动；双向教师作 real score</text>
  <text x="784" y="164" font-size="9" fill="#28343a">相机条件贯穿三个阶段 ——</text>
  <text x="784" y="178" font-size="9" fill="#28343a">否则蒸馏会把条件抹掉</text>
  </g>
- <text x="560" y="196" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">训练配置：480×832、77 帧、AR chunk = 4 latent frames、蒸馏 4 步</text>
- <text x="560" y="212" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">有效 batch 下限：&lt;4 学不到；8 不稳；16 可完成全流程</text>
- <text x="560" y="228" font-family="ui-monospace,monospace" font-size="9" fill="#0b6b74">单 A800、排除 VAE：首帧 269.055 s → 1.137 s（Wan，236.64×）</text>
+ <text x="560" y="196" font-size="9" fill="#4d5b61">训练配置：480×832、77 帧、AR chunk = 4 latent frames、蒸馏 4 步</text>
+ <text x="560" y="212" font-size="9" fill="#4d5b61">有效 batch 下限：&lt;4 学不到；8 不稳；16 可完成全流程</text>
+ <text x="560" y="228" font-size="9" fill="#0b6b74">单 A800、排除 VAE：首帧 269.055 s → 1.137 s（Wan，236.64×）</text>
 
  <line x1="24" y1="254" x2="1036" y2="254" stroke="#d8dee0"/>
 
  <!-- streaming topology -->
- <text x="24" y="278" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#101619">流式推理拓扑（单块循环）</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="24" y="278" font-size="11" font-weight="700" fill="#101619">流式推理拓扑（单块循环）</text>
+ <g font-size="9">
  <rect x="24" y="290" width="150" height="52" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="99" y="308" text-anchor="middle">CPU 控制线程</text>
- <text x="99" y="322" text-anchor="middle" font-size="8.5" fill="#4d5b61">接收键鼠 / 相机轨迹</text>
- <text x="99" y="335" text-anchor="middle" font-size="8.5" fill="#4d5b61">提前生成下一块 PRoPE 参数</text>
+ <text x="99" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">接收键鼠 / 相机轨迹</text>
+ <text x="99" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">提前生成下一块 PRoPE 参数</text>
  <text x="182" y="320" font-size="13">→</text>
 
  <rect x="200" y="290" width="180" height="52" fill="#e6f3f4" stroke="#0b6b74"/>
  <text x="290" y="308" text-anchor="middle">NPU Stream A</text>
- <text x="290" y="322" text-anchor="middle" font-size="8.5" fill="#4d5b61">4-step causal DiT</text>
- <text x="290" y="335" text-anchor="middle" font-size="8.5" fill="#4d5b61">读只增 / 滚动 KV</text>
+ <text x="290" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">4-step causal DiT</text>
+ <text x="290" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">读只增 / 滚动 KV</text>
  <text x="388" y="320" font-size="13">→</text>
 
  <rect x="406" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="496" y="308" text-anchor="middle">NPU Stream B</text>
- <text x="496" y="322" text-anchor="middle" font-size="8.5" fill="#4d5b61">上一块 VAE decode</text>
- <text x="496" y="335" text-anchor="middle" font-size="8.5" fill="#4d5b61">与后处理</text>
+ <text x="496" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">上一块 VAE decode</text>
+ <text x="496" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">与后处理</text>
  <text x="594" y="320" font-size="13">→</text>
 
  <rect x="612" y="290" width="180" height="52" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="702" y="308" text-anchor="middle">输出线程</text>
- <text x="702" y="322" text-anchor="middle" font-size="8.5" fill="#4d5b61">按帧显示 / 编码</text>
- <text x="702" y="335" text-anchor="middle" font-size="8.5" fill="#4d5b61">向推理端提供背压</text>
+ <text x="702" y="322" text-anchor="middle" font-size="8.6" fill="#4d5b61">按帧显示 / 编码</text>
+ <text x="702" y="335" text-anchor="middle" font-size="8.6" fill="#4d5b61">向推理端提供背压</text>
  </g>
 
  <rect x="812" y="290" width="224" height="52" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="924" y="308" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5">会话状态显式管理</text>
- <text x="924" y="324" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#4d5b61">KV 页 · RoPE offset · 随机状态</text>
- <text x="924" y="337" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#4d5b61">动作时间戳</text>
+ <text x="924" y="308" text-anchor="middle" font-size="9.5">会话状态显式管理</text>
+ <text x="924" y="324" text-anchor="middle" font-size="8.6" fill="#4d5b61">KV 页 · RoPE offset · 随机状态</text>
+ <text x="924" y="337" text-anchor="middle" font-size="8.6" fill="#4d5b61">动作时间戳</text>
 
  <rect x="24" y="356" width="1012" height="46" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="44" y="376" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#0b6b74">两个必须计入的边界</text>
- <text x="44" y="394" font-family="ui-monospace,monospace" font-size="9">① 论文的首帧数字明确排除 VAE：真实首帧应包含文本/图像预处理、DiT、VAE、设备同步与传输；② 仓库当前用 torch.cat 逐块扩展视觉 KV，</text>
- <text x="44" y="406" font-family="ui-monospace,monospace" font-size="9">README 仍把更广义的 inference acceleration 标为 TBD ⇒ <tspan font-weight="700">有 KV cache ≠ 有长时有界的 rolling / paged KV</tspan></text>
+ <text x="44" y="376" font-size="9.5" font-weight="700" fill="#0b6b74">两个必须计入的边界</text>
+ <text x="44" y="394" font-size="9">① 论文的首帧数字明确排除 VAE：真实首帧应包含文本/图像预处理、DiT、VAE、设备同步与传输；② 仓库当前用 torch.cat 逐块扩展视觉 KV，</text>
+ <text x="44" y="406" font-size="9">README 仍把更广义的 inference acceleration 标为 TBD ⇒ <tspan font-weight="700">有 KV cache ≠ 有长时有界的 rolling / paged KV</tspan></text>
 
  <rect x="24" y="414" width="1012" height="46" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="44" y="434" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#101619">这条流水线里最值得抄走的两条经验</text>
- <text x="44" y="452" font-family="ui-monospace,monospace" font-size="9">① 相机数据比算法更难：直接使用感知估计位姿学不到可靠控制，改用「重建 + 按指定轨迹重渲染」才成功；② 条件必须贯穿所有训练阶段。</text>
+ <text x="44" y="434" font-size="9.5" font-weight="700" fill="#101619">这条流水线里最值得抄走的两条经验</text>
+ <text x="44" y="452" font-size="9">① 相机数据比算法更难：直接使用感知估计位姿学不到可靠控制，改用「重建 + 按指定轨迹重渲染」才成功；② 条件必须贯穿所有训练阶段。</text>
  </svg>
  </div>
  <figcaption><b>FIG 1-5 · minWM 的改造流水线与流式拓扑</b>　上半是 PRoPE 几何注入与三阶段因果化，下半是单块流式循环的目标执行拓扑。</figcaption>
@@ -1058,12 +1062,12 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 400" role="img" aria-label="四种注意力掩码对照：双向、块级因果、MoBA、固定规则稀疏">
  <rect width="1060" height="400" fill="#ffffff"/>
- <text x="24" y="24" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">四种注意力掩码：这是「能不能流式」最直观的判据</text>
- <text x="24" y="42" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">纵轴 = query（第 i 块），横轴 = key（第 j 块）。格 = 该 query 能否看到该 key；深色 = 可见。</text>
+ <text x="24" y="24" font-size="12" font-weight="700" fill="#101619">四种注意力掩码：这是「能不能流式」最直观的判据</text>
+ <text x="24" y="42" font-size="10" fill="#4d5b61">纵轴 = query（第 i 块），横轴 = key（第 j 块）。格 = 该 query 能否看到该 key；深色 = 可见。</text>
 
  <!-- 1 bidirectional -->
  <g transform="translate(24,58)">
- <text x="0" y="0" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① 双向（离线模型）</text>
+ <text x="0" y="0" font-size="10.5" font-weight="700" fill="#101619">① 双向（离线模型）</text>
  <g>
  <rect x="0" y="12" width="150" height="150" fill="#ffffff" stroke="#a9b4b8"/>
  <g fill="#a9b4b8">
@@ -1078,14 +1082,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="0" y1="102" x2="150" y2="102"/><line x1="0" y1="132" x2="150" y2="132"/>
  </g>
  </g>
- <text x="0" y="182" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">每块都能看到未来块</text>
- <text x="0" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 不能边生成边提交</text>
- <text x="0" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">质量问题：可以整段联合去噪</text>
+ <text x="0" y="182" font-size="9.5" fill="#28343a">每块都能看到未来块</text>
+ <text x="0" y="196" font-size="9.5" fill="#0b6b74">⇒ 不能边生成边提交</text>
+ <text x="0" y="210" font-size="9.5" fill="#4d5b61">质量问题：可以整段联合去噪</text>
  </g>
 
  <!-- 2 block causal -->
  <g transform="translate(276,58)">
- <text x="0" y="0" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② 块级因果（Vidu / 流式）</text>
+ <text x="0" y="0" font-size="10.5" font-weight="700" fill="#101619">② 块级因果（Vidu / 流式）</text>
  <g>
  <rect x="0" y="12" width="150" height="150" fill="#ffffff" stroke="#a9b4b8"/>
  <g fill="#0b6b74" opacity=".72">
@@ -1102,14 +1106,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="0" y1="102" x2="150" y2="102"/><line x1="0" y1="132" x2="150" y2="132"/>
  </g>
  </g>
- <text x="0" y="182" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">下三角：块内双向、块间因果</text>
- <text x="0" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 可以流式，历史可只读</text>
- <text x="0" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">代价：误差会跨块累积</text>
+ <text x="0" y="182" font-size="9.5" fill="#28343a">下三角：块内双向、块间因果</text>
+ <text x="0" y="196" font-size="9.5" fill="#0b6b74">⇒ 可以流式，历史可只读</text>
+ <text x="0" y="210" font-size="9.5" fill="#0b6b74">代价：误差会跨块累积</text>
  </g>
 
  <!-- 3 MoBA -->
  <g transform="translate(528,58)">
- <text x="0" y="0" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ MoBA（LingBot-World 2.0）</text>
+ <text x="0" y="0" font-size="10.5" font-weight="700" fill="#101619">③ MoBA（LingBot-World 2.0）</text>
  <g>
  <rect x="0" y="12" width="150" height="150" fill="#ffffff" stroke="#a9b4b8"/>
  <g fill="#0b6b74" opacity=".72">
@@ -1126,14 +1130,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="0" y1="102" x2="150" y2="102"/><line x1="0" y1="132" x2="150" y2="132"/>
  </g>
  </g>
- <text x="0" y="182" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">在纯因果掩码上<tspan font-weight="700">追加一个双向块</tspan></text>
- <text x="0" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">动机：上下文越长，纯 TF 会让模型只</text>
- <text x="0" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">依赖上下文、不再预测未来帧</text>
+ <text x="0" y="182" font-size="9.5" fill="#0b6b74">在纯因果掩码上<tspan font-weight="700">追加一个双向块</tspan></text>
+ <text x="0" y="196" font-size="9.5" fill="#28343a">动机：上下文越长，纯 TF 会让模型只</text>
+ <text x="0" y="210" font-size="9.5" fill="#28343a">依赖上下文、不再预测未来帧</text>
  </g>
 
  <!-- 4 fixed sparse -->
  <g transform="translate(780,58)">
- <text x="0" y="0" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">④ 固定规则稀疏（OSP-Next）</text>
+ <text x="0" y="0" font-size="10.5" font-weight="700" fill="#101619">④ 固定规则稀疏（OSP-Next）</text>
  <g>
  <rect x="0" y="12" width="150" height="150" fill="#ffffff" stroke="#a9b4b8"/>
  <g fill="#0b6b74" opacity=".72">
@@ -1151,16 +1155,16 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="0" y1="102" x2="150" y2="102"/><line x1="0" y1="132" x2="150" y2="132"/>
  </g>
  </g>
- <text x="0" y="182" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Skiparse：固定 skip 间隔 + 交替模式</text>
- <text x="0" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 掩码可离线确定、子序列等长</text>
- <text x="0" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">⇒ 逐轮负载天然均衡（见第 06 章）</text>
+ <text x="0" y="182" font-size="9.5" fill="#28343a">Skiparse：固定 skip 间隔 + 交替模式</text>
+ <text x="0" y="196" font-size="9.5" fill="#0b6b74">⇒ 掩码可离线确定、子序列等长</text>
+ <text x="0" y="210" font-size="9.5" fill="#28343a">⇒ 逐轮负载天然均衡（见第 06 章）</text>
  </g>
 
  <line x1="24" y1="292" x2="1036" y2="292" stroke="#d8dee0"/>
- <text x="24" y="316" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">判据：掩码的每一行能不能在「只看到当前为止」的条件下决定？</text>
- <text x="24" y="338" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">① 行内包含未来列 ⇒ 不可流式；②③④ 行内只含过去与当前 ⇒ 可流式，差别只在「少看多少」与「少看的方式是否可预知」。</text>
- <text x="24" y="360" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">再往下一层：稀疏选择是<tspan font-weight="700">阈值型</tspan>（单块到达即可判定）还是<tspan font-weight="700">排序型</tspan>（需要整行排名）——后者在跨卡时不可实现，详见第 06 章。</text>
- <text x="24" y="382" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">训练侧的要求也随之不同：①②需要 forcing 后训练来承受自生成历史（第 02 章），④还需要 Sparse Adaptation 之类的退火过程才能训练稳定。</text>
+ <text x="24" y="316" font-size="10.5" font-weight="700" fill="#101619">判据：掩码的每一行能不能在「只看到当前为止」的条件下决定？</text>
+ <text x="24" y="338" font-size="10" fill="#28343a">① 行内包含未来列 ⇒ 不可流式；②③④ 行内只含过去与当前 ⇒ 可流式，差别只在「少看多少」与「少看的方式是否可预知」。</text>
+ <text x="24" y="360" font-size="10" fill="#28343a">再往下一层：稀疏选择是<tspan font-weight="700">阈值型</tspan>（单块到达即可判定）还是<tspan font-weight="700">排序型</tspan>（需要整行排名）——后者在跨卡时不可实现，详见第 06 章。</text>
+ <text x="24" y="382" font-size="10" fill="#4d5b61">训练侧的要求也随之不同：①②需要 forcing 后训练来承受自生成历史（第 02 章），④还需要 Sparse Adaptation 之类的退火过程才能训练稳定。</text>
  </svg>
  </div>
  <figcaption><b>FIG 1-6 · 四种注意力掩码对照</b>　从双向到块级因果、MoBA、固定规则稀疏，掩码的可见性决定了模型能不能流式、能不能跨卡稀疏。</figcaption>
@@ -1204,10 +1208,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 440" role="img" aria-label="暴露偏差导致的跨块误差累积，以及 forcing 的三个修补点">
  <rect width="1060" height="440" fill="#ffffff"/>
- <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">误差沿时间维累积，以及三个可以下手的位置</text>
+ <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">误差沿时间维累积，以及三个可以下手的位置</text>
 
- <text x="24" y="58" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">教师 / 训练期：历史为干净真值</text>
- <g font-family="ui-monospace,monospace" font-size="9.5">
+ <text x="24" y="58" font-size="10.5" font-weight="700" fill="#101619">教师 / 训练期：历史为干净真值</text>
+ <g font-size="9.5">
  <rect x="24" y="68" width="86" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="67" y="87" text-anchor="middle">x1 真值</text>
  <rect x="122" y="68" width="86" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="165" y="87" text-anchor="middle">x2 真值</text>
  <rect x="220" y="68" width="86" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="263" y="87" text-anchor="middle">x3 真值</text>
@@ -1216,10 +1220,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="112" y1="83" x2="120" y2="83" stroke="#0b6b74"/>
  <line x1="210" y1="83" x2="218" y2="83" stroke="#0b6b74"/>
  <line x1="308" y1="83" x2="316" y2="83" stroke="#0b6b74"/>
- <text x="424" y="87" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">每块误差有界、不累积：误差不进入下一步的输入</text>
+ <text x="424" y="87" font-size="9.5" fill="#4d5b61">每块误差有界、不累积：误差不进入下一步的输入</text>
 
- <text x="24" y="136" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#0b6b74">学生 / 推理期：历史为自己的采样</text>
- <g font-family="ui-monospace,monospace" font-size="9.5">
+ <text x="24" y="136" font-size="10.5" font-weight="700" fill="#0b6b74">学生 / 推理期：历史为自己的采样</text>
+ <g font-size="9.5">
  <rect x="24" y="146" width="86" height="30" fill="#eef2f3" stroke="#0b6b74"/><text x="67" y="165" text-anchor="middle">x̂1</text>
  <rect x="122" y="146" width="86" height="30" fill="#eef2f3" stroke="#0b6b74"/><text x="165" y="165" text-anchor="middle">x̂2</text>
  <rect x="220" y="146" width="86" height="30" fill="#eef2f3" stroke="#0b6b74"/><text x="263" y="165" text-anchor="middle">x̂3</text>
@@ -1233,37 +1237,37 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="406" y1="161" x2="414" y2="161" stroke="#0b6b74"/>
  <line x1="504" y1="161" x2="512" y2="161" stroke="#0b6b74"/>
  <polyline points="67,196 165,204 263,218 361,244 459,282 557,330" fill="none" stroke="#0b6b74" stroke-width="2"/>
- <text x="24" y="210" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">误差曲线：指数放大 ⇒ 几十块后身份与背景突变</text>
+ <text x="24" y="210" font-size="9.5" fill="#0b6b74">误差曲线：指数放大 ⇒ 几十块后身份与背景突变</text>
 
  <rect x="24" y="240" width="324" height="182" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="40" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">修补 A · 给历史注入噪声</text>
- <text x="40" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Diffusion Forcing：每个时序 token 可处于独立</text>
- <text x="40" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">噪声等级 ⇒ 模型见过「不干净的历史」</text>
- <text x="40" y="328" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Vidu / LingBot / 爱诗 R2 的 TF/DF 混合：</text>
- <text x="40" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">按概率抽样决定该用干净还是加噪前缀</text>
- <text x="40" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✔ 覆盖推理分布的一大类</text>
- <text x="40" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✘ 不保证与「自生成历史」一致，分布仍是人造的</text>
- <text x="40" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">代表：Diffusion Forcing（arXiv 2407.01392）</text>
+ <text x="40" y="264" font-size="10.5" font-weight="700" fill="#101619">修补 A · 给历史注入噪声</text>
+ <text x="40" y="288" font-size="9.5" fill="#28343a">Diffusion Forcing：每个时序 token 可处于独立</text>
+ <text x="40" y="304" font-size="9.5" fill="#28343a">噪声等级 ⇒ 模型见过「不干净的历史」</text>
+ <text x="40" y="328" font-size="9.5" fill="#28343a">Vidu / LingBot / 爱诗 R2 的 TF/DF 混合：</text>
+ <text x="40" y="344" font-size="9.5" fill="#28343a">按概率抽样决定该用干净还是加噪前缀</text>
+ <text x="40" y="374" font-size="9.5" fill="#0b6b74">✔ 覆盖推理分布的一大类</text>
+ <text x="40" y="394" font-size="9.5" fill="#0b6b74">✘ 不保证与「自生成历史」一致，分布仍是人造的</text>
+ <text x="40" y="412" font-size="9" fill="#4d5b61">代表：Diffusion Forcing（arXiv 2407.01392）</text>
 
  <rect x="366" y="240" width="324" height="182" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="382" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">修补 B · 在自生成轨迹上训练</text>
- <text x="382" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Self-Forcing：训练期就做自回归 rollout 并启用</text>
- <text x="382" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">KV caching，监督落在整段视频级的分布匹配上</text>
- <text x="382" y="328" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">梯度截断：只对每帧最后一个去噪步反传</text>
- <text x="382" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">随机退出步：保证各中间步都收到监督</text>
- <text x="382" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✔ 直接优化部署分布</text>
- <text x="382" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✘ 历史仍被「干净」喂入且 detach（见修补 C）</text>
- <text x="382" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">代表：Self-Forcing（arXiv 2506.08009）</text>
+ <text x="382" y="264" font-size="10.5" font-weight="700" fill="#101619">修补 B · 在自生成轨迹上训练</text>
+ <text x="382" y="288" font-size="9.5" fill="#28343a">Self-Forcing：训练期就做自回归 rollout 并启用</text>
+ <text x="382" y="304" font-size="9.5" fill="#28343a">KV caching，监督落在整段视频级的分布匹配上</text>
+ <text x="382" y="328" font-size="9.5" fill="#28343a">梯度截断：只对每帧最后一个去噪步反传</text>
+ <text x="382" y="344" font-size="9.5" fill="#28343a">随机退出步：保证各中间步都收到监督</text>
+ <text x="382" y="374" font-size="9.5" fill="#0b6b74">✔ 直接优化部署分布</text>
+ <text x="382" y="394" font-size="9.5" fill="#0b6b74">✘ 历史仍被「干净」喂入且 detach（见修补 C）</text>
+ <text x="382" y="412" font-size="9" fill="#4d5b61">代表：Self-Forcing（arXiv 2506.08009）</text>
 
  <rect x="708" y="240" width="328" height="182" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="724" y="264" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">修补 C · 重加噪 + 跨块梯度</text>
- <text x="724" y="288" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Self-Replay Forcing：rollout 后对自生成轨迹</text>
- <text x="724" y="304" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a"><tspan font-weight="700">按块独立重新加噪</tspan>，再做一次<tspan font-weight="700">开启梯度</tspan>的</text>
- <text x="724" y="320" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">因果重放 ⇒ 后段损失可前传，但不回穿 rollout</text>
- <text x="724" y="344" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">同时修补「干净历史」与「detach」两个缺陷</text>
- <text x="724" y="374" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✔ 训练条件与推理条件在两个维度上对齐</text>
- <text x="724" y="394" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">✘ 训练成本最高；需长时域回归验收</text>
- <text x="724" y="412" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">代表：Vidu S2 的 L_SRF（arXiv 2609.11638）</text>
+ <text x="724" y="264" font-size="10.5" font-weight="700" fill="#101619">修补 C · 重加噪 + 跨块梯度</text>
+ <text x="724" y="288" font-size="9.5" fill="#28343a">Self-Replay Forcing：rollout 后对自生成轨迹</text>
+ <text x="724" y="304" font-size="9.5" fill="#28343a"><tspan font-weight="700">按块独立重新加噪</tspan>，再做一次<tspan font-weight="700">开启梯度</tspan>的</text>
+ <text x="724" y="320" font-size="9.5" fill="#28343a">因果重放 ⇒ 后段损失可前传，但不回穿 rollout</text>
+ <text x="724" y="344" font-size="9.5" fill="#28343a">同时修补「干净历史」与「detach」两个缺陷</text>
+ <text x="724" y="374" font-size="9.5" fill="#0b6b74">✔ 训练条件与推理条件在两个维度上对齐</text>
+ <text x="724" y="394" font-size="9.5" fill="#0b6b74">✘ 训练成本最高；需长时域回归验收</text>
+ <text x="724" y="412" font-size="9" fill="#4d5b61">代表：Vidu S2 的 L_SRF（arXiv 2609.11638）</text>
  </svg>
  </div>
  <figcaption><b>FIG 2-1 · 暴露偏差与 forcing 的三个修补点</b>　三个修补点分别对应：让模型见过脏历史（A）、在自生成轨迹上训练（B）、同时修补噪声水平与梯度范围（C）。2026 年的产品级系统基本都在 B+C。</figcaption>
@@ -1427,65 +1431,65 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 470" role="img" aria-label="Self-Replay Forcing 三步流程与 Self-Forcing 的对比">
  <rect width="1060" height="470" fill="#ffffff"/>
- <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">Self-Replay Forcing：rollout → 重加噪 → 因果重放</text>
+ <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">Self-Replay Forcing：rollout → 重加噪 → 因果重放</text>
 
  <rect x="24" y="44" width="316" height="164" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="40" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① Rollout（无梯度）</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="40" y="68" font-size="10.5" font-weight="700" fill="#101619">① Rollout（无梯度）</text>
+ <g font-size="9">
  <rect x="40" y="80" width="56" height="24" fill="#ffffff" stroke="#a9b4b8"/><text x="68" y="96" text-anchor="middle">blk1</text>
  <rect x="102" y="80" width="56" height="24" fill="#ffffff" stroke="#a9b4b8"/><text x="130" y="96" text-anchor="middle">blk2</text>
  <rect x="164" y="80" width="56" height="24" fill="#ffffff" stroke="#a9b4b8"/><text x="192" y="96" text-anchor="middle">blk3</text>
  <rect x="226" y="80" width="56" height="24" fill="#ffffff" stroke="#a9b4b8"/><text x="254" y="96" text-anchor="middle">blk4</text>
  </g>
- <text x="40" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">学生按<tspan font-weight="700">真实推理方式</tspan>做长自回归 rollout</text>
- <text x="40" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">生成的 blocks 与 <tspan font-weight="700">KV caches 全部 detach</tspan></text>
- <text x="40" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">不留整段 rollout 的计算图</text>
- <text x="40" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">目的：拿到部署分布上的长轨迹样本，不付显存代价</text>
+ <text x="40" y="128" font-size="9.5" fill="#28343a">学生按<tspan font-weight="700">真实推理方式</tspan>做长自回归 rollout</text>
+ <text x="40" y="146" font-size="9.5" fill="#28343a">生成的 blocks 与 <tspan font-weight="700">KV caches 全部 detach</tspan></text>
+ <text x="40" y="164" font-size="9.5" fill="#28343a">不留整段 rollout 的计算图</text>
+ <text x="40" y="188" font-size="9" fill="#4d5b61">目的：拿到部署分布上的长轨迹样本，不付显存代价</text>
 
- <text x="352" y="128" font-size="15" fill="#4d5b61">→</text>
+ <text x="352" y="128" font-size="15.1" fill="#4d5b61">→</text>
 
  <rect x="384" y="44" width="316" height="164" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="400" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② Re-noise（按段重新加噪）</text>
- <g font-family="ui-monospace,monospace" font-size="9">
+ <text x="400" y="68" font-size="10.5" font-weight="700" fill="#101619">② Re-noise（按段重新加噪）</text>
+ <g font-size="9">
  <rect x="400" y="80" width="56" height="24" fill="#eef2f3" stroke="#0b6b74"/><text x="428" y="96" text-anchor="middle">t_hi</text>
  <rect x="462" y="80" width="56" height="24" fill="#eef2f3" stroke="#0b6b74"/><text x="490" y="96" text-anchor="middle">t_mid</text>
  <rect x="524" y="80" width="56" height="24" fill="#eef2f3" stroke="#0b6b74"/><text x="552" y="96" text-anchor="middle">t_low</text>
  <rect x="586" y="80" width="56" height="24" fill="#eef2f3" stroke="#0b6b74"/><text x="614" y="96" text-anchor="middle">t_lo2</text>
  </g>
- <text x="400" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">从<tspan font-weight="700">自生成轨迹</tspan>采样，按 Diffusion Forcing</text>
- <text x="400" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">对<tspan font-weight="700">所有 segment 独立重新加噪</tspan></text>
- <text x="400" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">⇒ 让模型见到「自己产出的、不同脏度的历史」</text>
- <text x="400" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">这一步直接修补「历史被干净喂入」的问题</text>
+ <text x="400" y="128" font-size="9.5" fill="#28343a">从<tspan font-weight="700">自生成轨迹</tspan>采样，按 Diffusion Forcing</text>
+ <text x="400" y="146" font-size="9.5" fill="#28343a">对<tspan font-weight="700">所有 segment 独立重新加噪</tspan></text>
+ <text x="400" y="164" font-size="9.5" fill="#28343a">⇒ 让模型见到「自己产出的、不同脏度的历史」</text>
+ <text x="400" y="188" font-size="9" fill="#4d5b61">这一步直接修补「历史被干净喂入」的问题</text>
 
- <text x="712" y="128" font-size="15" fill="#4d5b61">→</text>
+ <text x="712" y="128" font-size="15.1" fill="#4d5b61">→</text>
 
  <rect x="744" y="44" width="292" height="164" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="760" y="68" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ Causal replay（单次开梯度）</text>
+ <text x="760" y="68" font-size="10.5" font-weight="700" fill="#101619">③ Causal replay（单次开梯度）</text>
  <rect x="760" y="80" width="260" height="24" fill="#ffffff" stroke="#0b6b74"/>
- <text x="890" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9">replay 段内所有 block 同一计算图</text>
- <text x="760" y="128" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">「外部历史」继承自 detached rollout 且固定</text>
- <text x="760" y="146" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">⇒ <tspan font-weight="700">后段损失可向前段传播</tspan></text>
- <text x="760" y="164" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">但梯度<tspan font-weight="700">不</tspan>回穿原始 rollout</text>
- <text x="760" y="188" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">DMD 监督施加于 replay 段内所有 block</text>
+ <text x="890" y="96" text-anchor="middle" font-size="9">replay 段内所有 block 同一计算图</text>
+ <text x="760" y="128" font-size="9.5" fill="#28343a">「外部历史」继承自 detached rollout 且固定</text>
+ <text x="760" y="146" font-size="9.5" fill="#28343a">⇒ <tspan font-weight="700">后段损失可向前段传播</tspan></text>
+ <text x="760" y="164" font-size="9.5" fill="#28343a">但梯度<tspan font-weight="700">不</tspan>回穿原始 rollout</text>
+ <text x="760" y="188" font-size="9" fill="#4d5b61">DMD 监督施加于 replay 段内所有 block</text>
 
  <rect x="24" y="224" width="1012" height="56" fill="#ffffff" stroke="#a9b4b8"/>
- <text x="40" y="246" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">损失：L_SRF = L_DMD( f_θ^causal( x_t^{1:N} , t , r , c^{1:N} ) ) + L_perc( · )</text>
- <text x="40" y="266" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">L_perc 为感知损失，用于抑制模式崩溃、保持多样性；参考图 r 对所有段共享，c 为逐段条件</text>
+ <text x="40" y="246" font-size="10" fill="#28343a">损失：L_SRF = L_DMD( f_θ^causal( x_t^{1:N} , t , r , c^{1:N} ) ) + L_perc( · )</text>
+ <text x="40" y="266" font-size="9.5" fill="#4d5b61">L_perc 为感知损失，用于抑制模式崩溃、保持多样性；参考图 r 对所有段共享，c 为逐段条件</text>
 
- <text x="24" y="306" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">Self-Forcing 的两个遗留问题，以及 SRF 的对策</text>
+ <text x="24" y="306" font-size="10.5" font-weight="700" fill="#101619">Self-Forcing 的两个遗留问题，以及 SRF 的对策</text>
  <rect x="24" y="318" width="500" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="40" y="342" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#0b6b74">问题 1 · 自生成历史被「干净地」喂入</text>
- <text x="40" y="364" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">Self-Forcing 用自生成历史做条件，但把它当作干净状态送入</text>
- <text x="40" y="382" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">⇒ 训练条件仍不等于推理条件（推理时历史必然带噪与误差）</text>
- <text x="40" y="410" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">SRF 对策：按段独立重新加噪，显式覆盖「脏历史」分布</text>
- <text x="40" y="430" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">对应 2.2 的旋钮 1</text>
+ <text x="40" y="342" font-size="10" font-weight="700" fill="#0b6b74">问题 1 · 自生成历史被「干净地」喂入</text>
+ <text x="40" y="364" font-size="9.5" fill="#28343a">Self-Forcing 用自生成历史做条件，但把它当作干净状态送入</text>
+ <text x="40" y="382" font-size="9.5" fill="#28343a">⇒ 训练条件仍不等于推理条件（推理时历史必然带噪与误差）</text>
+ <text x="40" y="410" font-size="9.5" fill="#0b6b74">SRF 对策：按段独立重新加噪，显式覆盖「脏历史」分布</text>
+ <text x="40" y="430" font-size="9" fill="#4d5b61">对应 2.2 的旋钮 1</text>
 
  <rect x="536" y="318" width="500" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="552" y="342" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#0b6b74">问题 2 · 自生成历史被 detach</text>
- <text x="552" y="364" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">被 detach 的历史不携带梯度 ⇒ 长程一致性缺少训练信号</text>
- <text x="552" y="382" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">只能靠单块监督间接约束，跨块误差无法被「往回纠」</text>
- <text x="552" y="410" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">SRF 对策：因果重放，在同一计算图内开启跨块梯度</text>
- <text x="552" y="430" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">对应 2.2 的旋钮 2</text>
+ <text x="552" y="342" font-size="10" font-weight="700" fill="#0b6b74">问题 2 · 自生成历史被 detach</text>
+ <text x="552" y="364" font-size="9.5" fill="#28343a">被 detach 的历史不携带梯度 ⇒ 长程一致性缺少训练信号</text>
+ <text x="552" y="382" font-size="9.5" fill="#28343a">只能靠单块监督间接约束，跨块误差无法被「往回纠」</text>
+ <text x="552" y="410" font-size="9.5" fill="#0b6b74">SRF 对策：因果重放，在同一计算图内开启跨块梯度</text>
+ <text x="552" y="430" font-size="9" fill="#4d5b61">对应 2.2 的旋钮 2</text>
  </svg>
  </div>
  <figcaption><b>FIG 2-2 · Self-Replay Forcing 的三步循环</b>　rollout 拿部署分布样本、re-noise 制造脏历史、causal replay 补回跨块梯度。SRF 的价值在于把「训练条件 = 推理条件」拆成噪声水平与梯度范围两个可分别修补的维度。</figcaption>
@@ -1530,43 +1534,43 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <marker id="ar-d2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker>
  </defs>
  <rect width="1080" height="470" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">FORWARD vs REVERSE DIVERGENCE · 蒸馏目标的互补性</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">FORWARD vs REVERSE DIVERGENCE · 蒸馏目标的互补性</text>
 
  <!-- two poles -->
  <rect x="30" y="56" width="480" height="196" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="30" y="56" width="480" height="4" fill="#0b6b74"/>
- <text x="48" y="84" fill="#0b6b74" font-family="monospace" font-size="12">前向散度 · mode-covering（覆盖模式）</text>
- <text x="48" y="110" fill="#28343a" font-size="10.5">目标：学生分布<b>覆盖</b>教师分布的所有模式</text>
+ <text x="48" y="84" fill="#0b6b74" font-size="12">前向散度 · mode-covering（覆盖模式）</text>
+ <text x="48" y="110" fill="#28343a" font-size="10.5">目标：学生分布<tspan font-weight="700">覆盖</tspan>教师分布的所有模式</text>
  <text x="48" y="130" fill="#28343a" font-size="10.5">代表：一致性模型（sCM / PCM / rCM 的 CM 部分）、TF 监督</text>
  <line x1="48" y1="148" x2="492" y2="148" stroke="#d8dee0"/>
  <text x="48" y="172" fill="#0b6b74" font-size="10.5">✔ 多样性好、训练稳定、无需对抗调参</text>
  <text x="48" y="194" fill="#0b6b74" font-size="10.5">✘ 密度被「摊薄」⇒ 视觉质量偏低、细节偏软</text>
  <text x="48" y="216" fill="#4d5b61" font-size="10">理论解释（rCM 论文）：CM 试图一步求解 teacher ODE，</text>
- <text x="48" y="234" fill="#4d5b61" font-size="10">即学习 ∫₀ᵗ F_teacher(x_τ,τ)dτ，<b>误差随 t 累积</b></text>
+ <text x="48" y="234" fill="#4d5b61" font-size="10">即学习 ∫₀ᵗ F_teacher(x_τ,τ)dτ，<tspan font-weight="700">误差随 t 累积</tspan></text>
 
  <rect x="570" y="56" width="480" height="196" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="570" y="56" width="480" height="4" fill="#0b6b74"/>
- <text x="588" y="84" fill="#0b6b74" font-family="monospace" font-size="12">反向散度 · mode-seeking（寻找模式）</text>
- <text x="588" y="110" fill="#28343a" font-size="10.5">目标：让学生分布落在教师分布的<b>高密度区</b></text>
+ <text x="588" y="84" fill="#0b6b74" font-size="12">反向散度 · mode-seeking（寻找模式）</text>
+ <text x="588" y="110" fill="#28343a" font-size="10.5">目标：让学生分布落在教师分布的<tspan font-weight="700">高密度区</tspan></text>
  <text x="588" y="130" fill="#28343a" font-size="10.5">代表：DMD 系列（reverse-KL）、score distillation</text>
  <line x1="588" y1="148" x2="1032" y2="148" stroke="#d8dee0"/>
  <text x="588" y="172" fill="#0b6b74" font-size="10.5">✔ 视觉质量高、锐度好、少量步数即可用</text>
- <text x="588" y="194" fill="#0b6b74" font-size="10.5">✘ <b>mode collapse</b>：多样性坍塌、镜头漂移、内容退化</text>
+ <text x="588" y="194" fill="#0b6b74" font-size="10.5">✘ <tspan font-weight="700">mode collapse</tspan>：多样性坍塌、镜头漂移、内容退化</text>
  <text x="588" y="216" fill="#4d5b61" font-size="10">补救历史：GAN loss（DMD2）、感知损失（Vidu S1/S2）、</text>
  <text x="588" y="234" fill="#4d5b61" font-size="10">对抗正则（DMDX / APT / 爱诗 R2）、角色分离（DP-DMD）</text>
 
  <!-- complementarity -->
  <path d="M510,154 L566,154" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-d1)"/>
  <path d="M566,190 L510,190" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-d2)"/>
- <text x="450" y="286" fill="#0b6b74" font-family="monospace" font-size="12">rCM 的核心洞察：二者作用于 forward 与 reverse 两条生成路径，天然互补</text>
+ <text x="450" y="286" fill="#0b6b74" font-size="12">rCM 的核心洞察：二者作用于 forward 与 reverse 两条生成路径，天然互补</text>
  <text x="450" y="308" fill="#28343a" font-size="11" text-anchor="middle">rCM 把 score distillation 作为 long-skip regularizer 融入 sCM ⇒ 质量匹配/超过 DMD2，而多样性显著更优</text>
 
  <!-- Causal-rCM mapping -->
  <rect x="30" y="326" width="1020" height="126" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="48" y="350" fill="#0b6b74" font-family="monospace" font-size="11.5">这条分界如何解释 forcing 流水线（Causal-rCM，arXiv 2606.25473）</text>
+ <text x="48" y="350" fill="#0b6b74" font-size="11.6">这条分界如何解释 forcing 流水线（Causal-rCM，arXiv 2606.25473）</text>
  <text x="48" y="376" fill="#28343a" font-size="10.5">Teacher Forcing 提供 <tspan fill="#0b6b74">offline、mode-covering（forward-divergence）</tspan> 的因果训练信号；</text>
  <text x="48" y="398" fill="#28343a" font-size="10.5">Self-Forcing 提供 <tspan fill="#0b6b74">on-policy、reverse-divergence</tspan> 的精炼信号。</text>
- <text x="48" y="422" fill="#28343a" font-size="10.5">⇒ 与 rCM 中 CM（forward）与 DMD（reverse）的互补<b>一一对应</b>：实验表明 <tspan fill="#0b6b74">TF-CM 是 SF-DMD 目前最好的初始化</tspan>。</text>
+ <text x="48" y="422" fill="#28343a" font-size="10.5">⇒ 与 rCM 中 CM（forward）与 DMD（reverse）的互补<tspan font-weight="700">一一对应</tspan>：实验表明 <tspan fill="#0b6b74">TF-CM 是 SF-DMD 目前最好的初始化</tspan>。</text>
  <text x="48" y="444" fill="#4d5b61" font-size="10">公开数字：2-step 因果 Wan2.1-1.3B 达 VBench-T2V <tspan fill="#0b6b74">84.63（仅 1 或 2 采样步）</tspan>；仅用合成数据训练即达 SOTA 流式性能；已应用于 Cosmos 3。</text>
  </svg>
  </div>
@@ -1660,11 +1664,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="模式崩溃在视频上的表现与四类补救手段">
  <rect width="1080" height="400" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">MODE COLLAPSE · 视频上的表现与四类补救</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">MODE COLLAPSE · 视频上的表现与四类补救</text>
 
  <!-- mechanism -->
  <rect x="30" y="56" width="500" height="140" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="82" fill="#0b6b74" font-family="monospace" font-size="11.5">根因：反向散度是 mode-seeking</text>
+ <text x="48" y="82" fill="#0b6b74" font-size="11.6">根因：反向散度是 mode-seeking</text>
  <text x="48" y="106" fill="#28343a" font-size="10.5">reverse-KL 惩罚「学生有而教师无」远重于反向误差</text>
  <text x="48" y="126" fill="#28343a" font-size="10.5">⇒ 学生倾向收缩到少数高密度模式，放弃长尾</text>
  <text x="48" y="150" fill="#28343a" font-size="10.5">视频上：误差沿时间维放大 ⇒ 「合法但退化」</text>
@@ -1674,21 +1678,21 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- symptom cards -->
  <g>
  <rect x="560" y="56" width="160" height="140" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="640" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle" font-family="monospace">镜头漂移</text>
+ <text x="640" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle">镜头漂移</text>
  <text x="576" y="108" fill="#28343a" font-size="10">相机缓慢但持续地</text>
  <text x="576" y="126" fill="#28343a" font-size="10">偏离合理轨迹</text>
  <text x="576" y="152" fill="#4d5b61" font-size="9.5">单帧质量正常</text>
  <text x="576" y="170" fill="#4d5b61" font-size="9.5">长时域才暴露</text>
 
  <rect x="736" y="56" width="160" height="140" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="816" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle" font-family="monospace">内容退化</text>
+ <text x="816" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle">内容退化</text>
  <text x="752" y="108" fill="#28343a" font-size="10">画面逐渐「变平」</text>
  <text x="752" y="126" fill="#28343a" font-size="10">细节与运动幅度收缩</text>
  <text x="752" y="152" fill="#4d5b61" font-size="9.5">静态指标看不出</text>
  <text x="752" y="170" fill="#4d5b61" font-size="9.5">需测运动幅度</text>
 
  <rect x="912" y="56" width="138" height="140" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="981" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle" font-family="monospace">时序不一致</text>
+ <text x="981" y="82" fill="#0b6b74" font-size="10.5" text-anchor="middle">时序不一致</text>
  <text x="928" y="108" fill="#28343a" font-size="10">块边界出现跳变</text>
  <text x="928" y="126" fill="#28343a" font-size="10">动作节奏断裂</text>
  <text x="928" y="152" fill="#4d5b61" font-size="9.5">跨块指标</text>
@@ -1696,32 +1700,32 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <line x1="30" y1="216" x2="1050" y2="216" stroke="#d8dee0"/>
- <text x="30" y="244" fill="#4d5b61" font-family="monospace" font-size="11.5">四类补救手段与其代价</text>
+ <text x="30" y="244" fill="#4d5b61" font-size="11.6">四类补救手段与其代价</text>
 
  <g font-size="10">
  <rect x="30" y="258" width="242" height="122" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="282" fill="#0b6b74" font-family="monospace" font-size="11">① 加感知 / 特征损失</text>
+ <text x="48" y="282" fill="#0b6b74" font-size="11">① 加感知 / 特征损失</text>
  <text x="48" y="304" fill="#28343a">Vidu S1：PCM 的蒸馏目标 + 把距离</text>
  <text x="48" y="322" fill="#28343a">函数实例化为<tspan fill="#0b6b74">感知特征距离</tspan> d_PERC</text>
  <text x="48" y="340" fill="#28343a">S2：L_SRF = L_DMD + L_perc</text>
  <text x="48" y="366" fill="#4d5b61">代价：需额外特征网络，增加显存</text>
 
  <rect x="288" y="258" width="242" height="122" fill="#ffffff" stroke="#0b6b74"/>
- <text x="306" y="282" fill="#0b6b74" font-family="monospace" font-size="11">② 加对抗信号</text>
+ <text x="306" y="282" fill="#0b6b74" font-size="11">② 加对抗信号</text>
  <text x="306" y="304" fill="#28343a">DMD2 的 GAN loss；LingBot v1 在</text>
  <text x="306" y="322" fill="#28343a">fake score 特征上挂 GAN 分类头</text>
  <text x="306" y="340" fill="#28343a">爱诗 R2：DDMD + DMD2 对抗正则</text>
  <text x="306" y="366" fill="#4d5b61">代价：GAN 调参、训练不稳定</text>
 
  <rect x="546" y="258" width="242" height="122" fill="#ffffff" stroke="#0b6b74"/>
- <text x="564" y="282" fill="#0b6b74" font-family="monospace" font-size="11">③ 用前向散度做正则/初始化</text>
+ <text x="564" y="282" fill="#0b6b74" font-size="11">③ 用前向散度做正则/初始化</text>
  <text x="564" y="304" fill="#28343a">rCM：把 score distillation 作为 long-skip</text>
  <text x="564" y="322" fill="#28343a">regularizer 融入 sCM</text>
  <text x="564" y="340" fill="#28343a">Causal-rCM：TF-CM 作为 SF-DMD 的初始化</text>
  <text x="564" y="366" fill="#4d5b61">代价：需 JVP kernel / 更长训练</text>
 
  <rect x="804" y="258" width="246" height="122" fill="#ffffff" stroke="#0b6b74"/>
- <text x="822" y="282" fill="#0b6b74" font-family="monospace" font-size="11">④ 角色分离（最「干净」）</text>
+ <text x="822" y="282" fill="#0b6b74" font-size="11">④ 角色分离（最「干净」）</text>
  <text x="822" y="304" fill="#28343a">DP-DMD：第一步用 target-prediction</text>
  <text x="822" y="322" fill="#28343a">保多样性，其余步用 DMD 提质量</text>
  <text x="822" y="340" fill="#28343a">无正则、无额外模块、无参考样本</text>
@@ -1791,12 +1795,12 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 430" role="img" aria-label="三层优化与共享的耦合点">
  <rect width="1080" height="430" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">JOINT OPTIMIZATION · 三层不可分离的耦合点</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">JOINT OPTIMIZATION · 三层不可分离的耦合点</text>
 
  <!-- three layers -->
  <rect x="40" y="60" width="300" height="150" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="40" y="60" width="300" height="4" fill="#0b6b74"/>
- <text x="58" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">① 蒸馏 / 步数预算</text>
+ <text x="58" y="86" fill="#0b6b74" font-size="11.6">① 蒸馏 / 步数预算</text>
  <text x="58" y="110" fill="#28343a" font-size="10.5">NFE 1–4；每步承载的信息量激增</text>
  <text x="58" y="130" fill="#28343a" font-size="10.5">教师/学生/fake-score 三模型训练</text>
  <text x="58" y="150" fill="#28343a" font-size="10.5">与 forcing 联合（L_SRF 式）</text>
@@ -1805,7 +1809,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <rect x="380" y="60" width="300" height="150" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="380" y="60" width="300" height="4" fill="#0b6b74"/>
- <text x="398" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">② 稀疏 / 注意力预算</text>
+ <text x="398" y="86" fill="#0b6b74" font-size="11.6">② 稀疏 / 注意力预算</text>
  <text x="398" y="110" fill="#28343a" font-size="10.5">块级 top-k、稀疏—线性混合</text>
  <text x="398" y="130" fill="#28343a" font-size="10.5">逐层选择不同策略（分层混合）</text>
  <text x="398" y="150" fill="#28343a" font-size="10.5">改变注意力的数值分布</text>
@@ -1814,7 +1818,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <rect x="720" y="60" width="320" height="150" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="720" y="60" width="320" height="4" fill="#0b6b74"/>
- <text x="738" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">③ 量化 / 精度预算</text>
+ <text x="738" y="86" fill="#0b6b74" font-size="11.6">③ 量化 / 精度预算</text>
  <text x="738" y="110" fill="#28343a" font-size="10.5">权重 / 激活 / 注意力 / KV 四分对象</text>
  <text x="738" y="130" fill="#28343a" font-size="10.5">分块粒度（如 128×128）压制离群值</text>
  <text x="738" y="150" fill="#28343a" font-size="10.5">需要与 kernel 匹配才真正提速</text>
@@ -1826,19 +1830,19 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="340" y1="100" x2="380" y2="100"/><line x1="680" y1="100" x2="720" y2="100"/>
  <path d="M190,210 L190,240 L874,240 L874,210" fill="none"/>
  </g>
- <text x="440" y="258" fill="#0b6b74" font-family="monospace" font-size="10.5">三者共享同一批超参（块粒度、时间步调度、层选择）⇒ 顺序优化得到的解不是联合最优解</text>
+ <text x="440" y="258" fill="#0b6b74" font-size="10.5">三者共享同一批超参（块粒度、时间步调度、层选择）⇒ 顺序优化得到的解不是联合最优解</text>
 
  <!-- sequential vs joint -->
  <rect x="40" y="278" width="480" height="132" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="58" y="302" fill="#0b6b74" font-family="monospace" font-size="11.5">× 顺序优化（常见但次优）</text>
+ <text x="58" y="302" fill="#0b6b74" font-size="11.6">× 顺序优化（常见但次优）</text>
  <text x="58" y="326" fill="#28343a" font-size="10.5">先蒸馏 → 再稀疏 → 最后量化，每步独立校准</text>
  <text x="58" y="348" fill="#28343a" font-size="10.5">问题 1：每步都在前一步的误差之上再叠一层误差</text>
  <text x="58" y="370" fill="#28343a" font-size="10.5">问题 2：量化校准集来自未稀疏的分布，校准点错位</text>
  <text x="58" y="392" fill="#28343a" font-size="10.5">结果：单项收益看起来都对，端到端收益远低于预期</text>
 
  <rect x="560" y="278" width="480" height="132" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="578" y="302" fill="#0b6b74" font-family="monospace" font-size="11.5">√ 联合优化（公开系统的实际做法）</text>
- <text x="578" y="326" fill="#28343a" font-size="10.5">稀疏化与蒸馏<strong>并行</strong>进行，最后把两路权重更新合并进单一模型</text>
+ <text x="578" y="302" fill="#0b6b74" font-size="11.6">√ 联合优化（公开系统的实际做法）</text>
+ <text x="578" y="326" fill="#28343a" font-size="10.5">稀疏化与蒸馏<tspan font-weight="700">并行</tspan>进行，最后把两路权重更新合并进单一模型</text>
  <text x="578" y="348" fill="#28343a" font-size="10.5">（TurboDiffusion 公开做法：SLA 替换全注意力 + 微调 与 rCM 并行）</text>
  <text x="578" y="370" fill="#28343a" font-size="10.5">或：把稀疏/量化模式作为条件注入训练，让模型学会在该模式下工作</text>
  <text x="578" y="392" fill="#28343a" font-size="10.5">结果：训练期就吸收了近似误差，推理期不再需要「事后补偿」</text>
@@ -1957,36 +1961,36 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 340" role="img" aria-label="训练期、推理期、调度期三种合作的收益与成本">
  <rect width="1080" height="340" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">THREE FORMS OF COOPERATION · 收益递减次序</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">THREE FORMS OF COOPERATION · 收益递减次序</text>
 
  <!-- axis -->
  <line x1="90" y1="270" x2="1020" y2="270" stroke="#d8dee0"/>
- <text x="90" y="296" fill="#4d5b61" font-size="10.5" font-family="monospace">训练成本 / 重训需求 →</text>
+ <text x="90" y="296" fill="#4d5b61" font-size="10.5">训练成本 / 重训需求 →</text>
  <line x1="90" y1="270" x2="90" y2="70" stroke="#d8dee0"/>
- <text x="40" y="66" fill="#4d5b61" font-size="10.5" font-family="monospace">收益</text>
+ <text x="40" y="66" fill="#4d5b61" font-size="10.5">收益</text>
 
  <!-- bubbles -->
  <circle cx="230" cy="120" r="52" fill="#e6f3f4" stroke="#0b6b74" stroke-width="2"/>
- <text x="230" y="112" fill="#0b6b74" font-size="11" text-anchor="middle" font-family="monospace">形态 A</text>
- <text x="230" y="130" fill="#28343a" font-size="9.5" text-anchor="middle" font-family="monospace">训练期吸收</text>
+ <text x="230" y="112" fill="#0b6b74" font-size="11" text-anchor="middle">形态 A</text>
+ <text x="230" y="130" fill="#28343a" font-size="9.5" text-anchor="middle">训练期吸收</text>
  <text x="230" y="196" fill="#28343a" font-size="10.5" text-anchor="middle">稀疏×蒸馏×量化联合训练</text>
  <text x="230" y="214" fill="#4d5b61" font-size="10" text-anchor="middle">改配置 = 重训/微调</text>
 
  <circle cx="530" cy="168" r="44" fill="#ffffff" stroke="#0b6b74" stroke-width="2"/>
- <text x="530" y="160" fill="#0b6b74" font-size="11" text-anchor="middle" font-family="monospace">形态 B</text>
- <text x="530" y="178" fill="#28343a" font-size="9.5" text-anchor="middle" font-family="monospace">推理期动态</text>
+ <text x="530" y="160" fill="#0b6b74" font-size="11" text-anchor="middle">形态 B</text>
+ <text x="530" y="178" fill="#28343a" font-size="9.5" text-anchor="middle">推理期动态</text>
  <text x="530" y="236" fill="#28343a" font-size="10.5" text-anchor="middle">按块调 NFE / 稀疏率 / 窗口</text>
  <text x="530" y="254" fill="#4d5b61" font-size="10" text-anchor="middle">与图编译冲突，需难度估计</text>
 
  <circle cx="830" cy="208" r="36" fill="#ffffff" stroke="#0b6b74" stroke-width="2"/>
- <text x="830" y="202" fill="#0b6b74" font-size="11" text-anchor="middle" font-family="monospace">形态 C</text>
- <text x="830" y="220" fill="#28343a" font-size="9.5" text-anchor="middle" font-family="monospace">调度期重叠</text>
+ <text x="830" y="202" fill="#0b6b74" font-size="11" text-anchor="middle">形态 C</text>
+ <text x="830" y="220" fill="#28343a" font-size="9.5" text-anchor="middle">调度期重叠</text>
  <text x="830" y="266" fill="#28343a" font-size="10.5" text-anchor="middle">异步流水 / 合批 / 迁移</text>
  <text x="830" y="284" fill="#4d5b61" font-size="10" text-anchor="middle">不改变数值结果，但抬高显存峰值</text>
 
  <!-- warning -->
  <rect x="600" y="66" width="440" height="88" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="618" y="92" fill="#0b6b74" font-family="monospace" font-size="11">常见错误顺序</text>
+ <text x="618" y="92" fill="#0b6b74" font-size="11">常见错误顺序</text>
  <text x="618" y="114" fill="#28343a" font-size="10.5">先做形态 C（调度重叠）→ 再做形态 A（联合训练）</text>
  <text x="618" y="134" fill="#28343a" font-size="10.5">结果：C 的收益被 Amdahl 定律摊平，误判为「调度没用」</text>
  <text x="618" y="152" fill="#0b6b74" font-size="10">正确次序：A → B → C，与本文第 2–7 章的排列一致</text>
@@ -2025,27 +2029,27 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <marker id="ar-a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker>
  </defs>
  <rect width="1080" height="380" fill="#ffffff"/>
- <text x="30" y="34" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">ROPE AS A PRODUCT OF PER-AXIS ROTATIONS</text>
+ <text x="30" y="34" fill="#4d5b61" font-size="12" letter-spacing="1.6">ROPE AS A PRODUCT OF PER-AXIS ROTATIONS</text>
 
  <!-- frames strip -->
  <g>
- <text x="30" y="70" fill="#0b6b74" font-family="monospace" font-size="11">时间轴 t (frame / latent position)</text>
+ <text x="30" y="70" fill="#0b6b74" font-size="11">时间轴 t (frame / latent position)</text>
  <g>
- <rect x="30" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="58" y="106" fill="#28343a" font-size="11" text-anchor="middle" font-family="monospace">t=0</text>
- <rect x="94" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="122" y="106" fill="#28343a" font-size="11" text-anchor="middle" font-family="monospace">t=1</text>
- <rect x="158" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="186" y="106" fill="#28343a" font-size="11" text-anchor="middle" font-family="monospace">t=2</text>
- <rect x="222" y="80" width="56" height="42" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="250" y="106" fill="#4d5b61" font-size="11" text-anchor="middle" font-family="monospace">t=3</text>
- <rect x="286" y="80" width="56" height="42" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="314" y="106" fill="#4d5b61" font-size="11" text-anchor="middle" font-family="monospace">t=4</text>
- <rect x="350" y="80" width="56" height="42" fill="#e6f3f4" stroke="#0b6b74" stroke-dasharray="3 3"/><text x="378" y="106" fill="#0b6b74" font-size="11" text-anchor="middle" font-family="monospace">t=5</text>
+ <rect x="30" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="58" y="106" fill="#28343a" font-size="11" text-anchor="middle">t=0</text>
+ <rect x="94" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="122" y="106" fill="#28343a" font-size="11" text-anchor="middle">t=1</text>
+ <rect x="158" y="80" width="56" height="42" fill="#ffffff" stroke="#d8dee0"/><text x="186" y="106" fill="#28343a" font-size="11" text-anchor="middle">t=2</text>
+ <rect x="222" y="80" width="56" height="42" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="250" y="106" fill="#4d5b61" font-size="11" text-anchor="middle">t=3</text>
+ <rect x="286" y="80" width="56" height="42" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="314" y="106" fill="#4d5b61" font-size="11" text-anchor="middle">t=4</text>
+ <rect x="350" y="80" width="56" height="42" fill="#e6f3f4" stroke="#0b6b74" stroke-dasharray="3 3"/><text x="378" y="106" fill="#0b6b74" font-size="11" text-anchor="middle">t=5</text>
  </g>
  <text x="424" y="106" fill="#4d5b61" font-size="11">… 训练窗口 N=3，但推理要走到 t→∞</text>
  <line x1="360" y1="132" x2="700" y2="132" stroke="#0b6b74" stroke-width="1.5" stroke-dasharray="6 4"/>
- <text x="366" y="150" fill="#0b6b74" font-family="monospace" font-size="10.5">训练长度边界：越过此线，位置索引进入训练期未见过的分布</text>
+ <text x="366" y="150" fill="#0b6b74" font-size="10.5">训练长度边界：越过此线，位置索引进入训练期未见过的分布</text>
  </g>
 
  <!-- spatial grid -->
  <g>
- <text x="30" y="196" fill="#0b6b74" font-family="monospace" font-size="11">空间轴 (h, w) ：3D 视频 RoPE 常拆为 (t, h, w) 三组旋转</text>
+ <text x="30" y="196" fill="#0b6b74" font-size="11">空间轴 (h, w) ：3D 视频 RoPE 常拆为 (t, h, w) 三组旋转</text>
  <g>
  <rect x="30" y="208" width="120" height="96" fill="#ffffff" stroke="#d8dee0"/>
  <g fill="#0b6b74" opacity=".85">
@@ -2062,13 +2066,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- cache timeline -->
  <g>
- <text x="660" y="196" fill="#0b6b74" font-family="monospace" font-size="11">滑窗 KV Cache 的两种施加时机</text>
+ <text x="660" y="196" fill="#0b6b74" font-size="11">滑窗 KV Cache 的两种施加时机</text>
  <rect x="660" y="210" width="390" height="140" fill="#ffffff" stroke="#d8dee0"/>
  <rect x="676" y="226" width="358" height="42" fill="#ffffff" stroke="#d8dee0"/>
- <text x="686" y="243" fill="#0b6b74" font-size="11" font-family="monospace">A. 先 RoPE 再缓存（多数实现）</text>
+ <text x="686" y="243" fill="#0b6b74" font-size="11">A. 先 RoPE 再缓存（多数实现）</text>
  <text x="686" y="260" fill="#4d5b61" font-size="10.5">淘汰旧块后，被复用的 K 仍带旧绝对位置 ⇒ 与当前 Q 的相对差被拉大</text>
  <rect x="676" y="278" width="358" height="58" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="686" y="296" fill="#0b6b74" font-size="11" font-family="monospace">B. 先缓存、注意力时再按更新位置施加</text>
+ <text x="686" y="296" fill="#0b6b74" font-size="11">B. 先缓存、注意力时再按更新位置施加</text>
  <text x="686" y="313" fill="#4d5b61" font-size="10.5">缓存无位置编码的 K；窗口滑动后按新的相对位置重新旋转</text>
  <text x="686" y="330" fill="#0b6b74" font-size="10.5">⇒ 可见位置始终落在训练见过的范围内（Vidu S1/S2 的 RoPE Repositioning）</text>
  </g>
@@ -2134,10 +2138,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 300" role="img" aria-label="RoPE 重定位：窗口滑动前后相对位置的变化">
  <rect width="1080" height="300" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">ROPE REPOSITIONING · 窗口滑动时让可见相对距离保持有界</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">ROPE REPOSITIONING · 窗口滑动时让可见相对距离保持有界</text>
 
- <text x="30" y="74" fill="#0b6b74" font-family="monospace" font-size="11">× 无重定位：缓存 K 携带旧绝对位置</text>
- <g font-family="monospace" font-size="10.5">
+ <text x="30" y="74" fill="#0b6b74" font-size="11">× 无重定位：缓存 K 携带旧绝对位置</text>
+ <g font-size="10.5">
  <rect x="30" y="86" width="46" height="34" fill="#eef2f3" stroke="#0b6b74"/><text x="53" y="107" fill="#0b6b74" text-anchor="middle">t0</text>
  <rect x="82" y="86" width="46" height="34" fill="#eef2f3" stroke="#0b6b74"/><text x="105" y="107" fill="#0b6b74" text-anchor="middle">t1</text>
  <rect x="134" y="86" width="46" height="34" fill="#eef2f3" stroke="#0b6b74"/><text x="157" y="107" fill="#0b6b74" text-anchor="middle">t2</text>
@@ -2149,8 +2153,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="60" y1="132" x2="365" y2="132" stroke="#0b6b74" stroke-width="1.4" marker-end="url(#ar-r)"/>
  <text x="392" y="136" fill="#0b6b74" font-size="11">相对距离 = 6 → 远超训练窗（如 3），注意力 logits 分布漂移</text>
 
- <text x="30" y="186" fill="#0b6b74" font-family="monospace" font-size="11">√ 重定位：缓存未旋转 K，读取时按新位置旋转</text>
- <g font-family="monospace" font-size="10.5">
+ <text x="30" y="186" fill="#0b6b74" font-size="11">√ 重定位：缓存未旋转 K，读取时按新位置旋转</text>
+ <g font-size="10.5">
  <rect x="30" y="198" width="46" height="34" fill="#ffffff" stroke="#d8dee0" stroke-dasharray="3 3"/><text x="53" y="219" fill="#4d5b61" text-anchor="middle">t2</text>
  <rect x="82" y="198" width="46" height="34" fill="#ffffff" stroke="#d8dee0" stroke-dasharray="3 3"/><text x="105" y="219" fill="#4d5b61" text-anchor="middle">t3</text>
  <rect x="134" y="198" width="46" height="34" fill="#e6f3f4" stroke="#0b6b74"/><text x="157" y="219" fill="#0b6b74" text-anchor="middle">t4</text>
@@ -2161,7 +2165,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="292" y="248" fill="#0b6b74" font-size="11">相对距离被压回窗口内（≤ 2）→ 与训练期一致</text>
 
  <rect x="700" y="70" width="350" height="164" fill="#ffffff" stroke="#d8dee0"/>
- <text x="716" y="94" fill="#0b6b74" font-family="monospace" font-size="11">为什么它成立</text>
+ <text x="716" y="94" fill="#0b6b74" font-size="11">为什么它成立</text>
  <text x="716" y="118" fill="#28343a" font-size="11">RoPE 的注意力分数只依赖 (i − j)。</text>
  <text x="716" y="138" fill="#28343a" font-size="11">缓存 [0..L] 后，真正影响质量的不是</text>
  <text x="716" y="158" fill="#28343a" font-size="11">「历史有多长」，而是「当前 Q 看到</text>
@@ -2180,13 +2184,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <marker id="ar-inf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker>
  </defs>
  <rect width="1080" height="400" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">∞-ROPE · 移动参考系 ＋ KV FLUSH ＋ ROPE CUT</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">∞-ROPE · 移动参考系 ＋ KV FLUSH ＋ ROPE CUT</text>
 
  <!-- fixed frame problem -->
  <g>
- <text x="30" y="64" fill="#0b6b74" font-family="monospace" font-size="11">× 固定参考系（基座 3D-RoPE 的有限时间视野）</text>
+ <text x="30" y="64" fill="#0b6b74" font-size="11">× 固定参考系（基座 3D-RoPE 的有限时间视野）</text>
  <line x1="30" y1="96" x2="520" y2="96" stroke="#d8dee0"/>
- <g font-family="monospace" font-size="9.5">
+ <g font-size="9.5">
  <rect x="30" y="78" width="44" height="22" fill="#eef2f3" stroke="#0b6b74"/><text x="52" y="93" fill="#0b6b74" text-anchor="middle">blk0</text>
  <rect x="80" y="78" width="44" height="22" fill="#eef2f3" stroke="#0b6b74"/><text x="102" y="93" fill="#0b6b74" text-anchor="middle">blk1</text>
  <rect x="130" y="78" width="44" height="22" fill="#eef2f3" stroke="#0b6b74"/><text x="152" y="93" fill="#0b6b74" text-anchor="middle">blk2</text>
@@ -2203,9 +2207,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- moving frame -->
  <g>
- <text x="30" y="180" fill="#0b6b74" font-family="monospace" font-size="11">√ Block-Relativistic RoPE：新块相对「基座最大帧视野」旋转，旧块向后旋转</text>
+ <text x="30" y="180" fill="#0b6b74" font-size="11">√ Block-Relativistic RoPE：新块相对「基座最大帧视野」旋转，旧块向后旋转</text>
  <line x1="30" y1="212" x2="520" y2="212" stroke="#d8dee0"/>
- <g font-family="monospace" font-size="9.5">
+ <g font-size="9.5">
  <rect x="30" y="194" width="44" height="22" fill="#e6f3f4" stroke="#0b6b74"/><text x="52" y="209" fill="#0b6b74" text-anchor="middle">blk0</text>
  <rect x="80" y="194" width="44" height="22" fill="#e6f3f4" stroke="#0b6b74"/><text x="102" y="209" fill="#0b6b74" text-anchor="middle">blk1</text>
  <rect x="130" y="194" width="44" height="22" fill="#e6f3f4" stroke="#0b6b74"/><text x="152" y="209" fill="#0b6b74" text-anchor="middle">blk2</text>
@@ -2223,19 +2227,19 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- three components -->
  <g font-size="10">
  <rect x="560" y="60" width="490" height="96" fill="#ffffff" stroke="#0b6b74"/>
- <text x="578" y="84" fill="#0b6b74" font-family="monospace" font-size="11">② KV Flush：只留两个 latent 帧</text>
+ <text x="578" y="84" fill="#0b6b74" font-size="11">② KV Flush：只留两个 latent 帧</text>
  <text x="578" y="106" fill="#28343a">保留：全局 sink + 最近生成的 latent 帧</text>
  <text x="578" y="126" fill="#28343a">⇒ 无需重新编码即可获得细粒度动作控制</text>
  <text x="578" y="146" fill="#0b6b74">⇒ 与即时 prompt 响应（解决「提示响应慢」）</text>
 
  <rect x="560" y="168" width="490" height="90" fill="#ffffff" stroke="#0b6b74"/>
- <text x="578" y="192" fill="#0b6b74" font-family="monospace" font-size="11">③ RoPE Cut：在时间 RoPE 坐标制造受控不连续</text>
+ <text x="578" y="192" fill="#0b6b74" font-size="11">③ RoPE Cut：在时间 RoPE 坐标制造受控不连续</text>
  <text x="578" y="214" fill="#28343a">在连续 rollout 内人为切开时间轴</text>
  <text x="578" y="234" fill="#0b6b74">⇒ 一次 rollout 内实现多镜头 / 场景切换</text>
  <text x="578" y="252" fill="#4d5b61">这是位置编码被「当作剪辑工具」的一个少见用法</text>
 
  <rect x="560" y="272" width="490" height="88" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="578" y="296" fill="#0b6b74" font-family="monospace" font-size="11">定位：推理期统一框架，training-free</text>
+ <text x="578" y="296" fill="#0b6b74" font-size="11">定位：推理期统一框架，training-free</text>
  <text x="578" y="318" fill="#28343a">三个组件都不需要重新训练 ⇒ 可直接叠加在已有 checkpoint 上</text>
  <text x="578" y="338" fill="#28343a">公开结果：整体 VBench 分数持续超过此前的自回归模型</text>
  <text x="578" y="354" fill="#4d5b61" font-size="9.5">作为对照：Context Forcing 论文给出其有效上下文约 1.5 秒</text>
@@ -2394,11 +2398,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
     <div class="svgbox">
     <svg viewBox="0 0 1060 500" role="img" aria-label="Ring Attention 的流水线本质、通信重叠条件与显存模型">
       <rect width="1060" height="500" fill="#ffffff"/>
-      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">Ring 是一条深度为 P 的流水线，不是「把序列切开各算各的」</text>
+      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">Ring 是一条深度为 P 的流水线，不是「把序列切开各算各的」</text>
 
       <!-- pipeline -->
-      <text x="24" y="56" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① 每个 rank 的四个时隙（P = 4）</text>
-      <g font-family="ui-monospace,monospace" font-size="9">
+      <text x="24" y="56" font-size="10.5" font-weight="700" fill="#101619">① 每个 rank 的四个时隙（P = 4）</text>
+      <g font-size="9">
         <!-- header -->
         <text x="24" y="80" fill="#4d5b61">rank 0</text>
         <text x="24" y="118" fill="#4d5b61">rank 1</text>
@@ -2429,30 +2433,30 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
         <rect x="406" y="180" width="140" height="20" fill="#ffffff" stroke="#d8dee0"/><text x="476" y="194" text-anchor="middle">收 + 算</text>
         <rect x="566" y="180" width="140" height="20" fill="#ffffff" stroke="#d8dee0"/><text x="636" y="194" text-anchor="middle">收 + 算</text>
       </g>
-      <text x="726" y="120" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">每一轮：收一块 K/V → 做一次 blockwise</text>
-      <text x="726" y="138" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">attention → 用 online softmax 累加</text>
-      <text x="726" y="162" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">收益来自「第 i 轮收数据」与</text>
-      <text x="726" y="178" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">「第 i+1 轮计算」的重叠</text>
-      <text x="726" y="202" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">重叠成立 ⇒ 通信等于免费</text>
-      <text x="726" y="218" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">不成立 ⇒ Ring 退化为通信极重的方案</text>
+      <text x="726" y="120" font-size="9.5" fill="#28343a">每一轮：收一块 K/V → 做一次 blockwise</text>
+      <text x="726" y="138" font-size="9.5" fill="#28343a">attention → 用 online softmax 累加</text>
+      <text x="726" y="162" font-size="9.5" fill="#0b6b74">收益来自「第 i 轮收数据」与</text>
+      <text x="726" y="178" font-size="9.5" fill="#0b6b74">「第 i+1 轮计算」的重叠</text>
+      <text x="726" y="202" font-size="9.5" fill="#28343a">重叠成立 ⇒ 通信等于免费</text>
+      <text x="726" y="218" font-size="9.5" fill="#28343a">不成立 ⇒ Ring 退化为通信极重的方案</text>
 
       <line x1="24" y1="238" x2="1036" y2="238" stroke="#d8dee0"/>
 
       <!-- memory model -->
-      <text x="24" y="266" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② 显存构成：1 块 query + 2 块当前 K/V + 2 块接收中 K/V + 1 块输出 = 6 个单位</text>
-      <g font-family="ui-monospace,monospace" font-size="9">
+      <text x="24" y="266" font-size="10.5" font-weight="700" fill="#101619">② 显存构成：1 块 query + 2 块当前 K/V + 2 块接收中 K/V + 1 块输出 = 6 个单位</text>
+      <g font-size="9">
         <rect x="24" y="278" width="112" height="30" fill="#ffffff" stroke="#d8dee0"/><text x="80" y="298" text-anchor="middle">query 块</text>
         <rect x="144" y="278" width="112" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="200" y="298" text-anchor="middle">当前 K/V ×2</text>
         <rect x="264" y="278" width="112" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="320" y="298" text-anchor="middle">接收中 K/V ×2</text>
         <rect x="384" y="278" width="112" height="30" fill="#ffffff" stroke="#d8dee0"/><text x="440" y="298" text-anchor="middle">输出块</text>
       </g>
-      <text x="516" y="298" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">总量 = 6 × 块大小 × 头维 × 批 × 头数</text>
-      <text x="516" y="316" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 只与块大小有关，与序列总长无关（这是 Ring 的核心卖点）</text>
+      <text x="516" y="298" font-size="9.5" fill="#28343a">总量 = 6 × 块大小 × 头维 × 批 × 头数</text>
+      <text x="516" y="316" font-size="9.5" fill="#0b6b74">⇒ 只与块大小有关，与序列总长无关（这是 Ring 的核心卖点）</text>
 
       <!-- trade -->
       <rect x="24" y="326" width="500" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="348" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ 换到的是什么</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="42" y="348" font-size="10.5" font-weight="700" fill="#101619">③ 换到的是什么</text>
+      <g font-size="9.5">
         <text x="42" y="372" fill="#0b6b74">显存收益：KV 总量 ÷ 并行度 P，随 P 线性下降</text>
         <text x="42" y="396" fill="#28343a">通信代价：约等于把 KV 总量完整搬运 2 遍</text>
         <text x="42" y="420" fill="#28343a">即用 P 倍的 KV 通信，换 1/P 的 KV 显存</text>
@@ -2461,8 +2465,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
       </g>
 
       <rect x="536" y="326" width="500" height="150" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="554" y="348" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">④ 这个不等式带来的三条硬约束</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="554" y="348" font-size="10.5" font-weight="700" fill="#101619">④ 这个不等式带来的三条硬约束</text>
+      <g font-size="9.5">
         <text x="554" y="372" fill="#28343a">① 块不能太小：块越小，通信占比越高，重叠越难成立</text>
         <text x="554" y="396" fill="#28343a">② 带宽越低越难成立：跨机带宽远低于机内，因此</text>
         <text x="554" y="414" fill="#4d5b61">　 跨机部署时块要显著放大，或改用 Ulysses 式换轴</text>
@@ -2485,14 +2489,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="稀疏决策依据与 Ring 可行性判定">
  <rect width="1080" height="420" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">SPARSITY DECISION SOURCE × RING FEASIBILITY</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">SPARSITY DECISION SOURCE × RING FEASIBILITY</text>
 
- <text x="30" y="62" fill="#0b6b74" font-family="monospace" font-size="11.5">核心问题只有一个：决定「算哪些块」所需的信息，在 ring 的单步局部视野里拿得到吗？</text>
+ <text x="30" y="62" fill="#0b6b74" font-size="11.6">核心问题只有一个：决定「算哪些块」所需的信息，在 ring 的单步局部视野里拿得到吗？</text>
 
  <!-- two families -->
  <g>
  <rect x="30" y="82" width="500" height="150" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="48" y="108" fill="#0b6b74" font-family="monospace" font-size="11.5">位置依赖 / 阈值型 ⇒ 可以上 Ring</text>
+ <text x="48" y="108" fill="#0b6b74" font-size="11.6">位置依赖 / 阈值型 ⇒ 可以上 Ring</text>
  <text x="48" y="132" fill="#28343a" font-size="10.5">决策依据是<tspan fill="#0b6b74">块自己的坐标</tspan>或<tspan fill="#0b6b74">本地阈值</tspan>，单个块到达即可判定</text>
  <line x1="48" y1="148" x2="512" y2="148" stroke="#d8dee0"/>
  <text x="48" y="170" fill="#28343a" font-size="10.5">· <tspan fill="#0b6b74">db-SP</tspan>：静态划分、提前均衡（稀疏不均衡比 ρ_s 的提出者）</text>
@@ -2503,7 +2507,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <g>
  <rect x="550" y="82" width="500" height="150" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="568" y="108" fill="#0b6b74" font-family="monospace" font-size="11.5">数据依赖 / 排序型（Top-k）⇒ 不成立</text>
+ <text x="568" y="108" fill="#0b6b74" font-size="11.6">数据依赖 / 排序型（Top-k）⇒ 不成立</text>
  <text x="568" y="132" fill="#28343a" font-size="10.5">需要<tspan fill="#0b6b74">完整分布</tspan>才能定名次 ⇒ 必须物化整行分数 ⇒ 不可流式</text>
  <line x1="568" y1="148" x2="1032" y2="148" stroke="#d8dee0"/>
  <text x="568" y="170" fill="#28343a" font-size="10.5">· <tspan fill="#0b6b74">VSA</tspan>：top-k tile + 可训练粗到细，双重障碍</text>
@@ -2513,31 +2517,31 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <!-- three obstacles -->
- <text x="30" y="266" fill="#4d5b61" font-family="monospace" font-size="11.5">Top-k 在 Ring 上的四个障碍（本质 / 能否绕过）</text>
+ <text x="30" y="266" fill="#4d5b61" font-size="11.6">Top-k 在 Ring 上的四个障碍（本质 / 能否绕过）</text>
  <g font-size="10">
  <rect x="30" y="280" width="248" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="46" y="304" fill="#0b6b74" font-family="monospace" font-size="10.5">① 循环依赖</text>
+ <text x="46" y="304" fill="#0b6b74" font-size="10.5">① 循环依赖</text>
  <text x="46" y="326" fill="#28343a">选块需要全部 K；</text>
  <text x="46" y="344" fill="#28343a">拿到全部 K 就等于算完了</text>
  <text x="46" y="368" fill="#0b6b74">性质：信息时序问题</text>
  <text x="46" y="388" fill="#0b6b74">可部分绕过：低分辨率代理</text>
 
  <rect x="290" y="280" width="248" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="306" y="304" fill="#0b6b74" font-family="monospace" font-size="10.5">② Top-k 集合与 Q 属主耦合</text>
+ <text x="306" y="304" fill="#0b6b74" font-size="10.5">② Top-k 集合与 Q 属主耦合</text>
  <text x="306" y="326" fill="#28343a">Ring 下没有「完整 head」</text>
  <text x="306" y="344" fill="#28343a">可搬运</text>
  <text x="306" y="368" fill="#0b6b74">性质：数据布局难题</text>
  <text x="306" y="388" fill="#0b6b74">基本不可绕过</text>
 
  <rect x="550" y="280" width="248" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="566" y="304" fill="#0b6b74" font-family="monospace" font-size="10.5">③ 预取需沿环前进多跳</text>
+ <text x="566" y="304" fill="#0b6b74" font-size="10.5">③ 预取需沿环前进多跳</text>
  <text x="566" y="326" fill="#28343a">代价 ∝ 环上距离；</text>
  <text x="566" y="344" fill="#28343a">中间 rank 转发带宽被占</text>
  <text x="566" y="368" fill="#0b6b74">性质：P2P 拓扑</text>
  <text x="566" y="388" fill="#0b6b74">可部分绕过：并入正常轮次</text>
 
  <rect x="810" y="280" width="240" height="120" fill="#ffffff" stroke="#0b6b74"/>
- <text x="826" y="304" fill="#0b6b74" font-family="monospace" font-size="10.5">④ 逐轮负载不均</text>
+ <text x="826" y="304" fill="#0b6b74" font-size="10.5">④ 逐轮负载不均</text>
  <text x="826" y="326" fill="#28343a">破坏通信/计算重叠的</text>
  <text x="826" y="344" fill="#28343a">流水线节奏</text>
  <text x="826" y="368" fill="#0b6b74">性质：需要逐轮调度</text>
@@ -2639,13 +2643,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 430" role="img" aria-label="Ring 与 Ulysses 的切分维度差异，以及均衡成本排序">
  <rect width="1080" height="430" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">RING vs ULYSSES · 为什么切分维度决定均衡成本</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">RING vs ULYSSES · 为什么切分维度决定均衡成本</text>
 
  <!-- Ulysses -->
  <g>
  <rect x="30" y="56" width="490" height="176" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="82" fill="#0b6b74" font-family="monospace" font-size="11.5">Ulysses：沿 head 切分</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="48" y="82" fill="#0b6b74" font-size="11.6">Ulysses：沿 head 切分</text>
+ <g font-size="9.5">
  <rect x="48" y="98" width="130" height="30" fill="#ffffff" stroke="#0b6b74"/><text x="113" y="117" fill="#0b6b74" text-anchor="middle">rank0 · head 0..h/4</text>
  <rect x="188" y="98" width="130" height="30" fill="#ffffff" stroke="#0b6b74" opacity=".85"/><text x="253" y="117" fill="#0b6b74" text-anchor="middle">rank1 · h/4..h/2</text>
  <rect x="328" y="98" width="130" height="30" fill="#ffffff" stroke="#0b6b74" opacity=".7"/><text x="393" y="117" fill="#0b6b74" text-anchor="middle">rank2 · h/2..3h/4</text>
@@ -2659,8 +2663,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- Ring -->
  <g>
  <rect x="550" y="56" width="500" height="176" fill="#ffffff" stroke="#0b6b74"/>
- <text x="568" y="82" fill="#0b6b74" font-family="monospace" font-size="11.5">Ring：沿序列 / 块切分</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="568" y="82" fill="#0b6b74" font-size="11.6">Ring：沿序列 / 块切分</text>
+ <g font-size="9.5">
  <rect x="568" y="98" width="112" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="624" y="117" fill="#0b6b74" text-anchor="middle">rank0 · seq 段0</text>
  <rect x="688" y="98" width="112" height="30" fill="#e6f3f4" stroke="#0b6b74" opacity=".85"/><text x="744" y="117" fill="#0b6b74" text-anchor="middle">rank1 · 段1</text>
  <rect x="808" y="98" width="112" height="30" fill="#e6f3f4" stroke="#0b6b74" opacity=".7"/><text x="864" y="117" fill="#0b6b74" text-anchor="middle">rank2 · 段2</text>
@@ -2673,17 +2677,17 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <!-- cost-ordered balancing options -->
- <text x="30" y="266" fill="#4d5b61" font-family="monospace" font-size="11.5">在 Ring 上做均衡：按代价排序的三种手段</text>
+ <text x="30" y="266" fill="#4d5b61" font-size="11.6">在 Ring 上做均衡：按代价排序的三种手段</text>
  <g font-size="10">
  <rect x="30" y="280" width="326" height="130" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="48" y="304" fill="#0b6b74" font-family="monospace" font-size="11">优先 · 从掩码设计上消除不均衡</text>
+ <text x="48" y="304" fill="#0b6b74" font-size="11">优先 · 从掩码设计上消除不均衡</text>
  <text x="48" y="326" fill="#28343a">规则化稀疏的子序列<tspan fill="#0b6b74">等长</tspan>，逐轮均衡是</text>
  <text x="48" y="344" fill="#28343a"><tspan fill="#0b6b74">结构保证</tspan>的 ⇒ 零运行时开销</text>
  <text x="48" y="368" fill="#4d5b61">代表：OSP-Next 的 Skiparse 重排</text>
  <text x="48" y="392" fill="#4d5b61">代价：稀疏的「智能程度」下降</text>
 
  <rect x="372" y="280" width="326" height="130" fill="#ffffff" stroke="#0b6b74"/>
- <text x="390" y="304" fill="#0b6b74" font-family="monospace" font-size="11">其次 · 调 Q 块到 rank 的映射</text>
+ <text x="390" y="304" fill="#0b6b74" font-size="11">其次 · 调 Q 块到 rank 的映射</text>
  <text x="390" y="326" fill="#28343a">Ring 下<tspan fill="#0b6b74">「搬 Q」比「搬 K」便宜得多</tspan>——</text>
  <text x="390" y="344" fill="#28343a">Q 本来就在本地，重新分配 Q 块只需一次</text>
  <text x="390" y="362" fill="#28343a">轻量的序列重排，不涉及 K 的环上搬运</text>
@@ -2691,7 +2695,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="390" y="404" fill="#4d5b61" font-size="9.5">（此条为机制推断，未见公开实现）</text>
 
  <rect x="714" y="280" width="336" height="130" fill="#ffffff" stroke="#0b6b74"/>
- <text x="732" y="304" fill="#0b6b74" font-family="monospace" font-size="11">最后 · 逐轮微调块的计算顺序</text>
+ <text x="732" y="304" fill="#0b6b74" font-size="11">最后 · 逐轮微调块的计算顺序</text>
  <text x="732" y="326" fill="#28343a">在 C1 允许的范围内调整块的执行次序</text>
  <text x="732" y="348" fill="#0b6b74">收益有限：每轮同步点仍然存在</text>
  <text x="732" y="372" fill="#4d5b61">本质是在既有的逐轮约束内做局部优化，</text>
@@ -2825,11 +2829,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
     <div class="svgbox">
     <svg viewBox="0 0 1060 460" role="img" aria-label="MoE 把模型容量与每步成本解耦，以及需要计入的三项代价">
       <rect width="1060" height="460" fill="#ffffff"/>
-      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">MoE 解耦的是「容量」与「每步算力」，不是「容量」与「每步显存」</text>
+      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">MoE 解耦的是「容量」与「每步算力」，不是「容量」与「每步显存」</text>
 
       <!-- three curves -->
-      <text x="24" y="56" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">① 三条随规模变化的曲线</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="24" y="56" font-size="10.5" font-weight="700" fill="#101619">① 三条随规模变化的曲线</text>
+      <g font-size="9.5">
         <rect x="24" y="68" width="322" height="46" fill="#ffffff" stroke="#d8dee0"/>
         <text x="42" y="88" fill="#28343a">每步算力 ∝ <tspan font-weight="700">激活参数量</tspan></text>
         <text x="42" y="106" fill="#4d5b61">蒸馏、稀疏注意力、量化都在压这条</text>
@@ -2847,8 +2851,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
       <!-- accounting -->
       <rect x="394" y="68" width="316" height="154" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="412" y="90" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">② 两本账</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="412" y="90" font-size="10.5" font-weight="700" fill="#101619">② 两本账</text>
+      <g font-size="9.5">
         <text x="412" y="114" fill="#28343a">总参数量 = 共享部分 + 专家数 × 单专家</text>
         <text x="412" y="130" fill="#4d5b61">　　↑ 决定显存与容量</text>
         <text x="412" y="156" fill="#28343a">每步激活 = 共享部分 + <tspan font-weight="700">激活专家数</tspan> × 单专家</text>
@@ -2860,16 +2864,16 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
       <text x="726" y="150" font-size="14" fill="#4d5b61">→</text>
 
       <rect x="758" y="68" width="278" height="154" fill="#e6f3f4" stroke="#0b6b74"/>
-      <text x="776" y="90" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">③ 结论</text>
-      <text x="776" y="116" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">容量按专家总数放大</text>
-      <text x="776" y="140" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">单步算力只按激活专家数增长</text>
-      <text x="776" y="170" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">⇒ 两者可以分别设定</text>
-      <text x="776" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#28343a">但显存仍按总参数量付</text>
-      <text x="776" y="212" font-family="ui-monospace,monospace" font-size="9" fill="#4d5b61">这是后面所有代价的来源</text>
+      <text x="776" y="90" font-size="10.5" font-weight="700" fill="#101619">③ 结论</text>
+      <text x="776" y="116" font-size="9.5" fill="#28343a">容量按专家总数放大</text>
+      <text x="776" y="140" font-size="9.5" fill="#28343a">单步算力只按激活专家数增长</text>
+      <text x="776" y="170" font-size="9.5" fill="#0b6b74">⇒ 两者可以分别设定</text>
+      <text x="776" y="196" font-size="9.5" fill="#28343a">但显存仍按总参数量付</text>
+      <text x="776" y="212" font-size="9" fill="#4d5b61">这是后面所有代价的来源</text>
 
       <!-- costs -->
-      <text x="24" y="252" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">④ 必须同时计入的三项代价</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="24" y="252" font-size="10.5" font-weight="700" fill="#101619">④ 必须同时计入的三项代价</text>
+      <g font-size="9.5">
         <rect x="24" y="264" width="322" height="82" fill="#ffffff" stroke="#a9b4b8"/>
         <text x="42" y="286" fill="#101619" font-weight="700">少算 ≠ 少存</text>
         <text x="42" y="308" fill="#28343a">权重总量仍要存在某处，只激活一小部分</text>
@@ -2890,8 +2894,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
       </g>
 
       <rect x="24" y="362" width="1012" height="84" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="384" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">视频模型里出现的三种 MoE 形态</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="42" y="384" font-size="10.5" font-weight="700" fill="#101619">视频模型里出现的三种 MoE 形态</text>
+      <g font-size="9.5">
         <text x="42" y="408" fill="#28343a">① <tspan font-weight="700">时间步双专家</tspan>：按去噪时间步路由，高噪声专家管全局结构、低噪声专家管细节。每步只激活一个，等于用一个 dense 的成本持有两倍容量。</text>
         <text x="42" y="428" fill="#28343a">② <tspan font-weight="700">模态专家</tspan>：不同模态走不同专家（如视频 / 音频），条件沿模态维分流。容量随模态数增长，算力按当步使用的模态数增长。</text>
         <text x="42" y="448" fill="#28343a">③ <tspan font-weight="700">稀疏 MoE</tspan>：token 级 Top-k 路由到多个专家，稀疏度可到 1/8 ~ 1/32。容量收益最大，但三项代价也最重。</text>
@@ -2907,17 +2911,17 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 400" role="img" aria-label="MoE 的容量与激活解耦，以及稀疏度对算力/显存的影响">
  <rect width="1080" height="400" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">CAPACITY vs ACTIVE PARAMETERS · 解耦与代价</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">CAPACITY vs ACTIVE PARAMETERS · 解耦与代价</text>
 
  <!-- dense vs moe -->
  <g>
- <text x="30" y="64" fill="#4d5b61" font-family="monospace" font-size="11">Dense：容量 = 每步成本</text>
+ <text x="30" y="64" fill="#4d5b61" font-size="11">Dense：容量 = 每步成本</text>
  <rect x="30" y="76" width="400" height="34" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="230" y="98" fill="#28343a" font-size="10.5" text-anchor="middle">全部 N 参数每步都要参与计算</text>
  <text x="30" y="130" fill="#0b6b74" font-size="10.5">想加容量就必须加算力 ⇒ 存在硬上限</text>
 
- <text x="30" y="170" fill="#0b6b74" font-family="monospace" font-size="11">MoE：容量与激活量解耦</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="30" y="170" fill="#0b6b74" font-size="11">MoE：容量与激活量解耦</text>
+ <g font-size="9.5">
  <rect x="30" y="182" width="70" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="65" y="201" fill="#0b6b74" text-anchor="middle">shared</text>
  <rect x="106" y="182" width="46" height="30" fill="#ffffff" stroke="#0b6b74"/><text x="129" y="201" fill="#0b6b74" text-anchor="middle">E1</text>
  <rect x="158" y="182" width="46" height="30" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="181" y="201" fill="#4d5b61" text-anchor="middle">E2</text>
@@ -2935,7 +2939,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- cost breakdown -->
  <g>
  <rect x="580" y="60" width="470" height="240" fill="#ffffff" stroke="#d8dee0"/>
- <text x="598" y="86" fill="#0b6b74" font-family="monospace" font-size="11.5">MoE 单步时间账本</text>
+ <text x="598" y="86" fill="#0b6b74" font-size="11.6">MoE 单步时间账本</text>
  <g font-size="10">
  <rect x="598" y="100" width="434" height="22" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="606" y="115" fill="#28343a">router + top-k + 归一化</text>
@@ -2953,7 +2957,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="598" y="290" fill="#4d5b61" font-size="10">LLM 侧的瓶颈更多落在第 5 项（通信）与显存带宽上，优先级不同。</text>
  </g>
 
- <text x="30" y="340" fill="#4d5b61" font-family="monospace" font-size="11.5">一句话区分两种优化目标</text>
+ <text x="30" y="340" fill="#4d5b61" font-size="11.6">一句话区分两种优化目标</text>
  <rect x="30" y="352" width="500" height="34" fill="#ffffff" stroke="#0b6b74"/>
  <text x="46" y="374" fill="#28343a" font-size="10.5">LLM 侧：优化「通信 + 带宽」 ⇒ all-to-all 调度、dispatcher、EP 拓扑</text>
  <rect x="550" y="352" width="500" height="34" fill="#eef2f3" stroke="#0b6b74"/>
@@ -3122,14 +3126,14 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 420" role="img" aria-label="三种 MoE 形态在视频模型中的成本结构对比">
  <rect width="1080" height="420" fill="#ffffff"/>
- <text x="30" y="30" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">THREE MoE SHAPES IN VIDEO MODELS · 成本结构完全不同</text>
+ <text x="30" y="30" fill="#4d5b61" font-size="12" letter-spacing="1.6">THREE MoE SHAPES IN VIDEO MODELS · 成本结构完全不同</text>
 
  <!-- shape 1 -->
  <g>
  <rect x="30" y="54" width="326" height="190" fill="#e6f3f4" stroke="#0b6b74"/>
- <text x="48" y="80" fill="#0b6b74" font-family="monospace" font-size="11.5">① 时间维专家（静态路由）</text>
+ <text x="48" y="80" fill="#0b6b74" font-size="11.6">① 时间维专家（静态路由）</text>
  <text x="48" y="102" fill="#28343a" font-size="10.5">Wan2.2 · LingBot-World</text>
- <g font-family="monospace" font-size="9.5">
+ <g font-size="9.5">
  <rect x="48" y="116" width="130" height="28" fill="#e6f3f4" stroke="#0b6b74"/><text x="113" y="134" fill="#0b6b74" text-anchor="middle">high-noise 专家</text>
  <rect x="188" y="116" width="130" height="28" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="253" y="134" fill="#4d5b61" text-anchor="middle">low-noise 专家</text>
  </g>
@@ -3142,9 +3146,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- shape 2 -->
  <g>
  <rect x="377" y="54" width="326" height="190" fill="#eef2f3" stroke="#0b6b74"/>
- <text x="395" y="80" fill="#0b6b74" font-family="monospace" font-size="11.5">② 超细粒度 token-choice</text>
+ <text x="395" y="80" fill="#0b6b74" font-size="11.6">② 超细粒度 token-choice</text>
  <text x="395" y="102" fill="#28343a" font-size="10.5">MAGI-2 MagiMoE</text>
- <g font-family="monospace" font-size="9">
+ <g font-size="9">
  <rect x="395" y="116" width="44" height="26" fill="#e6f3f4" stroke="#0b6b74"/><text x="417" y="133" fill="#0b6b74" text-anchor="middle">E1</text>
  <rect x="444" y="116" width="44" height="26" fill="#ffffff" stroke="#0b6b74"/><text x="466" y="133" fill="#0b6b74" text-anchor="middle">E2</text>
  <rect x="493" y="116" width="44" height="26" fill="#ffffff" stroke="#a9b4b8" stroke-dasharray="3 3"/><text x="515" y="133" fill="#4d5b61" text-anchor="middle">E3</text>
@@ -3161,7 +3165,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- shape 3 -->
  <g>
  <rect x="724" y="54" width="326" height="190" fill="#ffffff" stroke="#0b6b74"/>
- <text x="742" y="80" fill="#0b6b74" font-family="monospace" font-size="11.5">③ 标准稀疏 MoE 主干</text>
+ <text x="742" y="80" fill="#0b6b74" font-size="11.6">③ 标准稀疏 MoE 主干</text>
  <text x="742" y="102" fill="#28343a" font-size="10.5">LingBot-Video（30B / 3B 激活）</text>
  <text x="742" y="126" fill="#28343a" font-size="10.5">容量 30B，每步激活 3B ⇒ 稀疏度约 1/10</text>
  <text x="742" y="148" fill="#28343a" font-size="10.5">官方称 MoE 推理约快 3×</text>
@@ -3173,9 +3177,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- comparison band -->
  <rect x="30" y="266" width="1020" height="126" fill="#ffffff" stroke="#d8dee0"/>
- <text x="48" y="292" fill="#0b6b74" font-family="monospace" font-size="11.5">Head Parallel 的通信量优势（MAGI-2 的公开口径）</text>
- <text x="48" y="316" fill="#28343a" font-size="11" font-family="monospace">标准 MoE 通信量 ≈ N · k · H ← 随 top-k 放大，形状动态</text>
- <text x="48" y="338" fill="#0b6b74" font-size="11" font-family="monospace">Head Parallel ≈ N · H ← 只交换固定 head slice，形状固定</text>
+ <text x="48" y="292" fill="#0b6b74" font-size="11.6">Head Parallel 的通信量优势（MAGI-2 的公开口径）</text>
+ <text x="48" y="316" fill="#28343a" font-size="11">标准 MoE 通信量 ≈ N · k · H ← 随 top-k 放大，形状动态</text>
+ <text x="48" y="338" fill="#0b6b74" font-size="11">Head Parallel ≈ N · H ← 只交换固定 head slice，形状固定</text>
  <text x="48" y="362" fill="#28343a" font-size="10.5">⇒ 消除了动态 all-to-all 的形状波动，但<tspan fill="#0b6b74">把性能压力转移到「大量极窄专家的本地执行效率」上</tspan>。</text>
  <text x="48" y="382" fill="#4d5b61" font-size="10">这对昇腾侧的含义：真正的工作量在「为窄专家定制 route/sort/grouped FFN/scatter 的全链融合」，而不是通信库替换。</text>
  </svg>
@@ -3229,23 +3233,23 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <marker id="ar-k" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#4d5b61"/></marker>
  </defs>
  <rect width="1080" height="430" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">FROM FLASHATTENTION TO THREE ORTHOGONAL DIRECTIONS</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">FROM FLASHATTENTION TO THREE ORTHOGONAL DIRECTIONS</text>
 
  <!-- root -->
  <rect x="30" y="56" width="240" height="86" fill="#ffffff" stroke="#0b6b74"/>
- <text x="46" y="82" fill="#0b6b74" font-family="monospace" font-size="11.5">FlashAttention 基线</text>
+ <text x="46" y="82" fill="#0b6b74" font-size="11.6">FlashAttention 基线</text>
  <text x="46" y="102" fill="#28343a" font-size="10.5">tiling + online softmax</text>
  <text x="46" y="120" fill="#28343a" font-size="10.5">把 O(N²) 的 HBM 读写做对</text>
  <text x="46" y="136" fill="#4d5b61" font-size="10">质量无损，但 FLOPs 仍是 N²</text>
 
  <line x1="270" y1="99" x2="330" y2="99" stroke="#4d5b61" marker-end="url(#ar-k)"/>
- <text x="282" y="90" fill="#4d5b61" font-size="10" font-family="monospace">剩下的三个方向</text>
+ <text x="282" y="90" fill="#4d5b61" font-size="10">剩下的三个方向</text>
 
  <!-- three columns -->
  <g>
  <rect x="336" y="46" width="232" height="96" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="336" y="46" width="232" height="4" fill="#0b6b74"/>
- <text x="352" y="74" fill="#0b6b74" font-family="monospace" font-size="11.5">① 少看一些</text>
+ <text x="352" y="74" fill="#0b6b74" font-size="11.6">① 少看一些</text>
  <text x="352" y="95" fill="#28343a" font-size="10.5">稀疏：块级 top-k / 径向</text>
  <text x="352" y="113" fill="#28343a" font-size="10.5">线性：把 softmax 换成核近似</text>
  <text x="352" y="131" fill="#4d5b61" font-size="10">代表：VSA · SLA · SpargeAttn</text>
@@ -3253,7 +3257,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <g>
  <rect x="584" y="46" width="232" height="96" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="584" y="46" width="232" height="4" fill="#0b6b74"/>
- <text x="600" y="74" fill="#0b6b74" font-family="monospace" font-size="11.5">② 少放一些</text>
+ <text x="600" y="74" fill="#0b6b74" font-size="11.6">② 少放一些</text>
  <text x="600" y="95" fill="#28343a" font-size="10.5">KV 低比特：INT8 / FP8 / 2-bit</text>
  <text x="600" y="113" fill="#28343a" font-size="10.5">权重激活量化：W8A8 / block-wise</text>
  <text x="600" y="131" fill="#4d5b61" font-size="10">代表：QuantWM · SageAttention</text>
@@ -3261,7 +3265,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <g>
  <rect x="832" y="46" width="218" height="96" fill="#ffffff" stroke="#0b6b74"/>
  <rect x="832" y="46" width="218" height="4" fill="#0b6b74"/>
- <text x="848" y="74" fill="#0b6b74" font-family="monospace" font-size="11.5">③ 少留一些</text>
+ <text x="848" y="74" fill="#0b6b74" font-size="11.6">③ 少留一些</text>
  <text x="848" y="95" fill="#28343a" font-size="10.5">sink + 滑窗 + 自适应淘汰</text>
  <text x="848" y="113" fill="#28343a" font-size="10.5">记忆压缩 / paged 预分配</text>
  <text x="848" y="131" fill="#4d5b61" font-size="10">代表：LongLive · TurboServe</text>
@@ -3270,10 +3274,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <!-- detail rows -->
  <g font-size="10.5">
  <rect x="30" y="168" width="1020" height="1" fill="#d8dee0"/>
- <text x="30" y="196" fill="#4d5b61" font-family="monospace" font-size="11">三个方向的「收益 / 破坏位置」并不重合，因此可以叠加，但验收必须分项</text>
+ <text x="30" y="196" fill="#4d5b61" font-size="11">三个方向的「收益 / 破坏位置」并不重合，因此可以叠加，但验收必须分项</text>
 
  <rect x="30" y="212" width="330" height="192" fill="#ffffff" stroke="#d8dee0"/>
- <text x="46" y="236" fill="#0b6b74" font-family="monospace" font-size="11">稀疏 / 线性注意力的收益形状</text>
+ <text x="46" y="236" fill="#0b6b74" font-size="11">稀疏 / 线性注意力的收益形状</text>
  <text x="46" y="260" fill="#28343a">收益 ∝ 上下文长度：短上下文几乎无收益</text>
  <text x="46" y="280" fill="#28343a">长上下文收益可达数倍</text>
  <line x1="46" y1="296" x2="344" y2="296" stroke="#d8dee0"/>
@@ -3283,7 +3287,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="46" y="386" fill="#4d5b61">否则推理期硬上会明显掉画质</text>
 
  <rect x="376" y="212" width="330" height="192" fill="#ffffff" stroke="#d8dee0"/>
- <text x="392" y="236" fill="#0b6b74" font-family="monospace" font-size="11">低比特注意力 / KV 量化的收益形状</text>
+ <text x="392" y="236" fill="#0b6b74" font-size="11">低比特注意力 / KV 量化的收益形状</text>
  <text x="392" y="260" fill="#28343a">收益来自 Tensor Core 吞吐与带宽</text>
  <text x="392" y="280" fill="#28343a">与序列长度近似无关 ⇒ 对短块也有用</text>
  <line x1="392" y1="296" x2="690" y2="296" stroke="#d8dee0"/>
@@ -3293,7 +3297,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="392" y="386" fill="#4d5b61">per-tensor 量化对离群值极脆弱</text>
 
  <rect x="722" y="212" width="328" height="192" fill="#ffffff" stroke="#d8dee0"/>
- <text x="738" y="236" fill="#0b6b74" font-family="monospace" font-size="11">缓存淘汰 / 记忆压缩的收益形状</text>
+ <text x="738" y="236" fill="#0b6b74" font-size="11">缓存淘汰 / 记忆压缩的收益形状</text>
  <text x="738" y="260" fill="#28343a">收益是「会话时长」而非「每步速度」</text>
  <text x="738" y="280" fill="#28343a">决定显存能否平台化、会话能否无限</text>
  <line x1="738" y1="296" x2="1034" y2="296" stroke="#d8dee0"/>
@@ -3315,29 +3319,29 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
     <div class="svgbox">
     <svg viewBox="0 0 1060 420" role="img" aria-label="长会话下注意力算力与 KV 显存的增长，以及三个方向的压降点">
       <rect width="1060" height="420" fill="#ffffff"/>
-      <text x="24" y="26" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#101619">两者都随会话时长线性增长，而每块的播放时长固定</text>
+      <text x="24" y="26" font-size="12" font-weight="700" fill="#101619">两者都随会话时长线性增长，而每块的播放时长固定</text>
 
       <!-- axes -->
       <line x1="70" y1="330" x2="520" y2="330" stroke="#101619" stroke-width="1.5"/>
       <line x1="70" y1="330" x2="70" y2="80" stroke="#101619" stroke-width="1.5"/>
-      <text x="530" y="334" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">会话时长 →</text>
-      <text x="24" y="76" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">成本</text>
+      <text x="530" y="334" font-size="9.5" fill="#4d5b61">会话时长 →</text>
+      <text x="24" y="76" font-size="9.5" fill="#4d5b61">成本</text>
 
       <!-- curves -->
       <line x1="70" y1="330" x2="500" y2="110" stroke="#0b6b74" stroke-width="2"/>
       <line x1="70" y1="330" x2="500" y2="150" stroke="#4d5b61" stroke-width="2" stroke-dasharray="6 4"/>
       <line x1="70" y1="330" x2="500" y2="330" stroke="#101619" stroke-width="2" stroke-dasharray="2 3"/>
 
-      <text x="330" y="98" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">KV 显存 = 2 × 序列长 × 头维 × 位宽 × 层数</text>
-      <text x="330" y="150" font-family="ui-monospace,monospace" font-size="9.5" fill="#4d5b61">单块注意力算力 ∝ 块内长度 × 序列长 × 头维</text>
-      <text x="330" y="322" font-family="ui-monospace,monospace" font-size="9.5" fill="#101619">每块允许的时间（常数）</text>
+      <text x="330" y="98" font-size="9.5" fill="#0b6b74">KV 显存 = 2 × 序列长 × 头维 × 位宽 × 层数</text>
+      <text x="330" y="150" font-size="9.5" fill="#4d5b61">单块注意力算力 ∝ 块内长度 × 序列长 × 头维</text>
+      <text x="330" y="322" font-size="9.5" fill="#101619">每块允许的时间（常数）</text>
 
-      <text x="360" y="196" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">两者的差额就是</text>
-      <text x="360" y="214" font-family="ui-monospace,monospace" font-size="9.5" fill="#0b6b74">随时间扩大的实时性缺口</text>
+      <text x="360" y="196" font-size="9.5" fill="#0b6b74">两者的差额就是</text>
+      <text x="360" y="214" font-size="9.5" fill="#0b6b74">随时间扩大的实时性缺口</text>
 
       <!-- three directions -->
-      <text x="580" y="76" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#101619">三个方向的压降点不同</text>
-      <g font-family="ui-monospace,monospace" font-size="9.5">
+      <text x="580" y="76" font-size="10.5" font-weight="700" fill="#101619">三个方向的压降点不同</text>
+      <g font-size="9.5">
         <rect x="580" y="88" width="456" height="66" fill="#ffffff" stroke="#d8dee0"/>
         <text x="598" y="110" fill="#101619" font-weight="700">稀疏与线性注意力</text>
         <text x="598" y="130" fill="#28343a">把上式里的「序列长」换成「实际参与计算的长度」</text>
@@ -3355,8 +3359,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
       </g>
 
       <rect x="24" y="348" width="1012" height="58" fill="#ffffff" stroke="#a9b4b8"/>
-      <text x="42" y="370" font-family="ui-monospace,monospace" font-size="10" fill="#28343a">三者可以叠加，但作用点不同：<tspan font-weight="700">先做哪一个取决于当前瓶颈落在算力还是显存</tspan>。</text>
-      <text x="42" y="392" font-family="ui-monospace,monospace" font-size="10" fill="#4d5b61">如果单块时间被注意力占满而显存宽裕，稀疏优先；如果显存是硬上限而算力有余，量化优先。</text>
+      <text x="42" y="370" font-size="10" fill="#28343a">三者可以叠加，但作用点不同：<tspan font-weight="700">先做哪一个取决于当前瓶颈落在算力还是显存</tspan>。</text>
+      <text x="42" y="392" font-size="10" fill="#4d5b61">如果单块时间被注意力占满而显存宽裕，稀疏优先；如果显存是硬上限而算力有余，量化优先。</text>
     </svg>
     </div>
     <figcaption><b>FIG 8-4 · 注意力算力与 KV 显存的增长曲线</b>　两条曲线都随会话时长线性上升，而每块允许的时间是常数；三个优化方向分别作用在不同的项上。</figcaption>
@@ -3523,11 +3527,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 340" role="img" aria-label="块稀疏注意力与稀疏-线性混合的机制对比">
  <rect width="1080" height="340" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">BLOCK-SPARSE vs SPARSE-LINEAR</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">BLOCK-SPARSE vs SPARSE-LINEAR</text>
 
  <!-- dense -->
  <g>
- <text x="30" y="64" fill="#4d5b61" font-family="monospace" font-size="11">Dense 注意力：N×N 全算</text>
+ <text x="30" y="64" fill="#4d5b61" font-size="11">Dense 注意力：N×N 全算</text>
  <g transform="translate(30,76)">
  <rect width="200" height="200" fill="#ffffff" stroke="#d8dee0"/>
  <g fill="#a9b4b8" opacity=".55">
@@ -3552,7 +3556,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- block sparse -->
  <g>
- <text x="316" y="64" fill="#0b6b74" font-family="monospace" font-size="11">块稀疏：只算 top-k 块（结构化 ⇒ 可编译）</text>
+ <text x="316" y="64" fill="#0b6b74" font-size="11">块稀疏：只算 top-k 块（结构化 ⇒ 可编译）</text>
  <rect x="316" y="76" width="200" height="200" fill="#ffffff" stroke="#d8dee0"/>
  <g fill="#0b6b74" opacity=".38">
  <rect x="316" y="76" width="50" height="50"/><rect x="366" y="126" width="50" height="50"/>
@@ -3572,7 +3576,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- sparse + linear -->
  <g>
- <text x="602" y="64" fill="#0b6b74" font-family="monospace" font-size="11">稀疏—线性混合：精确项 + 近似项</text>
+ <text x="602" y="64" fill="#0b6b74" font-size="11">稀疏—线性混合：精确项 + 近似项</text>
  <rect x="602" y="76" width="200" height="200" fill="#ffffff" stroke="#d8dee0"/>
  <g fill="#0b6b74" opacity=".38">
  <rect x="602" y="76" width="50" height="50"/><rect x="652" y="126" width="50" height="50"/>
@@ -3588,7 +3592,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- notes -->
  <rect x="848" y="76" width="202" height="200" fill="#ffffff" stroke="#d8dee0"/>
- <text x="862" y="100" fill="#0b6b74" font-family="monospace" font-size="10.5">部署要点</text>
+ <text x="862" y="100" fill="#0b6b74" font-size="10.5">部署要点</text>
  <text x="862" y="124" fill="#28343a" font-size="10">· 不物化 N² mask</text>
  <text x="862" y="144" fill="#28343a" font-size="10">· 块索引预生成</text>
  <text x="862" y="164" fill="#28343a" font-size="10">· 与 KV layout 一致</text>
@@ -3696,11 +3700,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 320" role="img" aria-label="逐块拼接缓存与预分配分页缓存的对比">
  <rect width="1080" height="320" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">KV CACHE LAYOUT · 逐块 cat vs 预分配 / paged</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">KV CACHE LAYOUT · 逐块 cat vs 预分配 / paged</text>
 
  <g>
- <text x="30" y="66" fill="#0b6b74" font-family="monospace" font-size="11">× 逐块 cat 扩展</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="30" y="66" fill="#0b6b74" font-size="11">× 逐块 cat 扩展</text>
+ <g font-size="9.5">
  <rect x="30" y="80" width="60" height="30" fill="#ffffff" stroke="#d8dee0"/><text x="60" y="99" fill="#28343a" text-anchor="middle">KV0</text>
  <rect x="96" y="80" width="96" height="30" fill="#eef2f3" stroke="#0b6b74"/><text x="144" y="99" fill="#0b6b74" text-anchor="middle">copy+KV0 KV1</text>
  <rect x="198" y="80" width="132" height="30" fill="#eef2f3" stroke="#0b6b74"/><text x="264" y="99" fill="#0b6b74" text-anchor="middle">copy + KV2</text>
@@ -3714,8 +3718,8 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <g>
- <text x="400" y="66" fill="#0b6b74" font-family="monospace" font-size="11">√ 预分配 + 环形 / 分页</text>
- <g font-family="monospace" font-size="9.5">
+ <text x="400" y="66" fill="#0b6b74" font-size="11">√ 预分配 + 环形 / 分页</text>
+ <g font-size="9.5">
  <rect x="400" y="80" width="60" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="430" y="99" fill="#0b6b74" text-anchor="middle">KV0</text>
  <rect x="466" y="80" width="60" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="496" y="99" fill="#0b6b74" text-anchor="middle">KV1</text>
  <rect x="532" y="80" width="60" height="30" fill="#e6f3f4" stroke="#0b6b74"/><text x="562" y="99" fill="#0b6b74" text-anchor="middle">KV2</text>
@@ -3731,7 +3735,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  </g>
 
  <rect x="790" y="80" width="260" height="196" fill="#ffffff" stroke="#d8dee0"/>
- <text x="806" y="104" fill="#0b6b74" font-family="monospace" font-size="10.5">验收命令（工程口径）</text>
+ <text x="806" y="104" fill="#0b6b74" font-size="10.5">验收命令（工程口径）</text>
  <text x="806" y="130" fill="#28343a" font-size="10">1. 跑 1 / 10 / 100 / 1000 块</text>
  <text x="806" y="152" fill="#28343a" font-size="10">2. 记录每块延迟曲线</text>
  <text x="806" y="174" fill="#28343a" font-size="10">3. 记录峰值/常驻显存</text>
@@ -3776,13 +3780,13 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 300" role="img" aria-label="高分辨率多步与级联精修的成本对比">
  <rect width="1060" height="300" fill="#ffffff"/>
- <g font-family="ui-monospace,monospace" font-size="12" fill="#28343a">
+ <g font-size="12" fill="#28343a">
  <text x="24" y="30" font-weight="700" fill="#101619">方案 A · 直接在高分辨率上多步</text>
  <rect x="24" y="42" width="52" height="34" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="50" y="64" text-anchor="middle">×20</text>
  <rect x="84" y="42" width="330" height="34" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="249" y="64" text-anchor="middle">每步都在高分辨率 token 上做注意力</text>
- <text x="24" y="96" font-size="11.5" fill="#4d5b61">单步 ∝ 分辨率⁴ ⇒ 总量约 80 个单位</text>
+ <text x="24" y="96" font-size="11.6" fill="#4d5b61">单步 ∝ 分辨率⁴ ⇒ 总量约 80 个单位</text>
 
  <text x="24" y="140" font-weight="700" fill="#101619">方案 B · 低分辨率多步 + 高分辨率单步精修</text>
  <rect x="24" y="152" width="52" height="34" fill="#e6f3f4" stroke="#0b6b74"/>
@@ -3794,11 +3798,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <text x="294" y="174" text-anchor="middle">×1</text>
  <rect x="328" y="152" width="180" height="34" fill="#ffffff" stroke="#0b6b74"/>
  <text x="418" y="174" text-anchor="middle">高分辨率精修</text>
- <text x="24" y="206" font-size="11.5" fill="#4d5b61">总量约 8 个单位 ⇒ 约 10 倍理论差距</text>
+ <text x="24" y="206" font-size="11.6" fill="#4d5b61">总量约 8 个单位 ⇒ 约 10 倍理论差距</text>
  </g>
 
  <line x1="560" y1="24" x2="560" y2="272" stroke="#d8dee0"/>
- <g font-family="ui-monospace,monospace" font-size="11.5" fill="#28343a">
+ <g font-size="11.6" fill="#28343a">
  <text x="586" y="30" font-weight="700" fill="#101619" font-size="12">公开实现的四种拓扑</text>
  <text x="586" y="58">Vidu S2 ｜ 540p 因果主干 → 单步 latent 超分 → 720p</text>
  <text x="586" y="82">爱诗 R2 ｜ 1–2 个低分辨率阶段 → 1 个高分辨率阶段</text>
@@ -3958,7 +3962,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1060 250" role="img" aria-label="主干提速前后 VAE 解码在总延迟中的占比变化">
  <rect width="1060" height="250" fill="#ffffff"/>
- <g font-family="ui-monospace,monospace" font-size="12" fill="#28343a">
+ <g font-size="12" fill="#28343a">
  <text x="24" y="28" font-weight="700" fill="#101619">优化前：主干 20–50 步，VAE 解码占总延迟 2.3%</text>
  <rect x="24" y="40" width="700" height="30" fill="#ffffff" stroke="#a9b4b8"/>
  <text x="374" y="60" text-anchor="middle">主干去噪（占绝大多数时间）</text>
@@ -4149,10 +4153,10 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <svg viewBox="0 0 1080 350" role="img" aria-label="流式生成的端到端时间线与三层职责">
  <defs><marker id="ar-s" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
  <rect width="1080" height="350" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">STREAMING LATENCY TIMELINE · 三层职责的分界线</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">STREAMING LATENCY TIMELINE · 三层职责的分界线</text>
 
  <!-- swimlanes -->
- <g font-family="monospace" font-size="10">
+ <g font-size="10">
  <text x="30" y="74" fill="#0b6b74">MODEL</text>
  <text x="30" y="148" fill="#0b6b74">RUNTIME</text>
  <text x="30" y="222" fill="#0b6b74">SERVING</text>
@@ -4186,11 +4190,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <!-- timeline arrow -->
  <line x1="130" y1="262" x2="1030" y2="262" stroke="#0b6b74" stroke-width="1.4" marker-end="url(#ar-s)"/>
- <text x="130" y="284" fill="#0b6b74" font-size="10.5" font-family="monospace">t=0 请求进入</text>
- <text x="300" y="284" fill="#4d5b61" font-size="10.5" font-family="monospace">prefill / 条件编码</text>
- <text x="500" y="284" fill="#4d5b61" font-size="10.5" font-family="monospace">首块 DiT + VAE</text>
- <text x="700" y="284" fill="#0b6b74" font-size="10.5" font-family="monospace">TTFC（用户看到第一帧）</text>
- <text x="920" y="284" fill="#4d5b61" font-size="10.5" font-family="monospace">稳态 TPC 循环</text>
+ <text x="130" y="284" fill="#0b6b74" font-size="10.5">t=0 请求进入</text>
+ <text x="300" y="284" fill="#4d5b61" font-size="10.5">prefill / 条件编码</text>
+ <text x="500" y="284" fill="#4d5b61" font-size="10.5">首块 DiT + VAE</text>
+ <text x="700" y="284" fill="#0b6b74" font-size="10.5">TTFC（用户看到第一帧）</text>
+ <text x="920" y="284" fill="#4d5b61" font-size="10.5">稳态 TPC 循环</text>
 
  <rect x="130" y="302" width="900" height="34" fill="#ffffff" stroke="#d8dee0"/>
  <text x="146" y="324" fill="#28343a" font-size="10.5">关键认识：TTFC 由「能否尽快产出第一块」决定，稳态体验由「P99 TPC 与抖动」决定，成本由「空闲会话是否占卡」决定 —— 三个目标由三套不同机制负责，不能用一个 FPS 数字概括。</text>
@@ -4286,11 +4290,11 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <svg viewBox="0 0 1080 400" role="img" aria-label="TurboServe 的 observe-place-provision-execute 闭环">
  <defs><marker id="ar-t" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0b6b74"/></marker></defs>
  <rect width="1080" height="400" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">TURBOSERVE CONTROL LOOP</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">TURBOSERVE CONTROL LOOP</text>
 
  <!-- loop boxes -->
  <rect x="30" y="62" width="230" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="46" y="88" fill="#0b6b74" font-family="monospace" font-size="11.5">① Observe</text>
+ <text x="46" y="88" fill="#0b6b74" font-size="11.6">① Observe</text>
  <text x="46" y="110" fill="#28343a" font-size="10.5">每个会话：active / idle、deadline</text>
  <text x="46" y="128" fill="#28343a" font-size="10.5">状态大小、预计块耗时</text>
  <text x="46" y="146" fill="#28343a" font-size="10.5">每卡：负载、剩余容量</text>
@@ -4298,7 +4302,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="260" y1="108" x2="300" y2="108" stroke="#0b6b74" marker-end="url(#ar-t)"/>
 
  <rect x="306" y="62" width="230" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="322" y="88" fill="#0b6b74" font-family="monospace" font-size="11.5">② Place</text>
+ <text x="322" y="88" fill="#0b6b74" font-size="11.6">② Place</text>
  <text x="322" y="110" fill="#28343a" font-size="10.5">迁移感知的放置决策</text>
  <text x="322" y="128" fill="#28343a" font-size="10.5">目标：压低最拥塞卡的</text>
  <text x="322" y="146" fill="#28343a" font-size="10.5">预计 per-chunk 延迟</text>
@@ -4306,7 +4310,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="536" y1="108" x2="576" y2="108" stroke="#0b6b74" marker-end="url(#ar-t)"/>
 
  <rect x="582" y="62" width="230" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="598" y="88" fill="#0b6b74" font-family="monospace" font-size="11.5">③ Provision</text>
+ <text x="598" y="88" fill="#0b6b74" font-size="11.6">③ Provision</text>
  <text x="598" y="110" fill="#28343a" font-size="10.5">按活跃负载调整 GPU budget</text>
  <text x="598" y="128" fill="#28343a" font-size="10.5">吸收 burst / idle 的时间异质性</text>
  <text x="598" y="146" fill="#28343a" font-size="10.5">受模型冷启动时间约束</text>
@@ -4314,38 +4318,38 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="812" y1="108" x2="852" y2="108" stroke="#0b6b74" marker-end="url(#ar-t)"/>
 
  <rect x="858" y="62" width="192" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="874" y="88" fill="#0b6b74" font-family="monospace" font-size="11.5">④ Execute</text>
+ <text x="874" y="88" fill="#0b6b74" font-size="11.6">④ Execute</text>
  <text x="874" y="110" fill="#28343a" font-size="10.5">活跃会话 coalesce 合批</text>
  <text x="874" y="128" fill="#28343a" font-size="10.5">空闲状态 offload</text>
  <text x="874" y="146" fill="#28343a" font-size="10.5">必要时 NCCL 迁移</text>
 
  <!-- loop back -->
  <path d="M954,154 L954,180 L145,180 L145,154" fill="none" stroke="#0b6b74" stroke-dasharray="5 4" marker-end="url(#ar-t)"/>
- <text x="470" y="198" fill="#4d5b61" font-size="10.5" font-family="monospace">持续闭环：会话老化 → 重新放置 → 供给跟随</text>
+ <text x="470" y="198" fill="#4d5b61" font-size="10.5">持续闭环：会话老化 → 重新放置 → 供给跟随</text>
 
  <!-- state that must be movable -->
- <text x="30" y="238" fill="#4d5b61" font-family="monospace" font-size="11.5">迁移必须搬动的四类会话状态（缺一项就无法一致续跑）</text>
+ <text x="30" y="238" fill="#4d5b61" font-size="11.6">迁移必须搬动的四类会话状态（缺一项就无法一致续跑）</text>
  <g font-size="10.5">
  <rect x="30" y="252" width="246" height="112" fill="#ffffff" stroke="#0b6b74"/>
- <text x="46" y="276" fill="#0b6b74" font-family="monospace" font-size="11">计算状态</text>
+ <text x="46" y="276" fill="#0b6b74" font-size="11">计算状态</text>
  <text x="46" y="298" fill="#28343a">每层 K/V、mask 元数据、</text>
  <text x="46" y="316" fill="#28343a">RoPE 位置与重定位基准</text>
  <text x="46" y="342" fill="#4d5b61">体积最大 → 决定迁移成本</text>
 
  <rect x="288" y="252" width="246" height="112" fill="#ffffff" stroke="#0b6b74"/>
- <text x="304" y="276" fill="#0b6b74" font-family="monospace" font-size="11">语义 / 条件状态</text>
+ <text x="304" y="276" fill="#0b6b74" font-size="11">语义 / 条件状态</text>
  <text x="304" y="298" fill="#28343a">全局 prompt、分块提示、</text>
  <text x="304" y="316" fill="#28343a">首帧特征、动作历史</text>
  <text x="304" y="342" fill="#4d5b61">小但决定语义连续</text>
 
  <rect x="546" y="252" width="246" height="112" fill="#ffffff" stroke="#0b6b74"/>
- <text x="562" y="276" fill="#0b6b74" font-family="monospace" font-size="11">采样状态</text>
+ <text x="562" y="276" fill="#0b6b74" font-size="11">采样状态</text>
  <text x="562" y="298" fill="#28343a">当前 latent、scheduler 步、</text>
  <text x="562" y="316" fill="#28343a">seed 与 RNG</text>
  <text x="562" y="342" fill="#4d5b61">缺一项即无法确定性续跑</text>
 
  <rect x="804" y="252" width="246" height="112" fill="#ffffff" stroke="#0b6b74"/>
- <text x="820" y="276" fill="#0b6b74" font-family="monospace" font-size="11">媒体 / 背压状态</text>
+ <text x="820" y="276" fill="#0b6b74" font-size="11">媒体 / 背压状态</text>
  <text x="820" y="298" fill="#28343a">待解码 latent、帧序号、</text>
  <text x="820" y="316" fill="#28343a">编码队列、播放水位</text>
  <text x="820" y="342" fill="#4d5b61">决定用户是否看到卡顿</text>
@@ -4404,9 +4408,9 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <div class="svgbox">
  <svg viewBox="0 0 1080 330" role="img" aria-label="共享时间线下的主干-精修-VAE 异步流水">
  <rect width="1080" height="330" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-family="monospace" font-size="12" letter-spacing="1.6">SHARED-TIMELINE PIPELINE · 主干 / Refiner / VAE 重叠</text>
+ <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">SHARED-TIMELINE PIPELINE · 主干 / Refiner / VAE 重叠</text>
 
- <g font-family="monospace" font-size="10">
+ <g font-size="10">
  <text x="30" y="72" fill="#0b6b74">Backbone</text>
  <text x="30" y="132" fill="#0b6b74">Refiner</text>
  <text x="30" y="192" fill="#0b6b74">VAE dec</text>
@@ -4447,7 +4451,7 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
  <line x1="662" y1="134" x2="662" y2="166"/>
  <line x1="550" y1="194" x2="550" y2="226"/>
  </g>
- <text x="330" y="292" fill="#4d5b61" font-size="10.5">每个阶段处理的是<strong>不同的块</strong>：主干 n+2 与解码 n 同时存在 ⇒ 延迟被重叠而非消除。</text>
+ <text x="330" y="292" fill="#4d5b61" font-size="10.5">每个阶段处理的是<tspan font-weight="700">不同的块</tspan>：主干 n+2 与解码 n 同时存在 ⇒ 延迟被重叠而非消除。</text>
  <text x="330" y="312" fill="#0b6b74" font-size="10.5">代价：显存中同时驻留多个阶段的中间张量，需按阶段估算峰值而非按单块估算。</text>
  </svg>
  </div>
