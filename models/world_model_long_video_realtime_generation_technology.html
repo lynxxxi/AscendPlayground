@@ -286,101 +286,107 @@ footer{border-top:2px solid var(--rule);padding:24px;color:var(--muted);font:.8r
 
  <figure class="wide" id="map-flow">
  <div class="svgbox">
- <svg viewBox="0 0 1080 470" role="img" aria-label="实时生成技术的四段依赖链与各章位置">
+<svg viewBox="0 0 1080 580" role="img" aria-label="实时生成技术的四段依赖链与四个正交杠杆">
  <defs>
- <marker id="ar-m" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0b6b74"/></marker>
- <marker id="ar-m2" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d5b61"/></marker>
+  <marker id="ar-m" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0b6b74"/></marker>
  </defs>
- <rect width="1080" height="470" fill="#ffffff"/>
- <text x="30" y="32" fill="#4d5b61" font-size="12" letter-spacing="1.6">DEPENDENCY MAP · 四段串联与章节落点</text>
+ <rect width="1080" height="580" fill="#ffffff"/>
+ <text x="30" y="34" fill="#4d5b61" font-size="13" letter-spacing="1.6">DEPENDENCY MAP · 四段串联与章节落点</text>
 
- <!-- four stages -->
- <g>
- <rect x="30" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
- <rect x="30" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="48" y="86" fill="#0b6b74" font-size="11.6">A · 模型结构</text>
- <text x="48" y="110" fill="#28343a" font-size="10.5">基座主干、条件注入方式、</text>
- <text x="48" y="128" fill="#28343a" font-size="10.5">块级因果掩码、参考图作为</text>
- <text x="48" y="146" fill="#28343a" font-size="10.5">条件 token、音视频联合状态</text>
- <text x="48" y="172" fill="#0b6b74" font-size="10.5">回答：能不能「增量算」？</text>
- <text x="48" y="194" fill="#0b6b74" font-size="11">→ 第 01 章</text>
- <text x="48" y="212" fill="#4d5b61" font-size="10">U-ViT · UniDiffuser · S2 · R2</text>
+ <!-- ============ dependency chain ============ -->
+ <text x="30" y="74" font-size="14" font-weight="700" fill="#101619">A→B→C→D：每一段把上一段的产物变成可用系统</text>
 
- <rect x="290" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
- <rect x="290" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="308" y="86" fill="#0b6b74" font-size="11.6">B · 后训练（训练侧）</text>
- <text x="308" y="110" fill="#28343a" font-size="10.5">forcing 修补训练—推理落差；</text>
- <text x="308" y="128" fill="#28343a" font-size="10.5">蒸馏把 NFE 压到 1–4 步；</text>
- <text x="308" y="146" fill="#28343a" font-size="10.5">两者与稀疏/量化联合优化</text>
- <text x="308" y="172" fill="#0b6b74" font-size="10.5">回答：会不会跑飞？快不快？</text>
- <text x="308" y="194" fill="#0b6b74" font-size="11">→ 第 02 / 03 / 04 章</text>
- <text x="308" y="212" fill="#4d5b61" font-size="10">Forcing · DMD/PCM/rCM · 联合优化</text>
-
- <rect x="550" y="58" width="244" height="164" fill="#ffffff" stroke="#0b6b74"/>
- <rect x="550" y="58" width="244" height="5" fill="#0b6b74"/>
- <text x="568" y="86" fill="#0b6b74" font-size="11.6">C · 推理运行时</text>
- <text x="568" y="110" fill="#28343a" font-size="10.5">RoPE 重定位让缓存可复用；</text>
- <text x="568" y="128" fill="#28343a" font-size="10.5">分布式稀疏并行（跨卡可行性）；</text>
- <text x="568" y="146" fill="#28343a" font-size="10.5">稀疏 MoE、注意力稀疏、KV 量化；</text>
- <text x="568" y="164" fill="#28343a" font-size="10.5">超分精修与轻量化 VAE</text>
- <text x="568" y="186" fill="#0b6b74" font-size="10.5">回答：一块要花多少？跨卡还成立吗？</text>
- <text x="568" y="204" fill="#0b6b74" font-size="11">→ 第 05 – 11 章</text>
- <text x="568" y="218" fill="#4d5b61" font-size="9.5">RoPE · db-SP/FVAttn · FastMoE/DIET · VSA/SLA · 超分/VAE</text>
-
- <rect x="810" y="58" width="240" height="164" fill="#ffffff" stroke="#0b6b74"/>
- <rect x="810" y="58" width="240" height="5" fill="#0b6b74"/>
- <text x="828" y="86" fill="#0b6b74" font-size="11.6">D · 服务化与落地</text>
- <text x="828" y="110" fill="#28343a" font-size="10.5">异步 DiT–VAE 流水、合批、</text>
- <text x="828" y="128" fill="#28343a" font-size="10.5">会话放置与状态迁移、</text>
- <text x="828" y="146" fill="#28343a" font-size="10.5">弹性供给与成本控制；</text>
- <text x="828" y="164" fill="#28343a" font-size="10.5">迁移与落地判断</text>
- <text x="828" y="186" fill="#0b6b74" font-size="10.5">回答：多人长会话扛不扛得住？</text>
- <text x="828" y="204" fill="#0b6b74" font-size="11">→ 第 09 / 10 章</text>
- <text x="828" y="218" fill="#4d5b61" font-size="9.5">TurboServe · 生数加速栈 · 会话调度</text>
+ <!-- stage A -->
+ <rect x="30" y="96" width="250" height="176" fill="#ffffff" stroke="#0b6b74"/>
+ <rect x="30" y="96" width="250" height="5" fill="#0b6b74"/>
+ <text x="48" y="134" font-size="15" font-weight="700" fill="#0b6b74">A · 模型结构</text>
+ <g font-size="12" fill="#28343a">
+  <text x="48" y="166">基座主干、条件注入方式、</text>
+  <text x="48" y="190">块级因果掩码、参考图作为</text>
+  <text x="48" y="214">条件 token、音视频联合状态</text>
  </g>
+ <text x="48" y="244" font-size="12.5" fill="#0b6b74">回答：能不能「增量算」？</text>
+ <text x="48" y="264" font-size="12.5" fill="#0b6b74">→ 第 01 章</text>
 
- <!-- arrows -->
- <line x1="274" y1="140" x2="288" y2="140" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
- <line x1="534" y1="140" x2="548" y2="140" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
- <line x1="794" y1="140" x2="808" y2="140" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
+ <!-- stage B -->
+ <rect x="296" y="96" width="250" height="176" fill="#ffffff" stroke="#0b6b74"/>
+ <rect x="296" y="96" width="250" height="5" fill="#0b6b74"/>
+ <text x="314" y="134" font-size="15" font-weight="700" fill="#0b6b74">B · 后训练（训练侧）</text>
+ <g font-size="12" fill="#28343a">
+  <text x="314" y="166">forcing 修补训练与推理的</text>
+  <text x="314" y="190">落差；蒸馏把 NFE 压到</text>
+  <text x="314" y="214">1–4 步；两者与稀疏/量化联合</text>
+ </g>
+ <text x="314" y="244" font-size="12.5" fill="#0b6b74">回答：会不会跑飞？快不快？</text>
+ <text x="314" y="264" font-size="12.5" fill="#0b6b74">→ 第 02–04 章</text>
+
+ <!-- stage C -->
+ <rect x="562" y="96" width="250" height="176" fill="#ffffff" stroke="#0b6b74"/>
+ <rect x="562" y="96" width="250" height="5" fill="#0b6b74"/>
+ <text x="580" y="134" font-size="15" font-weight="700" fill="#0b6b74">C · 推理运行时</text>
+ <g font-size="12" fill="#28343a">
+  <text x="580" y="166">RoPE 重定位让缓存可复用；</text>
+  <text x="580" y="190">分布式稀疏并行、稀疏 MoE、</text>
+  <text x="580" y="214">KV 量化、超分精修与轻量 VAE</text>
+ </g>
+ <text x="580" y="244" font-size="12.5" fill="#0b6b74">回答：一块要花多少？</text>
+ <text x="580" y="264" font-size="12.5" fill="#0b6b74">→ 第 05–11 章</text>
+
+ <!-- stage D -->
+ <rect x="828" y="96" width="222" height="176" fill="#ffffff" stroke="#0b6b74"/>
+ <rect x="828" y="96" width="222" height="5" fill="#0b6b74"/>
+ <text x="846" y="134" font-size="15" font-weight="700" fill="#0b6b74">D · 服务化</text>
+ <g font-size="12" fill="#28343a">
+  <text x="846" y="166">异步 DiT–VAE 流水、合批、</text>
+  <text x="846" y="190">会话放置与状态迁移、弹性</text>
+  <text x="846" y="214">供给与成本控制</text>
+ </g>
+ <text x="846" y="244" font-size="12.5" fill="#0b6b74">回答：多人长会话扛得住？</text>
+ <text x="846" y="264" font-size="12.5" fill="#0b6b74">→ 第 09 / 10 章</text>
+
+ <!-- chain arrows -->
+ <line x1="282" y1="184" x2="294" y2="184" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
+ <line x1="548" y1="184" x2="560" y2="184" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
+ <line x1="814" y1="184" x2="826" y2="184" stroke="#0b6b74" stroke-width="2" marker-end="url(#ar-m)"/>
 
  <!-- what each stage makes possible -->
- <g font-size="10">
- <text x="30" y="248" fill="#4d5b61">结构让「增量」成为可能</text>
- <text x="290" y="248" fill="#4d5b61">后训练让「长跑」成为可能</text>
- <text x="550" y="248" fill="#4d5b61">运行时让「实时」成为可能</text>
- <text x="810" y="248" fill="#4d5b61">服务让「商用」成为可能</text>
+ <g font-size="12.5" fill="#0b6b74">
+  <text x="30" y="300">结构让「增量」成为可能</text>
+  <text x="296" y="300">后训练让「长跑」成为可能</text>
+  <text x="562" y="300">运行时让「实时」成为可能</text>
+  <text x="828" y="300">服务让「商用」成为可能</text>
  </g>
- <line x1="30" y1="262" x2="1050" y2="262" stroke="#d8dee0"/>
 
- <!-- feedback arrows -->
- <path d="M930,226 L930,282 L152,282 L152,226" fill="none" stroke="#4d5b61" stroke-dasharray="5 4" marker-end="url(#ar-m2)"/>
- <text x="360" y="300" fill="#4d5b61" font-size="10.5">反向约束：服务层的目标（如 P99 块延迟、单会话成本）反过来决定后训练要压到几步、稀疏到什么比例</text>
+ <!-- reverse constraint -->
+ <path d="M1050 322 L1050 358 L540 358 L540 336" fill="none" stroke="#0b6b74" stroke-dasharray="5 4"/>
+ <line x1="30" y1="322" x2="1050" y2="322" stroke="#d8dee0"/>
+ <rect x="30" y="374" width="1020" height="42" fill="#eef2f3"/>
+ <text x="48" y="400" font-size="12.5" fill="#0b6b74">反向约束：服务层的目标（如 P99 块延迟、单会话成本）反过来决定后训练要压到几步、稀疏到什么比例</text>
 
- <!-- the four levers -->
- <text x="30" y="344" fill="#4d5b61" font-size="12" letter-spacing="1.6">四个正交杠杆（乘性，不可相加）</text>
- <g>
- <rect x="30" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="48" y="382" fill="#0b6b74" font-size="11">① 减少主干调用次数</text>
- <text x="48" y="404" fill="#28343a" font-size="10.5">蒸馏：几十步 → 1–4 步</text>
- <text x="48" y="424" fill="#4d5b61" font-size="10">收益最大；需重训 + 长时回归</text>
+ <!-- ============ four orthogonal levers ============ -->
+ <text x="30" y="460" font-size="14" font-weight="700" fill="#101619">四个正交杠杆（乘性，不可相加）</text>
+ <g font-size="12" fill="#28343a">
+  <rect x="30" y="480" width="250" height="84" fill="#ffffff" stroke="#0b6b74"/>
+  <text x="48" y="508" font-size="12.5" font-weight="700" fill="#0b6b74">① 减少主干调用次数</text>
+  <text x="48" y="532">蒸馏：几十步 → 1–4 步</text>
+  <text x="48" y="552" fill="#4d5b61">收益最大；需重训 + 长时回归</text>
 
- <rect x="290" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="308" y="382" fill="#0b6b74" font-size="11">② 消除历史重算</text>
- <text x="308" y="404" fill="#28343a" font-size="10.5">块因果 + KV + RoPE 重定位</text>
- <text x="308" y="424" fill="#4d5b61" font-size="10">质量无损；依赖运行时机制</text>
+  <rect x="296" y="480" width="250" height="84" fill="#ffffff" stroke="#0b6b74"/>
+  <text x="314" y="508" font-size="12.5" font-weight="700" fill="#0b6b74">② 消除历史重算</text>
+  <text x="314" y="532">块因果 + KV + RoPE 重定位</text>
+  <text x="314" y="552" fill="#4d5b61">质量无损；依赖运行时机制</text>
 
- <rect x="550" y="358" width="244" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="568" y="382" fill="#0b6b74" font-size="11">③ 压缩单步成本</text>
- <text x="568" y="404" fill="#28343a" font-size="10.5">稀疏 MoE / 注意力稀疏 / 低比特 / 分块量化</text>
- <text x="568" y="424" fill="#4d5b61" font-size="10">长上下文收益大；破坏远端细节</text>
+  <rect x="562" y="480" width="250" height="84" fill="#ffffff" stroke="#0b6b74"/>
+  <text x="580" y="508" font-size="12.5" font-weight="700" fill="#0b6b74">③ 压缩单步成本</text>
+  <text x="580" y="532">稀疏 MoE / 注意力稀疏 / 低比特</text>
+  <text x="580" y="552" fill="#4d5b61">长上下文收益大；破坏远端细节</text>
 
- <rect x="810" y="358" width="240" height="92" fill="#ffffff" stroke="#0b6b74"/>
- <text x="828" y="382" fill="#0b6b74" font-size="11">④ 跨卡分摊 + 藏波动</text>
- <text x="828" y="404" fill="#28343a" font-size="10.5">分布式稀疏并行 / 异步流水 / 合批 / 迁移</text>
- <text x="828" y="424" fill="#4d5b61" font-size="10">并行决定稀疏可行性；调度藏住剩余波动</text>
+  <rect x="828" y="480" width="222" height="84" fill="#ffffff" stroke="#0b6b74"/>
+  <text x="846" y="508" font-size="12.5" font-weight="700" fill="#0b6b74">④ 跨卡分摊 + 藏波动</text>
+  <text x="846" y="532">分布式并行 / 异步流水 / 合批</text>
+  <text x="846" y="552" fill="#4d5b61">并行决定稀疏可行性</text>
  </g>
- </svg>
+</svg>
  </div>
  <figcaption><b>FIG 0-1 · 四段依赖链与四个正交杠杆</b>　A→B→C→D 是<strong>能力递进</strong>关系（每段把上一段的产物变成可用系统），四个杠杆是<strong>乘性收益</strong>关系（各自独立但要联合调参）。</figcaption>
  </figure>
